@@ -119,13 +119,13 @@ jobs:
             async function main() {
               // Read inputs from environment variables
               const reaction = process.env.GITHUB_AW_REACTION || "eyes";
-              const alias = process.env.GITHUB_AW_ALIAS; // Only present for alias workflows
+              const command = process.env.GITHUB_AW_COMMAND; // Only present for command workflows
               const runId = context.runId;
               const runUrl = context.payload.repository
                 ? `${context.payload.repository.html_url}/actions/runs/${runId}`
                 : `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}`;
               console.log("Reaction type:", reaction);
-              console.log("Alias name:", alias || "none");
+              console.log("Command name:", command || "none");
               console.log("Run ID:", runId);
               console.log("Run URL:", runUrl);
               // Validate reaction type
@@ -172,8 +172,8 @@ jobs:
                     }
                     reactionEndpoint = `/repos/${owner}/${repo}/issues/comments/${commentId}/reactions`;
                     commentUpdateEndpoint = `/repos/${owner}/${repo}/issues/comments/${commentId}`;
-                    // Only edit comments for alias workflows
-                    shouldEditComment = alias ? true : false;
+                    // Only edit comments for command workflows
+                    shouldEditComment = command ? true : false;
                     break;
                   case "pull_request":
                     const prNumber = context.payload?.pull_request?.number;
@@ -194,8 +194,8 @@ jobs:
                     }
                     reactionEndpoint = `/repos/${owner}/${repo}/pulls/comments/${reviewCommentId}/reactions`;
                     commentUpdateEndpoint = `/repos/${owner}/${repo}/pulls/comments/${reviewCommentId}`;
-                    // Only edit comments for alias workflows
-                    shouldEditComment = alias ? true : false;
+                    // Only edit comments for command workflows
+                    shouldEditComment = command ? true : false;
                     break;
                   default:
                     core.setFailed(`Unsupported event type: ${eventName}`);
@@ -209,9 +209,9 @@ jobs:
                   console.log("Comment update endpoint:", commentUpdateEndpoint);
                   await editCommentWithWorkflowLink(commentUpdateEndpoint, runUrl);
                 } else {
-                  if (!alias && commentUpdateEndpoint) {
+                  if (!command && commentUpdateEndpoint) {
                     console.log(
-                      "Skipping comment edit - only available for alias workflows"
+                      "Skipping comment edit - only available for command workflows"
                     );
                   } else {
                     console.log("Skipping comment edit for event type:", eventName);
@@ -357,19 +357,9 @@ jobs:
         run: |
           mkdir -p /tmp/aw-prompts
           cat > $GITHUB_AW_PROMPT << 'EOF'
-          Analyze the pull request and create a few targeted review comments on the code changes.
+          Analyze the pull request #${github.event.pull_request.number} and create one code review comment on the code changes. 
           
-          You MUST create 2 review comments focusing on:
-          1. Code quality and best practices
-          2. Potential security issues or improvements
-          3. Performance optimizations or concerns
-          
-          For each review comment, specify:
-          - The exact file path where the comment should be placed
-          - The specific line number in the diff
-          - A helpful comment body with actionable feedback
-          
-          If you find multi-line issues, use start_line to comment on ranges of lines.
+          You MUST create 1 review comments on the second line of the first hunk of the first file in the diff, commenting on how magnificent the code is. Really go to town on praising the code.
           
           
           ---
@@ -382,9 +372,22 @@ jobs:
           
           ### Available Output Types:
           
+          **Creating a Pull Request Review Comment**
+          
+          To create a review comment on a pull request:
+          1. Write an entry to "${{ env.GITHUB_AW_SAFE_OUTPUTS }}":
+          ```json
+          {"type": "create-pull-request-review-comment", "body": "Your comment content in markdown", "path": "file/path.ext", "start_line": 10, "line": 10, "side": "RIGHT"}
+          ```
+          2. The `path` field specifies the file path in the pull request where the comment should be added
+          3. The `line` field specifies the line number in the file for the comment
+          4. The optional `start_line` field is optional and can be used to specify the start of a multi-line comment range
+          5. The optional `side` field indicates whether the comment is on the "RIGHT" (new code) or "LEFT" (old code) side of the diff
+          6. After you write to that file, read it as JSONL and check it is valid. If it isn't, make any necessary corrections to it to fix it up
+          
           **Example JSONL file content:**
           ```
-          # No safe outputs configured for this workflow
+          {"type": "create-pull-request-review-comment", "body": "Consider renaming this variable for clarity.", "path": "src/main.py", "start_line": 41, "line": 42, "side": "RIGHT"}
           ```
           
           **Important Notes:**
