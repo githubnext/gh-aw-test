@@ -1756,7 +1756,7 @@ jobs:
       findings_count: ${{ steps.create_code_scanning_alert.outputs.findings_count }}
       sarif_file: ${{ steps.create_code_scanning_alert.outputs.sarif_file }}
     steps:
-      - name: Create Repository Security Advisory
+      - name: Create Code Scanning Alert
         id: create_code_scanning_alert
         uses: actions/github-script@v7
         env:
@@ -2005,7 +2005,7 @@ jobs:
                 core.setOutput("artifact_uploaded", "pending");
                 core.setOutput("codeql_uploaded", "pending");
                 // Write summary with findings
-                let summaryContent = "\n\n## Repository Security Advisory\n";
+                let summaryContent = "\n\n## Code Scanning Alert\n";
                 summaryContent += `Found **${validFindings.length}** security finding(s):\n\n`;
                 for (const finding of validFindings) {
                   const emoji =

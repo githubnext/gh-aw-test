@@ -1295,9 +1295,9 @@ run_command_tests() {
                         
                         if [[ -n "$pr_num" ]]; then
                             success "Created test PR #$pr_num for $workflow: https://github.com/$REPO_OWNER/$REPO_NAME/pull/$pr_num"
-                            sleep 10 # Wait for workflow to trigger automatically
                             
                             progress "Testing $ai_display_name PR review comment workflow"
+                            post_pr_command "$pr_num" "/test-${ai_type}-create-pull-request-review-comment"
                             wait_for_pr_review_comments "$pr_num" "$ai_display_name" "$workflow" || true
                         else
                             error "Failed to create test PR for $workflow"
