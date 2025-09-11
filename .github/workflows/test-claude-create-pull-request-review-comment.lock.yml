@@ -1870,7 +1870,7 @@ jobs:
                 );
                 return;
               }
-              const pullRequest = context.payload.pull_request;
+              let pullRequest = context.payload.pull_request;
               if (!pullRequest) {
                 //No, github.event.issue.pull_request does not contain the full pull request data like head.sha. It only includes a minimal object with a url pointing to the pull request API resource.
                 //To get full PR details (like head.sha, base.ref, etc.), you need to make an API call using that URL.
