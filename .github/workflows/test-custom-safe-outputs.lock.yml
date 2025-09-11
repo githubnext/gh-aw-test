@@ -3378,6 +3378,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: read
+      issues: read
     timeout-minutes: 10
     outputs:
       branch_name: ${{ steps.push_to_pr_branch.outputs.branch_name }}
@@ -3403,6 +3404,7 @@ jobs:
         id: push_to_pr_branch
         uses: actions/github-script@v7
         env:
+          GH_TOKEN: ${{ github.token }}
           GITHUB_AW_AGENT_OUTPUT: ${{ needs.test-safe-outputs-custom-engine.outputs.output }}
           GITHUB_AW_PUSH_TARGET: "*"
           GITHUB_AW_PUSH_IF_NO_CHANGES: "warn"
