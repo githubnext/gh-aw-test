@@ -537,10 +537,10 @@ create_test_pr_with_branch() {
     local file_content="# Test PR Content\n\nThis is a test file created for PR testing at $(date)"
     local file_path="test-file-$(date +%s).md"
     
-    # Get the current SHA of the branch
-    local current_sha=$(git ls-remote --heads origin "$branch" 2>/dev/null | cut -f1)
+    # Get the initial SHA of the branch (before our test commit)
+    local initial_sha=$(git ls-remote --heads origin "$branch" 2>/dev/null | cut -f1)
     
-    if [[ -n "$current_sha" ]]; then
+    if [[ -n "$initial_sha" ]]; then
         # Create a new file on the branch using GitHub API
         gh api repos/:owner/:repo/contents/"$file_path" \
             --method PUT \
@@ -548,12 +548,15 @@ create_test_pr_with_branch() {
             --field content="$(echo -e "$file_content" | base64 -w 0)" \
             --field branch="$branch" &>/dev/null
         
+        # Get the SHA after creating the test commit
+        local after_commit_sha=$(git ls-remote --heads origin "$branch" 2>/dev/null | cut -f1)
+        
         # Create a PR using the GitHub CLI
         local pr_url=$(gh pr create --title "$title" --body "$body" --head "$branch" --base main 2>/dev/null)
         
         if [[ -n "$pr_url" ]]; then
             local pr_number=$(echo "$pr_url" | grep -o '[0-9]\+$')
-            echo "$pr_number,$branch,$current_sha"
+            echo "$pr_number,$branch,$after_commit_sha"
         else
             echo ""
         fi
@@ -1125,12 +1128,12 @@ run_command_tests() {
                         local pr_info=$(create_test_pr_with_branch "Test PR for $ai_display_name Push-to-Branch" "This PR is for testing $workflow")
                         
                         if [[ -n "$pr_info" ]]; then
-                            IFS=',' read -r pr_num branch_name initial_sha <<< "$pr_info"
+                            IFS=',' read -r pr_num branch_name after_commit_sha <<< "$pr_info"
                             success "Created test PR #$pr_num for $workflow with branch '$branch_name': https://github.com/$REPO_OWNER/$REPO_NAME/pull/$pr_num"
                             
                             progress "Testing $ai_display_name push-to-pr-branch workflow"
                             post_pr_command "$pr_num" "/test-${ai_type}-push-to-pr-branch"
-                            wait_for_branch_update "$branch_name" "$initial_sha" "$workflow" || true
+                            wait_for_branch_update "$branch_name" "$after_commit_sha" "$workflow" || true
                         else
                             error "Failed to create test PR for $workflow"
                             FAILED_TESTS+=("$workflow")

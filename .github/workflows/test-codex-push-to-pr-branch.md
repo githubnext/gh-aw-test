@@ -2,6 +2,7 @@
 on:
   command:
     name: test-codex-push-to-pr-branch
+  reaction: eyes
 
 engine: 
   id: codex

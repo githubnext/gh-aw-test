@@ -2,6 +2,7 @@
 on:
   command:
     name: test-claude-push-to-pr-branch
+  reaction: eyes
 
 engine: 
   id: claude
