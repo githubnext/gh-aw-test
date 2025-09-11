@@ -38,7 +38,13 @@
 #   - Proper repository permissions for creating issues/PRs
 #   - Internet access for GitHub API calls
 
-set -euo pipefail
+set -uo pipefail  # Removed -e to allow test failures without stopping the script
+
+# Error Handling Strategy:
+# - Individual test failures are tracked but don't stop the overall test suite
+# - Polling timeouts are handled gracefully and recorded as test failures  
+# - Critical prerequisite failures (like missing gh CLI) still exit immediately
+# - Cleanup operations continue even if some steps fail
 
 # Colors and emojis for output
 RED='\033[0;31m'
@@ -53,6 +59,21 @@ NC='\033[0m' # No Color
 declare -a PASSED_TESTS=()
 declare -a FAILED_TESTS=()
 declare -a SKIPPED_TESTS=()
+
+# Helper function to safely execute commands that might fail
+# Usage: safe_run "operation description" command arg1 arg2...
+safe_run() {
+    local description="$1"
+    shift
+    
+    if "$@"; then
+        return 0
+    else
+        local exit_code=$?
+        warning "Failed to $description (exit code: $exit_code)"
+        return $exit_code
+    fi
+}
 
 # Configuration
 REPO_OWNER="githubnext"
@@ -998,49 +1019,55 @@ run_workflow_dispatch_tests() {
         # Capitalize first letter for display
         local ai_display_name="${ai_type^}"
         
+        # Use explicit result tracking to handle failures gracefully
+        local workflow_success=false
         if trigger_workflow_dispatch_and_await_completion "$workflow"; then
+            workflow_success=true
+        fi
+        
+        if [[ "$workflow_success" == true ]]; then
             # Validate specific outcomes based on workflow type
+            local validation_success=false
             case "$workflow" in
                 *"create-issue")
                     local title_prefix="[${ai_type}-test]"
                     local expected_labels="${ai_type},automation"
                     
                     if validate_issue_created "$title_prefix" "$expected_labels"; then
-                        PASSED_TESTS+=("$workflow")
-                    else
-                        FAILED_TESTS+=("$workflow")
+                        validation_success=true
                     fi
                     ;;
                 *"create-pull-request")
                     local title_prefix="[${ai_type}-test]"
                     
                     if validate_pr_created "$title_prefix"; then
-                        PASSED_TESTS+=("$workflow")
-                    else
-                        FAILED_TESTS+=("$workflow")
+                        validation_success=true
                     fi
                     ;;
                 *"repository-security-advisory")
                     if validate_repository_security_advisory "$workflow"; then
-                        PASSED_TESTS+=("$workflow")
-                    else
-                        FAILED_TESTS+=("$workflow")
+                        validation_success=true
                     fi
                     ;;
                 *"mcp")
                     if validate_mcp_workflow "$workflow"; then
-                        PASSED_TESTS+=("$workflow")
-                    else
-                        FAILED_TESTS+=("$workflow")
+                        validation_success=true
                     fi
                     ;;
                 *)
                     # For truly unknown workflows, just check that they completed successfully
                     success "Workflow '$workflow' completed successfully (no specific validation available)"
-                    PASSED_TESTS+=("$workflow")
+                    validation_success=true
                     ;;
             esac
+            
+            if [[ "$validation_success" == true ]]; then
+                PASSED_TESTS+=("$workflow")
+            else
+                FAILED_TESTS+=("$workflow")
+            fi
         else
+            error "Workflow '$workflow' failed to complete successfully"
             FAILED_TESTS+=("$workflow")
         fi
         
@@ -1068,10 +1095,14 @@ run_issue_triggered_tests() {
         local ai_display_name="${ai_type^}"
         
         if [[ -n "$ai_type" ]]; then
-            # Try to enable the workflow
+            # Try to enable the workflow - handle failures gracefully
+            local enable_success=false
             if enable_workflow "$workflow"; then
+                enable_success=true
                 workflows_to_disable+=("$workflow")
-                
+            fi
+            
+            if [[ "$enable_success" == true ]]; then
                 # Create a test issue for this specific workflow
                 progress "Testing $workflow"
                 local issue_num=$(create_test_issue "Hello from $ai_display_name" "This is a test issue to trigger $workflow")
@@ -1081,15 +1112,16 @@ run_issue_triggered_tests() {
                     sleep 10 # Wait for workflow to trigger
                     
                     # Run the appropriate test based on workflow type
+                    # Note: wait_for_* functions handle their own success/failure tracking
                     case "$workflow" in
                         *"add-issue-comment")
-                            wait_for_issue_comment "$issue_num" "Reply from $ai_display_name" "$workflow"
+                            wait_for_issue_comment "$issue_num" "Reply from $ai_display_name" "$workflow" || true
                             ;;
                         *"add-issue-labels")
-                            wait_for_issue_labels "$issue_num" "${ai_type}-safe-output-label-test" "$workflow"
+                            wait_for_issue_labels "$issue_num" "${ai_type}-safe-output-label-test" "$workflow" || true
                             ;;
                         *"update-issue")
-                            wait_for_issue_update "$issue_num" "$ai_display_name" "$workflow"
+                            wait_for_issue_update "$issue_num" "$ai_display_name" "$workflow" || true
                             ;;
                     esac
                 else
@@ -1097,14 +1129,15 @@ run_issue_triggered_tests() {
                     FAILED_TESTS+=("$workflow")
                 fi
             else
+                error "Failed to enable workflow '$workflow'"
                 FAILED_TESTS+=("$workflow")
             fi
         fi
     done
     
-    # Disable workflows after testing
+    # Disable workflows after testing - handle failures gracefully
     for workflow in "${workflows_to_disable[@]}"; do
-        disable_workflow "$workflow"
+        disable_workflow "$workflow" || warning "Failed to disable workflow '$workflow', continuing..."
     done
     
     if [[ ${#workflows_to_disable[@]} -eq 0 ]]; then
@@ -1135,10 +1168,14 @@ run_command_tests() {
         local ai_display_name="${ai_type^}"
         
         if [[ -n "$ai_type" ]]; then
-            # Try to enable the workflow
+            # Try to enable the workflow - handle failures gracefully
+            local enable_success=false
             if enable_workflow "$workflow"; then
+                enable_success=true
                 workflows_to_disable+=("$workflow")
-                
+            fi
+            
+            if [[ "$enable_success" == true ]]; then
                 # Different handling for different workflow types
                 case "$workflow" in
                     *"push-to-pr-branch")
@@ -1152,7 +1189,7 @@ run_command_tests() {
                             
                             progress "Testing $ai_display_name push-to-pr-branch workflow"
                             post_pr_command "$pr_num" "/test-${ai_type}-push-to-pr-branch"
-                            wait_for_branch_update "$branch_name" "$initial_sha" "$workflow"
+                            wait_for_branch_update "$branch_name" "$initial_sha" "$workflow" || true
                         else
                             error "Failed to create test PR for $workflow"
                             FAILED_TESTS+=("$workflow")
@@ -1168,7 +1205,7 @@ run_command_tests() {
                             sleep 10 # Wait for workflow to trigger automatically
                             
                             progress "Testing $ai_display_name PR review comment workflow"
-                            wait_for_pr_review_comments "$pr_num" "$ai_display_name" "$workflow"
+                            wait_for_pr_review_comments "$pr_num" "$ai_display_name" "$workflow" || true
                         else
                             error "Failed to create test PR for $workflow"
                             FAILED_TESTS+=("$workflow")
@@ -1186,7 +1223,7 @@ run_command_tests() {
                                 *"command")
                                     progress "Testing $ai_display_name command workflow"
                                     post_issue_command "$issue_num" "/test-${ai_type}-command What is 102+103?"
-                                    wait_for_command_comment "$issue_num" "205" "$workflow"
+                                    wait_for_command_comment "$issue_num" "205" "$workflow" || true
                                     ;;
                             esac
                         else
@@ -1196,14 +1233,15 @@ run_command_tests() {
                         ;;
                 esac
             else
+                error "Failed to enable workflow '$workflow'"
                 FAILED_TESTS+=("$workflow")
             fi
         fi
     done
     
-    # Disable workflows after testing
+    # Disable workflows after testing - handle failures gracefully  
     for workflow in "${workflows_to_disable[@]}"; do
-        disable_workflow "$workflow"
+        disable_workflow "$workflow" || warning "Failed to disable workflow '$workflow', continuing..."
     done
     
     if [[ ${#workflows_to_disable[@]} -eq 0 ]]; then

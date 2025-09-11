@@ -1,0 +1,64 @@
+name: Nightly E2E Tests
+
+on:
+  schedule:
+    - cron: '0 3 * * *'  # Run nightly at 03:00 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+  actions: read
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ensure gh is available
+        run: |
+          gh --version
+
+      - name: Authenticate gh CLI using GITHUB_TOKEN
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Authenticating gh CLI..."
+          echo "$GITHUB_TOKEN" | gh auth login --with-token
+          gh auth status
+
+      - name: Run e2e tests and publish output to job summary
+        env:
+          GITHUB_STEP_SUMMARY: ${{ github.step_summary }}
+        run: |
+          set -o pipefail
+          chmod +x ./e2e.sh
+
+          # Run the e2e script, capture all output
+          set +e
+          ./e2e.sh > e2e-output.log 2>&1
+          rc=$?
+          set -e
+
+          echo "\n## E2E test run output" >> "$GITHUB_STEP_SUMMARY"
+          echo '```bash' >> "$GITHUB_STEP_SUMMARY"
+          sed -n '1,50000p' e2e-output.log >> "$GITHUB_STEP_SUMMARY" || true
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+          echo "Detailed log attached as artifact: e2e-output.log"
+
+          # Fail the job if the script exited non-zero so GH shows failure status
+          if [[ $rc -ne 0 ]]; then
+            echo "E2E script failed with exit code $rc"
+            exit $rc
+          fi
+
+      - name: Upload e2e log artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-output-log
+          path: e2e-output.log
