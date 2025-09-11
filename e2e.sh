@@ -705,40 +705,24 @@ validate_code_scanning_alert() {
     local workflow_name="$1"
     
     # Determine expected title based on workflow name
-    local expected_title
+    local expected_message
     if [[ "$workflow_name" == *"claude"* ]]; then
-        expected_title="Claude wants security review."
+        expected_message="Claude wants security review."
     elif [[ "$workflow_name" == *"codex"* ]]; then
-        expected_title="Codex wants security review."
+        expected_message="Codex wants security review."
     else
-        expected_title="security review"  # Fallback for generic matching
+        expected_message="security review"  # Fallback for generic matching
     fi
     
     # Check for code scanning alerts with the specific title
-    local security_advisories=$(gh api repos/:owner/:repo/code-scanning/alerts --jq ".[] | select(.title | contains(\"$expected_title\")) | .title" 2>/dev/null || echo "")
+    local code_scanning_alerts=$(gh api repos/:owner/:repo/code-scanning/alerts?state=open --jq ".[] | select(.most_recent_instance.message.text | contains(\"$expected_message\")) | .most_recent_instance.message.text" 2>/dev/null || echo "")
     
-    if [[ -n "$security_advisories" ]]; then
-        success "Security report workflow '$workflow_name' created security advisory with expected title: '$expected_title'"
+    if [[ -n "$code_scanning_alerts" ]]; then
+        success "Security report workflow '$workflow_name' created security advisory with expected message: '$expected_message'"
         return 0
     else
-        # Also check for issues with the specific title and security-related labels
-        local security_issue=$(gh issue list --limit 10 --json title,labels --jq ".[] | select(.title | contains(\"$expected_title\")) | select(.labels[]?.name | contains(\"security\") or contains(\"vulnerability\")) | .title" 2>/dev/null | head -1)
-        
-        if [[ -n "$security_issue" ]]; then
-            success "Security report workflow '$workflow_name' created security issue with expected title: '$expected_title'"
-            return 0
-        else
-            # Fallback: check for any recent security-related content
-            local any_security_content=$(gh issue list --limit 5 --json title,body --jq ".[] | select(.title or .body | contains(\"security\") or contains(\"Security\")) | .title" 2>/dev/null | head -1)
-            
-            if [[ -n "$any_security_content" ]]; then
-                warning "Security report workflow '$workflow_name' created security content but not with expected title. Found: '$any_security_content'"
-                return 0  # Still pass - security content was created
-            else
-                error "Security report workflow '$workflow_name' completed but no code scanning alerts found with expected title: '$expected_title'"
-                return 1
-            fi
-        fi
+        error "Security report workflow '$workflow_name' completed but no code scanning alerts found with expected message: '$expected_message'"
+        return 1
     fi
 }
 
