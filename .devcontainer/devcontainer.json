@@ -1,0 +1,80 @@
+{
+	"name": "GitHub Agentic Workflows Test Environment",
+	"image": "mcr.microsoft.com/devcontainers/universal:2-linux",
+	
+	// Configure container features
+	"features": {
+		"ghcr.io/devcontainers/features/go:1": {
+			"version": "latest"
+		},
+		"ghcr.io/devcontainers/features/node:1": {
+			"version": "lts"
+		},
+		"ghcr.io/devcontainers/features/github-cli:1": {
+			"installDirectlyFromGitHubRelease": true,
+			"version": "latest"
+		},
+		"ghcr.io/devcontainers/features/git:1": {
+			"ppa": true,
+			"version": "latest"
+		}
+	},
+
+	// Configure container settings
+	"containerEnv": {
+		"GO111MODULE": "on",
+		"GOPROXY": "https://proxy.golang.org,direct"
+	},
+
+	// Configure git and submodules
+	"initializeCommand": [
+		"bash", "-c", 
+		"cd ${localWorkspaceFolder} && git config --global --add safe.directory ${containerWorkspaceFolder} && git submodule update --init --recursive"
+	],
+
+	"postCreateCommand": [
+		"bash", "-c",
+		"git config --global user.email 'copilot@github.com' && git config --global user.name 'GitHub Copilot' && git submodule update --init --recursive && make build || true"
+	],
+
+	// Mount configuration for accessing GitHubnext/gh-aw
+	"mounts": [
+		"source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh,type=bind,consistency=cached",
+		"source=${localEnv:HOME}/.gitconfig,target=/home/vscode/.gitconfig,type=bind,consistency=cached"
+	],
+
+	// Port forwarding for development servers
+	"forwardPorts": [3000, 8080, 9000],
+
+	// Extensions to install
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"golang.go",
+				"ms-vscode.vscode-json",
+				"GitHub.copilot",
+				"GitHub.vscode-github-actions",
+				"ms-vscode.vscode-typescript-next"
+			],
+			"settings": {
+				"go.toolsManagement.checkForUpdates": "local",
+				"go.useLanguageServer": true,
+				"terminal.integrated.shell.linux": "/bin/bash"
+			}
+		}
+	},
+
+	// Configure workspace
+	"workspaceFolder": "/workspaces/gh-aw-test",
+	"workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/gh-aw-test,type=bind,consistency=cached",
+
+	// Configure user permissions
+	"remoteUser": "vscode",
+	"containerUser": "vscode",
+
+	// Additional apt packages for development
+	"postStartCommand": [
+		"bash", "-c",
+		"sudo apt-get update && sudo apt-get install -y make curl wget jq && git submodule update --remote --merge || true"
+	]
+}
