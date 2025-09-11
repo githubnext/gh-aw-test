@@ -8,7 +8,7 @@ engine:
   id: codex
 
 safe-outputs:
-  create-repository-security-advisory:
+  create-code-scanning-alert:
     max: 10
 ---
 

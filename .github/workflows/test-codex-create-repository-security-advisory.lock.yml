@@ -356,7 +356,7 @@ jobs:
           To create repository security advisories (SARIF format for GitHub Code Scanning):
           1. Write an entry to "${{ env.GITHUB_AW_SAFE_OUTPUTS }}":
           ```json
-          {"type": "create-repository-security-advisory", "file": "path/to/file.js", "line": 42, "severity": "error", "message": "Security vulnerability description", "column": 5, "ruleIdSuffix": "custom-rule"}
+          {"type": "create-code-scanning-alert", "file": "path/to/file.js", "line": 42, "severity": "error", "message": "Security vulnerability description", "column": 5, "ruleIdSuffix": "custom-rule"}
           ```
           2. **Required fields**: `file` (string), `line` (number), `severity` ("error", "warning", "info", or "note"), `message` (string)
           3. **Optional fields**: `column` (number, defaults to 1), `ruleIdSuffix` (string with only alphanumeric, hyphens, underscores)
@@ -365,7 +365,7 @@ jobs:
           
           **Example JSONL file content:**
           ```
-          {"type": "create-repository-security-advisory", "file": "src/auth.js", "line": 25, "severity": "error", "message": "Potential SQL injection vulnerability"}
+          {"type": "create-code-scanning-alert", "file": "src/auth.js", "line": 25, "severity": "error", "message": "Potential SQL injection vulnerability"}
           ```
           
           **Important Notes:**
@@ -466,7 +466,7 @@ jobs:
         uses: actions/github-script@v7
         env:
           GITHUB_AW_SAFE_OUTPUTS: ${{ env.GITHUB_AW_SAFE_OUTPUTS }}
-          GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"create-repository-security-advisory\":{\"enabled\":true,\"max\":10}}"
+          GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"create-code-scanning-alert\":{\"enabled\":true,\"max\":10}}"
         with:
           script: |
             async function main() {
@@ -632,7 +632,7 @@ jobs:
                     return 1; // Only one discussion allowed
                   case "missing-tool":
                     return 1000; // Allow many missing tool reports (default: unlimited)
-                  case "create-repository-security-advisory":
+                  case "create-code-scanning-alert":
                     return 1000; // Allow many repository security advisories (default: unlimited)
                   default:
                     return 1; // Default to single item for unknown types
@@ -1090,11 +1090,11 @@ jobs:
                         item.alternatives = sanitizeContent(item.alternatives);
                       }
                       break;
-                    case "create-repository-security-advisory":
+                    case "create-code-scanning-alert":
                       // Validate required fields
                       if (!item.file || typeof item.file !== "string") {
                         errors.push(
-                          `Line ${i + 1}: create-repository-security-advisory requires a 'file' field (string)`
+                          `Line ${i + 1}: create-code-scanning-alert requires a 'file' field (string)`
                         );
                         continue;
                       }
@@ -1104,7 +1104,7 @@ jobs:
                         (typeof item.line !== "number" && typeof item.line !== "string")
                       ) {
                         errors.push(
-                          `Line ${i + 1}: create-repository-security-advisory requires a 'line' field (number or string)`
+                          `Line ${i + 1}: create-code-scanning-alert requires a 'line' field (number or string)`
                         );
                         continue;
                       }
@@ -1112,19 +1112,19 @@ jobs:
                       const parsedLine = parseInt(item.line, 10);
                       if (isNaN(parsedLine) || parsedLine <= 0) {
                         errors.push(
-                          `Line ${i + 1}: create-repository-security-advisory 'line' must be a valid positive integer (got: ${item.line})`
+                          `Line ${i + 1}: create-code-scanning-alert 'line' must be a valid positive integer (got: ${item.line})`
                         );
                         continue;
                       }
                       if (!item.severity || typeof item.severity !== "string") {
                         errors.push(
-                          `Line ${i + 1}: create-repository-security-advisory requires a 'severity' field (string)`
+                          `Line ${i + 1}: create-code-scanning-alert requires a 'severity' field (string)`
                         );
                         continue;
                       }
                       if (!item.message || typeof item.message !== "string") {
                         errors.push(
-                          `Line ${i + 1}: create-repository-security-advisory requires a 'message' field (string)`
+                          `Line ${i + 1}: create-code-scanning-alert requires a 'message' field (string)`
                         );
                         continue;
                       }
@@ -1132,7 +1132,7 @@ jobs:
                       const allowedSeverities = ["error", "warning", "info", "note"];
                       if (!allowedSeverities.includes(item.severity.toLowerCase())) {
                         errors.push(
-                          `Line ${i + 1}: create-repository-security-advisory 'severity' must be one of: ${allowedSeverities.join(", ")}`
+                          `Line ${i + 1}: create-code-scanning-alert 'severity' must be one of: ${allowedSeverities.join(", ")}`
                         );
                         continue;
                       }
@@ -1143,7 +1143,7 @@ jobs:
                           typeof item.column !== "string"
                         ) {
                           errors.push(
-                            `Line ${i + 1}: create-repository-security-advisory 'column' must be a number or string`
+                            `Line ${i + 1}: create-code-scanning-alert 'column' must be a number or string`
                           );
                           continue;
                         }
@@ -1151,7 +1151,7 @@ jobs:
                         const parsedColumn = parseInt(item.column, 10);
                         if (isNaN(parsedColumn) || parsedColumn <= 0) {
                           errors.push(
-                            `Line ${i + 1}: create-repository-security-advisory 'column' must be a valid positive integer (got: ${item.column})`
+                            `Line ${i + 1}: create-code-scanning-alert 'column' must be a valid positive integer (got: ${item.column})`
                           );
                           continue;
                         }
@@ -1160,13 +1160,13 @@ jobs:
                       if (item.ruleIdSuffix !== undefined) {
                         if (typeof item.ruleIdSuffix !== "string") {
                           errors.push(
-                            `Line ${i + 1}: create-repository-security-advisory 'ruleIdSuffix' must be a string`
+                            `Line ${i + 1}: create-code-scanning-alert 'ruleIdSuffix' must be a string`
                           );
                           continue;
                         }
                         if (!/^[a-zA-Z0-9_-]+$/.test(item.ruleIdSuffix.trim())) {
                           errors.push(
-                            `Line ${i + 1}: create-repository-security-advisory 'ruleIdSuffix' must contain only alphanumeric characters, hyphens, and underscores`
+                            `Line ${i + 1}: create-code-scanning-alert 'ruleIdSuffix' must contain only alphanumeric characters, hyphens, and underscores`
                           );
                           continue;
                         }
@@ -1504,7 +1504,7 @@ jobs:
           path: /tmp/test-codex-create-repository-security-advisory.log
           if-no-files-found: warn
 
-  create_repository_security_advisory:
+  create_code_scanning_alert:
     needs: test-codex-create-repository-security-advisory
     runs-on: ubuntu-latest
     permissions:
@@ -1513,13 +1513,13 @@ jobs:
       actions: read
     timeout-minutes: 10
     outputs:
-      artifact_uploaded: ${{ steps.create_repository_security_advisory.outputs.artifact_uploaded }}
-      codeql_uploaded: ${{ steps.create_repository_security_advisory.outputs.codeql_uploaded }}
-      findings_count: ${{ steps.create_repository_security_advisory.outputs.findings_count }}
-      sarif_file: ${{ steps.create_repository_security_advisory.outputs.sarif_file }}
+      artifact_uploaded: ${{ steps.create_code_scanning_alert.outputs.artifact_uploaded }}
+      codeql_uploaded: ${{ steps.create_code_scanning_alert.outputs.codeql_uploaded }}
+      findings_count: ${{ steps.create_code_scanning_alert.outputs.findings_count }}
+      sarif_file: ${{ steps.create_code_scanning_alert.outputs.sarif_file }}
     steps:
       - name: Create Repository Security Advisory
-        id: create_repository_security_advisory
+        id: create_code_scanning_alert
         uses: actions/github-script@v7
         env:
           GITHUB_AW_AGENT_OUTPUT: ${{ needs.test-codex-create-repository-security-advisory.outputs.output }}
@@ -1555,19 +1555,19 @@ jobs:
                 console.log("No valid items found in agent output");
                 return;
               }
-              // Find all create-repository-security-advisory items
+              // Find all create-code-scanning-alert items
               const securityItems = validatedOutput.items.filter(
                 /** @param {any} item */ item =>
-                  item.type === "create-repository-security-advisory"
+                  item.type === "create-code-scanning-alert"
               );
               if (securityItems.length === 0) {
                 console.log(
-                  "No create-repository-security-advisory items found in agent output"
+                  "No create-code-scanning-alert items found in agent output"
                 );
                 return;
               }
               console.log(
-                `Found ${securityItems.length} create-repository-security-advisory item(s)`
+                `Found ${securityItems.length} create-code-scanning-alert item(s)`
               );
               // Get the max configuration from environment variable
               const maxFindings = process.env.GITHUB_AW_SECURITY_REPORT_MAX
@@ -1590,7 +1590,7 @@ jobs:
               for (let i = 0; i < securityItems.length; i++) {
                 const securityItem = securityItems[i];
                 console.log(
-                  `Processing create-repository-security-advisory item ${i + 1}/${securityItems.length}:`,
+                  `Processing create-code-scanning-alert item ${i + 1}/${securityItems.length}:`,
                   {
                     file: securityItem.file,
                     line: securityItem.line,
@@ -1604,7 +1604,7 @@ jobs:
                 // Validate required fields
                 if (!securityItem.file) {
                   console.log(
-                    'Missing required field "file" in repository security advisory item'
+                    'Missing required field "file" in code scanning alert item'
                   );
                   continue;
                 }
@@ -1614,19 +1614,19 @@ jobs:
                     typeof securityItem.line !== "string")
                 ) {
                   console.log(
-                    'Missing or invalid required field "line" in repository security advisory item'
+                    'Missing or invalid required field "line" in code scanning alert item'
                   );
                   continue;
                 }
                 if (!securityItem.severity || typeof securityItem.severity !== "string") {
                   console.log(
-                    'Missing or invalid required field "severity" in repository security advisory item'
+                    'Missing or invalid required field "severity" in code scanning alert item'
                   );
                   continue;
                 }
                 if (!securityItem.message || typeof securityItem.message !== "string") {
                   console.log(
-                    'Missing or invalid required field "message" in repository security advisory item'
+                    'Missing or invalid required field "message" in code scanning alert item'
                   );
                   continue;
                 }
@@ -1644,7 +1644,7 @@ jobs:
                     typeof securityItem.column !== "string"
                   ) {
                     console.log(
-                      'Invalid field "column" in repository security advisory item (must be number or string)'
+                      'Invalid field "column" in code scanning alert item (must be number or string)'
                     );
                     continue;
                   }
@@ -1660,7 +1660,7 @@ jobs:
                 if (securityItem.ruleIdSuffix !== undefined) {
                   if (typeof securityItem.ruleIdSuffix !== "string") {
                     console.log(
-                      'Invalid field "ruleIdSuffix" in repository security advisory item (must be string)'
+                      'Invalid field "ruleIdSuffix" in code scanning alert item (must be string)'
                     );
                     continue;
                   }
@@ -1668,7 +1668,7 @@ jobs:
                   const trimmedSuffix = securityItem.ruleIdSuffix.trim();
                   if (trimmedSuffix.length === 0) {
                     console.log(
-                      'Invalid field "ruleIdSuffix" in repository security advisory item (cannot be empty)'
+                      'Invalid field "ruleIdSuffix" in code scanning alert item (cannot be empty)'
                     );
                     continue;
                   }
@@ -1728,7 +1728,7 @@ jobs:
                       driver: {
                         name: driverName,
                         version: "1.0.0",
-                        informationUri: "https://github.com/githubnext/gh-aw-copilots",
+                        informationUri: "https://github.com/githubnext/gh-aw",
                       },
                     },
                     results: validFindings.map((finding, index) => ({
@@ -1755,7 +1755,7 @@ jobs:
               // Write SARIF file to filesystem
               const fs = require("fs");
               const path = require("path");
-              const sarifFileName = "repository-security-advisory.sarif";
+              const sarifFileName = "code-scanning-alert.sarif";
               const sarifFilePath = path.join(process.cwd(), sarifFileName);
               try {
                 fs.writeFileSync(sarifFilePath, JSON.stringify(sarifContent, null, 2));
@@ -1788,7 +1788,7 @@ jobs:
                 throw error;
               }
               console.log(
-                `Successfully created repository security advisory with ${validFindings.length} finding(s)`
+                `Successfully created code scanning alert with ${validFindings.length} finding(s)`
               );
               return {
                 sarifFile: sarifFilePath,
@@ -1798,14 +1798,14 @@ jobs:
             }
             await main();
       - name: Upload SARIF artifact
-        if: steps.create_repository_security_advisory.outputs.sarif_file
+        if: steps.create_code_scanning_alert.outputs.sarif_file
         uses: actions/upload-artifact@v4
         with:
-          name: repository-security-advisory.sarif
-          path: ${{ steps.create_repository_security_advisory.outputs.sarif_file }}
+          name: code-scanning-alert.sarif
+          path: ${{ steps.create_code_scanning_alert.outputs.sarif_file }}
       - name: Upload SARIF to GitHub Security
-        if: steps.create_repository_security_advisory.outputs.sarif_file
+        if: steps.create_code_scanning_alert.outputs.sarif_file
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: ${{ steps.create_repository_security_advisory.outputs.sarif_file }}
+          sarif_file: ${{ steps.create_code_scanning_alert.outputs.sarif_file }}
 

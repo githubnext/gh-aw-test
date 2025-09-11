@@ -1,7 +1,0 @@
-2025-09-11 15:02:05 Starting e2e tests at Thu Sep 11 15:02:05 BST 2025
-[0;34mℹ️  Checking prerequisites...[0m
-[0;34mℹ️  Found local ./gh-aw binary[0m
-[0;32m✅ Prerequisites check passed[0m
-[0;34mℹ️  🎯 Running specific tests: test-claude-create-security-report[0m
-[1;33m⚠️  Test resources were not cleaned up. You may want to manually clean them later.[0m
-2025-09-11 15:02:10 E2E tests completed at Thu Sep 11 15:02:10 BST 2025

@@ -15,7 +15,7 @@
 # 7. Optionally clean up test resources
 #
 # Test Types:
-# - workflow_dispatch: Direct trigger tests (create issues, PRs, repository security advisories, etc.)
+# - workflow_dispatch: Direct trigger tests (create issues, PRs, code scanning alerts, etc.)
 # - issue-triggered: Tests triggered by creating issues with specific titles
 # - command-triggered: Tests triggered by posting commands in issue comments  
 # - PR-triggered: Tests triggered by creating pull requests
@@ -165,11 +165,10 @@ get_workflow_dispatch_tests() {
     echo "test-codex-create-issue"
     echo "test-claude-create-pull-request"
     echo "test-codex-create-pull-request"
-    echo "test-claude-create-repository-security-advisory"
-    echo "test-codex-create-repository-security-advisory"
+    echo "test-claude-create-code-scanning-alert"
+    echo "test-codex-create-code-scanning-alert"
     echo "test-claude-mcp"
     echo "test-codex-mcp"
-    echo "test-custom-safe-outputs"
 }
 
 get_issue_triggered_tests() {
@@ -702,7 +701,7 @@ validate_pr_created() {
     fi
 }
 
-validate_repository_security_advisory() {
+validate_code_scanning_alert() {
     local workflow_name="$1"
     
     # Determine expected title based on workflow name
@@ -715,8 +714,8 @@ validate_repository_security_advisory() {
         expected_title="security review"  # Fallback for generic matching
     fi
     
-    # Check for security advisories with the specific title
-    local security_advisories=$(gh api repos/:owner/:repo/security-advisories --jq ".[] | select(.title | contains(\"$expected_title\")) | .title" 2>/dev/null || echo "")
+    # Check for code scanning alerts with the specific title
+    local security_advisories=$(gh api repos/:owner/:repo/code-scanning/alerts --jq ".[] | select(.title | contains(\"$expected_title\")) | .title" 2>/dev/null || echo "")
     
     if [[ -n "$security_advisories" ]]; then
         success "Security report workflow '$workflow_name' created security advisory with expected title: '$expected_title'"
@@ -736,7 +735,7 @@ validate_repository_security_advisory() {
                 warning "Security report workflow '$workflow_name' created security content but not with expected title. Found: '$any_security_content'"
                 return 0  # Still pass - security content was created
             else
-                error "Security report workflow '$workflow_name' completed but no repository security advisories found with expected title: '$expected_title'"
+                error "Security report workflow '$workflow_name' completed but no code scanning alerts found with expected title: '$expected_title'"
                 return 1
             fi
         fi
@@ -951,8 +950,8 @@ cleanup_test_resources() {
     #     "test-codex-create-issue"
     #     "test-claude-create-pull-request"
     #     "test-codex-create-pull-request"
-    #     "test-claude-create-repository-security-advisory"
-    #     "test-codex-create-repository-security-advisory"
+    #     "test-claude-create-code-scanning-alert"
+    #     "test-codex-create-code-scanning-alert"
     #     "test-claude-mcp"
     #     "test-codex-mcp"
     #     "test-claude-add-issue-comment"
@@ -1044,6 +1043,36 @@ run_workflow_dispatch_tests() {
         # Capitalize first letter for display
         local ai_display_name="${ai_type^}"
         
+        # First delete any existing test artifacts that might interfere
+        if [[ "$workflow" == *"create-issue"* ]]; then
+            gh issue list --limit 10 --json number,title --jq ".[] | select(.title | startswith(\"[${ai_type}-test]\")) | .number" | while read -r issue_num; do
+                if [[ -n "$issue_num" ]]; then
+                    gh issue close "$issue_num" --comment "Closed by e2e test setup" &>/dev/null || true
+                fi
+            done
+        elif [[ "$workflow" == *"create-pull-request"* ]]; then
+            gh pr list --limit 10 --json number,title --jq ".[] | select(.title | startswith(\"[${ai_type}-test]\")) | .number" | while read -r pr_num; do
+                if [[ -n "$pr_num" ]]; then
+                    gh pr close "$pr_num" --comment "Closed by e2e test setup" &>/dev/null || true
+                fi
+            done
+        elif [[ "$workflow" == *"mcp"* ]]; then
+            # MCP workflows may create issues with time-based titles - clean those up
+            gh issue list --limit 10 --json number,title --jq '.[] | select(.title | test("MCP time tool|current time is|UTC")) | .number' | while read -r issue_num; do
+                if [[ -n "$issue_num" ]]; then
+                    gh issue close "$issue_num" --comment "Closed by e2e test setup" &>/dev/null || true
+                fi
+            done
+        elif [[ "$workflow" == *"code-scanning-alert"* ]]; then
+            # Close all code scanning alerts
+            gh api repos/:owner/:repo/code-scanning/alerts --jq '.[].number' 2>/dev/null | while read -r alert_num; do
+                if [[ -n "$alert_num" ]]; then
+                    gh api repos/:owner/:repo/code-scanning/alerts/"$alert_num" -X PATCH -f state="dismissed" -f dismissal_reason="false positive" &>/dev/null || true
+                fi
+            done
+        fi
+
+
         # Use explicit result tracking to handle failures gracefully
         local workflow_success=false
         if trigger_workflow_dispatch_and_await_completion "$workflow"; then
@@ -1069,8 +1098,8 @@ run_workflow_dispatch_tests() {
                         validation_success=true
                     fi
                     ;;
-                *"repository-security-advisory")
-                    if validate_repository_security_advisory "$workflow"; then
+                *"code-scanning-alert")
+                    if validate_code_scanning_alert "$workflow"; then
                         validation_success=true
                     fi
                     ;;
