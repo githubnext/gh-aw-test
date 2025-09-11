@@ -23,18 +23,20 @@
 	// Configure container settings
 	"containerEnv": {
 		"GO111MODULE": "on",
-		"GOPROXY": "https://proxy.golang.org,direct"
+		"GOPROXY": "https://proxy.golang.org,direct",
+		"GITHUB_TOKEN": "${localEnv:GITHUB_TOKEN}",
+		"GH_TOKEN": "${localEnv:GITHUB_TOKEN}"
 	},
 
 	// Configure git and submodules
 	"initializeCommand": [
 		"bash", "-c", 
-		"cd ${localWorkspaceFolder} && git config --global --add safe.directory ${containerWorkspaceFolder} && git submodule update --init --recursive"
+		"cd ${localWorkspaceFolder} && git submodule update --init --recursive"
 	],
 
 	"postCreateCommand": [
 		"bash", "-c",
-		"git config --global user.email 'copilot@github.com' && git config --global user.name 'GitHub Copilot' && git submodule update --init --recursive && make build || true"
+		"git config --global --add safe.directory ${containerWorkspaceFolder} && git config --global --add safe.directory ${containerWorkspaceFolder}/gh-aw && git config --global user.email 'copilot@github.com' && git config --global user.name 'GitHub Copilot' && git submodule update --init --recursive && cd gh-aw && make build && npm install"
 	],
 
 	// Mount configuration for accessing GitHubnext/gh-aw
@@ -75,6 +77,6 @@
 	// Additional apt packages for development
 	"postStartCommand": [
 		"bash", "-c",
-		"sudo apt-get update && sudo apt-get install -y make curl wget jq && git submodule update --remote --merge || true"
+		"sudo apt-get update && sudo apt-get install -y make curl wget jq && git submodule foreach git pull origin main || git submodule foreach git pull origin master || true"
 	]
 }
