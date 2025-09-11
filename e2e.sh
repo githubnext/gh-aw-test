@@ -775,22 +775,10 @@ validate_pr_review_comments() {
     # Get PR review comments using GitHub CLI (these are line-specific review comments)
     local review_comments=$(gh api repos/:owner/:repo/pulls/"$pr_number"/reviews 2>/dev/null | jq -r '.[].body // empty' 2>/dev/null || echo "")
     
-    # Also check for PR comments (general comments on the PR)
-    local pr_comments=$(gh pr view "$pr_number" --json comments --jq '.comments[]?.body // empty' 2>/dev/null || echo "")
-    
-    # Combine both types of comments for validation
-    local all_comments="$review_comments $pr_comments"
-    
-    if [[ -n "$all_comments" && "$all_comments" != " " ]]; then
+    if [[ -n "$review_comments" ]]; then
         # Check if any comment contains AI-specific content or expected patterns
-        if echo "$all_comments" | grep -qi "$ai_type\|review\|test\|automated\|workflow"; then
-            success "PR #$pr_number has review/comments (likely from $ai_type AI workflow)"
-            return 0
-        else
-            # Accept any non-empty comments as success since AI might generate varied content
-            success "PR #$pr_number has review/comments (content validation passed)"
-            return 0
-        fi
+        success "PR #$pr_number has review comments (likely from $ai_type AI workflow)"
+        return 0
     else
         warning "(polling) PR #$pr_number missing expected review comments from $ai_type"
         return 1
