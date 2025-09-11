@@ -39,8 +39,6 @@
 		"git config --global --add safe.directory ${containerWorkspaceFolder} && git config --global --add safe.directory ${containerWorkspaceFolder}/gh-aw && git submodule update --init --recursive && cd gh-aw && make build && npm install"
 	],
 
-
-
 	// Port forwarding for development servers
 	"forwardPorts": [3000, 8080, 9000],
 
