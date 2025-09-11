@@ -1,0 +1,29 @@
+2025-09-11 15:02:35 Starting e2e tests at Thu Sep 11 15:02:35 BST 2025
+[0;34mℹ️  Checking prerequisites...[0m
+[0;34mℹ️  Found local ./gh-aw binary[0m
+[0;32m✅ Prerequisites check passed[0m
+[0;34mℹ️  🎯 Running specific tests: test-claude-create-repository-security-advisory[0m
+[0;34mℹ️  🚀 Running workflow_dispatch tests...[0m
+[0;35m🔨 Testing workflow: test-claude-create-repository-security-advisory[0m
+[0;34mℹ️  Triggering workflow_dispatch for 'test-claude-create-repository-security-advisory'...[0m
+[0;34mℹ️  Enabling workflow 'test-claude-create-repository-security-advisory'...[0m
+The following workflows will be enabled:
+  Test Claude Create Repository Security Advisory (current state: disabled_manually)
+Enabled workflow: Test Claude Create Repository Security Advisory
+[0;32m✅ Successfully enabled 'test-claude-create-repository-security-advisory'[0m
+ℹ Running 1 workflow(s)...
+Successfully triggered workflow: test-claude-create-repository-security-advisory.lock.yml
+
+🔗 View workflow run: https://github.com/githubnext/gh-aw-test/actions/runs/17647054023
+✓ Successfully triggered 1 workflow(s)
+[0;32m✅ Successfully triggered 'test-claude-create-repository-security-advisory'[0m
+[0;35m🔨 Waiting for workflow 'test-claude-create-repository-security-advisory' (run #17647054023) to complete...[0m
+[0;35m🔨 View run details: https://github.com/githubnext/gh-aw-test/actions/runs/17647054023[0m
+[0;31m❌ Workflow 'test-claude-create-repository-security-advisory' failed with conclusion: failure[0m
+[0;31m❌ View run details: https://github.com/githubnext/gh-aw-test/actions/runs/17647054023[0m
+[0;34mℹ️  Disabling workflow 'test-claude-create-repository-security-advisory'...[0m
+The following workflows will be disabled:
+  Test Claude Create Repository Security Advisory (current state: active)
+Disabled workflow: Test Claude Create Repository Security Advisory
+[0;32m✅ Successfully disabled 'test-claude-create-repository-security-advisory'[0m
+[0;31m❌ Workflow 'test-claude-create-repository-security-advisory' failed to complete successfully[0m

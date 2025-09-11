@@ -1,0 +1,743 @@
+2025-09-11 13:04:45 Starting e2e tests at Thu Sep 11 13:04:45 BST 2025
+[0;34mℹ️  Checking prerequisites...[0m
+[0;34mℹ️  Found local ./gh-aw binary[0m
+[0;32m✅ Prerequisites check passed[0m
+[0;34mℹ️  🚀 Running workflow_dispatch tests...[0m
+[0;35m🔨 Testing workflow: test-claude-create-issue[0m
+[0;34mℹ️  Triggering workflow_dispatch for 'test-claude-create-issue'...[0m
+[0;34mℹ️  Enabling workflow 'test-claude-create-issue'...[0m
+The following workflows will be enabled:
+  Test Claude Create Issue (current state: disabled_manually)
+Enabled workflow: Test Claude Create Issue
+[0;32m✅ Successfully enabled 'test-claude-create-issue'[0m
+ℹ Running 1 workflow(s)...
+Successfully triggered workflow: test-claude-create-issue.lock.yml
+
+🔗 View workflow run: https://github.com/githubnext/gh-aw-test/actions/runs/17643903118
+✓ Successfully triggered 1 workflow(s)
+[0;32m✅ Successfully triggered 'test-claude-create-issue'[0m
+[0;35m🔨 Waiting for workflow 'test-claude-create-issue' (run #17643903118) to complete...[0m
+[0;35m🔨 View run details: https://github.com/githubnext/gh-aw-test/actions/runs/17643903118[0m
+[0;32m✅ Workflow 'test-claude-create-issue' completed successfully[0m
+[0;34mℹ️  Disabling workflow 'test-claude-create-issue'...[0m
+The following workflows will be disabled:
+  Test Claude Create Issue (current state: active)
+Disabled workflow: Test Claude Create Issue
+[0;32m✅ Successfully disabled 'test-claude-create-issue'[0m
+[0;32m✅ Issue #1 created successfully with expected properties[0m
+[0;35m🔨 Testing workflow: test-codex-create-issue[0m
+[0;34mℹ️  Triggering workflow_dispatch for 'test-codex-create-issue'...[0m
+[0;34mℹ️  Enabling workflow 'test-codex-create-issue'...[0m
+No workflows found matching pattern 'test-codex-create-issue' that need to be enabled.
+[0;32m✅ Successfully enabled 'test-codex-create-issue'[0m
+ℹ Running 1 workflow(s)...
+Successfully triggered workflow: test-codex-create-issue.lock.yml
+
+🔗 View workflow run: https://github.com/githubnext/gh-aw-test/actions/runs/17643930778
+✓ Successfully triggered 1 workflow(s)
+[0;32m✅ Successfully triggered 'test-codex-create-issue'[0m
+[0;35m🔨 Waiting for workflow 'test-codex-create-issue' (run #17643930778) to complete...[0m
+[0;35m🔨 View run details: https://github.com/githubnext/gh-aw-test/actions/runs/17643930778[0m
+[0;32m✅ Workflow 'test-codex-create-issue' completed successfully[0m
+[0;34mℹ️  Disabling workflow 'test-codex-create-issue'...[0m
+The following workflows will be disabled:
+  Test Codex Create Issue (current state: active)
+Disabled workflow: Test Codex Create Issue
+[0;32m✅ Successfully disabled 'test-codex-create-issue'[0m
+[0;32m✅ Issue #2 created successfully with expected properties[0m
+[0;35m🔨 Testing workflow: test-claude-create-pull-request[0m
+[0;34mℹ️  Triggering workflow_dispatch for 'test-claude-create-pull-request'...[0m
+[0;34mℹ️  Enabling workflow 'test-claude-create-pull-request'...[0m
+No workflows found matching pattern 'test-claude-create-pull-request' that need to be enabled.
+[0;32m✅ Successfully enabled 'test-claude-create-pull-request'[0m
+ℹ Running 1 workflow(s)...
+Successfully triggered workflow: test-claude-create-pull-request.lock.yml
+
+🔗 View workflow run: https://github.com/githubnext/gh-aw-test/actions/runs/17643969850
+✓ Successfully triggered 1 workflow(s)
+[0;32m✅ Successfully triggered 'test-claude-create-pull-request'[0m
+[0;35m🔨 Waiting for workflow 'test-claude-create-pull-request' (run #17643969850) to complete...[0m
+[0;35m🔨 View run details: https://github.com/githubnext/gh-aw-test/actions/runs/17643969850[0m
+[0;32m✅ Workflow 'test-claude-create-pull-request' completed successfully[0m
+[0;34mℹ️  Disabling workflow 'test-claude-create-pull-request'...[0m
+The following workflows will be disabled:
+  Test Claude Create Pull Request Review Comment (current state: active)
+  Test Claude Create Pull Request (current state: active)
+Disabled workflow: Test Claude Create Pull Request Review Comment
+Disabled workflow: Test Claude Create Pull Request
+[0;32m✅ Successfully disabled 'test-claude-create-pull-request'[0m
+[0;32m✅ PR #3 created successfully[0m
+[0;35m🔨 Testing workflow: test-codex-create-pull-request[0m
+[0;34mℹ️  Triggering workflow_dispatch for 'test-codex-create-pull-request'...[0m
+[0;34mℹ️  Enabling workflow 'test-codex-create-pull-request'...[0m
+No workflows found matching pattern 'test-codex-create-pull-request' that need to be enabled.
+[0;32m✅ Successfully enabled 'test-codex-create-pull-request'[0m
+ℹ Running 1 workflow(s)...
+Successfully triggered workflow: test-codex-create-pull-request.lock.yml
+
+🔗 View workflow run: https://github.com/githubnext/gh-aw-test/actions/runs/17644016786
+✓ Successfully triggered 1 workflow(s)
+[0;32m✅ Successfully triggered 'test-codex-create-pull-request'[0m
+[0;35m🔨 Waiting for workflow 'test-codex-create-pull-request' (run #17644016786) to complete...[0m
+[0;35m🔨 View run details: https://github.com/githubnext/gh-aw-test/actions/runs/17644016786[0m
+[0;32m✅ Workflow 'test-codex-create-pull-request' completed successfully[0m
+[0;34mℹ️  Disabling workflow 'test-codex-create-pull-request'...[0m
+The following workflows will be disabled:
+  Test Codex Create Pull Request Review Comment (current state: active)
+  Test Codex Create Pull Request (current state: active)
+Disabled workflow: Test Codex Create Pull Request Review Comment
+Disabled workflow: Test Codex Create Pull Request
+[0;32m✅ Successfully disabled 'test-codex-create-pull-request'[0m
+[0;32m✅ PR #4 created successfully[0m
+[0;35m🔨 Testing workflow: test-claude-create-repository-security-advisory[0m
+[0;34mℹ️  Triggering workflow_dispatch for 'test-claude-create-repository-security-advisory'...[0m
+[0;34mℹ️  Enabling workflow 'test-claude-create-repository-security-advisory'...[0m
+No workflows found matching pattern 'test-claude-create-repository-security-advisory' that need to be enabled.
+[0;32m✅ Successfully enabled 'test-claude-create-repository-security-advisory'[0m
+ℹ Running 1 workflow(s)...
+Successfully triggered workflow: test-claude-create-repository-security-advisory.lock.yml
+
+🔗 View workflow run: https://github.com/githubnext/gh-aw-test/actions/runs/17644063967
+✓ Successfully triggered 1 workflow(s)
+[0;32m✅ Successfully triggered 'test-claude-create-repository-security-advisory'[0m
+[0;35m🔨 Waiting for workflow 'test-claude-create-repository-security-advisory' (run #17644063967) to complete...[0m
+[0;35m🔨 View run details: https://github.com/githubnext/gh-aw-test/actions/runs/17644063967[0m
+[0;31m❌ Workflow 'test-claude-create-repository-security-advisory' failed with conclusion: failure[0m
+[0;31m❌ View run details: https://github.com/githubnext/gh-aw-test/actions/runs/17644063967[0m
+[0;34mℹ️  Disabling workflow 'test-claude-create-repository-security-advisory'...[0m
+The following workflows will be disabled:
+  Test Claude Create Repository Security Advisory (current state: active)
+Disabled workflow: Test Claude Create Repository Security Advisory
+[0;32m✅ Successfully disabled 'test-claude-create-repository-security-advisory'[0m
+[0;31m❌ Workflow 'test-claude-create-repository-security-advisory' failed to complete successfully[0m
+[0;35m🔨 Testing workflow: test-codex-create-repository-security-advisory[0m
+[0;34mℹ️  Triggering workflow_dispatch for 'test-codex-create-repository-security-advisory'...[0m
+[0;34mℹ️  Enabling workflow 'test-codex-create-repository-security-advisory'...[0m
+No workflows found matching pattern 'test-codex-create-repository-security-advisory' that need to be enabled.
+[0;32m✅ Successfully enabled 'test-codex-create-repository-security-advisory'[0m
+ℹ Running 1 workflow(s)...
+Successfully triggered workflow: test-codex-create-repository-security-advisory.lock.yml
+
+🔗 View workflow run: https://github.com/githubnext/gh-aw-test/actions/runs/17644092691
+✓ Successfully triggered 1 workflow(s)
+[0;32m✅ Successfully triggered 'test-codex-create-repository-security-advisory'[0m
+[0;35m🔨 Waiting for workflow 'test-codex-create-repository-security-advisory' (run #17644092691) to complete...[0m
+[0;35m🔨 View run details: https://github.com/githubnext/gh-aw-test/actions/runs/17644092691[0m
+[0;31m❌ Workflow 'test-codex-create-repository-security-advisory' failed with conclusion: failure[0m
+[0;31m❌ View run details: https://github.com/githubnext/gh-aw-test/actions/runs/17644092691[0m
+[0;34mℹ️  Disabling workflow 'test-codex-create-repository-security-advisory'...[0m
+The following workflows will be disabled:
+  Test Codex Create Repository Security Advisory (current state: active)
+Disabled workflow: Test Codex Create Repository Security Advisory
+[0;32m✅ Successfully disabled 'test-codex-create-repository-security-advisory'[0m
+[0;31m❌ Workflow 'test-codex-create-repository-security-advisory' failed to complete successfully[0m
+[0;35m🔨 Testing workflow: test-claude-mcp[0m
+[0;34mℹ️  Triggering workflow_dispatch for 'test-claude-mcp'...[0m
+[0;34mℹ️  Enabling workflow 'test-claude-mcp'...[0m
+No workflows found matching pattern 'test-claude-mcp' that need to be enabled.
+[0;32m✅ Successfully enabled 'test-claude-mcp'[0m
+ℹ Running 1 workflow(s)...
+Successfully triggered workflow: test-claude-mcp.lock.yml
+
+🔗 View workflow run: https://github.com/githubnext/gh-aw-test/actions/runs/17644120353
+✓ Successfully triggered 1 workflow(s)
+[0;32m✅ Successfully triggered 'test-claude-mcp'[0m
+[0;35m🔨 Waiting for workflow 'test-claude-mcp' (run #17644120353) to complete...[0m
+[0;35m🔨 View run details: https://github.com/githubnext/gh-aw-test/actions/runs/17644120353[0m
+[0;32m✅ Workflow 'test-claude-mcp' completed successfully[0m
+[0;34mℹ️  Disabling workflow 'test-claude-mcp'...[0m
+The following workflows will be disabled:
+  Test Claude Mcp (current state: active)
+Disabled workflow: Test Claude Mcp
+[0;32m✅ Successfully disabled 'test-claude-mcp'[0m
+[0;32m✅ MCP workflow 'test-claude-mcp' appears to have used MCP tools successfully[0m
+[0;35m🔨 Testing workflow: test-codex-mcp[0m
+[0;34mℹ️  Triggering workflow_dispatch for 'test-codex-mcp'...[0m
+[0;34mℹ️  Enabling workflow 'test-codex-mcp'...[0m
+No workflows found matching pattern 'test-codex-mcp' that need to be enabled.
+[0;32m✅ Successfully enabled 'test-codex-mcp'[0m
+ℹ Running 1 workflow(s)...
+Successfully triggered workflow: test-codex-mcp.lock.yml
+
+🔗 View workflow run: https://github.com/githubnext/gh-aw-test/actions/runs/17644148774
+✓ Successfully triggered 1 workflow(s)
+[0;32m✅ Successfully triggered 'test-codex-mcp'[0m
+[0;35m🔨 Waiting for workflow 'test-codex-mcp' (run #17644148774) to complete...[0m
+[0;35m🔨 View run details: https://github.com/githubnext/gh-aw-test/actions/runs/17644148774[0m
+[0;31m❌ Workflow 'test-codex-mcp' failed with conclusion: failure[0m
+[0;31m❌ View run details: https://github.com/githubnext/gh-aw-test/actions/runs/17644148774[0m
+[0;34mℹ️  Disabling workflow 'test-codex-mcp'...[0m
+The following workflows will be disabled:
+  Test Codex Mcp (current state: active)
+Disabled workflow: Test Codex Mcp
+[0;32m✅ Successfully disabled 'test-codex-mcp'[0m
+[0;31m❌ Workflow 'test-codex-mcp' failed to complete successfully[0m
+[0;35m🔨 Testing workflow: test-custom-safe-outputs[0m
+[0;34mℹ️  Triggering workflow_dispatch for 'test-custom-safe-outputs'...[0m
+[0;34mℹ️  Enabling workflow 'test-custom-safe-outputs'...[0m
+No workflows found matching pattern 'test-custom-safe-outputs' that need to be enabled.
+[0;32m✅ Successfully enabled 'test-custom-safe-outputs'[0m
+ℹ Running 1 workflow(s)...
+Successfully triggered workflow: test-custom-safe-outputs.lock.yml
+
+🔗 View workflow run: https://github.com/githubnext/gh-aw-test/actions/runs/17644186578
+✓ Successfully triggered 1 workflow(s)
+[0;32m✅ Successfully triggered 'test-custom-safe-outputs'[0m
+[0;35m🔨 Waiting for workflow 'test-custom-safe-outputs' (run #17644186578) to complete...[0m
+[0;35m🔨 View run details: https://github.com/githubnext/gh-aw-test/actions/runs/17644186578[0m
+[0;31m❌ Workflow 'test-custom-safe-outputs' failed with conclusion: failure[0m
+[0;31m❌ View run details: https://github.com/githubnext/gh-aw-test/actions/runs/17644186578[0m
+[0;34mℹ️  Disabling workflow 'test-custom-safe-outputs'...[0m
+The following workflows will be disabled:
+  Test Safe Outputs - Custom Engine (current state: active)
+Disabled workflow: Test Safe Outputs - Custom Engine
+[0;32m✅ Successfully disabled 'test-custom-safe-outputs'[0m
+[0;31m❌ Workflow 'test-custom-safe-outputs' failed to complete successfully[0m
+[0;34mℹ️  📝 Running issue-triggered tests...[0m
+[0;34mℹ️  Enabling workflow 'test-claude-add-issue-comment'...[0m
+No workflows found matching pattern 'test-claude-add-issue-comment' that need to be enabled.
+[0;32m✅ Successfully enabled 'test-claude-add-issue-comment'[0m
+[0;35m🔨 Testing test-claude-add-issue-comment[0m
+[0;32m✅ Created test issue #7 for test-claude-add-issue-comment: https://github.com/githubnext/gh-aw-test/issues/7[0m
+[1;33m⚠️  (polling) Issue #7 missing expected comment containing: 'Reply from Claude'. Actual comments: ...[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #7 missing expected comment containing: 'Reply from Claude'. Actual comments: ...[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #7 missing expected comment containing: 'Reply from Claude'. Actual comments: ...[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #7 missing expected comment containing: 'Reply from Claude'. Actual comments: ...[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #7 missing expected comment containing: 'Reply from Claude'. Actual comments: ...[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #7 missing expected comment containing: 'Reply from Claude'. Actual comments: ...[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #7 missing expected comment containing: 'Reply from Claude'. Actual comments: ### Summary of the Issue
+
+The issue at hand involves adding a comment to a GitHub issue or pull request without using traditional methods such as MCP tools, `gh`, or the GitHub API due to lack of writ...[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #7 missing expected comment containing: 'Reply from Claude'. Actual comments: ### Summary of the Issue
+
+The issue at hand involves adding a comment to a GitHub issue or pull request without using traditional methods such as MCP tools, `gh`, or the GitHub API due to lack of writ...[0m
+[0;34mℹ️  ...[0m
+[0;32m✅ Issue #7 has expected comment containing: Reply from Claude[0m
+[0;34mℹ️  Enabling workflow 'test-claude-add-issue-labels'...[0m
+No workflows found matching pattern 'test-claude-add-issue-labels' that need to be enabled.
+[0;32m✅ Successfully enabled 'test-claude-add-issue-labels'[0m
+[0;35m🔨 Testing test-claude-add-issue-labels[0m
+[0;32m✅ Created test issue #8 for test-claude-add-issue-labels: https://github.com/githubnext/gh-aw-test/issues/8[0m
+[1;33m⚠️  (polling) Issue #8 missing expected label: 'claude-safe-output-label-test'. Actual labels: ''[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #8 missing expected label: 'claude-safe-output-label-test'. Actual labels: ''[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #8 missing expected label: 'claude-safe-output-label-test'. Actual labels: ''[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #8 missing expected label: 'claude-safe-output-label-test'. Actual labels: ''[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #8 missing expected label: 'claude-safe-output-label-test'. Actual labels: ''[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #8 missing expected label: 'claude-safe-output-label-test'. Actual labels: ''[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #8 missing expected label: 'claude-safe-output-label-test'. Actual labels: ''[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #8 missing expected label: 'claude-safe-output-label-test'. Actual labels: ''[0m
+[0;34mℹ️  ...[0m
+[0;32m✅ Issue #8 has expected label: claude-safe-output-label-test[0m
+[0;34mℹ️  Enabling workflow 'test-codex-add-issue-comment'...[0m
+No workflows found matching pattern 'test-codex-add-issue-comment' that need to be enabled.
+[0;32m✅ Successfully enabled 'test-codex-add-issue-comment'[0m
+[0;35m🔨 Testing test-codex-add-issue-comment[0m
+[0;32m✅ Created test issue #9 for test-codex-add-issue-comment: https://github.com/githubnext/gh-aw-test/issues/9[0m
+[1;33m⚠️  (polling) Issue #9 missing expected comment containing: 'Reply from Codex'. Actual comments: ...[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #9 missing expected comment containing: 'Reply from Codex'. Actual comments: ...[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #9 missing expected comment containing: 'Reply from Codex'. Actual comments: ...[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #9 missing expected comment containing: 'Reply from Codex'. Actual comments: ...[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #9 missing expected comment containing: 'Reply from Codex'. Actual comments: ...[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #9 missing expected comment containing: 'Reply from Codex'. Actual comments: ### Summary of the Issue:
+
+The issue is a test communication from Codex, specifically designed to trigger an action related to adding comments to an issue or pull request. It emphasizes that instead o...[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #9 missing expected comment containing: 'Reply from Codex'. Actual comments: ### Summary of the Issue:
+
+The issue is a test communication from Codex, specifically designed to trigger an action related to adding comments to an issue or pull request. It emphasizes that instead o...[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #9 missing expected comment containing: 'Reply from Codex'. Actual comments: ### Summary of the Issue:
+
+The issue is a test communication from Codex, specifically designed to trigger an action related to adding comments to an issue or pull request. It emphasizes that instead o...[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #9 missing expected comment containing: 'Reply from Codex'. Actual comments: ### Summary of the Issue:
+
+The issue is a test communication from Codex, specifically designed to trigger an action related to adding comments to an issue or pull request. It emphasizes that instead o...[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #9 missing expected comment containing: 'Reply from Codex'. Actual comments: ### Summary of the Issue:
+
+The issue is a test communication from Codex, specifically designed to trigger an action related to adding comments to an issue or pull request. It emphasizes that instead o...[0m
+[0;34mℹ️  ...[0m
+[0;32m✅ Issue #9 has expected comment containing: Reply from Codex[0m
+[0;34mℹ️  Enabling workflow 'test-codex-add-issue-labels'...[0m
+No workflows found matching pattern 'test-codex-add-issue-labels' that need to be enabled.
+[0;32m✅ Successfully enabled 'test-codex-add-issue-labels'[0m
+[0;35m🔨 Testing test-codex-add-issue-labels[0m
+[0;32m✅ Created test issue #10 for test-codex-add-issue-labels: https://github.com/githubnext/gh-aw-test/issues/10[0m
+[1;33m⚠️  (polling) Issue #10 missing expected label: 'codex-safe-output-label-test'. Actual labels: ''[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #10 missing expected label: 'codex-safe-output-label-test'. Actual labels: ''[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #10 missing expected label: 'codex-safe-output-label-test'. Actual labels: ''[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #10 missing expected label: 'codex-safe-output-label-test'. Actual labels: ''[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #10 missing expected label: 'codex-safe-output-label-test'. Actual labels: ''[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #10 missing expected label: 'codex-safe-output-label-test'. Actual labels: ''[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #10 missing expected label: 'codex-safe-output-label-test'. Actual labels: ''[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #10 missing expected label: 'codex-safe-output-label-test'. Actual labels: ''[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #10 missing expected label: 'codex-safe-output-label-test'. Actual labels: ''[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #10 missing expected label: 'codex-safe-output-label-test'. Actual labels: ''[0m
+[0;34mℹ️  ...[0m
+[0;32m✅ Issue #10 has expected label: codex-safe-output-label-test[0m
+[0;34mℹ️  Enabling workflow 'test-claude-update-issue'...[0m
+No workflows found matching pattern 'test-claude-update-issue' that need to be enabled.
+[0;32m✅ Successfully enabled 'test-claude-update-issue'[0m
+[0;35m🔨 Testing test-claude-update-issue[0m
+[0;32m✅ Created test issue #11 for test-claude-update-issue: https://github.com/githubnext/gh-aw-test/issues/11[0m
+[1;33m⚠️  (polling) Issue #11 title does not show expected update by Claude. Expected pattern: 'Processed by Claude'. Actual title: 'Hello from Claude'[0m
+[1;33m⚠️  (polling) Issue #11 body does not show expected update by Claude. Expected pattern: 'updated by'. Actual body: This is a test issue to trigger test-claude-update-issue...[0m
+[1;33m⚠️  (polling) Issue #11 is still open (state OPEN). Expected it to be closed after processing.[0m
+[1;33m⚠️  (polling) Issue #11 validation incomplete: title=false, body=false, state=false[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #11 title does not show expected update by Claude. Expected pattern: 'Processed by Claude'. Actual title: 'Hello from Claude'[0m
+[1;33m⚠️  (polling) Issue #11 body does not show expected update by Claude. Expected pattern: 'updated by'. Actual body: This is a test issue to trigger test-claude-update-issue...[0m
+[1;33m⚠️  (polling) Issue #11 is still open (state OPEN). Expected it to be closed after processing.[0m
+[1;33m⚠️  (polling) Issue #11 validation incomplete: title=false, body=false, state=false[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #11 title does not show expected update by Claude. Expected pattern: 'Processed by Claude'. Actual title: 'Hello from Claude'[0m
+[1;33m⚠️  (polling) Issue #11 body does not show expected update by Claude. Expected pattern: 'updated by'. Actual body: This is a test issue to trigger test-claude-update-issue...[0m
+[1;33m⚠️  (polling) Issue #11 is still open (state OPEN). Expected it to be closed after processing.[0m
+[1;33m⚠️  (polling) Issue #11 validation incomplete: title=false, body=false, state=false[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #11 title does not show expected update by Claude. Expected pattern: 'Processed by Claude'. Actual title: 'Hello from Claude'[0m
+[1;33m⚠️  (polling) Issue #11 body does not show expected update by Claude. Expected pattern: 'updated by'. Actual body: This is a test issue to trigger test-claude-update-issue...[0m
+[1;33m⚠️  (polling) Issue #11 is still open (state OPEN). Expected it to be closed after processing.[0m
+[1;33m⚠️  (polling) Issue #11 validation incomplete: title=false, body=false, state=false[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #11 title does not show expected update by Claude. Expected pattern: 'Processed by Claude'. Actual title: 'Hello from Claude'[0m
+[1;33m⚠️  (polling) Issue #11 body does not show expected update by Claude. Expected pattern: 'updated by'. Actual body: This is a test issue to trigger test-claude-update-issue...[0m
+[1;33m⚠️  (polling) Issue #11 is still open (state OPEN). Expected it to be closed after processing.[0m
+[1;33m⚠️  (polling) Issue #11 validation incomplete: title=false, body=false, state=false[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #11 title does not show expected update by Claude. Expected pattern: 'Processed by Claude'. Actual title: 'Hello from Claude'[0m
+[1;33m⚠️  (polling) Issue #11 body does not show expected update by Claude. Expected pattern: 'updated by'. Actual body: This is a test issue to trigger test-claude-update-issue...[0m
+[1;33m⚠️  (polling) Issue #11 is still open (state OPEN). Expected it to be closed after processing.[0m
+[1;33m⚠️  (polling) Issue #11 validation incomplete: title=false, body=false, state=false[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #11 title does not show expected update by Claude. Expected pattern: 'Processed by Claude'. Actual title: 'Hello from Claude'[0m
+[1;33m⚠️  (polling) Issue #11 body does not show expected update by Claude. Expected pattern: 'updated by'. Actual body: This is a test issue to trigger test-claude-update-issue...[0m
+[1;33m⚠️  (polling) Issue #11 is still open (state OPEN). Expected it to be closed after processing.[0m
+[1;33m⚠️  (polling) Issue #11 validation incomplete: title=false, body=false, state=false[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #11 title does not show expected update by Claude. Expected pattern: 'Processed by Claude'. Actual title: 'Hello from Claude'[0m
+[1;33m⚠️  (polling) Issue #11 body does not show expected update by Claude. Expected pattern: 'updated by'. Actual body: This is a test issue to trigger test-claude-update-issue...[0m
+[1;33m⚠️  (polling) Issue #11 is still open (state OPEN). Expected it to be closed after processing.[0m
+[1;33m⚠️  (polling) Issue #11 validation incomplete: title=false, body=false, state=false[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #11 title does not show expected update by Claude. Expected pattern: 'Processed by Claude'. Actual title: 'Hello from Claude'[0m
+[1;33m⚠️  (polling) Issue #11 body does not show expected update by Claude. Expected pattern: 'updated by'. Actual body: This is a test issue to trigger test-claude-update-issue...[0m
+[1;33m⚠️  (polling) Issue #11 is still open (state OPEN). Expected it to be closed after processing.[0m
+[1;33m⚠️  (polling) Issue #11 validation incomplete: title=false, body=false, state=false[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #11 title does not show expected update by Claude. Expected pattern: 'Processed by Claude'. Actual title: 'Hello from Claude'[0m
+[1;33m⚠️  (polling) Issue #11 body does not show expected update by Claude. Expected pattern: 'updated by'. Actual body: This is a test issue to trigger test-claude-update-issue...[0m
+[1;33m⚠️  (polling) Issue #11 is still open (state OPEN). Expected it to be closed after processing.[0m
+[1;33m⚠️  (polling) Issue #11 validation incomplete: title=false, body=false, state=false[0m
+[0;34mℹ️  ...[0m
+[0;32m✅ Issue #11 title was updated by Claude[0m
+[0;32m✅ Issue #11 body was updated by Claude[0m
+[0;32m✅ Issue #11 was closed, indicating it was processed[0m
+[0;32m✅ Issue #11 validation passed: all checks (title, body, state) succeeded[0m
+[0;34mℹ️  Enabling workflow 'test-codex-update-issue'...[0m
+No workflows found matching pattern 'test-codex-update-issue' that need to be enabled.
+[0;32m✅ Successfully enabled 'test-codex-update-issue'[0m
+[0;35m🔨 Testing test-codex-update-issue[0m
+[0;32m✅ Created test issue #12 for test-codex-update-issue: https://github.com/githubnext/gh-aw-test/issues/12[0m
+[1;33m⚠️  (polling) Issue #12 title does not show expected update by Codex. Expected pattern: 'Processed by Codex'. Actual title: 'Hello from Codex'[0m
+[1;33m⚠️  (polling) Issue #12 body does not show expected update by Codex. Expected pattern: 'updated by'. Actual body: This is a test issue to trigger test-codex-update-issue...[0m
+[1;33m⚠️  (polling) Issue #12 is still open (state OPEN). Expected it to be closed after processing.[0m
+[1;33m⚠️  (polling) Issue #12 validation incomplete: title=false, body=false, state=false[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #12 title does not show expected update by Codex. Expected pattern: 'Processed by Codex'. Actual title: 'Hello from Codex'[0m
+[1;33m⚠️  (polling) Issue #12 body does not show expected update by Codex. Expected pattern: 'updated by'. Actual body: This is a test issue to trigger test-codex-update-issue...[0m
+[1;33m⚠️  (polling) Issue #12 is still open (state OPEN). Expected it to be closed after processing.[0m
+[1;33m⚠️  (polling) Issue #12 validation incomplete: title=false, body=false, state=false[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #12 title does not show expected update by Codex. Expected pattern: 'Processed by Codex'. Actual title: 'Hello from Codex'[0m
+[1;33m⚠️  (polling) Issue #12 body does not show expected update by Codex. Expected pattern: 'updated by'. Actual body: This is a test issue to trigger test-codex-update-issue...[0m
+[1;33m⚠️  (polling) Issue #12 is still open (state OPEN). Expected it to be closed after processing.[0m
+[1;33m⚠️  (polling) Issue #12 validation incomplete: title=false, body=false, state=false[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #12 title does not show expected update by Codex. Expected pattern: 'Processed by Codex'. Actual title: 'Hello from Codex'[0m
+[1;33m⚠️  (polling) Issue #12 body does not show expected update by Codex. Expected pattern: 'updated by'. Actual body: This is a test issue to trigger test-codex-update-issue...[0m
+[1;33m⚠️  (polling) Issue #12 is still open (state OPEN). Expected it to be closed after processing.[0m
+[1;33m⚠️  (polling) Issue #12 validation incomplete: title=false, body=false, state=false[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #12 title does not show expected update by Codex. Expected pattern: 'Processed by Codex'. Actual title: 'Hello from Codex'[0m
+[1;33m⚠️  (polling) Issue #12 body does not show expected update by Codex. Expected pattern: 'updated by'. Actual body: This is a test issue to trigger test-codex-update-issue...[0m
+[1;33m⚠️  (polling) Issue #12 is still open (state OPEN). Expected it to be closed after processing.[0m
+[1;33m⚠️  (polling) Issue #12 validation incomplete: title=false, body=false, state=false[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #12 title does not show expected update by Codex. Expected pattern: 'Processed by Codex'. Actual title: 'Hello from Codex'[0m
+[1;33m⚠️  (polling) Issue #12 body does not show expected update by Codex. Expected pattern: 'updated by'. Actual body: This is a test issue to trigger test-codex-update-issue...[0m
+[1;33m⚠️  (polling) Issue #12 is still open (state OPEN). Expected it to be closed after processing.[0m
+[1;33m⚠️  (polling) Issue #12 validation incomplete: title=false, body=false, state=false[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #12 title does not show expected update by Codex. Expected pattern: 'Processed by Codex'. Actual title: 'Hello from Codex'[0m
+[1;33m⚠️  (polling) Issue #12 body does not show expected update by Codex. Expected pattern: 'updated by'. Actual body: This is a test issue to trigger test-codex-update-issue...[0m
+[1;33m⚠️  (polling) Issue #12 is still open (state OPEN). Expected it to be closed after processing.[0m
+[1;33m⚠️  (polling) Issue #12 validation incomplete: title=false, body=false, state=false[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #12 title does not show expected update by Codex. Expected pattern: 'Processed by Codex'. Actual title: 'Hello from Codex'[0m
+[1;33m⚠️  (polling) Issue #12 body does not show expected update by Codex. Expected pattern: 'updated by'. Actual body: This is a test issue to trigger test-codex-update-issue...[0m
+[1;33m⚠️  (polling) Issue #12 is still open (state OPEN). Expected it to be closed after processing.[0m
+[1;33m⚠️  (polling) Issue #12 validation incomplete: title=false, body=false, state=false[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #12 title does not show expected update by Codex. Expected pattern: 'Processed by Codex'. Actual title: 'Hello from Codex'[0m
+[1;33m⚠️  (polling) Issue #12 body does not show expected update by Codex. Expected pattern: 'updated by'. Actual body: This is a test issue to trigger test-codex-update-issue...[0m
+[1;33m⚠️  (polling) Issue #12 is still open (state OPEN). Expected it to be closed after processing.[0m
+[1;33m⚠️  (polling) Issue #12 validation incomplete: title=false, body=false, state=false[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #12 title does not show expected update by Codex. Expected pattern: 'Processed by Codex'. Actual title: 'Hello from Codex'[0m
+[1;33m⚠️  (polling) Issue #12 body does not show expected update by Codex. Expected pattern: 'updated by'. Actual body: This is a test issue to trigger test-codex-update-issue...[0m
+[1;33m⚠️  (polling) Issue #12 is still open (state OPEN). Expected it to be closed after processing.[0m
+[1;33m⚠️  (polling) Issue #12 validation incomplete: title=false, body=false, state=false[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #12 title does not show expected update by Codex. Expected pattern: 'Processed by Codex'. Actual title: 'Hello from Codex'[0m
+[1;33m⚠️  (polling) Issue #12 body does not show expected update by Codex. Expected pattern: 'updated by'. Actual body: This is a test issue to trigger test-codex-update-issue...[0m
+[1;33m⚠️  (polling) Issue #12 is still open (state OPEN). Expected it to be closed after processing.[0m
+[1;33m⚠️  (polling) Issue #12 validation incomplete: title=false, body=false, state=false[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #12 title does not show expected update by Codex. Expected pattern: 'Processed by Codex'. Actual title: 'Hello from Codex'[0m
+[1;33m⚠️  (polling) Issue #12 body does not show expected update by Codex. Expected pattern: 'updated by'. Actual body: This is a test issue to trigger test-codex-update-issue...[0m
+[1;33m⚠️  (polling) Issue #12 is still open (state OPEN). Expected it to be closed after processing.[0m
+[1;33m⚠️  (polling) Issue #12 validation incomplete: title=false, body=false, state=false[0m
+[0;34mℹ️  ...[0m
+[0;32m✅ Issue #12 title was updated by Codex[0m
+[0;32m✅ Issue #12 body was updated by Codex[0m
+[0;32m✅ Issue #12 was closed, indicating it was processed[0m
+[0;32m✅ Issue #12 validation passed: all checks (title, body, state) succeeded[0m
+[0;34mℹ️  Disabling workflow 'test-claude-add-issue-comment'...[0m
+The following workflows will be disabled:
+  Test Claude Add Issue Comment (current state: active)
+Disabled workflow: Test Claude Add Issue Comment
+[0;32m✅ Successfully disabled 'test-claude-add-issue-comment'[0m
+[0;34mℹ️  Disabling workflow 'test-claude-add-issue-labels'...[0m
+The following workflows will be disabled:
+  Test Claude Add Issue Labels (current state: active)
+Disabled workflow: Test Claude Add Issue Labels
+[0;32m✅ Successfully disabled 'test-claude-add-issue-labels'[0m
+[0;34mℹ️  Disabling workflow 'test-codex-add-issue-comment'...[0m
+The following workflows will be disabled:
+  Test Codex Add Issue Comment (current state: active)
+Disabled workflow: Test Codex Add Issue Comment
+[0;32m✅ Successfully disabled 'test-codex-add-issue-comment'[0m
+[0;34mℹ️  Disabling workflow 'test-codex-add-issue-labels'...[0m
+The following workflows will be disabled:
+  Test Codex Add Issue Labels (current state: active)
+Disabled workflow: Test Codex Add Issue Labels
+[0;32m✅ Successfully disabled 'test-codex-add-issue-labels'[0m
+[0;34mℹ️  Disabling workflow 'test-claude-update-issue'...[0m
+The following workflows will be disabled:
+  Test Claude Update Issue (current state: active)
+Disabled workflow: Test Claude Update Issue
+[0;32m✅ Successfully disabled 'test-claude-update-issue'[0m
+[0;34mℹ️  Disabling workflow 'test-codex-update-issue'...[0m
+The following workflows will be disabled:
+  Test Codex Update Issue (current state: active)
+Disabled workflow: Test Codex Update Issue
+[0;32m✅ Successfully disabled 'test-codex-update-issue'[0m
+[0;34mℹ️  💬 Running command-triggered tests...[0m
+[0;34mℹ️  Enabling workflow 'test-claude-command'...[0m
+No workflows found matching pattern 'test-claude-command' that need to be enabled.
+[0;32m✅ Successfully enabled 'test-claude-command'[0m
+[0;32m✅ Created test issue #13 for test-claude-command: https://github.com/githubnext/gh-aw-test/issues/13[0m
+[0;35m🔨 Testing Claude command workflow[0m
+[1;33m⚠️  (polling) Issue #13 missing expected comment containing: '205'. Actual comments: /test-claude-command What is 102+103?...[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #13 missing expected comment containing: '205'. Actual comments: /test-claude-command What is 102+103?...[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #13 missing expected comment containing: '205'. Actual comments: /test-claude-command What is 102+103?...[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #13 missing expected comment containing: '205'. Actual comments: /test-claude-command What is 102+103?...[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #13 missing expected comment containing: '205'. Actual comments: /test-claude-command What is 102+103?...[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #13 missing expected comment containing: '205'. Actual comments: /test-claude-command What is 102+103?...[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #13 missing expected comment containing: '205'. Actual comments: /test-claude-command What is 102+103?
+### Summary of the Issue
+
+The issue titled &quot;Test Issue for Claude Commands&quot; is centered around testing specific commands related to the &quot;Claude&quo...[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #13 missing expected comment containing: '205'. Actual comments: /test-claude-command What is 102+103?
+### Summary of the Issue
+
+The issue titled &quot;Test Issue for Claude Commands&quot; is centered around testing specific commands related to the &quot;Claude&quo...[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #13 missing expected comment containing: '205'. Actual comments: /test-claude-command What is 102+103?
+### Summary of the Issue
+
+The issue titled &quot;Test Issue for Claude Commands&quot; is centered around testing specific commands related to the &quot;Claude&quo...[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #13 missing expected comment containing: '205'. Actual comments: /test-claude-command What is 102+103?
+### Summary of the Issue
+
+The issue titled &quot;Test Issue for Claude Commands&quot; is centered around testing specific commands related to the &quot;Claude&quo...[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #13 missing expected comment containing: '205'. Actual comments: /test-claude-command What is 102+103?
+### Summary of the Issue
+
+The issue titled &quot;Test Issue for Claude Commands&quot; is centered around testing specific commands related to the &quot;Claude&quo...[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #13 missing expected comment containing: '205'. Actual comments: /test-claude-command What is 102+103?
+### Summary of the Issue
+
+The issue titled &quot;Test Issue for Claude Commands&quot; is centered around testing specific commands related to the &quot;Claude&quo...[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #13 missing expected comment containing: '205'. Actual comments: /test-claude-command What is 102+103?
+### Summary of the Issue
+
+The issue titled &quot;Test Issue for Claude Commands&quot; is centered around testing specific commands related to the &quot;Claude&quo...[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #13 missing expected comment containing: '205'. Actual comments: /test-claude-command What is 102+103?
+### Summary of the Issue
+
+The issue titled &quot;Test Issue for Claude Commands&quot; is centered around testing specific commands related to the &quot;Claude&quo...[0m
+[0;34mℹ️  ...[0m
+[0;32m✅ Issue #13 has expected comment containing: 205[0m
+[0;34mℹ️  Enabling workflow 'test-codex-command'...[0m
+No workflows found matching pattern 'test-codex-command' that need to be enabled.
+[0;32m✅ Successfully enabled 'test-codex-command'[0m
+[0;32m✅ Created test issue #14 for test-codex-command: https://github.com/githubnext/gh-aw-test/issues/14[0m
+[0;35m🔨 Testing Codex command workflow[0m
+[1;33m⚠️  (polling) Issue #14 missing expected comment containing: '205'. Actual comments: /test-codex-command What is 102+103?...[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #14 missing expected comment containing: '205'. Actual comments: /test-codex-command What is 102+103?...[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #14 missing expected comment containing: '205'. Actual comments: /test-codex-command What is 102+103?...[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #14 missing expected comment containing: '205'. Actual comments: /test-codex-command What is 102+103?...[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #14 missing expected comment containing: '205'. Actual comments: /test-codex-command What is 102+103?...[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #14 missing expected comment containing: '205'. Actual comments: /test-codex-command What is 102+103?
+### Summary of the Issue
+
+The document outlines a test procedure for using &quot;codex commands&quot; in a GitHub repository, specifically for adding comments to i...[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #14 missing expected comment containing: '205'. Actual comments: /test-codex-command What is 102+103?
+### Summary of the Issue
+
+The document outlines a test procedure for using &quot;codex commands&quot; in a GitHub repository, specifically for adding comments to i...[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #14 missing expected comment containing: '205'. Actual comments: /test-codex-command What is 102+103?
+### Summary of the Issue
+
+The document outlines a test procedure for using &quot;codex commands&quot; in a GitHub repository, specifically for adding comments to i...[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #14 missing expected comment containing: '205'. Actual comments: /test-codex-command What is 102+103?
+### Summary of the Issue
+
+The document outlines a test procedure for using &quot;codex commands&quot; in a GitHub repository, specifically for adding comments to i...[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #14 missing expected comment containing: '205'. Actual comments: /test-codex-command What is 102+103?
+### Summary of the Issue
+
+The document outlines a test procedure for using &quot;codex commands&quot; in a GitHub repository, specifically for adding comments to i...[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #14 missing expected comment containing: '205'. Actual comments: /test-codex-command What is 102+103?
+### Summary of the Issue
+
+The document outlines a test procedure for using &quot;codex commands&quot; in a GitHub repository, specifically for adding comments to i...[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #14 missing expected comment containing: '205'. Actual comments: /test-codex-command What is 102+103?
+### Summary of the Issue
+
+The document outlines a test procedure for using &quot;codex commands&quot; in a GitHub repository, specifically for adding comments to i...[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #14 missing expected comment containing: '205'. Actual comments: /test-codex-command What is 102+103?
+### Summary of the Issue
+
+The document outlines a test procedure for using &quot;codex commands&quot; in a GitHub repository, specifically for adding comments to i...[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #14 missing expected comment containing: '205'. Actual comments: /test-codex-command What is 102+103?
+### Summary of the Issue
+
+The document outlines a test procedure for using &quot;codex commands&quot; in a GitHub repository, specifically for adding comments to i...[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) Issue #14 missing expected comment containing: '205'. Actual comments: /test-codex-command What is 102+103?
+### Summary of the Issue
+
+The document outlines a test procedure for using &quot;codex commands&quot; in a GitHub repository, specifically for adding comments to i...[0m
+[0;34mℹ️  ...[0m
+[0;32m✅ Issue #14 has expected comment containing: 205[0m
+[0;34mℹ️  Enabling workflow 'test-claude-push-to-pr-branch'...[0m
+No workflows found matching pattern 'test-claude-push-to-pr-branch' that need to be enabled.
+[0;32m✅ Successfully enabled 'test-claude-push-to-pr-branch'[0m
+[0;35m🔨 Testing test-claude-push-to-pr-branch[0m
+[0;32m✅ Created test PR #15 for test-claude-push-to-pr-branch with branch 'test-pr-1757593634': https://github.com/githubnext/gh-aw-test/pull/15[0m
+[0;35m🔨 Testing Claude push-to-pr-branch workflow[0m
+[0;32m✅ Branch 'test-pr-1757593634' updated successfully: b21dfedb5cae48eb13499a7cf5a000f0654b64d9 -> 45eedce19170a9b5be5f8fd46e58ea841237b897[0m
+[0;34mℹ️  Enabling workflow 'test-codex-push-to-pr-branch'...[0m
+No workflows found matching pattern 'test-codex-push-to-pr-branch' that need to be enabled.
+[0;32m✅ Successfully enabled 'test-codex-push-to-pr-branch'[0m
+[0;35m🔨 Testing test-codex-push-to-pr-branch[0m
+[0;32m✅ Created test PR #16 for test-codex-push-to-pr-branch with branch 'test-pr-1757593640': https://github.com/githubnext/gh-aw-test/pull/16[0m
+[0;35m🔨 Testing Codex push-to-pr-branch workflow[0m
+[0;32m✅ Branch 'test-pr-1757593640' updated successfully: b21dfedb5cae48eb13499a7cf5a000f0654b64d9 -> 39eaac36b13159847e6fea7520e56e870fcab58c[0m
+[0;34mℹ️  Enabling workflow 'test-claude-create-pull-request-review-comment'...[0m
+The following workflows will be enabled:
+  Test Claude Create Pull Request Review Comment (current state: disabled_manually)
+Enabled workflow: Test Claude Create Pull Request Review Comment
+[0;32m✅ Successfully enabled 'test-claude-create-pull-request-review-comment'[0m
+[0;35m🔨 Testing test-claude-create-pull-request-review-comment[0m
+[0;32m✅ Created test PR #17 for test-claude-create-pull-request-review-comment: https://github.com/githubnext/gh-aw-test/pull/17[0m
+[0;35m🔨 Testing Claude PR review comment workflow[0m
+[1;33m⚠️  (polling) PR #17 missing expected review comments from Claude[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) PR #17 missing expected review comments from Claude[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) PR #17 missing expected review comments from Claude[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) PR #17 missing expected review comments from Claude[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) PR #17 missing expected review comments from Claude[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) PR #17 missing expected review comments from Claude[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) PR #17 missing expected review comments from Claude[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) PR #17 missing expected review comments from Claude[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) PR #17 missing expected review comments from Claude[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) PR #17 missing expected review comments from Claude[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) PR #17 missing expected review comments from Claude[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) PR #17 missing expected review comments from Claude[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) PR #17 missing expected review comments from Claude[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) PR #17 missing expected review comments from Claude[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) PR #17 missing expected review comments from Claude[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) PR #17 missing expected review comments from Claude[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) PR #17 missing expected review comments from Claude[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) PR #17 missing expected review comments from Claude[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) PR #17 missing expected review comments from Claude[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) PR #17 missing expected review comments from Claude[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) PR #17 missing expected review comments from Claude[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) PR #17 missing expected review comments from Claude[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) PR #17 missing expected review comments from Claude[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) PR #17 missing expected review comments from Claude[0m
+[0;34mℹ️  ...[0m
+[0;32m✅ PR #17 has review/comments (likely from Claude AI workflow)[0m
+[0;34mℹ️  Enabling workflow 'test-codex-create-pull-request-review-comment'...[0m
+The following workflows will be enabled:
+  Test Codex Create Pull Request Review Comment (current state: disabled_manually)
+Enabled workflow: Test Codex Create Pull Request Review Comment
+[0;32m✅ Successfully enabled 'test-codex-create-pull-request-review-comment'[0m
+[0;35m🔨 Testing test-codex-create-pull-request-review-comment[0m
+[0;32m✅ Created test PR #18 for test-codex-create-pull-request-review-comment: https://github.com/githubnext/gh-aw-test/pull/18[0m
+[0;35m🔨 Testing Codex PR review comment workflow[0m
+[1;33m⚠️  (polling) PR #18 missing expected review comments from Codex[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) PR #18 missing expected review comments from Codex[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) PR #18 missing expected review comments from Codex[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) PR #18 missing expected review comments from Codex[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) PR #18 missing expected review comments from Codex[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) PR #18 missing expected review comments from Codex[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) PR #18 missing expected review comments from Codex[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) PR #18 missing expected review comments from Codex[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) PR #18 missing expected review comments from Codex[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) PR #18 missing expected review comments from Codex[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) PR #18 missing expected review comments from Codex[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) PR #18 missing expected review comments from Codex[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) PR #18 missing expected review comments from Codex[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) PR #18 missing expected review comments from Codex[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) PR #18 missing expected review comments from Codex[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) PR #18 missing expected review comments from Codex[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) PR #18 missing expected review comments from Codex[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) PR #18 missing expected review comments from Codex[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) PR #18 missing expected review comments from Codex[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) PR #18 missing expected review comments from Codex[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) PR #18 missing expected review comments from Codex[0m
+[0;34mℹ️  ...[0m
+[1;33m⚠️  (polling) PR #18 missing expected review comments from Codex[0m
+[0;34mℹ️  ...[0m
+[0;32m✅ PR #18 has review/comments (likely from Codex AI workflow)[0m
+[0;34mℹ️  Disabling workflow 'test-claude-command'...[0m
+The following workflows will be disabled:
+  Test Claude Command (current state: active)
+Disabled workflow: Test Claude Command
+[0;32m✅ Successfully disabled 'test-claude-command'[0m
+[0;34mℹ️  Disabling workflow 'test-codex-command'...[0m
+The following workflows will be disabled:
+  Test Codex Command (current state: active)
+Disabled workflow: Test Codex Command
+[0;32m✅ Successfully disabled 'test-codex-command'[0m
+[0;34mℹ️  Disabling workflow 'test-claude-push-to-pr-branch'...[0m
+The following workflows will be disabled:
+  Test Claude Push to Branch (current state: active)
+Disabled workflow: Test Claude Push to Branch
+[0;32m✅ Successfully disabled 'test-claude-push-to-pr-branch'[0m
+[0;34mℹ️  Disabling workflow 'test-codex-push-to-pr-branch'...[0m
+The following workflows will be disabled:
+  Test Codex Push to Branch (current state: active)
+Disabled workflow: Test Codex Push to Branch
+[0;32m✅ Successfully disabled 'test-codex-push-to-pr-branch'[0m
+[0;34mℹ️  Disabling workflow 'test-claude-create-pull-request-review-comment'...[0m
+The following workflows will be disabled:
+  Test Claude Create Pull Request Review Comment (current state: active)
+Disabled workflow: Test Claude Create Pull Request Review Comment
+[0;32m✅ Successfully disabled 'test-claude-create-pull-request-review-comment'[0m
+[0;34mℹ️  Disabling workflow 'test-codex-create-pull-request-review-comment'...[0m
+The following workflows will be disabled:
+  Test Codex Create Pull Request Review Comment (current state: active)
+Disabled workflow: Test Codex Create Pull Request Review Comment
+[0;32m✅ Successfully disabled 'test-codex-create-pull-request-review-comment'[0m

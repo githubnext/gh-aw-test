@@ -1,0 +1,7 @@
+2025-09-11 15:02:14 Starting e2e tests at Thu Sep 11 15:02:14 BST 2025
+[0;34mℹ️  Checking prerequisites...[0m
+[0;34mℹ️  Found local ./gh-aw binary[0m
+[0;32m✅ Prerequisites check passed[0m
+[0;34mℹ️  🎯 Running specific tests: test-claude-*[0m
+[0;34mℹ️  🚀 Running workflow_dispatch tests...[0m
+[0;31m❌ Script interrupted[0m

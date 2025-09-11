@@ -310,6 +310,25 @@ check_prerequisites() {
         exit 1
     fi
 
+    # If there are any updates from the compile, commit them and push them to main to make
+    # sure the workflows are up to date for testing
+
+    local git_status
+    git_status=$(git status --porcelain)
+    if [[ -n "$git_status" ]]; then
+        info "Detected changes after 'gh-aw compile'; committing and pushing to main branch"
+        git add . &>> "$LOG_FILE"
+        git commit -m "chore: update compiled workflows via e2e.sh" &>> "$LOG_FILE"
+        if git push origin main &>> "$LOG_FILE"; then
+            success "Changes pushed to main branch"
+        else
+            error "Failed to push changes to main branch. Check $LOG_FILE for details"
+            exit 1
+        fi
+    else
+        info "No changes detected after 'gh-aw compile'"
+    fi
+
     success "Prerequisites check passed"
 }
 

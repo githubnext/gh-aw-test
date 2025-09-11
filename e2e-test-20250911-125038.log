@@ -1,0 +1,40 @@
+2025-09-11 12:50:38 Starting e2e tests at Thu Sep 11 12:50:38 BST 2025
+[0;34mℹ️  Checking prerequisites...[0m
+[0;34mℹ️  Found gh-aw binary in sibling checkout at ../gh-aw/gh-aw; creating symlink ./gh-aw -> ../gh-aw/gh-aw[0m
+[0;32m✅ Symlink created: ./gh-aw -> ../gh-aw/gh-aw[0m
+[0;32m✅ Prerequisites check passed[0m
+[0;34mℹ️  🚀 Running workflow_dispatch tests...[0m
+[0;35m🔨 Testing workflow: test-claude-create-issue[0m
+[0;34mℹ️  Triggering workflow_dispatch for 'test-claude-create-issue'...[0m
+[0;34mℹ️  Enabling workflow 'test-claude-create-issue'...[0m
+No workflows found matching pattern 'test-claude-create-issue' that need to be enabled.
+[0;32m✅ Successfully enabled 'test-claude-create-issue'[0m
+ℹ Running 1 workflow(s)...
+Successfully triggered workflow: test-claude-create-issue.lock.yml
+
+🔗 View workflow run: https://github.com/githubnext/gh-aw-test/actions/runs/17643589706
+✓ Successfully triggered 1 workflow(s)
+[0;32m✅ Successfully triggered 'test-claude-create-issue'[0m
+[0;35m🔨 Waiting for workflow 'test-claude-create-issue' (run #17643589706) to complete...[0m
+[0;35m🔨 View run details: https://github.com/githubnext/gh-aw-test/actions/runs/17643589706[0m
+[0;31m❌ Workflow 'test-claude-create-issue' failed with conclusion: failure[0m
+[0;31m❌ View run details: https://github.com/githubnext/gh-aw-test/actions/runs/17643589706[0m
+[0;34mℹ️  Disabling workflow 'test-claude-create-issue'...[0m
+The following workflows will be disabled:
+  Test Claude Create Issue (current state: active)
+Disabled workflow: Test Claude Create Issue
+[0;32m✅ Successfully disabled 'test-claude-create-issue'[0m
+[0;35m🔨 Testing workflow: test-codex-create-issue[0m
+[0;34mℹ️  Triggering workflow_dispatch for 'test-codex-create-issue'...[0m
+[0;34mℹ️  Enabling workflow 'test-codex-create-issue'...[0m
+No workflows found matching pattern 'test-codex-create-issue' that need to be enabled.
+[0;32m✅ Successfully enabled 'test-codex-create-issue'[0m
+ℹ Running 1 workflow(s)...
+Successfully triggered workflow: test-codex-create-issue.lock.yml
+
+🔗 View workflow run: https://github.com/githubnext/gh-aw-test/actions/runs/17643600018
+✓ Successfully triggered 1 workflow(s)
+[0;32m✅ Successfully triggered 'test-codex-create-issue'[0m
+[0;35m🔨 Waiting for workflow 'test-codex-create-issue' (run #17643600018) to complete...[0m
+[0;35m🔨 View run details: https://github.com/githubnext/gh-aw-test/actions/runs/17643600018[0m
+[0;31m❌ Script interrupted[0m
