@@ -1107,8 +1107,8 @@ run_workflow_dispatch_tests() {
         elif [[ "$workflow" == *"code-scanning-alert"* ]]; then
             info "Checking for existing code scanning alerts"
             local dismissed_alerts=0
-            # Close all code scanning alerts
-            gh api repos/:owner/:repo/code-scanning/alerts --jq '.[].number' 2>/dev/null | while read -r alert_num; do
+            # Close all active code scanning alerts (only query non-dismissed ones)
+            gh api repos/:owner/:repo/code-scanning/alerts?state=open --jq '.[].number' 2>/dev/null | while read -r alert_num; do
                 if [[ -n "$alert_num" ]]; then
                     info "Dismissing existing code scanning alert #$alert_num"
                     if gh api repos/:owner/:repo/code-scanning/alerts/"$alert_num" -X PATCH -f state="dismissed" -f dismissed_reason="false positive" &>/dev/null; then

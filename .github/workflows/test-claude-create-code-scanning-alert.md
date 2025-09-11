@@ -1,5 +1,5 @@
 ---
-name: Test Claude Repository Security Advisory
+name: Test Claude Code Scanning Alert
 on:
   workflow_dispatch:
   reaction: eyes
@@ -12,6 +12,6 @@ safe-outputs:
     max: 10
 ---
 
-# Test Claude Create Repository Security Advisory
+# Test Claude Create Code Scanning Alert
 
-Create a new repository security advisory for the repository with title "Claude wants security review." and adding a couple of sentences about why security is important.
+Create a new Code Scanning Alert for the repository with title "Claude wants security review." and adding a couple of sentences about why security is important.
