@@ -1763,7 +1763,7 @@ jobs:
           GITHUB_AW_AGENT_OUTPUT: ${{ needs.test-claude-create-repository-security-advisory.outputs.output }}
           GITHUB_AW_SECURITY_REPORT_MAX: 10
           GITHUB_AW_SECURITY_REPORT_DRIVER: Test Claude Repository Security Advisory
-          GITHUB_AW_WORKFLOW_FILENAME: test-claude-create-repository-security-advisory
+          GITHUB_AW_WORKFLOW_FILENAME: test-claude-create-code-scanning-alert
         with:
           script: |
             async function main() {
