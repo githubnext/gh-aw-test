@@ -768,16 +768,16 @@ validate_branch_updated() {
     fi
 }
 
-validate_pr_review_comments() {
+validate_pr_reviews() {
     local pr_number="$1"
     local ai_type="$2"  # "Claude" or "Codex"
     
-    # Get PR review comments using GitHub CLI (these are line-specific review comments)
-    local review_comments=$(gh api repos/:owner/:repo/pulls/"$pr_number"/reviews 2>/dev/null | jq -r '.[].body // empty' 2>/dev/null || echo "")
+    # Get PR reviews (once a comment is made it shows up as a review)
+    local reviews=$(gh api repos/:owner/:repo/pulls/"$pr_number"/reviews 2>/dev/null | jq -r '.[].state // empty' 2>/dev/null || echo "")
     
-    if [[ -n "$review_comments" ]]; then
+    if [[ -n "$reviews" ]]; then
         # Check if any comment contains AI-specific content or expected patterns
-        success "PR #$pr_number has review comments (likely from $ai_type AI workflow)"
+        success "PR #$pr_number has a review (likely from $ai_type AI workflow)"
         return 0
     else
         warning "(polling) PR #$pr_number missing expected review comments from $ai_type"
@@ -891,7 +891,7 @@ wait_for_branch_update() {
     return 1
 }
 
-wait_for_pr_review_comments() {
+wait_for_pr_reviews() {
     local pr_number="$1"
     local ai_type="$2"
     local test_name="$3"
@@ -899,7 +899,7 @@ wait_for_pr_review_comments() {
     local waited=0
     
     while [[ $waited -lt $max_wait ]]; do
-        if validate_pr_review_comments "$pr_number" "$ai_type"; then
+        if validate_pr_reviews "$pr_number" "$ai_type"; then
             PASSED_TESTS+=("$test_name")
             return 0
         fi
@@ -914,77 +914,21 @@ wait_for_pr_review_comments() {
 
 cleanup_test_resources() {
     info "Cleaning up test resources..."
-    
-    # # Disable all test workflows
-    # info "Disabling test workflows..."
-    # local test_workflows=(
-    #     "test-claude-create-issue"
-    #     "test-codex-create-issue"
-    #     "test-claude-create-pull-request"
-    #     "test-codex-create-pull-request"
-    #     "test-claude-create-code-scanning-alert"
-    #     "test-codex-create-code-scanning-alert"
-    #     "test-claude-mcp"
-    #     "test-codex-mcp"
-    #     "test-claude-add-issue-comment"
-    #     "test-codex-add-issue-comment"
-    #     "test-claude-add-issue-labels"
-    #     "test-codex-add-issue-labels"
-    #     "test-claude-command"
-    #     "test-codex-command"
-    #     "test-claude-push-to-pr-branch"
-    #     "test-codex-push-to-pr-branch"
-    #     "test-claude-create-pull-request-review-comment"
-    #     "test-codex-create-pull-request-review-comment"
-    #     "test-claude-update-issue"
-    #     "test-codex-update-issue"
-    # )
-    
-    # for workflow in "${test_workflows[@]}"; do
-    #     disable_workflow "$workflow" || true  # Continue even if disable fails
-    # done
-    
-    # Close test issues
-    gh issue list --label "claude,automation" --limit 20 --json number --jq '.[].number' | while read -r issue_num; do
+        
+    # Close all issues
+    gh issue list --limit 20 --json number --jq '.[].number' | while read -r issue_num; do
         if [[ -n "$issue_num" ]]; then
             gh issue close "$issue_num" --comment "Closed by e2e test cleanup" &>/dev/null || true
         fi
     done
     
-    # Close issues with titles containing "Hello from"
-    gh issue list --limit 20 --json number,title --jq '.[] | select(.title | contains("Hello from")) | .number' | while read -r issue_num; do
-        if [[ -n "$issue_num" ]]; then
-            gh issue close "$issue_num" --comment "Closed by e2e test cleanup" &>/dev/null || true
-        fi
-    done
-    
-    # # Also close issues with other test labels
-    # gh issue list --label "test-safe-outputs" --limit 20 --json number --jq '.[].number' | while read -r issue_num; do
-    #     if [[ -n "$issue_num" ]]; then
-    #         gh issue close "$issue_num" --comment "Closed by e2e test cleanup" &>/dev/null || true
-    #     fi
-    # done
-    
-    # Close test PRs
-    gh pr list --label "claude,automation,bot" --limit 20 --json number --jq '.[].number' | while read -r pr_num; do
+    # Close all PRs
+    gh pr list --limit 20 --json number --jq '.[].number' | while read -r pr_num; do
         if [[ -n "$pr_num" ]]; then
             gh pr close "$pr_num" --comment "Closed by e2e test cleanup" &>/dev/null || true
         fi
     done
-    
-    # Close PRs with titles containing "Test PR for"
-    gh pr list --limit 20 --json number,title --jq '.[] | select(.title | contains("Test PR for")) | .number' | while read -r pr_num; do
-        if [[ -n "$pr_num" ]]; then
-            gh pr close "$pr_num" --comment "Closed by e2e test cleanup" &>/dev/null || true
-        fi
-    done
-    
-    # gh pr list --label "test-safe-outputs" --limit 20 --json number --jq '.[].number' | while read -r pr_num; do
-    #     if [[ -n "$pr_num" ]]; then
-    #         gh pr close "$pr_num" --comment "Closed by e2e test cleanup" &>/dev/null || true
-    #     fi
-    # done
-    
+
     # Delete test branches
     git branch -r | grep 'origin/test-pr-\|origin/claude-test-branch\|origin/codex-test-branch' | sed 's/origin\///' | while read -r branch; do
         if [[ -n "$branch" ]]; then
@@ -1014,90 +958,6 @@ run_workflow_dispatch_tests() {
         local ai_type=$(extract_ai_type "$workflow")
         # Capitalize first letter for display
         local ai_display_name="${ai_type^}"
-        
-        # First delete any existing test artifacts that might interfere
-        progress "Cleaning up existing test artifacts for $workflow..."
-        
-        if [[ "$workflow" == *"create-issue"* ]]; then
-            info "Checking for existing issues with prefix '[${ai_type}-test]'"
-            local closed_issues=0
-            gh issue list --limit 10 --json number,title --jq ".[] | select(.title | startswith(\"[${ai_type}-test]\")) | .number" | while read -r issue_num; do
-                if [[ -n "$issue_num" ]]; then
-                    info "Closing existing test issue #$issue_num"
-                    if gh issue close "$issue_num" --comment "Closed by e2e test setup" &>/dev/null; then
-                        ((closed_issues++)) || true
-                    else
-                        warning "Failed to close issue #$issue_num"
-                    fi
-                fi
-            done
-            if [[ $closed_issues -gt 0 ]]; then
-                success "Closed $closed_issues existing test issues"
-            else
-                info "No existing test issues found to clean up"
-            fi
-            
-        elif [[ "$workflow" == *"create-pull-request"* ]]; then
-            info "Checking for existing PRs with prefix '[${ai_type}-test]'"
-            local closed_prs=0
-            gh pr list --limit 10 --json number,title --jq ".[] | select(.title | startswith(\"[${ai_type}-test]\")) | .number" | while read -r pr_num; do
-                if [[ -n "$pr_num" ]]; then
-                    info "Closing existing test PR #$pr_num"
-                    if gh pr close "$pr_num" --comment "Closed by e2e test setup" &>/dev/null; then
-                        ((closed_prs++)) || true
-                    else
-                        warning "Failed to close PR #$pr_num"
-                    fi
-                fi
-            done
-            if [[ $closed_prs -gt 0 ]]; then
-                success "Closed $closed_prs existing test PRs"
-            else
-                info "No existing test PRs found to clean up"
-            fi
-            
-        elif [[ "$workflow" == *"mcp"* ]]; then
-            info "Checking for existing MCP-related issues"
-            local closed_mcp_issues=0
-            # MCP workflows may create issues with time-based titles - clean those up
-            gh issue list --limit 10 --json number,title --jq '.[] | select(.title | test("MCP time tool|current time is|UTC")) | .number' | while read -r issue_num; do
-                if [[ -n "$issue_num" ]]; then
-                    info "Closing existing MCP test issue #$issue_num"
-                    if gh issue close "$issue_num" --comment "Closed by e2e test setup" &>/dev/null; then
-                        ((closed_mcp_issues++)) || true
-                    else
-                        warning "Failed to close MCP issue #$issue_num"
-                    fi
-                fi
-            done
-            if [[ $closed_mcp_issues -gt 0 ]]; then
-                success "Closed $closed_mcp_issues existing MCP test issues"
-            else
-                info "No existing MCP test issues found to clean up"
-            fi
-            
-        elif [[ "$workflow" == *"code-scanning-alert"* ]]; then
-            info "Checking for existing code scanning alerts"
-            local dismissed_alerts=0
-            # Close all active code scanning alerts (only query non-dismissed ones)
-            gh api repos/:owner/:repo/code-scanning/alerts?state=open --jq '.[].number' 2>/dev/null | while read -r alert_num; do
-                if [[ -n "$alert_num" ]]; then
-                    info "Dismissing existing code scanning alert #$alert_num"
-                    if gh api repos/:owner/:repo/code-scanning/alerts/"$alert_num" -X PATCH -f state="dismissed" -f dismissed_reason="false positive" &>/dev/null; then
-                        ((dismissed_alerts++)) || true
-                    else
-                        warning "Failed to dismiss code scanning alert #$alert_num"
-                    fi
-                fi
-            done
-            if [[ $dismissed_alerts -gt 0 ]]; then
-                success "Dismissed $dismissed_alerts existing code scanning alerts"
-            else
-                info "No existing code scanning alerts found to clean up"
-            fi
-        fi
-        
-        success "Pre-test cleanup completed for $workflow"
 
 
         # Use explicit result tracking to handle failures gracefully
@@ -1286,7 +1146,7 @@ run_command_tests() {
                             
                             progress "Testing $ai_display_name PR review comment workflow"
                             post_pr_command "$pr_num" "/test-${ai_type}-create-pull-request-review-comment"
-                            wait_for_pr_review_comments "$pr_num" "$ai_display_name" "$workflow" || true
+                            wait_for_pr_reviews "$pr_num" "$ai_display_name" "$workflow" || true
                         else
                             error "Failed to create test PR for $workflow"
                             FAILED_TESTS+=("$workflow")
@@ -1504,6 +1364,12 @@ main() {
     
     check_prerequisites
     
+    if [[ "$dry_run" == true ]]; then
+        info "Dry run mode - skipping cleanup of test resources"
+    else
+        cleanup_test_resources
+    fi
+
     # If specific tests are provided, determine which test suites need to run
     if [[ ${#specific_tests[@]} -gt 0 ]]; then
         info "🎯 Running specific tests: ${specific_tests[*]}"
@@ -1545,16 +1411,6 @@ main() {
     fi
     
     print_final_report
-    
-    # Ask user if they want to cleanup
-    echo
-    read -p "$(echo -e ${YELLOW}⚠️  Do you want to clean up test resources \(issues, PRs, branches\)? [y/N]: ${NC})" -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        cleanup_test_resources
-    else
-        warning "Test resources were not cleaned up. You may want to manually clean them later."
-    fi
     
     log "E2E tests completed at $(date)"
 }
