@@ -304,6 +304,12 @@ check_prerequisites() {
         exit 1
     fi
 
+    # Run "gh-aw compile"
+    if ! ./gh-aw compile &>> "$LOG_FILE"; then
+        error "'gh-aw compile' failed. Check $LOG_FILE for details"
+        exit 1
+    fi
+
     success "Prerequisites check passed"
 }
 
