@@ -1384,6 +1384,8 @@ jobs:
         with:
           script: |
             async function main() {
+              // Check if we're in staged mode
+              const isStaged = process.env.GITHUB_AW_SAFE_OUTPUTS_STAGED === "true";
               // Read the validated output content from environment variable
               const outputContent = process.env.GITHUB_AW_AGENT_OUTPUT;
               if (!outputContent) {
@@ -1419,6 +1421,28 @@ jobs:
                 return;
               }
               console.log(`Found ${createIssueItems.length} create-issue item(s)`);
+              // If in staged mode, emit step summary instead of creating issues
+              if (isStaged) {
+                let summaryContent = "## 🎭 Staged Mode: Create Issues Preview\n\n";
+                summaryContent +=
+                  "The following issues would be created if staged mode was disabled:\n\n";
+                for (let i = 0; i < createIssueItems.length; i++) {
+                  const item = createIssueItems[i];
+                  summaryContent += `### Issue ${i + 1}\n`;
+                  summaryContent += `**Title:** ${item.title || "No title provided"}\n\n`;
+                  if (item.body) {
+                    summaryContent += `**Body:**\n${item.body}\n\n`;
+                  }
+                  if (item.labels && item.labels.length > 0) {
+                    summaryContent += `**Labels:** ${item.labels.join(", ")}\n\n`;
+                  }
+                  summaryContent += "---\n\n";
+                }
+                // Write to step summary
+                await core.summary.addRaw(summaryContent).write();
+                console.log("📝 Issue creation preview written to step summary");
+                return;
+              }
               // Check if we're in an issue context (triggered by an issue event)
               const parentIssueNumber = context.payload?.issue?.number;
               // Parse labels from environment variable (comma-separated string)
@@ -1597,6 +1621,28 @@ jobs:
               console.log(
                 `Found ${createDiscussionItems.length} create-discussion item(s)`
               );
+              // If in staged mode, emit step summary instead of creating discussions
+              if (process.env.GITHUB_AW_SAFE_OUTPUTS_STAGED === "true") {
+                let summaryContent = "## 🎭 Staged Mode: Create Discussions Preview\n\n";
+                summaryContent +=
+                  "The following discussions would be created if staged mode was disabled:\n\n";
+                for (let i = 0; i < createDiscussionItems.length; i++) {
+                  const item = createDiscussionItems[i];
+                  summaryContent += `### Discussion ${i + 1}\n`;
+                  summaryContent += `**Title:** ${item.title || "No title provided"}\n\n`;
+                  if (item.body) {
+                    summaryContent += `**Body:**\n${item.body}\n\n`;
+                  }
+                  if (item.category_id) {
+                    summaryContent += `**Category ID:** ${item.category_id}\n\n`;
+                  }
+                  summaryContent += "---\n\n";
+                }
+                // Write to step summary
+                await core.summary.addRaw(summaryContent).write();
+                console.log("📝 Discussion creation preview written to step summary");
+                return;
+              }
               // Get repository ID and discussion categories using GraphQL API
               let discussionCategories = [];
               let repositoryId = null;
@@ -1784,6 +1830,8 @@ jobs:
         with:
           script: |
             async function main() {
+              // Check if we're in staged mode
+              const isStaged = process.env.GITHUB_AW_SAFE_OUTPUTS_STAGED === "true";
               // Read the validated output content from environment variable
               const outputContent = process.env.GITHUB_AW_AGENT_OUTPUT;
               if (!outputContent) {
@@ -1819,6 +1867,27 @@ jobs:
                 return;
               }
               console.log(`Found ${commentItems.length} add-issue-comment item(s)`);
+              // If in staged mode, emit step summary instead of creating comments
+              if (isStaged) {
+                let summaryContent = "## 🎭 Staged Mode: Add Comments Preview\n\n";
+                summaryContent +=
+                  "The following comments would be added if staged mode was disabled:\n\n";
+                for (let i = 0; i < commentItems.length; i++) {
+                  const item = commentItems[i];
+                  summaryContent += `### Comment ${i + 1}\n`;
+                  if (item.issue_number) {
+                    summaryContent += `**Target Issue:** #${item.issue_number}\n\n`;
+                  } else {
+                    summaryContent += `**Target:** Current issue/PR\n\n`;
+                  }
+                  summaryContent += `**Body:**\n${item.body || "No content provided"}\n\n`;
+                  summaryContent += "---\n\n";
+                }
+                // Write to step summary
+                await core.summary.addRaw(summaryContent).write();
+                console.log("📝 Comment creation preview written to step summary");
+                return;
+              }
               // Get the target configuration from environment variable
               const commentTarget = process.env.GITHUB_AW_COMMENT_TARGET || "triggering";
               console.log(`Comment target configuration: ${commentTarget}`);
@@ -1947,7 +2016,7 @@ jobs:
 
   create_pr_review_comment:
     needs: test-safe-outputs-custom-engine
-    if: github.event.pull_request.number
+    if: (github.event.issue.pull_request || github.event.pull_request)
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -2006,6 +2075,31 @@ jobs:
               console.log(
                 `Found ${reviewCommentItems.length} create-pull-request-review-comment item(s)`
               );
+              // If in staged mode, emit step summary instead of creating review comments
+              if (process.env.GITHUB_AW_SAFE_OUTPUTS_STAGED === "true") {
+                let summaryContent =
+                  "## 🎭 Staged Mode: Create PR Review Comments Preview\n\n";
+                summaryContent +=
+                  "The following review comments would be created if staged mode was disabled:\n\n";
+                for (let i = 0; i < reviewCommentItems.length; i++) {
+                  const item = reviewCommentItems[i];
+                  summaryContent += `### Review Comment ${i + 1}\n`;
+                  summaryContent += `**File:** ${item.path || "No path provided"}\n\n`;
+                  summaryContent += `**Line:** ${item.line || "No line provided"}\n\n`;
+                  if (item.start_line) {
+                    summaryContent += `**Start Line:** ${item.start_line}\n\n`;
+                  }
+                  summaryContent += `**Side:** ${item.side || "RIGHT"}\n\n`;
+                  summaryContent += `**Body:**\n${item.body || "No content provided"}\n\n`;
+                  summaryContent += "---\n\n";
+                }
+                // Write to step summary
+                await core.summary.addRaw(summaryContent).write();
+                console.log(
+                  "📝 PR review comment creation preview written to step summary"
+                );
+                return;
+              }
               // Get the side configuration from environment variable
               const defaultSide = process.env.GITHUB_AW_PR_REVIEW_COMMENT_SIDE || "RIGHT";
               console.log(`Default comment side configuration: ${defaultSide}`);
@@ -2210,18 +2304,37 @@ jobs:
               }
               // Find all create-code-scanning-alert items
               const securityItems = validatedOutput.items.filter(
-                /** @param {any} item */ item =>
-                  item.type === "create-code-scanning-alert"
+                /** @param {any} item */ item => item.type === "create-code-scanning-alert"
               );
               if (securityItems.length === 0) {
-                console.log(
-                  "No create-code-scanning-alert items found in agent output"
-                );
+                console.log("No create-code-scanning-alert items found in agent output");
                 return;
               }
               console.log(
                 `Found ${securityItems.length} create-code-scanning-alert item(s)`
               );
+              // If in staged mode, emit step summary instead of creating code scanning alerts
+              if (process.env.GITHUB_AW_SAFE_OUTPUTS_STAGED === "true") {
+                let summaryContent =
+                  "## 🎭 Staged Mode: Create Code Scanning Alerts Preview\n\n";
+                summaryContent +=
+                  "The following code scanning alerts would be created if staged mode was disabled:\n\n";
+                for (let i = 0; i < securityItems.length; i++) {
+                  const item = securityItems[i];
+                  summaryContent += `### Security Finding ${i + 1}\n`;
+                  summaryContent += `**File:** ${item.file || "No file provided"}\n\n`;
+                  summaryContent += `**Line:** ${item.line || "No line provided"}\n\n`;
+                  summaryContent += `**Severity:** ${item.severity || "No severity provided"}\n\n`;
+                  summaryContent += `**Message:**\n${item.message || "No message provided"}\n\n`;
+                  summaryContent += "---\n\n";
+                }
+                // Write to step summary
+                await core.summary.addRaw(summaryContent).write();
+                console.log(
+                  "📝 Code scanning alert creation preview written to step summary"
+                );
+                return;
+              }
               // Get the max configuration from environment variable
               const maxFindings = process.env.GITHUB_AW_SECURITY_REPORT_MAX
                 ? parseInt(process.env.GITHUB_AW_SECURITY_REPORT_MAX)
@@ -2256,9 +2369,7 @@ jobs:
                 );
                 // Validate required fields
                 if (!securityItem.file) {
-                  console.log(
-                    'Missing required field "file" in code scanning alert item'
-                  );
+                  console.log('Missing required field "file" in code scanning alert item');
                   continue;
                 }
                 if (
@@ -2509,6 +2620,8 @@ jobs:
             const crypto = require("crypto");
             const { execSync } = require("child_process");
             async function main() {
+              // Check if we're in staged mode
+              const isStaged = process.env.GITHUB_AW_SAFE_OUTPUTS_STAGED === "true";
               // Environment validation - fail early if required variables are missing
               const workflowId = process.env.GITHUB_AW_WORKFLOW_ID;
               if (!workflowId) {
@@ -2608,6 +2721,31 @@ jobs:
                 title: pullRequestItem.title,
                 bodyLength: pullRequestItem.body.length,
               });
+              // If in staged mode, emit step summary instead of creating PR
+              if (isStaged) {
+                let summaryContent = "## 🎭 Staged Mode: Create Pull Request Preview\n\n";
+                summaryContent +=
+                  "The following pull request would be created if staged mode was disabled:\n\n";
+                summaryContent += `**Title:** ${pullRequestItem.title || "No title provided"}\n\n`;
+                summaryContent += `**Branch:** ${pullRequestItem.branch || "auto-generated"}\n\n`;
+                summaryContent += `**Base:** ${baseBranch}\n\n`;
+                if (pullRequestItem.body) {
+                  summaryContent += `**Body:**\n${pullRequestItem.body}\n\n`;
+                }
+                if (fs.existsSync("/tmp/aw.patch")) {
+                  const patchStats = fs.readFileSync("/tmp/aw.patch", "utf8");
+                  if (patchStats.trim()) {
+                    summaryContent += `**Changes:** Patch file exists with ${patchStats.split("\n").length} lines\n\n`;
+                    summaryContent += `<details><summary>Show patch preview</summary>\n\n\`\`\`diff\n${patchStats.slice(0, 2000)}${patchStats.length > 2000 ? "\n... (truncated)" : ""}\n\`\`\`\n\n</details>\n\n`;
+                  } else {
+                    summaryContent += `**Changes:** No changes (empty patch)\n\n`;
+                  }
+                }
+                // Write to step summary
+                await core.summary.addRaw(summaryContent).write();
+                console.log("📝 Pull request creation preview written to step summary");
+                return;
+              }
               // Extract title, body, and branch from the JSON item
               let title = pullRequestItem.title.trim();
               let bodyLines = pullRequestItem.body.split("\n");
@@ -2808,6 +2946,24 @@ jobs:
               console.log("Found add-issue-label item:", {
                 labelsCount: labelsItem.labels.length,
               });
+              // If in staged mode, emit step summary instead of adding labels
+              if (process.env.GITHUB_AW_SAFE_OUTPUTS_STAGED === "true") {
+                let summaryContent = "## 🎭 Staged Mode: Add Labels Preview\n\n";
+                summaryContent +=
+                  "The following labels would be added if staged mode was disabled:\n\n";
+                if (labelsItem.issue_number) {
+                  summaryContent += `**Target Issue:** #${labelsItem.issue_number}\n\n`;
+                } else {
+                  summaryContent += `**Target:** Current issue/PR\n\n`;
+                }
+                if (labelsItem.labels && labelsItem.labels.length > 0) {
+                  summaryContent += `**Labels to add:** ${labelsItem.labels.join(", ")}\n\n`;
+                }
+                // Write to step summary
+                await core.summary.addRaw(summaryContent).write();
+                console.log("📝 Label addition preview written to step summary");
+                return;
+              }
               // Read the allowed labels from environment variable (optional)
               const allowedLabelsEnv = process.env.GITHUB_AW_LABELS_ALLOWED;
               let allowedLabels = null;
@@ -2978,6 +3134,8 @@ jobs:
         with:
           script: |
             async function main() {
+              // Check if we're in staged mode
+              const isStaged = process.env.GITHUB_AW_SAFE_OUTPUTS_STAGED === "true";
               // Read the validated output content from environment variable
               const outputContent = process.env.GITHUB_AW_AGENT_OUTPUT;
               if (!outputContent) {
@@ -3013,6 +3171,35 @@ jobs:
                 return;
               }
               console.log(`Found ${updateItems.length} update-issue item(s)`);
+              // If in staged mode, emit step summary instead of updating issues
+              if (isStaged) {
+                let summaryContent = "## 🎭 Staged Mode: Update Issues Preview\n\n";
+                summaryContent +=
+                  "The following issue updates would be applied if staged mode was disabled:\n\n";
+                for (let i = 0; i < updateItems.length; i++) {
+                  const item = updateItems[i];
+                  summaryContent += `### Issue Update ${i + 1}\n`;
+                  if (item.issue_number) {
+                    summaryContent += `**Target Issue:** #${item.issue_number}\n\n`;
+                  } else {
+                    summaryContent += `**Target:** Current issue\n\n`;
+                  }
+                  if (item.title !== undefined) {
+                    summaryContent += `**New Title:** ${item.title}\n\n`;
+                  }
+                  if (item.body !== undefined) {
+                    summaryContent += `**New Body:**\n${item.body}\n\n`;
+                  }
+                  if (item.status !== undefined) {
+                    summaryContent += `**New Status:** ${item.status}\n\n`;
+                  }
+                  summaryContent += "---\n\n";
+                }
+                // Write to step summary
+                await core.summary.addRaw(summaryContent).write();
+                console.log("📝 Issue update preview written to step summary");
+                return;
+              }
               // Get the configuration from environment variables
               const updateTarget = process.env.GITHUB_AW_UPDATE_TARGET || "triggering";
               const canUpdateStatus = process.env.GITHUB_AW_UPDATE_STATUS === "true";
@@ -3290,6 +3477,29 @@ jobs:
                 return;
               }
               console.log("Found push-to-pr-branch item");
+              // If in staged mode, emit step summary instead of pushing changes
+              if (process.env.GITHUB_AW_SAFE_OUTPUTS_STAGED === "true") {
+                let summaryContent = "## 🎭 Staged Mode: Push to PR Branch Preview\n\n";
+                summaryContent +=
+                  "The following changes would be pushed if staged mode was disabled:\n\n";
+                summaryContent += `**Target:** ${target}\n\n`;
+                if (pushItem.commit_message) {
+                  summaryContent += `**Commit Message:** ${pushItem.commit_message}\n\n`;
+                }
+                if (fs.existsSync("/tmp/aw.patch")) {
+                  const patchStats = fs.readFileSync("/tmp/aw.patch", "utf8");
+                  if (patchStats.trim()) {
+                    summaryContent += `**Changes:** Patch file exists with ${patchStats.split("\n").length} lines\n\n`;
+                    summaryContent += `<details><summary>Show patch preview</summary>\n\n\`\`\`diff\n${patchStats.slice(0, 2000)}${patchStats.length > 2000 ? "\n... (truncated)" : ""}\n\`\`\`\n\n</details>\n\n`;
+                  } else {
+                    summaryContent += `**Changes:** No changes (empty patch)\n\n`;
+                  }
+                }
+                // Write to step summary
+                await core.summary.addRaw(summaryContent).write();
+                console.log("📝 Push to PR branch preview written to step summary");
+                return;
+              }
               // Validate target configuration for pull request context
               if (target !== "*" && target !== "triggering") {
                 // If target is a specific number, validate it's a valid pull request number
