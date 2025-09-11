@@ -36,14 +36,10 @@
 
 	"postCreateCommand": [
 		"bash", "-c",
-		"git config --global --add safe.directory ${containerWorkspaceFolder} && git config --global --add safe.directory ${containerWorkspaceFolder}/gh-aw && git config --global user.email 'copilot@github.com' && git config --global user.name 'GitHub Copilot' && git submodule update --init --recursive && cd gh-aw && make build && npm install"
+		"git config --global --add safe.directory ${containerWorkspaceFolder} && git config --global --add safe.directory ${containerWorkspaceFolder}/gh-aw && git submodule update --init --recursive && cd gh-aw && make build && npm install"
 	],
 
-	// Mount configuration for accessing GitHubnext/gh-aw
-	"mounts": [
-		"source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh,type=bind,consistency=cached",
-		"source=${localEnv:HOME}/.gitconfig,target=/home/vscode/.gitconfig,type=bind,consistency=cached"
-	],
+
 
 	// Port forwarding for development servers
 	"forwardPorts": [3000, 8080, 9000],
@@ -68,7 +64,6 @@
 
 	// Configure workspace
 	"workspaceFolder": "/workspaces/gh-aw-test",
-	"workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/gh-aw-test,type=bind,consistency=cached",
 
 	// Configure user permissions
 	"remoteUser": "vscode",
