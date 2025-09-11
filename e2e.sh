@@ -1044,33 +1044,88 @@ run_workflow_dispatch_tests() {
         local ai_display_name="${ai_type^}"
         
         # First delete any existing test artifacts that might interfere
+        progress "Cleaning up existing test artifacts for $workflow..."
+        
         if [[ "$workflow" == *"create-issue"* ]]; then
+            info "Checking for existing issues with prefix '[${ai_type}-test]'"
+            local closed_issues=0
             gh issue list --limit 10 --json number,title --jq ".[] | select(.title | startswith(\"[${ai_type}-test]\")) | .number" | while read -r issue_num; do
                 if [[ -n "$issue_num" ]]; then
-                    gh issue close "$issue_num" --comment "Closed by e2e test setup" &>/dev/null || true
+                    info "Closing existing test issue #$issue_num"
+                    if gh issue close "$issue_num" --comment "Closed by e2e test setup" &>/dev/null; then
+                        ((closed_issues++)) || true
+                    else
+                        warning "Failed to close issue #$issue_num"
+                    fi
                 fi
             done
+            if [[ $closed_issues -gt 0 ]]; then
+                success "Closed $closed_issues existing test issues"
+            else
+                info "No existing test issues found to clean up"
+            fi
+            
         elif [[ "$workflow" == *"create-pull-request"* ]]; then
+            info "Checking for existing PRs with prefix '[${ai_type}-test]'"
+            local closed_prs=0
             gh pr list --limit 10 --json number,title --jq ".[] | select(.title | startswith(\"[${ai_type}-test]\")) | .number" | while read -r pr_num; do
                 if [[ -n "$pr_num" ]]; then
-                    gh pr close "$pr_num" --comment "Closed by e2e test setup" &>/dev/null || true
+                    info "Closing existing test PR #$pr_num"
+                    if gh pr close "$pr_num" --comment "Closed by e2e test setup" &>/dev/null; then
+                        ((closed_prs++)) || true
+                    else
+                        warning "Failed to close PR #$pr_num"
+                    fi
                 fi
             done
+            if [[ $closed_prs -gt 0 ]]; then
+                success "Closed $closed_prs existing test PRs"
+            else
+                info "No existing test PRs found to clean up"
+            fi
+            
         elif [[ "$workflow" == *"mcp"* ]]; then
+            info "Checking for existing MCP-related issues"
+            local closed_mcp_issues=0
             # MCP workflows may create issues with time-based titles - clean those up
             gh issue list --limit 10 --json number,title --jq '.[] | select(.title | test("MCP time tool|current time is|UTC")) | .number' | while read -r issue_num; do
                 if [[ -n "$issue_num" ]]; then
-                    gh issue close "$issue_num" --comment "Closed by e2e test setup" &>/dev/null || true
+                    info "Closing existing MCP test issue #$issue_num"
+                    if gh issue close "$issue_num" --comment "Closed by e2e test setup" &>/dev/null; then
+                        ((closed_mcp_issues++)) || true
+                    else
+                        warning "Failed to close MCP issue #$issue_num"
+                    fi
                 fi
             done
+            if [[ $closed_mcp_issues -gt 0 ]]; then
+                success "Closed $closed_mcp_issues existing MCP test issues"
+            else
+                info "No existing MCP test issues found to clean up"
+            fi
+            
         elif [[ "$workflow" == *"code-scanning-alert"* ]]; then
+            info "Checking for existing code scanning alerts"
+            local dismissed_alerts=0
             # Close all code scanning alerts
             gh api repos/:owner/:repo/code-scanning/alerts --jq '.[].number' 2>/dev/null | while read -r alert_num; do
                 if [[ -n "$alert_num" ]]; then
-                    gh api repos/:owner/:repo/code-scanning/alerts/"$alert_num" -X PATCH -f state="dismissed" -f dismissal_reason="false positive" &>/dev/null || true
+                    info "Dismissing existing code scanning alert #$alert_num"
+                    if gh api repos/:owner/:repo/code-scanning/alerts/"$alert_num" -X PATCH -f state="dismissed" -f dismissed_reason="false positive" &>/dev/null; then
+                        ((dismissed_alerts++)) || true
+                    else
+                        warning "Failed to dismiss code scanning alert #$alert_num"
+                    fi
                 fi
             done
+            if [[ $dismissed_alerts -gt 0 ]]; then
+                success "Dismissed $dismissed_alerts existing code scanning alerts"
+            else
+                info "No existing code scanning alerts found to clean up"
+            fi
         fi
+        
+        success "Pre-test cleanup completed for $workflow"
 
 
         # Use explicit result tracking to handle failures gracefully
