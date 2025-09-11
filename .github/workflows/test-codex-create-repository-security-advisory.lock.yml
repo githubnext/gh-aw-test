@@ -273,7 +273,7 @@ jobs:
             }
             await main();
 
-  test-codex-create-repository-security-advisory:
+  test-codex-create-code-scanning-alert:
     runs-on: ubuntu-latest
     permissions: read-all
     outputs:
@@ -317,7 +317,7 @@ jobs:
           persistence = "none"
           
           [mcp_servers.github]
-          user_agent = "test-codex-create-repository-security-advisory"
+          user_agent = "test-codex-create-code-scanning-alert"
           command = "docker"
           args = [
             "run",
@@ -434,7 +434,7 @@ jobs:
           # Run codex with log capture - pipefail ensures codex exit code is preserved
           codex exec \
             -c model=o4-mini \
-            --full-auto "$INSTRUCTION" 2>&1 | tee /tmp/test-codex-create-repository-security-advisory.log
+            --full-auto "$INSTRUCTION" 2>&1 | tee /tmp/test-codex-create-code-scanning-alert.log
         env:
           GITHUB_AW_PROMPT: /tmp/aw-prompts/prompt.txt
           GITHUB_AW_SAFE_OUTPUTS: ${{ env.GITHUB_AW_SAFE_OUTPUTS }}
@@ -1243,7 +1243,7 @@ jobs:
         if: always()
         uses: actions/github-script@v7
         env:
-          AGENT_LOG_FILE: /tmp/test-codex-create-repository-security-advisory.log
+          AGENT_LOG_FILE: /tmp/test-codex-create-code-scanning-alert.log
         with:
           script: |
             function main() {
@@ -1500,12 +1500,12 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-codex-create-repository-security-advisory.log
-          path: /tmp/test-codex-create-repository-security-advisory.log
+          name: test-codex-create-code-scanning-alert.log
+          path: /tmp/test-codex-create-code-scanning-alert.log
           if-no-files-found: warn
 
   create_code_scanning_alert:
-    needs: test-codex-create-repository-security-advisory
+    needs: test-codex-create-code-scanning-alert
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -1518,11 +1518,11 @@ jobs:
       findings_count: ${{ steps.create_code_scanning_alert.outputs.findings_count }}
       sarif_file: ${{ steps.create_code_scanning_alert.outputs.sarif_file }}
     steps:
-      - name: Create Code Scanning Alert
+      - name: Create Repository Security Advisory
         id: create_code_scanning_alert
         uses: actions/github-script@v7
         env:
-          GITHUB_AW_AGENT_OUTPUT: ${{ needs.test-codex-create-repository-security-advisory.outputs.output }}
+          GITHUB_AW_AGENT_OUTPUT: ${{ needs.test-codex-create-code-scanning-alert.outputs.output }}
           GITHUB_AW_SECURITY_REPORT_MAX: 10
           GITHUB_AW_SECURITY_REPORT_DRIVER: Test Codex Code Scanning Alert
           GITHUB_AW_WORKFLOW_FILENAME: test-codex-create-repository-security-advisory
@@ -1767,7 +1767,7 @@ jobs:
                 core.setOutput("artifact_uploaded", "pending");
                 core.setOutput("codeql_uploaded", "pending");
                 // Write summary with findings
-                let summaryContent = "\n\n## Code Scanning Alert\n";
+                let summaryContent = "\n\n## Repository Security Advisory\n";
                 summaryContent += `Found **${validFindings.length}** security finding(s):\n\n`;
                 for (const finding of validFindings) {
                   const emoji =
