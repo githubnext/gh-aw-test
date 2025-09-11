@@ -2016,7 +2016,7 @@ jobs:
 
   create_pr_review_comment:
     needs: test-safe-outputs-custom-engine
-    if: (github.event.issue.pull_request || github.event.pull_request)
+    if: (github.event.issue.number && github.event.issue.pull_request) || github.event.pull_request
     runs-on: ubuntu-latest
     permissions:
       contents: read
