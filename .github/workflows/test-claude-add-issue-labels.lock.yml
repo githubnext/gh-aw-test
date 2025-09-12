@@ -17,17 +17,10 @@ concurrency:
 run-name: "Test Claude Add Issue Labels"
 
 jobs:
-  add_reaction:
-    if: >
-      github.event_name == 'issues' || github.event_name == 'issue_comment' || github.event_name == 'pull_request_comment' ||
-      github.event_name == 'pull_request_review_comment' || (github.event_name == 'pull_request') &&
-      (github.event.pull_request.head.repo.full_name == github.repository)
+  task:
     runs-on: ubuntu-latest
     permissions:
-      issues: write
-      pull-requests: write
-    outputs:
-      reaction_id: ${{ steps.react.outputs.reaction-id }}
+      actions: write  # Required for github.rest.actions.cancelWorkflowRun()
     steps:
       - name: Check team membership for workflow
         id: check-team-member
@@ -36,12 +29,26 @@ jobs:
           GITHUB_AW_REQUIRED_ROLES: admin,maintainer
         with:
           script: |
+            async function setCancelled(message) {
+              try {
+                await github.rest.actions.cancelWorkflowRun({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  run_id: context.runId,
+                });
+                core.info(`Cancellation requested for this workflow run: ${message}`);
+              } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                core.warning(`Failed to cancel workflow run: ${errorMessage}`);
+                core.setFailed(message); // Fallback if API call fails
+              }
+            }
             async function main() {
               const { eventName } = context;
               // skip check for safe events
               const safeEvents = ["workflow_dispatch", "workflow_run", "schedule"];
               if (safeEvents.includes(eventName)) {
-                console.log(`✅ Event ${eventName} does not require validation`);
+                core.info(`✅ Event ${eventName} does not require validation`);
                 return;
               }
               const actor = context.actor;
@@ -54,14 +61,17 @@ jobs:
                 core.error(
                   "❌ Configuration error: Required permissions not specified. Contact repository administrator."
                 );
-                process.exit(1);
+                await setCancelled(
+                  "Configuration error: Required permissions not specified"
+                );
+                return;
               }
               // Check if the actor has the required repository permissions
               try {
-                console.log(
+                core.debug(
                   `Checking if user '${actor}' has required permissions for ${owner}/${repo}`
                 );
-                console.log(`Required permissions: ${requiredPermissions.join(", ")}`);
+                core.debug(`Required permissions: ${requiredPermissions.join(", ")}`);
                 const repoPermission =
                   await github.rest.repos.getCollaboratorPermissionLevel({
                     owner: owner,
@@ -69,33 +79,50 @@ jobs:
                     username: actor,
                   });
                 const permission = repoPermission.data.permission;
-                console.log(`Repository permission level: ${permission}`);
+                core.debug(`Repository permission level: ${permission}`);
                 // Check if user has one of the required permission levels
                 for (const requiredPerm of requiredPermissions) {
                   if (
                     permission === requiredPerm ||
                     (requiredPerm === "maintainer" && permission === "maintain")
                   ) {
-                    console.log(`✅ User has ${permission} access to repository`);
+                    core.info(`✅ User has ${permission} access to repository`);
                     return;
                   }
                 }
-                console.log(
+                core.warning(
                   `User permission '${permission}' does not meet requirements: ${requiredPermissions.join(", ")}`
                 );
               } catch (repoError) {
                 const errorMessage =
                   repoError instanceof Error ? repoError.message : String(repoError);
                 core.error(`Repository permission check failed: ${errorMessage}`);
-                process.exit(1);
+                await setCancelled(`Repository permission check failed: ${errorMessage}`);
+                return;
               }
-              // Fail the job when permission check fails
+              // Cancel the workflow when permission check fails
               core.warning(
                 `❌ Access denied: Only authorized users can trigger this workflow. User '${actor}' is not authorized. Required permissions: ${requiredPermissions.join(", ")}`
               );
-              process.exit(78);
+              await setCancelled(
+                `Access denied: User '${actor}' is not authorized. Required permissions: ${requiredPermissions.join(", ")}`
+              );
             }
             await main();
+
+  add_reaction:
+    needs: task
+    if: >
+      github.event_name == 'issues' || github.event_name == 'issue_comment' || github.event_name == 'pull_request_comment' ||
+      github.event_name == 'pull_request_review_comment' || (github.event_name == 'pull_request') &&
+      (github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    outputs:
+      reaction_id: ${{ steps.react.outputs.reaction-id }}
+    steps:
       - name: Add eyes reaction to the triggering item
         id: react
         uses: actions/github-script@v7
@@ -111,10 +138,10 @@ jobs:
               const runUrl = context.payload.repository
                 ? `${context.payload.repository.html_url}/actions/runs/${runId}`
                 : `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}`;
-              console.log("Reaction type:", reaction);
-              console.log("Command name:", command || "none");
-              console.log("Run ID:", runId);
-              console.log("Run URL:", runUrl);
+              core.info(`Reaction type: ${reaction}`);
+              core.info(`Command name: ${command || "none"}`);
+              core.info(`Run ID: ${runId}`);
+              core.info(`Run URL: ${runUrl}`);
               // Validate reaction type
               const validReactions = [
                 "+1",
@@ -188,20 +215,20 @@ jobs:
                     core.setFailed(`Unsupported event type: ${eventName}`);
                     return;
                 }
-                console.log("Reaction API endpoint:", reactionEndpoint);
+                core.info(`Reaction API endpoint: ${reactionEndpoint}`);
                 // Add reaction first
                 await addReaction(reactionEndpoint, reaction);
                 // Then edit comment if applicable and if it's a comment event
                 if (shouldEditComment && commentUpdateEndpoint) {
-                  console.log("Comment update endpoint:", commentUpdateEndpoint);
+                  core.info(`Comment update endpoint: ${commentUpdateEndpoint}`);
                   await editCommentWithWorkflowLink(commentUpdateEndpoint, runUrl);
                 } else {
                   if (!command && commentUpdateEndpoint) {
-                    console.log(
+                    core.info(
                       "Skipping comment edit - only available for command workflows"
                     );
                   } else {
-                    console.log("Skipping comment edit for event type:", eventName);
+                    core.info(`Skipping comment edit for event type: ${eventName}`);
                   }
                 }
               } catch (error) {
@@ -226,10 +253,10 @@ jobs:
               });
               const reactionId = response.data?.id;
               if (reactionId) {
-                console.log(`Successfully added reaction: ${reaction} (id: ${reactionId})`);
+                core.info(`Successfully added reaction: ${reaction} (id: ${reactionId})`);
                 core.setOutput("reaction-id", reactionId.toString());
               } else {
-                console.log(`Successfully added reaction: ${reaction}`);
+                core.info(`Successfully added reaction: ${reaction}`);
                 core.setOutput("reaction-id", "");
               }
             }
@@ -250,9 +277,7 @@ jobs:
                 const workflowLinkText = `\n\n---\n*🤖 [Workflow run](${runUrl}) triggered by this comment*`;
                 // Check if we've already added a workflow link to avoid duplicates
                 if (originalBody.includes("*🤖 [Workflow run](")) {
-                  console.log(
-                    "Comment already contains a workflow run link, skipping edit"
-                  );
+                  core.info("Comment already contains a workflow run link, skipping edit");
                   return;
                 }
                 const updatedBody = originalBody + workflowLinkText;
@@ -263,92 +288,26 @@ jobs:
                     Accept: "application/vnd.github+json",
                   },
                 });
-                console.log(`Successfully updated comment with workflow link`);
-                console.log(`Comment ID: ${updateResponse.data.id}`);
+                core.info(`Successfully updated comment with workflow link`);
+                core.info(`Comment ID: ${updateResponse.data.id}`);
               } catch (error) {
                 // Don't fail the entire job if comment editing fails - just log it
                 const errorMessage = error instanceof Error ? error.message : String(error);
-                core.warn("Failed to edit comment with workflow link:", errorMessage);
-                core.warn(
-                  "This is not critical - the reaction was still added successfully"
+                core.warning(
+                  "Failed to edit comment with workflow link (This is not critical - the reaction was still added successfully): " +
+                    errorMessage
                 );
               }
             }
             await main();
 
   test-claude-add-issue-labels:
+    needs: task
     runs-on: ubuntu-latest
     permissions: read-all
     outputs:
       output: ${{ steps.collect_output.outputs.output }}
     steps:
-      - name: Check team membership for workflow
-        id: check-team-member
-        uses: actions/github-script@v7
-        env:
-          GITHUB_AW_REQUIRED_ROLES: admin,maintainer
-        with:
-          script: |
-            async function main() {
-              const { eventName } = context;
-              // skip check for safe events
-              const safeEvents = ["workflow_dispatch", "workflow_run", "schedule"];
-              if (safeEvents.includes(eventName)) {
-                console.log(`✅ Event ${eventName} does not require validation`);
-                return;
-              }
-              const actor = context.actor;
-              const { owner, repo } = context.repo;
-              const requiredPermissionsEnv = process.env.GITHUB_AW_REQUIRED_ROLES;
-              const requiredPermissions = requiredPermissionsEnv
-                ? requiredPermissionsEnv.split(",").filter(p => p.trim() !== "")
-                : [];
-              if (!requiredPermissions || requiredPermissions.length === 0) {
-                core.error(
-                  "❌ Configuration error: Required permissions not specified. Contact repository administrator."
-                );
-                process.exit(1);
-              }
-              // Check if the actor has the required repository permissions
-              try {
-                console.log(
-                  `Checking if user '${actor}' has required permissions for ${owner}/${repo}`
-                );
-                console.log(`Required permissions: ${requiredPermissions.join(", ")}`);
-                const repoPermission =
-                  await github.rest.repos.getCollaboratorPermissionLevel({
-                    owner: owner,
-                    repo: repo,
-                    username: actor,
-                  });
-                const permission = repoPermission.data.permission;
-                console.log(`Repository permission level: ${permission}`);
-                // Check if user has one of the required permission levels
-                for (const requiredPerm of requiredPermissions) {
-                  if (
-                    permission === requiredPerm ||
-                    (requiredPerm === "maintainer" && permission === "maintain")
-                  ) {
-                    console.log(`✅ User has ${permission} access to repository`);
-                    return;
-                  }
-                }
-                console.log(
-                  `User permission '${permission}' does not meet requirements: ${requiredPermissions.join(", ")}`
-                );
-              } catch (repoError) {
-                const errorMessage =
-                  repoError instanceof Error ? repoError.message : String(repoError);
-                core.error(`Repository permission check failed: ${errorMessage}`);
-                process.exit(1);
-              }
-              // Fail the job when permission check fails
-              core.warning(
-                `❌ Access denied: Only authorized users can trigger this workflow. User '${actor}' is not authorized. Required permissions: ${requiredPermissions.join(", ")}`
-              );
-              process.exit(78);
-            }
-            await main();
       - name: Checkout repository
         uses: actions/checkout@v5
       - name: Generate Claude Settings
@@ -577,6 +536,7 @@ jobs:
               sha: context.sha,
               actor: context.actor,
               event_name: context.eventName,
+              staged: false,
               created_at: new Date().toISOString()
             };
             
@@ -832,7 +792,7 @@ jobs:
               /**
                * Gets the maximum allowed count for a given output type
                * @param {string} itemType - The output item type
-               * @param {Object} config - The safe-outputs configuration
+               * @param {any} config - The safe-outputs configuration
                * @returns {number} The maximum allowed count
                */
               function getMaxAllowedForType(itemType, config) {
@@ -882,6 +842,7 @@ jobs:
                 // U+0014 (DC4) — represented here as "\u0014"
                 // Escape control characters not allowed in JSON strings (U+0000 through U+001F)
                 // Preserve common JSON escapes for \b, \f, \n, \r, \t and use \uXXXX for the rest.
+                /** @type {Record<number, string>} */
                 const _ctrl = { 8: "\\b", 9: "\\t", 10: "\\n", 12: "\\f", 13: "\\r" };
                 repaired = repaired.replace(/[\u0000-\u001F]/g, ch => {
                   const c = ch.charCodeAt(0);
@@ -956,9 +917,17 @@ jobs:
                     return JSON.parse(repairedJson);
                   } catch (repairError) {
                     // If repair also fails, throw the error
-                    console.log(`invalid input json: ${jsonStr}`);
+                    core.info(`invalid input json: ${jsonStr}`);
+                    const originalMsg =
+                      originalError instanceof Error
+                        ? originalError.message
+                        : String(originalError);
+                    const repairMsg =
+                      repairError instanceof Error
+                        ? repairError.message
+                        : String(repairError);
                     throw new Error(
-                      `JSON parsing failed. Original: ${originalError.message}. After attempted repair: ${repairError.message}`
+                      `JSON parsing failed. Original: ${originalMsg}. After attempted repair: ${repairMsg}`
                     );
                   }
                 }
@@ -966,33 +935,34 @@ jobs:
               const outputFile = process.env.GITHUB_AW_SAFE_OUTPUTS;
               const safeOutputsConfig = process.env.GITHUB_AW_SAFE_OUTPUTS_CONFIG;
               if (!outputFile) {
-                console.log("GITHUB_AW_SAFE_OUTPUTS not set, no output to collect");
+                core.info("GITHUB_AW_SAFE_OUTPUTS not set, no output to collect");
                 core.setOutput("output", "");
                 return;
               }
               if (!fs.existsSync(outputFile)) {
-                console.log("Output file does not exist:", outputFile);
+                core.info(`Output file does not exist: ${outputFile}`);
                 core.setOutput("output", "");
                 return;
               }
               const outputContent = fs.readFileSync(outputFile, "utf8");
               if (outputContent.trim() === "") {
-                console.log("Output file is empty");
+                core.info("Output file is empty");
                 core.setOutput("output", "");
                 return;
               }
-              console.log("Raw output content length:", outputContent.length);
+              core.info(`Raw output content length: ${outputContent.length}`);
               // Parse the safe-outputs configuration
+              /** @type {any} */
               let expectedOutputTypes = {};
               if (safeOutputsConfig) {
                 try {
                   expectedOutputTypes = JSON.parse(safeOutputsConfig);
-                  console.log("Expected output types:", Object.keys(expectedOutputTypes));
-                } catch (error) {
-                  console.log(
-                    "Warning: Could not parse safe-outputs config:",
-                    error.message
+                  core.info(
+                    `Expected output types: ${JSON.stringify(Object.keys(expectedOutputTypes))}`
                   );
+                } catch (error) {
+                  const errorMsg = error instanceof Error ? error.message : String(error);
+                  core.info(`Warning: Could not parse safe-outputs config: ${errorMsg}`);
                 }
               }
               // Parse JSONL content
@@ -1003,6 +973,7 @@ jobs:
                 const line = lines[i].trim();
                 if (line === "") continue; // Skip empty lines
                 try {
+                  /** @type {any} */
                   const item = parseJsonWithRepair(line);
                   // If item is undefined (failed to parse), add error and process next line
                   if (item === undefined) {
@@ -1053,8 +1024,9 @@ jobs:
                       item.body = sanitizeContent(item.body);
                       // Sanitize labels if present
                       if (item.labels && Array.isArray(item.labels)) {
-                        item.labels = item.labels.map(label =>
-                          typeof label === "string" ? sanitizeContent(label) : label
+                        item.labels = item.labels.map(
+                          /** @param {any} label */ label =>
+                            typeof label === "string" ? sanitizeContent(label) : label
                         );
                       }
                       break;
@@ -1090,8 +1062,9 @@ jobs:
                       }
                       // Sanitize labels if present
                       if (item.labels && Array.isArray(item.labels)) {
-                        item.labels = item.labels.map(label =>
-                          typeof label === "string" ? sanitizeContent(label) : label
+                        item.labels = item.labels.map(
+                          /** @param {any} label */ label =>
+                            typeof label === "string" ? sanitizeContent(label) : label
                         );
                       }
                       break;
@@ -1102,14 +1075,20 @@ jobs:
                         );
                         continue;
                       }
-                      if (item.labels.some(label => typeof label !== "string")) {
+                      if (
+                        item.labels.some(
+                          /** @param {any} label */ label => typeof label !== "string"
+                        )
+                      ) {
                         errors.push(
                           `Line ${i + 1}: add-issue-label labels array must contain only strings`
                         );
                         continue;
                       }
                       // Sanitize label strings
-                      item.labels = item.labels.map(label => sanitizeContent(label));
+                      item.labels = item.labels.map(
+                        /** @param {any} label */ label => sanitizeContent(label)
+                      );
                       break;
                     case "update-issue":
                       // Check that at least one updateable field is provided
@@ -1417,10 +1396,11 @@ jobs:
                       errors.push(`Line ${i + 1}: Unknown output type '${itemType}'`);
                       continue;
                   }
-                  console.log(`Line ${i + 1}: Valid ${itemType} item`);
+                  core.info(`Line ${i + 1}: Valid ${itemType} item`);
                   parsedItems.push(item);
                 } catch (error) {
-                  errors.push(`Line ${i + 1}: Invalid JSON - ${error.message}`);
+                  const errorMsg = error instanceof Error ? error.message : String(error);
+                  errors.push(`Line ${i + 1}: Invalid JSON - ${errorMsg}`);
                 }
               }
               // Report validation results
@@ -1434,7 +1414,7 @@ jobs:
                 // For now, we'll continue with valid items but log the errors
                 // In the future, we might want to fail the workflow for invalid items
               }
-              console.log(`Successfully parsed ${parsedItems.length} valid output items`);
+              core.info(`Successfully parsed ${parsedItems.length} valid output items`);
               // Set the parsed and validated items as output
               const validatedOutput = {
                 items: parsedItems,
@@ -1447,11 +1427,12 @@ jobs:
                 // Ensure the /tmp directory exists
                 fs.mkdirSync("/tmp", { recursive: true });
                 fs.writeFileSync(agentOutputFile, validatedOutputJson, "utf8");
-                console.log(`Stored validated output to: ${agentOutputFile}`);
+                core.info(`Stored validated output to: ${agentOutputFile}`);
                 // Set the environment variable GITHUB_AW_AGENT_OUTPUT to the file path
                 core.exportVariable("GITHUB_AW_AGENT_OUTPUT", agentOutputFile);
               } catch (error) {
-                core.error(`Failed to write agent output file: ${error.message}`);
+                const errorMsg = error instanceof Error ? error.message : String(error);
+                core.error(`Failed to write agent output file: ${errorMsg}`);
               }
               core.setOutput("output", JSON.stringify(validatedOutput));
               core.setOutput("raw_output", outputContent);
@@ -1495,11 +1476,11 @@ jobs:
                 // Get the log file path from environment
                 const logFile = process.env.GITHUB_AW_AGENT_OUTPUT;
                 if (!logFile) {
-                  console.log("No agent log file specified");
+                  core.info("No agent log file specified");
                   return;
                 }
                 if (!fs.existsSync(logFile)) {
-                  console.log(`Log file not found: ${logFile}`);
+                  core.info(`Log file not found: ${logFile}`);
                   return;
                 }
                 const logContent = fs.readFileSync(logFile, "utf8");
@@ -1507,10 +1488,15 @@ jobs:
                 // Append to GitHub step summary
                 core.summary.addRaw(markdown).write();
               } catch (error) {
-                core.error(`Error parsing Claude log: ${error.message}`);
-                core.setFailed(error.message);
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                core.setFailed(errorMessage);
               }
             }
+            /**
+             * Parses Claude log content and converts it to markdown format
+             * @param {string} logContent - The raw log content as a string
+             * @returns {string} Formatted markdown content
+             */
             function parseClaudeLog(logContent) {
               try {
                 const logEntries = JSON.parse(logContent);
@@ -1650,9 +1636,16 @@ jobs:
                 }
                 return markdown;
               } catch (error) {
-                return `## Agent Log Summary\n\nError parsing Claude log: ${error.message}\n`;
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                return `## Agent Log Summary\n\nError parsing Claude log: ${errorMessage}\n`;
               }
             }
+            /**
+             * Formats a tool use entry with its result into markdown
+             * @param {any} toolUse - The tool use object containing name, input, etc.
+             * @param {any} toolResult - The corresponding tool result object
+             * @returns {string} Formatted markdown string
+             */
             function formatToolUse(toolUse, toolResult) {
               const toolName = toolUse.name;
               const input = toolUse.input || {};
@@ -1739,6 +1732,11 @@ jobs:
               }
               return markdown;
             }
+            /**
+             * Formats MCP tool name from internal format to display format
+             * @param {string} toolName - The raw tool name (e.g., mcp__github__search_issues)
+             * @returns {string} Formatted tool name (e.g., github::search_issues)
+             */
             function formatMcpName(toolName) {
               // Convert mcp__github__search_issues to github::search_issues
               if (toolName.startsWith("mcp__")) {
@@ -1751,6 +1749,11 @@ jobs:
               }
               return toolName;
             }
+            /**
+             * Formats MCP parameters into a human-readable string
+             * @param {Record<string, any>} input - The input object containing parameters
+             * @returns {string} Formatted parameters string
+             */
             function formatMcpParameters(input) {
               const keys = Object.keys(input);
               if (keys.length === 0) return "";
@@ -1765,6 +1768,11 @@ jobs:
               }
               return paramStrs.join(", ");
             }
+            /**
+             * Formats a bash command by normalizing whitespace and escaping
+             * @param {string} command - The raw bash command string
+             * @returns {string} Formatted and escaped command string
+             */
             function formatBashCommand(command) {
               if (!command) return "";
               // Convert multi-line commands to single line by replacing newlines with spaces
@@ -1784,6 +1792,12 @@ jobs:
               }
               return formatted;
             }
+            /**
+             * Truncates a string to a maximum length with ellipsis
+             * @param {string} str - The string to truncate
+             * @param {number} maxLength - Maximum allowed length
+             * @returns {string} Truncated string with ellipsis if needed
+             */
             function truncateString(str, maxLength) {
               if (!str) return "";
               if (str.length <= maxLength) return str;
@@ -1832,27 +1846,26 @@ jobs:
               // Read the validated output content from environment variable
               const outputContent = process.env.GITHUB_AW_AGENT_OUTPUT;
               if (!outputContent) {
-                console.log("No GITHUB_AW_AGENT_OUTPUT environment variable found");
+                core.info("No GITHUB_AW_AGENT_OUTPUT environment variable found");
                 return;
               }
               if (outputContent.trim() === "") {
-                console.log("Agent output content is empty");
+                core.info("Agent output content is empty");
                 return;
               }
-              console.log("Agent output content length:", outputContent.length);
+              core.debug(`Agent output content length: ${outputContent.length}`);
               // Parse the validated output JSON
               let validatedOutput;
               try {
                 validatedOutput = JSON.parse(outputContent);
               } catch (error) {
-                console.log(
-                  "Error parsing agent output JSON:",
-                  error instanceof Error ? error.message : String(error)
+                core.setFailed(
+                  `Error parsing agent output JSON: ${error instanceof Error ? error.message : String(error)}`
                 );
                 return;
               }
               if (!validatedOutput.items || !Array.isArray(validatedOutput.items)) {
-                console.log("No valid items found in agent output");
+                core.warning("No valid items found in agent output");
                 return;
               }
               // Find the add-issue-label item
@@ -1860,12 +1873,12 @@ jobs:
                 /** @param {any} item */ item => item.type === "add-issue-label"
               );
               if (!labelsItem) {
-                console.log("No add-issue-label item found in agent output");
+                core.warning("No add-issue-label item found in agent output");
                 return;
               }
-              console.log("Found add-issue-label item:", {
-                labelsCount: labelsItem.labels.length,
-              });
+              core.debug(
+                `Found add-issue-label item with ${labelsItem.labels.length} labels`
+              );
               // If in staged mode, emit step summary instead of adding labels
               if (process.env.GITHUB_AW_SAFE_OUTPUTS_STAGED === "true") {
                 let summaryContent = "## 🎭 Staged Mode: Add Labels Preview\n\n";
@@ -1881,7 +1894,7 @@ jobs:
                 }
                 // Write to step summary
                 await core.summary.addRaw(summaryContent).write();
-                console.log("📝 Label addition preview written to step summary");
+                core.info("📝 Label addition preview written to step summary");
                 return;
               }
               // Read the allowed labels from environment variable (optional)
@@ -1897,9 +1910,9 @@ jobs:
                 }
               }
               if (allowedLabels) {
-                console.log("Allowed labels:", allowedLabels);
+                core.debug(`Allowed labels: ${JSON.stringify(allowedLabels)}`);
               } else {
-                console.log("No label restrictions - any labels are allowed");
+                core.debug("No label restrictions - any labels are allowed");
               }
               // Read the max limit from environment variable (default: 3)
               const maxCountEnv = process.env.GITHUB_AW_LABELS_MAX_COUNT;
@@ -1910,7 +1923,7 @@ jobs:
                 );
                 return;
               }
-              console.log("Max count:", maxCount);
+              core.debug(`Max count: ${maxCount}`);
               // Check if we're in an issue or pull request context
               const isIssueContext =
                 context.eventName === "issues" || context.eventName === "issue_comment";
@@ -1952,7 +1965,7 @@ jobs:
               }
               // Extract labels from the JSON item
               const requestedLabels = labelsItem.labels || [];
-              console.log("Requested labels:", requestedLabels);
+              core.debug(`Requested labels: ${JSON.stringify(requestedLabels)}`);
               // Check for label removal attempts (labels starting with '-')
               for (const label of requestedLabels) {
                 if (label.startsWith("-")) {
@@ -1976,11 +1989,11 @@ jobs:
               let uniqueLabels = [...new Set(validLabels)];
               // Enforce max limit
               if (uniqueLabels.length > maxCount) {
-                console.log(`too many labels, keep ${maxCount}`);
+                core.debug(`too many labels, keep ${maxCount}`);
                 uniqueLabels = uniqueLabels.slice(0, maxCount);
               }
               if (uniqueLabels.length === 0) {
-                console.log("No labels to add");
+                core.info("No labels to add");
                 core.setOutput("labels_added", "");
                 await core.summary
                   .addRaw(
@@ -1992,9 +2005,8 @@ jobs:
                   .write();
                 return;
               }
-              console.log(
-                `Adding ${uniqueLabels.length} labels to ${contextType} #${issueNumber}:`,
-                uniqueLabels
+              core.info(
+                `Adding ${uniqueLabels.length} labels to ${contextType} #${issueNumber}: ${JSON.stringify(uniqueLabels)}`
               );
               try {
                 // Add labels using GitHub API
@@ -2004,7 +2016,7 @@ jobs:
                   issue_number: issueNumber,
                   labels: uniqueLabels,
                 });
-                console.log(
+                core.info(
                   `Successfully added ${uniqueLabels.length} labels to ${contextType} #${issueNumber}`
                 );
                 // Set output for other jobs to use

@@ -14,7 +14,14 @@ concurrency:
 run-name: "Test Codex Create Pull Request"
 
 jobs:
+  task:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Task job condition barrier
+        run: echo "Task job executed - conditions satisfied"
+
   test-codex-create-pull-request:
+    needs: task
     runs-on: ubuntu-latest
     permissions: read-all
     outputs:
@@ -211,6 +218,7 @@ jobs:
               sha: context.sha,
               actor: context.actor,
               event_name: context.eventName,
+              staged: false,
               created_at: new Date().toISOString()
             };
             
@@ -403,7 +411,7 @@ jobs:
               /**
                * Gets the maximum allowed count for a given output type
                * @param {string} itemType - The output item type
-               * @param {Object} config - The safe-outputs configuration
+               * @param {any} config - The safe-outputs configuration
                * @returns {number} The maximum allowed count
                */
               function getMaxAllowedForType(itemType, config) {
@@ -453,6 +461,7 @@ jobs:
                 // U+0014 (DC4) — represented here as "\u0014"
                 // Escape control characters not allowed in JSON strings (U+0000 through U+001F)
                 // Preserve common JSON escapes for \b, \f, \n, \r, \t and use \uXXXX for the rest.
+                /** @type {Record<number, string>} */
                 const _ctrl = { 8: "\\b", 9: "\\t", 10: "\\n", 12: "\\f", 13: "\\r" };
                 repaired = repaired.replace(/[\u0000-\u001F]/g, ch => {
                   const c = ch.charCodeAt(0);
@@ -527,9 +536,17 @@ jobs:
                     return JSON.parse(repairedJson);
                   } catch (repairError) {
                     // If repair also fails, throw the error
-                    console.log(`invalid input json: ${jsonStr}`);
+                    core.info(`invalid input json: ${jsonStr}`);
+                    const originalMsg =
+                      originalError instanceof Error
+                        ? originalError.message
+                        : String(originalError);
+                    const repairMsg =
+                      repairError instanceof Error
+                        ? repairError.message
+                        : String(repairError);
                     throw new Error(
-                      `JSON parsing failed. Original: ${originalError.message}. After attempted repair: ${repairError.message}`
+                      `JSON parsing failed. Original: ${originalMsg}. After attempted repair: ${repairMsg}`
                     );
                   }
                 }
@@ -537,33 +554,34 @@ jobs:
               const outputFile = process.env.GITHUB_AW_SAFE_OUTPUTS;
               const safeOutputsConfig = process.env.GITHUB_AW_SAFE_OUTPUTS_CONFIG;
               if (!outputFile) {
-                console.log("GITHUB_AW_SAFE_OUTPUTS not set, no output to collect");
+                core.info("GITHUB_AW_SAFE_OUTPUTS not set, no output to collect");
                 core.setOutput("output", "");
                 return;
               }
               if (!fs.existsSync(outputFile)) {
-                console.log("Output file does not exist:", outputFile);
+                core.info(`Output file does not exist: ${outputFile}`);
                 core.setOutput("output", "");
                 return;
               }
               const outputContent = fs.readFileSync(outputFile, "utf8");
               if (outputContent.trim() === "") {
-                console.log("Output file is empty");
+                core.info("Output file is empty");
                 core.setOutput("output", "");
                 return;
               }
-              console.log("Raw output content length:", outputContent.length);
+              core.info(`Raw output content length: ${outputContent.length}`);
               // Parse the safe-outputs configuration
+              /** @type {any} */
               let expectedOutputTypes = {};
               if (safeOutputsConfig) {
                 try {
                   expectedOutputTypes = JSON.parse(safeOutputsConfig);
-                  console.log("Expected output types:", Object.keys(expectedOutputTypes));
-                } catch (error) {
-                  console.log(
-                    "Warning: Could not parse safe-outputs config:",
-                    error.message
+                  core.info(
+                    `Expected output types: ${JSON.stringify(Object.keys(expectedOutputTypes))}`
                   );
+                } catch (error) {
+                  const errorMsg = error instanceof Error ? error.message : String(error);
+                  core.info(`Warning: Could not parse safe-outputs config: ${errorMsg}`);
                 }
               }
               // Parse JSONL content
@@ -574,6 +592,7 @@ jobs:
                 const line = lines[i].trim();
                 if (line === "") continue; // Skip empty lines
                 try {
+                  /** @type {any} */
                   const item = parseJsonWithRepair(line);
                   // If item is undefined (failed to parse), add error and process next line
                   if (item === undefined) {
@@ -624,8 +643,9 @@ jobs:
                       item.body = sanitizeContent(item.body);
                       // Sanitize labels if present
                       if (item.labels && Array.isArray(item.labels)) {
-                        item.labels = item.labels.map(label =>
-                          typeof label === "string" ? sanitizeContent(label) : label
+                        item.labels = item.labels.map(
+                          /** @param {any} label */ label =>
+                            typeof label === "string" ? sanitizeContent(label) : label
                         );
                       }
                       break;
@@ -661,8 +681,9 @@ jobs:
                       }
                       // Sanitize labels if present
                       if (item.labels && Array.isArray(item.labels)) {
-                        item.labels = item.labels.map(label =>
-                          typeof label === "string" ? sanitizeContent(label) : label
+                        item.labels = item.labels.map(
+                          /** @param {any} label */ label =>
+                            typeof label === "string" ? sanitizeContent(label) : label
                         );
                       }
                       break;
@@ -673,14 +694,20 @@ jobs:
                         );
                         continue;
                       }
-                      if (item.labels.some(label => typeof label !== "string")) {
+                      if (
+                        item.labels.some(
+                          /** @param {any} label */ label => typeof label !== "string"
+                        )
+                      ) {
                         errors.push(
                           `Line ${i + 1}: add-issue-label labels array must contain only strings`
                         );
                         continue;
                       }
                       // Sanitize label strings
-                      item.labels = item.labels.map(label => sanitizeContent(label));
+                      item.labels = item.labels.map(
+                        /** @param {any} label */ label => sanitizeContent(label)
+                      );
                       break;
                     case "update-issue":
                       // Check that at least one updateable field is provided
@@ -988,10 +1015,11 @@ jobs:
                       errors.push(`Line ${i + 1}: Unknown output type '${itemType}'`);
                       continue;
                   }
-                  console.log(`Line ${i + 1}: Valid ${itemType} item`);
+                  core.info(`Line ${i + 1}: Valid ${itemType} item`);
                   parsedItems.push(item);
                 } catch (error) {
-                  errors.push(`Line ${i + 1}: Invalid JSON - ${error.message}`);
+                  const errorMsg = error instanceof Error ? error.message : String(error);
+                  errors.push(`Line ${i + 1}: Invalid JSON - ${errorMsg}`);
                 }
               }
               // Report validation results
@@ -1005,7 +1033,7 @@ jobs:
                 // For now, we'll continue with valid items but log the errors
                 // In the future, we might want to fail the workflow for invalid items
               }
-              console.log(`Successfully parsed ${parsedItems.length} valid output items`);
+              core.info(`Successfully parsed ${parsedItems.length} valid output items`);
               // Set the parsed and validated items as output
               const validatedOutput = {
                 items: parsedItems,
@@ -1018,11 +1046,12 @@ jobs:
                 // Ensure the /tmp directory exists
                 fs.mkdirSync("/tmp", { recursive: true });
                 fs.writeFileSync(agentOutputFile, validatedOutputJson, "utf8");
-                console.log(`Stored validated output to: ${agentOutputFile}`);
+                core.info(`Stored validated output to: ${agentOutputFile}`);
                 // Set the environment variable GITHUB_AW_AGENT_OUTPUT to the file path
                 core.exportVariable("GITHUB_AW_AGENT_OUTPUT", agentOutputFile);
               } catch (error) {
-                core.error(`Failed to write agent output file: ${error.message}`);
+                const errorMsg = error instanceof Error ? error.message : String(error);
+                core.error(`Failed to write agent output file: ${errorMsg}`);
               }
               core.setOutput("output", JSON.stringify(validatedOutput));
               core.setOutput("raw_output", outputContent);
@@ -1055,25 +1084,30 @@ jobs:
               try {
                 const logFile = process.env.GITHUB_AW_AGENT_OUTPUT;
                 if (!logFile) {
-                  console.log("No agent log file specified");
+                  core.info("No agent log file specified");
                   return;
                 }
                 if (!fs.existsSync(logFile)) {
-                  console.log(`Log file not found: ${logFile}`);
+                  core.info(`Log file not found: ${logFile}`);
                   return;
                 }
                 const content = fs.readFileSync(logFile, "utf8");
                 const parsedLog = parseCodexLog(content);
                 if (parsedLog) {
                   core.summary.addRaw(parsedLog).write();
-                  console.log("Codex log parsed successfully");
+                  core.info("Codex log parsed successfully");
                 } else {
                   core.error("Failed to parse Codex log");
                 }
               } catch (error) {
-                core.setFailed(error.message);
+                core.setFailed(error instanceof Error ? error : String(error));
               }
             }
+            /**
+             * Parse codex log content and format as markdown
+             * @param {string} logContent - The raw log content to parse
+             * @returns {string} Formatted markdown content
+             */
             function parseCodexLog(logContent) {
               try {
                 const lines = logContent.split("\n");
@@ -1155,8 +1189,11 @@ jobs:
                 const tokenMatches = logContent.match(/tokens used: (\d+)/g);
                 if (tokenMatches) {
                   for (const match of tokenMatches) {
-                    const tokens = parseInt(match.match(/(\d+)/)[1]);
-                    totalTokens += tokens;
+                    const numberMatch = match.match(/(\d+)/);
+                    if (numberMatch) {
+                      const tokens = parseInt(numberMatch[1]);
+                      totalTokens += tokens;
+                    }
                   }
                 }
                 if (totalTokens > 0) {
@@ -1271,6 +1308,11 @@ jobs:
                 return "## 🤖 Commands and Tools\n\nError parsing log content.\n\n## 🤖 Reasoning\n\nUnable to parse reasoning from log.\n\n";
               }
             }
+            /**
+             * Format bash command for display
+             * @param {string} command - The command to format
+             * @returns {string} Formatted command string
+             */
             function formatBashCommand(command) {
               if (!command) return "";
               // Convert multi-line commands to single line by replacing newlines with spaces
@@ -1290,6 +1332,12 @@ jobs:
               }
               return formatted;
             }
+            /**
+             * Truncate string to maximum length
+             * @param {string} str - The string to truncate
+             * @param {number} maxLength - Maximum length allowed
+             * @returns {string} Truncated string
+             */
             function truncateString(str, maxLength) {
               if (!str) return "";
               if (str.length <= maxLength) return str;
@@ -1339,11 +1387,13 @@ jobs:
                 if (hasErrors) {
                   core.setFailed("Errors detected in agent logs - failing workflow step");
                 } else {
-                  console.log("Error validation completed successfully");
+                  core.info("Error validation completed successfully");
                 }
               } catch (error) {
                 console.debug(error);
-                core.setFailed(`Error validating log: ${error.message}`);
+                core.setFailed(
+                  `Error validating log: ${error instanceof Error ? error.message : String(error)}`
+                );
               }
             }
             function getErrorPatternsFromEnv() {
@@ -1361,10 +1411,15 @@ jobs:
                 return patterns;
               } catch (e) {
                 throw new Error(
-                  `Failed to parse GITHUB_AW_ERROR_PATTERNS as JSON: ${e.message}`
+                  `Failed to parse GITHUB_AW_ERROR_PATTERNS as JSON: ${e instanceof Error ? e.message : String(e)}`
                 );
               }
             }
+            /**
+             * @param {string} logContent
+             * @param {any[]} patterns
+             * @returns {boolean}
+             */
             function validateErrors(logContent, patterns) {
               const lines = logContent.split("\n");
               let hasErrors = false;
@@ -1381,13 +1436,18 @@ jobs:
                       core.error(errorMessage);
                       hasErrors = true;
                     } else {
-                      core.warn(errorMessage);
+                      core.warning(errorMessage);
                     }
                   }
                 }
               }
               return hasErrors;
             }
+            /**
+             * @param {any} match
+             * @param {any} pattern
+             * @returns {string}
+             */
             function extractLevel(match, pattern) {
               if (
                 pattern.level_group &&
@@ -1405,6 +1465,12 @@ jobs:
               }
               return "unknown";
             }
+            /**
+             * @param {any} match
+             * @param {any} pattern
+             * @param {any} fullLine
+             * @returns {string}
+             */
             function extractMessage(match, pattern, fullLine) {
               if (
                 pattern.message_group &&
@@ -1416,6 +1482,11 @@ jobs:
               // Fallback to the full match or line
               return match[0] || fullLine.trim();
             }
+            /**
+             * @param {any} str
+             * @param {any} maxLength
+             * @returns {string}
+             */
             function truncateString(str, maxLength) {
               if (!str) return "";
               if (str.length <= maxLength) return str;
@@ -1611,13 +1682,27 @@ jobs:
               }
               const outputContent = process.env.GITHUB_AW_AGENT_OUTPUT || "";
               if (outputContent.trim() === "") {
-                console.log("Agent output content is empty");
+                core.info("Agent output content is empty");
               }
               const ifNoChanges = process.env.GITHUB_AW_PR_IF_NO_CHANGES || "warn";
               // Check if patch file exists and has valid content
               if (!fs.existsSync("/tmp/aw.patch")) {
                 const message =
                   "No patch file found - cannot create pull request without changes";
+                // If in staged mode, still show preview
+                if (isStaged) {
+                  let summaryContent = "## 🎭 Staged Mode: Create Pull Request Preview\n\n";
+                  summaryContent +=
+                    "The following pull request would be created if staged mode was disabled:\n\n";
+                  summaryContent += `**Status:** ⚠️ No patch file found\n\n`;
+                  summaryContent += `**Message:** ${message}\n\n`;
+                  // Write to step summary
+                  await core.summary.addRaw(summaryContent).write();
+                  core.info(
+                    "📝 Pull request creation preview written to step summary (no patch file)"
+                  );
+                  return;
+                }
                 switch (ifNoChanges) {
                   case "error":
                     throw new Error(message);
@@ -1626,7 +1711,7 @@ jobs:
                     return;
                   case "warn":
                   default:
-                    console.log(message);
+                    core.warning(message);
                     return;
                 }
               }
@@ -1635,6 +1720,20 @@ jobs:
               if (patchContent.includes("Failed to generate patch")) {
                 const message =
                   "Patch file contains error message - cannot create pull request without changes";
+                // If in staged mode, still show preview
+                if (isStaged) {
+                  let summaryContent = "## 🎭 Staged Mode: Create Pull Request Preview\n\n";
+                  summaryContent +=
+                    "The following pull request would be created if staged mode was disabled:\n\n";
+                  summaryContent += `**Status:** ⚠️ Patch file contains error\n\n`;
+                  summaryContent += `**Message:** ${message}\n\n`;
+                  // Write to step summary
+                  await core.summary.addRaw(summaryContent).write();
+                  core.info(
+                    "📝 Pull request creation preview written to step summary (patch error)"
+                  );
+                  return;
+                }
                 switch (ifNoChanges) {
                   case "error":
                     throw new Error(message);
@@ -1643,13 +1742,13 @@ jobs:
                     return;
                   case "warn":
                   default:
-                    console.log(message);
+                    core.warning(message);
                     return;
                 }
               }
               // Empty patch is valid - behavior depends on if-no-changes configuration
               const isEmpty = !patchContent || !patchContent.trim();
-              if (isEmpty) {
+              if (isEmpty && !isStaged) {
                 const message =
                   "Patch file is empty - no changes to apply (noop operation)";
                 switch (ifNoChanges) {
@@ -1662,29 +1761,28 @@ jobs:
                     return;
                   case "warn":
                   default:
-                    console.log(message);
+                    core.warning(message);
                     return;
                 }
               }
-              console.log("Agent output content length:", outputContent.length);
+              core.debug(`Agent output content length: ${outputContent.length}`);
               if (!isEmpty) {
-                console.log("Patch content validation passed");
+                core.info("Patch content validation passed");
               } else {
-                console.log("Patch file is empty - processing noop operation");
+                core.info("Patch file is empty - processing noop operation");
               }
               // Parse the validated output JSON
               let validatedOutput;
               try {
                 validatedOutput = JSON.parse(outputContent);
               } catch (error) {
-                console.log(
-                  "Error parsing agent output JSON:",
-                  error instanceof Error ? error.message : String(error)
+                core.setFailed(
+                  `Error parsing agent output JSON: ${error instanceof Error ? error.message : String(error)}`
                 );
                 return;
               }
               if (!validatedOutput.items || !Array.isArray(validatedOutput.items)) {
-                console.log("No valid items found in agent output");
+                core.warning("No valid items found in agent output");
                 return;
               }
               // Find the create-pull-request item
@@ -1692,13 +1790,12 @@ jobs:
                 /** @param {any} item */ item => item.type === "create-pull-request"
               );
               if (!pullRequestItem) {
-                console.log("No create-pull-request item found in agent output");
+                core.warning("No create-pull-request item found in agent output");
                 return;
               }
-              console.log("Found create-pull-request item:", {
-                title: pullRequestItem.title,
-                bodyLength: pullRequestItem.body.length,
-              });
+              core.debug(
+                `Found create-pull-request item: title="${pullRequestItem.title}", bodyLength=${pullRequestItem.body.length}`
+              );
               // If in staged mode, emit step summary instead of creating PR
               if (isStaged) {
                 let summaryContent = "## 🎭 Staged Mode: Create Pull Request Preview\n\n";
@@ -1721,7 +1818,7 @@ jobs:
                 }
                 // Write to step summary
                 await core.summary.addRaw(summaryContent).write();
-                console.log("📝 Pull request creation preview written to step summary");
+                core.info("📝 Pull request creation preview written to step summary");
                 return;
               }
               // Extract title, body, and branch from the JSON item
@@ -1763,50 +1860,48 @@ jobs:
               // Parse draft setting from environment variable (defaults to true)
               const draftEnv = process.env.GITHUB_AW_PR_DRAFT;
               const draft = draftEnv ? draftEnv.toLowerCase() === "true" : true;
-              console.log("Creating pull request with title:", title);
-              console.log("Labels:", labels);
-              console.log("Draft:", draft);
-              console.log("Body length:", body.length);
+              core.info(`Creating pull request with title: ${title}`);
+              core.debug(`Labels: ${JSON.stringify(labels)}`);
+              core.debug(`Draft: ${draft}`);
+              core.debug(`Body length: ${body.length}`);
               const randomHex = crypto.randomBytes(8).toString("hex");
               // Use branch name from JSONL if provided, otherwise generate unique branch name
               if (!branchName) {
-                console.log(
+                core.debug(
                   "No branch name provided in JSONL, generating unique branch name"
                 );
                 // Generate unique branch name using cryptographic random hex
                 branchName = `${workflowId}-${randomHex}`;
               } else {
                 branchName = `${branchName}-${randomHex}`;
-                console.log("Using branch name from JSONL with added salt:", branchName);
+                core.debug(`Using branch name from JSONL with added salt: ${branchName}`);
               }
-              console.log("Generated branch name:", branchName);
-              console.log("Base branch:", baseBranch);
+              core.info(`Generated branch name: ${branchName}`);
+              core.debug(`Base branch: ${baseBranch}`);
               // Create a new branch using git CLI, ensuring it's based on the correct base branch
               // First, fetch latest changes and checkout the base branch
-              console.log(
-                "Fetching latest changes and checking out base branch:",
-                baseBranch
+              core.debug(
+                `Fetching latest changes and checking out base branch: ${baseBranch}`
               );
               execSync("git fetch origin", { stdio: "inherit" });
               execSync(`git checkout ${baseBranch}`, { stdio: "inherit" });
               // Handle branch creation/checkout
-              console.log(
-                "Branch should not exist locally, creating new branch from base:",
-                branchName
+              core.debug(
+                `Branch should not exist locally, creating new branch from base: ${branchName}`
               );
               execSync(`git checkout -b ${branchName}`, { stdio: "inherit" });
-              console.log("Created new branch from base:", branchName);
+              core.info(`Created new branch from base: ${branchName}`);
               // Apply the patch using git CLI (skip if empty)
               if (!isEmpty) {
-                console.log("Applying patch...");
+                core.info("Applying patch...");
                 // Patches are created with git format-patch, so use git am to apply them
                 execSync("git am /tmp/aw.patch", { stdio: "inherit" });
-                console.log("Patch applied successfully");
+                core.info("Patch applied successfully");
                 // Push the applied commits to the branch
                 execSync(`git push origin ${branchName}`, { stdio: "inherit" });
-                console.log("Changes pushed to branch");
+                core.info("Changes pushed to branch");
               } else {
-                console.log("Skipping patch application (empty patch)");
+                core.info("Skipping patch application (empty patch)");
                 // For empty patches, handle if-no-changes configuration
                 const message =
                   "No changes to apply - noop operation completed successfully";
@@ -1820,7 +1915,7 @@ jobs:
                     return;
                   case "warn":
                   default:
-                    console.log(message);
+                    core.warning(message);
                     return;
                 }
               }
@@ -1834,8 +1929,8 @@ jobs:
                 base: baseBranch,
                 draft: draft,
               });
-              console.log(
-                "Created pull request #" + pullRequest.number + ": " + pullRequest.html_url
+              core.info(
+                `Created pull request #${pullRequest.number}: ${pullRequest.html_url}`
               );
               // Add labels if specified
               if (labels.length > 0) {
@@ -1845,7 +1940,7 @@ jobs:
                   issue_number: pullRequest.number,
                   labels: labels,
                 });
-                console.log("Added labels to pull request:", labels);
+                core.info(`Added labels to pull request: ${JSON.stringify(labels)}`);
               }
               // Set output for other jobs to use
               core.setOutput("pull_request_number", pullRequest.number);

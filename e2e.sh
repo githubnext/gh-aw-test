@@ -21,15 +21,11 @@
 # - PR-triggered: Tests triggered by creating pull requests
 #
 # Options:
-#   --workflow-dispatch-only   Run only workflow_dispatch triggered tests
-#   --issue-triggered-only     Run only issue-triggered tests  
-#   --command-triggered-only   Run only command-triggered tests
 #   --dry-run                  Show what would be tested without running
 #   --help, -h                 Show help message
 #
 # Examples:
 #   ./e2e.sh                               # Run all tests
-#   ./e2e.sh --workflow-dispatch-only      # Run only direct trigger tests
 #   ./e2e.sh --dry-run                     # See what would be tested
 #
 # Prerequisites:
@@ -169,6 +165,8 @@ get_workflow_dispatch_tests() {
     echo "test-codex-create-code-scanning-alert"
     echo "test-claude-mcp"
     echo "test-codex-mcp"
+    echo "test-claude-multi"
+    echo "test-codex-multi"
 }
 
 get_issue_triggered_tests() {
@@ -973,6 +971,17 @@ run_workflow_dispatch_tests() {
             # Validate specific outcomes based on workflow type
             local validation_success=false
             case "$workflow" in
+                *"multi")
+                    local title_prefix="[${ai_type}-test]"
+                    local expected_labels="${ai_type},automation"
+                    
+                    if validate_issue_created "$title_prefix" "$expected_labels"; then
+                        validation_success=true
+                    fi
+                    if validate_pr_created "$title_prefix"; then
+                        validation_success=true
+                    fi
+                    ;;
                 *"create-issue")
                     local title_prefix="[${ai_type}-test]"
                     local expected_labels="${ai_type},automation"
@@ -1255,24 +1264,6 @@ main() {
     
     while [[ $# -gt 0 ]]; do
         case $1 in
-            --workflow-dispatch-only)
-                run_workflow_dispatch=true
-                run_issue_triggered=false
-                run_command_triggered=false
-                shift
-                ;;
-            --issue-triggered-only)
-                run_workflow_dispatch=false
-                run_issue_triggered=true
-                run_command_triggered=false
-                shift
-                ;;
-            --command-triggered-only)
-                run_workflow_dispatch=false
-                run_issue_triggered=false
-                run_command_triggered=true
-                shift
-                ;;
             --dry-run|-n)
                 dry_run=true
                 shift
@@ -1281,9 +1272,6 @@ main() {
                 echo "Usage: $0 [OPTIONS] [TEST_PATTERNS...]"
                 echo ""
                 echo "Options:"
-                echo "  --workflow-dispatch-only   Run only workflow_dispatch triggered tests"
-                echo "  --issue-triggered-only     Run only issue-triggered tests"
-                echo "  --command-triggered-only   Run only command-triggered tests"
                 echo "  --dry-run, -n              Show what would be tested without running"
                 echo "  --help, -h                 Show this help message"
                 echo ""
