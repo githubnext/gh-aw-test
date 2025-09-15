@@ -892,7 +892,7 @@ jobs:
                   "GITHUB_AW_SAFE_OUTPUTS": "${{ env.GITHUB_AW_SAFE_OUTPUTS }}",
                   "GITHUB_AW_SAFE_OUTPUTS_CONFIG": ${{ toJSON(env.GITHUB_AW_SAFE_OUTPUTS_CONFIG) }}
                 }
-              }
+              },
               "time": {
                 "command": "docker",
                 "args": [
@@ -906,7 +906,7 @@ jobs:
                 "env": {
                   "LOCAL_TIMEZONE": "${LOCAL_TIMEZONE}"
                 }
-              },
+              }
             }
           }
           EOF
