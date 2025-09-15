@@ -594,7 +594,7 @@ validate_issue_created() {
                 fi
             done
         fi
-        success "Issue #$issue_number created successfully with expected properties"
+        success "Issue #$issue_number created successfully with expected properties, URL: https://github.com/$REPO_OWNER/$REPO_NAME/issues/$issue_number"
         return 0
     else
         error "No issue found with title prefix: $title_prefix"
@@ -694,7 +694,7 @@ validate_pr_created() {
     local pr_number=$(gh pr list --limit 10 --json number,title --jq ".[] | select(.title | startswith(\"$title_prefix\")) | .number" | head -1)
     
     if [[ -n "$pr_number" ]]; then
-        success "PR #$pr_number created successfully"
+        success "PR #$pr_number created successfully, https://github.com/$REPO_OWNER/$REPO_NAME/pull/$pr_number"
         return 0
     else
         error "No PR found with title prefix: $title_prefix"
