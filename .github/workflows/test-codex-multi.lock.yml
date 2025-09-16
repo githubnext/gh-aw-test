@@ -33,6 +33,10 @@ jobs:
           node-version: '24'
       - name: Install Codex
         run: npm install -g @openai/codex
+      - name: where is Codex
+        run: which codex
+      - name: Check Codex version
+        run: codex --version
       - name: Authenticate with Codex
         run: codex login --api-key "${{ secrets.OPENAI_API_KEY }}"
       - name: Setup agent output
