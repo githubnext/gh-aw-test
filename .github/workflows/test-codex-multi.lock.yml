@@ -600,7 +600,6 @@ jobs:
           
           # Run codex with log capture - pipefail ensures codex exit code is preserved
           codex exec \
-            -c model=o4-mini \
             --full-auto "$INSTRUCTION" 2>&1 | tee /tmp/test-project.log
         env:
           GITHUB_AW_PROMPT: /tmp/aw-prompts/prompt.txt
