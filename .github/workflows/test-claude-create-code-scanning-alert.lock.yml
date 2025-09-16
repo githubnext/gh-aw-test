@@ -2,7 +2,7 @@
 # To update this file, edit the corresponding .md file and run:
 #   gh aw compile
 
-name: "Test Claude Create Code Scanning Alert"
+name: "Test Claude Code Scanning Alert"
 "on":
   workflow_dispatch: null
 
@@ -11,7 +11,7 @@ permissions: {}
 concurrency:
   group: "gh-aw-${{ github.workflow }}"
 
-run-name: "Test Claude Create Code Scanning Alert"
+run-name: "Test Claude Code Scanning Alert"
 
 jobs:
   add_reaction:
@@ -28,7 +28,7 @@ jobs:
     steps:
       - name: Check team membership for workflow
         id: check-team-member
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           GITHUB_AW_REQUIRED_ROLES: admin,maintainer
         with:
@@ -115,7 +115,7 @@ jobs:
             await main();
       - name: Add eyes reaction to the triggering item
         id: react
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           GITHUB_AW_REACTION: eyes
         with:
@@ -291,7 +291,7 @@ jobs:
             }
             await main();
 
-  test-claude-create-code-scanning-alert:
+  test-claude-code-scanning-alert:
     runs-on: ubuntu-latest
     permissions: read-all
     outputs:
@@ -409,7 +409,7 @@ jobs:
           chmod +x .claude/hooks/network_permissions.py
       - name: Setup agent output
         id: setup_agent_output
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             function main() {
@@ -924,7 +924,7 @@ jobs:
         env:
           GITHUB_AW_PROMPT: /tmp/aw-prompts/prompt.txt
       - name: Generate agentic run info
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');
@@ -934,7 +934,7 @@ jobs:
               engine_name: "Claude Code",
               model: "",
               version: "",
-              workflow_name: "Test Claude Create Code Scanning Alert",
+              workflow_name: "Test Claude Code Scanning Alert",
               experimental: false,
               supports_tools_whitelist: true,
               supports_http_transport: true,
@@ -1022,7 +1022,7 @@ jobs:
         run: |
           set -o pipefail
           # Execute Claude Code CLI with prompt from file
-          npx @anthropic-ai/claude-code@latest --print --mcp-config /tmp/mcp-config/mcp-servers.json --allowed-tools "ExitPlanMode,Glob,Grep,LS,NotebookRead,Read,Task,TodoWrite,Write,mcp__github__download_workflow_run_artifact,mcp__github__get_code_scanning_alert,mcp__github__get_commit,mcp__github__get_dependabot_alert,mcp__github__get_discussion,mcp__github__get_discussion_comments,mcp__github__get_file_contents,mcp__github__get_issue,mcp__github__get_issue_comments,mcp__github__get_job_logs,mcp__github__get_me,mcp__github__get_notification_details,mcp__github__get_pull_request,mcp__github__get_pull_request_comments,mcp__github__get_pull_request_diff,mcp__github__get_pull_request_files,mcp__github__get_pull_request_reviews,mcp__github__get_pull_request_status,mcp__github__get_secret_scanning_alert,mcp__github__get_tag,mcp__github__get_workflow_run,mcp__github__get_workflow_run_logs,mcp__github__get_workflow_run_usage,mcp__github__list_branches,mcp__github__list_code_scanning_alerts,mcp__github__list_commits,mcp__github__list_dependabot_alerts,mcp__github__list_discussion_categories,mcp__github__list_discussions,mcp__github__list_issues,mcp__github__list_notifications,mcp__github__list_pull_requests,mcp__github__list_secret_scanning_alerts,mcp__github__list_tags,mcp__github__list_workflow_jobs,mcp__github__list_workflow_run_artifacts,mcp__github__list_workflow_runs,mcp__github__list_workflows,mcp__github__search_code,mcp__github__search_issues,mcp__github__search_orgs,mcp__github__search_pull_requests,mcp__github__search_repositories,mcp__github__search_users" --debug --verbose --permission-mode bypassPermissions --output-format json --settings /tmp/.claude/settings.json "$(cat /tmp/aw-prompts/prompt.txt)" 2>&1 | tee /tmp/test-claude-create-code-scanning-alert.log
+          npx @anthropic-ai/claude-code@latest --print --mcp-config /tmp/mcp-config/mcp-servers.json --allowed-tools "ExitPlanMode,Glob,Grep,LS,NotebookRead,Read,Task,TodoWrite,Write,mcp__github__download_workflow_run_artifact,mcp__github__get_code_scanning_alert,mcp__github__get_commit,mcp__github__get_dependabot_alert,mcp__github__get_discussion,mcp__github__get_discussion_comments,mcp__github__get_file_contents,mcp__github__get_issue,mcp__github__get_issue_comments,mcp__github__get_job_logs,mcp__github__get_me,mcp__github__get_notification_details,mcp__github__get_pull_request,mcp__github__get_pull_request_comments,mcp__github__get_pull_request_diff,mcp__github__get_pull_request_files,mcp__github__get_pull_request_reviews,mcp__github__get_pull_request_status,mcp__github__get_secret_scanning_alert,mcp__github__get_tag,mcp__github__get_workflow_run,mcp__github__get_workflow_run_logs,mcp__github__get_workflow_run_usage,mcp__github__list_branches,mcp__github__list_code_scanning_alerts,mcp__github__list_commits,mcp__github__list_dependabot_alerts,mcp__github__list_discussion_categories,mcp__github__list_discussions,mcp__github__list_issues,mcp__github__list_notifications,mcp__github__list_pull_requests,mcp__github__list_secret_scanning_alerts,mcp__github__list_tags,mcp__github__list_workflow_jobs,mcp__github__list_workflow_run_artifacts,mcp__github__list_workflow_runs,mcp__github__list_workflows,mcp__github__search_code,mcp__github__search_issues,mcp__github__search_orgs,mcp__github__search_pull_requests,mcp__github__search_repositories,mcp__github__search_users" --debug --verbose --permission-mode bypassPermissions --output-format json --settings /tmp/.claude/settings.json "$(cat /tmp/aw-prompts/prompt.txt)" 2>&1 | tee /tmp/test-claude-code-scanning-alert.log
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           DISABLE_TELEMETRY: "1"
@@ -1034,10 +1034,10 @@ jobs:
         if: always()
         run: |
           # Ensure log file exists
-          touch /tmp/test-claude-create-code-scanning-alert.log
+          touch /tmp/test-claude-code-scanning-alert.log
           # Show last few lines for debugging
           echo "=== Last 10 lines of Claude execution log ==="
-          tail -10 /tmp/test-claude-create-code-scanning-alert.log || echo "No log content available"
+          tail -10 /tmp/test-claude-code-scanning-alert.log || echo "No log content available"
       - name: Print Agent output
         env:
           GITHUB_AW_SAFE_OUTPUTS: ${{ env.GITHUB_AW_SAFE_OUTPUTS }}
@@ -1065,7 +1065,7 @@ jobs:
           if-no-files-found: warn
       - name: Ingest agent output
         id: collect_output
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           GITHUB_AW_SAFE_OUTPUTS: ${{ env.GITHUB_AW_SAFE_OUTPUTS }}
           GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"create-code-scanning-alert\":{\"enabled\":true,\"max\":10}}"
@@ -1862,27 +1862,16 @@ jobs:
           name: agent_output.json
           path: ${{ env.GITHUB_AW_AGENT_OUTPUT }}
           if-no-files-found: warn
-      - name: Upload engine output files
-        uses: actions/upload-artifact@v4
-        with:
-          name: agent_outputs
-          path: |
-            output.txt
-          if-no-files-found: ignore
-      - name: Clean up engine output files
-        run: |
-          rm -f output.txt
       - name: Parse agent logs for step summary
         if: always()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
-          GITHUB_AW_AGENT_OUTPUT: /tmp/test-claude-create-code-scanning-alert.log
+          GITHUB_AW_AGENT_OUTPUT: /tmp/test-claude-code-scanning-alert.log
         with:
           script: |
             function main() {
               const fs = require("fs");
               try {
-                // Get the log file path from environment
                 const logFile = process.env.GITHUB_AW_AGENT_OUTPUT;
                 if (!logFile) {
                   core.info("No agent log file specified");
@@ -1894,9 +1883,7 @@ jobs:
                 }
                 const logContent = fs.readFileSync(logFile, "utf8");
                 const result = parseClaudeLog(logContent);
-                // Append to GitHub step summary
                 core.summary.addRaw(result.markdown).write();
-                // Check for MCP server failures and fail the job if any occurred
                 if (result.mcpFailures && result.mcpFailures.length > 0) {
                   const failedServers = result.mcpFailures.join(", ");
                   core.setFailed(`MCP server(s) failed to launch: ${failedServers}`);
@@ -1913,11 +1900,41 @@ jobs:
              */
             function parseClaudeLog(logContent) {
               try {
-                const logEntries = JSON.parse(logContent);
-                if (!Array.isArray(logEntries)) {
+                let logEntries;
+                // First, try to parse as JSON array (old format)
+                try {
+                  logEntries = JSON.parse(logContent);
+                  if (!Array.isArray(logEntries)) {
+                    throw new Error("Not a JSON array");
+                  }
+                } catch (jsonArrayError) {
+                  // If that fails, try to parse as mixed format (debug logs + JSONL)
+                  logEntries = [];
+                  const lines = logContent.split("\n");
+                  for (const line of lines) {
+                    const trimmedLine = line.trim();
+                    if (trimmedLine === "") {
+                      continue; // Skip empty lines
+                    }
+                    // Skip debug log lines that don't start with {
+                    // (these are typically timestamped debug messages)
+                    if (!trimmedLine.startsWith("{")) {
+                      continue;
+                    }
+                    // Try to parse each line as JSON
+                    try {
+                      const jsonEntry = JSON.parse(trimmedLine);
+                      logEntries.push(jsonEntry);
+                    } catch (jsonLineError) {
+                      // Skip invalid JSON lines (could be partial debug output)
+                      continue;
+                    }
+                  }
+                }
+                if (!Array.isArray(logEntries) || logEntries.length === 0) {
                   return {
                     markdown:
-                      "## Agent Log Summary\n\nLog format not recognized as Claude JSON array.\n",
+                      "## Agent Log Summary\n\nLog format not recognized as Claude JSON array or JSONL.\n",
                     mcpFailures: [],
                   };
                 }
@@ -2069,7 +2086,7 @@ jobs:
               } catch (error) {
                 const errorMessage = error instanceof Error ? error.message : String(error);
                 return {
-                  markdown: `## Agent Log Summary\n\nError parsing Claude log: ${errorMessage}\n`,
+                  markdown: `## Agent Log Summary\n\nError parsing Claude log (tried both JSON array and JSONL formats): ${errorMessage}\n`,
                   mcpFailures: [],
                 };
               }
@@ -2366,12 +2383,12 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-claude-create-code-scanning-alert.log
-          path: /tmp/test-claude-create-code-scanning-alert.log
+          name: test-claude-code-scanning-alert.log
+          path: /tmp/test-claude-code-scanning-alert.log
           if-no-files-found: warn
 
   create_code_scanning_alert:
-    needs: test-claude-create-code-scanning-alert
+    needs: test-claude-code-scanning-alert
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -2386,9 +2403,9 @@ jobs:
     steps:
       - name: Create Code Scanning Alert
         id: create_code_scanning_alert
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
-          GITHUB_AW_AGENT_OUTPUT: ${{ needs.test-claude-create-code-scanning-alert.outputs.output }}
+          GITHUB_AW_AGENT_OUTPUT: ${{ needs.test-claude-code-scanning-alert.outputs.output }}
           GITHUB_AW_SECURITY_REPORT_MAX: 10
           GITHUB_AW_SECURITY_REPORT_DRIVER: Test Claude Code Scanning Alert
           GITHUB_AW_WORKFLOW_FILENAME: test-claude-create-code-scanning-alert

@@ -31,7 +31,7 @@ jobs:
     steps:
       - name: Check team membership for command workflow
         id: check-team-member
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           GITHUB_AW_REQUIRED_ROLES: admin,maintainer
         with:
@@ -134,7 +134,7 @@ jobs:
     steps:
       - name: Add eyes reaction to the triggering item
         id: react
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           GITHUB_AW_REACTION: eyes
           GITHUB_AW_COMMAND: test-codex-push-to-pr-branch
@@ -334,9 +334,11 @@ jobs:
           node-version: '24'
       - name: Install Codex
         run: npm install -g @openai/codex
+      - name: Authenticate with Codex
+        run: codex login --api-key "${{ secrets.OPENAI_API_KEY }}"
       - name: Setup agent output
         id: setup_agent_output
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             function main() {
@@ -882,7 +884,7 @@ jobs:
         env:
           GITHUB_AW_PROMPT: /tmp/aw-prompts/prompt.txt
       - name: Generate agentic run info
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');
@@ -930,8 +932,7 @@ jobs:
           mkdir -p /tmp/aw-logs
           
           # Run codex with log capture - pipefail ensures codex exit code is preserved
-          codex exec \
-            --full-auto "$INSTRUCTION" 2>&1 | tee /tmp/test-codex-push-to-branch.log
+          codex exec --full-auto "$INSTRUCTION" 2>&1 | tee /tmp/test-codex-push-to-branch.log
         env:
           GITHUB_AW_PROMPT: /tmp/aw-prompts/prompt.txt
           GITHUB_AW_SAFE_OUTPUTS: ${{ env.GITHUB_AW_SAFE_OUTPUTS }}
@@ -964,7 +965,7 @@ jobs:
           if-no-files-found: warn
       - name: Ingest agent output
         id: collect_output
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           GITHUB_AW_SAFE_OUTPUTS: ${{ env.GITHUB_AW_SAFE_OUTPUTS }}
           GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"push-to-pr-branch\":{\"enabled\":true}}"
@@ -1763,7 +1764,7 @@ jobs:
           if-no-files-found: warn
       - name: Parse agent logs for step summary
         if: always()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           GITHUB_AW_AGENT_OUTPUT: /tmp/test-codex-push-to-branch.log
         with:
@@ -2046,7 +2047,7 @@ jobs:
           if-no-files-found: warn
       - name: Validate agent logs for errors
         if: always()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           GITHUB_AW_AGENT_OUTPUT: /tmp/test-codex-push-to-branch.log
           GITHUB_AW_ERROR_PATTERNS: "[{\"pattern\":\"\\\\[(\\\\d{4}-\\\\d{2}-\\\\d{2}T\\\\d{2}:\\\\d{2}:\\\\d{2})\\\\]\\\\s+stream\\\\s+(error):\\\\s+(.+)\",\"level_group\":2,\"message_group\":3,\"description\":\"Codex stream errors with timestamp\"},{\"pattern\":\"\\\\[(\\\\d{4}-\\\\d{2}-\\\\d{2}T\\\\d{2}:\\\\d{2}:\\\\d{2})\\\\]\\\\s+(ERROR):\\\\s+(.+)\",\"level_group\":2,\"message_group\":3,\"description\":\"Codex ERROR messages with timestamp\"},{\"pattern\":\"\\\\[(\\\\d{4}-\\\\d{2}-\\\\d{2}T\\\\d{2}:\\\\d{2}:\\\\d{2})\\\\]\\\\s+(WARN|WARNING):\\\\s+(.+)\",\"level_group\":2,\"message_group\":3,\"description\":\"Codex warning messages with timestamp\"}]"
@@ -2345,7 +2346,7 @@ jobs:
           echo "Git configured with standard GitHub Actions identity"
       - name: Push to Branch
         id: push_to_pr_branch
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           GH_TOKEN: ${{ github.token }}
           GITHUB_AW_AGENT_OUTPUT: ${{ needs.test-codex-push-to-branch.outputs.output }}

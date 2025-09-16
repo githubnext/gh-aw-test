@@ -2,7 +2,7 @@
 # To update this file, edit the corresponding .md file and run:
 #   gh aw compile
 
-name: "Test Ai Inference Github Models"
+name: "AI Inference with GitHub Models"
 on:
   issues:
     types:
@@ -18,7 +18,7 @@ permissions: {}
 concurrency:
   group: "gh-aw-${{ github.workflow }}-${{ github.event.issue.number }}"
 
-run-name: "Test Ai Inference Github Models"
+run-name: "AI Inference with GitHub Models"
 
 jobs:
   task:
@@ -30,7 +30,7 @@ jobs:
     steps:
       - name: Check team membership for workflow
         id: check-team-member
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           GITHUB_AW_REQUIRED_ROLES: admin,maintainer
         with:
@@ -117,7 +117,7 @@ jobs:
             await main();
       - name: Compute current body text
         id: compute-text
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             /**
@@ -359,7 +359,7 @@ jobs:
             }
             await main();
 
-  test-ai-inference-github-models:
+  ai-inference-with-github-models:
     needs: task
     runs-on: ubuntu-latest
     permissions:
@@ -372,7 +372,7 @@ jobs:
         uses: actions/checkout@v5
       - name: Setup agent output
         id: setup_agent_output
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             function main() {
@@ -889,7 +889,7 @@ jobs:
         env:
           GITHUB_AW_PROMPT: /tmp/aw-prompts/prompt.txt
       - name: Generate agentic run info
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');
@@ -899,7 +899,7 @@ jobs:
               engine_name: "Custom Steps",
               model: "",
               version: "",
-              workflow_name: "Test Ai Inference Github Models",
+              workflow_name: "AI Inference with GitHub Models",
               experimental: false,
               supports_tools_whitelist: false,
               supports_http_transport: false,
@@ -961,8 +961,8 @@ jobs:
             fs.appendFileSync(process.env.GITHUB_AW_SAFE_OUTPUTS, JSON.stringify(safeOutput) + '\n');
       - name: Ensure log file exists
         run: |
-          echo "Custom steps execution completed" >> /tmp/test-ai-inference-github-models.log
-          touch /tmp/test-ai-inference-github-models.log
+          echo "Custom steps execution completed" >> /tmp/ai-inference-with-github-models.log
+          touch /tmp/ai-inference-with-github-models.log
       - name: Print Agent output
         env:
           GITHUB_AW_SAFE_OUTPUTS: ${{ env.GITHUB_AW_SAFE_OUTPUTS }}
@@ -990,7 +990,7 @@ jobs:
           if-no-files-found: warn
       - name: Ingest agent output
         id: collect_output
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           GITHUB_AW_SAFE_OUTPUTS: ${{ env.GITHUB_AW_SAFE_OUTPUTS }}
           GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"add-issue-comment\":{\"enabled\":true,\"target\":\"*\"}}"
@@ -1791,12 +1791,12 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-ai-inference-github-models.log
-          path: /tmp/test-ai-inference-github-models.log
+          name: ai-inference-with-github-models.log
+          path: /tmp/ai-inference-with-github-models.log
           if-no-files-found: warn
 
   create_issue_comment:
-    needs: test-ai-inference-github-models
+    needs: ai-inference-with-github-models
     if: always()
     runs-on: ubuntu-latest
     permissions:
@@ -1810,9 +1810,9 @@ jobs:
     steps:
       - name: Add Issue Comment
         id: create_comment
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
-          GITHUB_AW_AGENT_OUTPUT: ${{ needs.test-ai-inference-github-models.outputs.output }}
+          GITHUB_AW_AGENT_OUTPUT: ${{ needs.ai-inference-with-github-models.outputs.output }}
           GITHUB_AW_COMMENT_TARGET: "*"
         with:
           script: |
