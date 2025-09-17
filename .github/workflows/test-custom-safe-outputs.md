@@ -15,14 +15,14 @@ safe-outputs:
     title-prefix: "[Custom Engine Test] "
     labels: [test-safe-outputs, automation, custom-engine]
     max: 1
-  add-issue-comment:
+  add-comment:
     max: 1
     target: "*"
   create-pull-request:
     title-prefix: "[Custom Engine Test] "
     labels: [test-safe-outputs, automation, custom-engine]
     draft: true
-  add-issue-label:
+  add-labels:
     allowed: [test-safe-outputs, automation, custom-engine, bug, enhancement, documentation]
     max: 3
   update-issue:
@@ -53,11 +53,11 @@ engine:
         
     - name: Generate Add Issue Comment Output
       run: |
-        echo '{"type": "add-issue-comment", "body": "## Test Comment from Custom Engine\n\nThis comment was automatically posted by the test-safe-outputs-custom-engine workflow to validate the add-issue-comment safe output functionality.\n\n**Test Information:**\n- Workflow: test-safe-outputs-custom-engine\n- Engine Type: Custom (GitHub Actions steps)\n- Execution Time: '"$(date)"'\n- Event: ${{ github.event_name }}\n\n✅ Safe output testing in progress..."}' >> $GITHUB_AW_SAFE_OUTPUTS
+        echo '{"type": "add-comment", "body": "## Test Comment from Custom Engine\n\nThis comment was automatically posted by the test-safe-outputs-custom-engine workflow to validate the add-comment safe output functionality.\n\n**Test Information:**\n- Workflow: test-safe-outputs-custom-engine\n- Engine Type: Custom (GitHub Actions steps)\n- Execution Time: '"$(date)"'\n- Event: ${{ github.event_name }}\n\n✅ Safe output testing in progress..."}' >> $GITHUB_AW_SAFE_OUTPUTS
         
     - name: Generate Add Issue Labels Output
       run: |
-        echo '{"type": "add-issue-label", "labels": ["test-safe-outputs", "automation", "custom-engine"]}' >> $GITHUB_AW_SAFE_OUTPUTS
+        echo '{"type": "add-labels", "labels": ["test-safe-outputs", "automation", "custom-engine"]}' >> $GITHUB_AW_SAFE_OUTPUTS
         
     - name: Generate Update Issue Output
       run: |
@@ -122,9 +122,9 @@ This workflow validates all safe output types using the custom engine implementa
 This is a comprehensive test workflow that exercises every available safe output type:
 
 - **create-issue**: Creates test issues with custom engine
-- **add-issue-comment**: Posts comments on issues/PRs
+- **add-comment**: Posts comments on issues/PRs
 - **create-pull-request**: Creates PRs with code changes
-- **add-issue-label**: Adds labels to issues/PRs
+- **add-labels**: Adds labels to issues/PRs
 - **update-issue**: Updates issue properties
 - **push-to-pr-branch**: Pushes changes to branches
 - **missing-tool**: Reports missing functionality (test simulation)

@@ -340,7 +340,7 @@ jobs:
             main();
       - name: Setup Safe Outputs Collector MCP
         env:
-          GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"add-issue-label\":true}"
+          GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"add-labels\":true}"
         run: |
           mkdir -p /tmp/safe-outputs
           cat > /tmp/safe-outputs/mcp-server.cjs << 'EOF'
@@ -493,7 +493,7 @@ jobs:
                   },
                 },
                 {
-                  name: "add-issue-comment",
+                  name: "add-comment",
                   description: "Add a comment to a GitHub issue or pull request",
                   inputSchema: {
                     type: "object",
@@ -600,7 +600,7 @@ jobs:
                   },
                 },
                 {
-                  name: "add-issue-label",
+                  name: "add-labels",
                   description: "Add labels to a GitHub issue or pull request",
                   inputSchema: {
                     type: "object",
@@ -774,7 +774,7 @@ jobs:
       - name: Setup MCPs
         env:
           GITHUB_AW_SAFE_OUTPUTS: ${{ env.GITHUB_AW_SAFE_OUTPUTS }}
-          GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"add-issue-label\":true}"
+          GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"add-labels\":true}"
         run: |
           mkdir -p /tmp/mcp-config
           cat > /tmp/mcp-config/config.toml << EOF
@@ -816,6 +816,11 @@ jobs:
           ## Adding Labels to Issues or Pull Requests, Reporting Missing Tools or Functionality
           
           **IMPORTANT**: To do the actions mentioned in the header of this section, use the **safe-outputs** tools, do NOT attempt to use `gh`, do NOT attempt to use the GitHub API. You don't have write access to the GitHub repo.
+          
+          **Adding Labels to Issues or Pull Requests**
+          
+          To add labels to an issue or a pull request, use the add-labels tool from the safe-outputs MCP
+          
           EOF
       - name: Print prompt to step summary
         run: |
@@ -928,7 +933,7 @@ jobs:
         uses: actions/github-script@v8
         env:
           GITHUB_AW_SAFE_OUTPUTS: ${{ env.GITHUB_AW_SAFE_OUTPUTS }}
-          GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"add-issue-label\":true}"
+          GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"add-labels\":true}"
         with:
           script: |
             async function main() {
@@ -961,15 +966,17 @@ jobs:
                 let sanitized = content;
                 // Neutralize @mentions to prevent unintended notifications
                 sanitized = neutralizeMentions(sanitized);
+                // Remove ANSI escape sequences BEFORE removing control characters
+                sanitized = sanitized.replace(/\x1b\[[0-9;]*[mGKH]/g, "");
                 // Remove control characters (except newlines and tabs)
                 sanitized = sanitized.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
-                // XML character escaping
-                sanitized = sanitized
-                  .replace(/&/g, "&amp;") // Must be first to avoid double-escaping
-                  .replace(/</g, "&lt;")
-                  .replace(/>/g, "&gt;")
-                  .replace(/"/g, "&quot;")
-                  .replace(/'/g, "&apos;");
+                // // XML character escaping
+                // sanitized = sanitized
+                //   .replace(/&/g, "&amp;") // Must be first to avoid double-escaping
+                //   .replace(/</g, "&lt;")
+                //   .replace(/>/g, "&gt;")
+                //   .replace(/"/g, "&quot;")
+                //   .replace(/'/g, "&apos;");
                 // URI filtering - replace non-https protocols with "(redacted)"
                 sanitized = sanitizeUrlProtocols(sanitized);
                 // Domain filtering for HTTPS URIs
@@ -989,8 +996,7 @@ jobs:
                     lines.slice(0, maxLines).join("\n") +
                     "\n[Content truncated due to line count]";
                 }
-                // Remove ANSI escape sequences
-                sanitized = sanitized.replace(/\x1b\[[0-9;]*[mGKH]/g, "");
+                // ANSI escape sequences already removed earlier in the function
                 // Neutralize common bot trigger phrases
                 sanitized = neutralizeBotTriggers(sanitized);
                 // Trim excessive whitespace
@@ -1002,10 +1008,12 @@ jobs:
                  */
                 function sanitizeUrlDomains(s) {
                   return s.replace(
-                    /\bhttps:\/\/([^\/\s\])}'"<>&\x00-\x1f]+)/gi,
-                    (match, domain) => {
+                    /\bhttps:\/\/[^\s\])}'"<>&\x00-\x1f,;]+/gi,
+                    (match) => {
+                      // Extract just the URL part after https://
+                      const urlAfterProtocol = match.slice(8); // Remove 'https://'
                       // Extract the hostname part (before first slash, colon, or other delimiter)
-                      const hostname = domain.split(/[\/:\?#]/)[0].toLowerCase();
+                      const hostname = urlAfterProtocol.split(/[\/:\?#]/)[0].toLowerCase();
                       // Check if this domain or any parent domain is in the allowlist
                       const isAllowed = allowedDomains.some(allowedDomain => {
                         const normalizedAllowed = allowedDomain.toLowerCase();
@@ -1024,9 +1032,10 @@ jobs:
                  * @returns {string} The string with non-https protocols redacted
                  */
                 function sanitizeUrlProtocols(s) {
-                  // Match both protocol:// and protocol: patterns
+                  // Match protocol:// patterns (URLs) and standalone protocol: patterns that look like URLs
+                  // Avoid matching command line flags like -v:10 or z3 -memory:high
                   return s.replace(
-                    /\b(\w+):(?:\/\/)?[^\s\])}'"<>&\x00-\x1f]+/gi,
+                    /\b(\w+):\/\/[^\s\])}'"<>&\x00-\x1f]+/gi,
                     (match, protocol) => {
                       // Allow https (case insensitive), redact everything else
                       return protocol.toLowerCase() === "https" ? match : "(redacted)";
@@ -1078,13 +1087,13 @@ jobs:
                 switch (itemType) {
                   case "create-issue":
                     return 1; // Only one issue allowed
-                  case "add-issue-comment":
+                  case "add-comment":
                     return 1; // Only one comment allowed
                   case "create-pull-request":
                     return 1; // Only one pull request allowed
                   case "create-pull-request-review-comment":
                     return 10; // Default to 10 review comments allowed
-                  case "add-issue-label":
+                  case "add-labels":
                     return 5; // Only one labels operation allowed
                   case "update-issue":
                     return 1; // Only one issue update allowed
@@ -1299,10 +1308,10 @@ jobs:
                         );
                       }
                       break;
-                    case "add-issue-comment":
+                    case "add-comment":
                       if (!item.body || typeof item.body !== "string") {
                         errors.push(
-                          `Line ${i + 1}: add-issue-comment requires a 'body' string field`
+                          `Line ${i + 1}: add-comment requires a 'body' string field`
                         );
                         continue;
                       }
@@ -1337,10 +1346,10 @@ jobs:
                         );
                       }
                       break;
-                    case "add-issue-label":
+                    case "add-labels":
                       if (!item.labels || !Array.isArray(item.labels)) {
                         errors.push(
-                          `Line ${i + 1}: add-issue-label requires a 'labels' array field`
+                          `Line ${i + 1}: add-labels requires a 'labels' array field`
                         );
                         continue;
                       }
@@ -1350,7 +1359,7 @@ jobs:
                         )
                       ) {
                         errors.push(
-                          `Line ${i + 1}: add-issue-label labels array must contain only strings`
+                          `Line ${i + 1}: add-labels labels array must contain only strings`
                         );
                         continue;
                       }
@@ -2204,16 +2213,16 @@ jobs:
                 core.warning("No valid items found in agent output");
                 return;
               }
-              // Find the add-issue-label item
+              // Find the add-labels item
               const labelsItem = validatedOutput.items.find(
-                /** @param {any} item */ item => item.type === "add-issue-label"
+                /** @param {any} item */ item => item.type === "add-labels"
               );
               if (!labelsItem) {
-                core.warning("No add-issue-label item found in agent output");
+                core.warning("No add-labels item found in agent output");
                 return;
               }
               core.debug(
-                `Found add-issue-label item with ${labelsItem.labels.length} labels`
+                `Found add-labels item with ${labelsItem.labels.length} labels`
               );
               // If in staged mode, emit step summary instead of adding labels
               if (process.env.GITHUB_AW_SAFE_OUTPUTS_STAGED === "true") {

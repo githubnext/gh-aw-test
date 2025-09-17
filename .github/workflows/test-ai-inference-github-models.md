@@ -42,14 +42,14 @@ engine:
             : context.payload.inputs.issue_number;
           const aiResponse = process.env.AI_RESPONSE;          
           const safeOutput = {
-            type: "add-issue-comment",
+            type: "add-comment",
             issue_number: issueNumber,
             body: aiResponse
           };          
           fs.appendFileSync(process.env.GITHUB_AW_SAFE_OUTPUTS, JSON.stringify(safeOutput) + '\n');
 
 safe-outputs:
-  add-issue-comment:
+  add-comment:
     max: 1
     target: "*"
 ---

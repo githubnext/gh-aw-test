@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 safe-outputs:
-  add-issue-comment:
+  add-comment:
 
 network:
   allowed:

@@ -51,7 +51,7 @@ jobs:
             main();
       - name: Setup Safe Outputs Collector MCP
         env:
-          GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"add-issue-comment\":{\"enabled\":true,\"target\":\"*\"},\"add-issue-label\":true,\"create-code-scanning-alert\":{\"enabled\":true,\"max\":5},\"create-discussion\":{\"enabled\":true,\"max\":1},\"create-issue\":true,\"create-pull-request\":true,\"create-pull-request-review-comment\":{\"enabled\":true,\"max\":1},\"missing-tool\":{\"enabled\":true,\"max\":5},\"push-to-pr-branch\":{\"enabled\":true,\"target\":\"*\"},\"update-issue\":true}"
+          GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"add-comment\":{\"enabled\":true,\"target\":\"*\"},\"add-labels\":true,\"create-code-scanning-alert\":{\"enabled\":true,\"max\":5},\"create-discussion\":{\"enabled\":true,\"max\":1},\"create-issue\":true,\"create-pull-request\":true,\"create-pull-request-review-comment\":{\"enabled\":true,\"max\":1},\"missing-tool\":{\"enabled\":true,\"max\":5},\"push-to-pr-branch\":{\"enabled\":true,\"target\":\"*\"},\"update-issue\":true}"
         run: |
           mkdir -p /tmp/safe-outputs
           cat > /tmp/safe-outputs/mcp-server.cjs << 'EOF'
@@ -204,7 +204,7 @@ jobs:
                   },
                 },
                 {
-                  name: "add-issue-comment",
+                  name: "add-comment",
                   description: "Add a comment to a GitHub issue or pull request",
                   inputSchema: {
                     type: "object",
@@ -311,7 +311,7 @@ jobs:
                   },
                 },
                 {
-                  name: "add-issue-label",
+                  name: "add-labels",
                   description: "Add labels to a GitHub issue or pull request",
                   inputSchema: {
                     type: "object",
@@ -485,7 +485,7 @@ jobs:
       - name: Setup MCPs
         env:
           GITHUB_AW_SAFE_OUTPUTS: ${{ env.GITHUB_AW_SAFE_OUTPUTS }}
-          GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"add-issue-comment\":{\"enabled\":true,\"target\":\"*\"},\"add-issue-label\":true,\"create-code-scanning-alert\":{\"enabled\":true,\"max\":5},\"create-discussion\":{\"enabled\":true,\"max\":1},\"create-issue\":true,\"create-pull-request\":true,\"create-pull-request-review-comment\":{\"enabled\":true,\"max\":1},\"missing-tool\":{\"enabled\":true,\"max\":5},\"push-to-pr-branch\":{\"enabled\":true,\"target\":\"*\"},\"update-issue\":true}"
+          GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"add-comment\":{\"enabled\":true,\"target\":\"*\"},\"add-labels\":true,\"create-code-scanning-alert\":{\"enabled\":true,\"max\":5},\"create-discussion\":{\"enabled\":true,\"max\":1},\"create-issue\":true,\"create-pull-request\":true,\"create-pull-request-review-comment\":{\"enabled\":true,\"max\":1},\"missing-tool\":{\"enabled\":true,\"max\":5},\"push-to-pr-branch\":{\"enabled\":true,\"target\":\"*\"},\"update-issue\":true}"
         run: |
           mkdir -p /tmp/mcp-config
           cat > /tmp/mcp-config/mcp-servers.json << 'EOF'
@@ -532,9 +532,9 @@ jobs:
           This is a comprehensive test workflow that exercises every available safe output type:
           
           - **create-issue**: Creates test issues with custom engine
-          - **add-issue-comment**: Posts comments on issues/PRs
+          - **add-comment**: Posts comments on issues/PRs
           - **create-pull-request**: Creates PRs with code changes
-          - **add-issue-label**: Adds labels to issues/PRs
+          - **add-labels**: Adds labels to issues/PRs
           - **update-issue**: Updates issue properties
           - **push-to-pr-branch**: Pushes changes to branches
           - **missing-tool**: Reports missing functionality (test simulation)
@@ -559,9 +559,54 @@ jobs:
           
           ---
           
-          ## Adding a Comment to an Issue or Pull Request, Creating an Issue, Creating a Pull Request, Adding Labels to Issues or Pull Requests, Updating Issues, Pushing Changes to Branch, Creating Repository Security Advisories, Reporting Missing Tools or Functionality
+          ## Adding a Comment to an Issue or Pull Request, Creating an Issue, Creating a Pull Request, Adding Labels to Issues or Pull Requests, Updating Issues, Pushing Changes to Branch, Creating Code Scanning Alert, Reporting Missing Tools or Functionality
           
           **IMPORTANT**: To do the actions mentioned in the header of this section, use the **safe-outputs** tools, do NOT attempt to use `gh`, do NOT attempt to use the GitHub API. You don't have write access to the GitHub repo.
+          
+          **Adding a Comment to an Issue or Pull Request**
+          
+          To add a comment to an issue or pull request, use the add-comments tool from the safe-outputs MCP
+          
+          **Creating an Issue**
+          
+          To create an issue, use the create-issue tool from the safe-outputs MCP
+          
+          **Creating a Pull Request**
+          
+          To create a pull request:
+          1. Make any file changes directly in the working directory
+          2. If you haven't done so already, create a local branch using an appropriate unique name
+          3. Add and commit your changes to the branch. Be careful to add exactly the files you intend, and check there are no extra files left un-added. Check you haven't deleted or changed any files you didn't intend to.
+          4. Do not push your changes. That will be done by the tool.
+          5. Create the pull request with the create-pull-request tool from the safe-outputs MCP
+          
+          **Adding Labels to Issues or Pull Requests**
+          
+          To add labels to an issue or a pull request, use the add-labels tool from the safe-outputs MCP
+          
+          **Updating an Issue**
+          
+          To udpate an issue, use the update-issue tool from the safe-outputs MCP
+          
+          **Pushing Changes to Pull Request Branch**
+          
+          To push changes to the branch of a pull request:
+          1. Make any file changes directly in the working directory
+          2. Add and commit your changes to the local copy of the pull request branch. Be careful to add exactly the files you intend, and check there are no extra files left un-added. Check you haven't deleted or changed any files you didn't intend to.
+          3. Push the branch to the repo by using the push-to-pr-branch tool from the safe-outputs MCP
+          
+          **Creating Code Scanning Alert**
+          
+          To create code scanning alert use the create-code-scanning-alert tool from the safe-outputs MCP
+          
+          **Reporting Missing Tools or Functionality**
+          
+          To report a missing tool use the missing-tool tool from the safe-outputs MCP.
+          
+          **Creating a Pull Request Review Comment**
+          
+          To create a pull request review comment, use the create-pull-request-review-comment tool from the safe-outputs MCP
+          
           EOF
       - name: Print prompt to step summary
         run: |
@@ -627,13 +672,13 @@ jobs:
           GITHUB_AW_SAFE_OUTPUTS: ${{ env.GITHUB_AW_SAFE_OUTPUTS }}
       - name: Generate Add Issue Comment Output
         run: |
-          echo '{"type": "add-issue-comment", "body": "## Test Comment from Custom Engine\n\nThis comment was automatically posted by the test-safe-outputs-custom-engine workflow to validate the add-issue-comment safe output functionality.\n\n**Test Information:**\n- Workflow: test-safe-outputs-custom-engine\n- Engine Type: Custom (GitHub Actions steps)\n- Execution Time: '"$(date)"'\n- Event: ${{ github.event_name }}\n\n✅ Safe output testing in progress..."}' >> $GITHUB_AW_SAFE_OUTPUTS
+          echo '{"type": "add-comment", "body": "## Test Comment from Custom Engine\n\nThis comment was automatically posted by the test-safe-outputs-custom-engine workflow to validate the add-comment safe output functionality.\n\n**Test Information:**\n- Workflow: test-safe-outputs-custom-engine\n- Engine Type: Custom (GitHub Actions steps)\n- Execution Time: '"$(date)"'\n- Event: ${{ github.event_name }}\n\n✅ Safe output testing in progress..."}' >> $GITHUB_AW_SAFE_OUTPUTS
         env:
           GITHUB_AW_PROMPT: /tmp/aw-prompts/prompt.txt
           GITHUB_AW_SAFE_OUTPUTS: ${{ env.GITHUB_AW_SAFE_OUTPUTS }}
       - name: Generate Add Issue Labels Output
         run: |
-          echo '{"type": "add-issue-label", "labels": ["test-safe-outputs", "automation", "custom-engine"]}' >> $GITHUB_AW_SAFE_OUTPUTS
+          echo '{"type": "add-labels", "labels": ["test-safe-outputs", "automation", "custom-engine"]}' >> $GITHUB_AW_SAFE_OUTPUTS
         env:
           GITHUB_AW_PROMPT: /tmp/aw-prompts/prompt.txt
           GITHUB_AW_SAFE_OUTPUTS: ${{ env.GITHUB_AW_SAFE_OUTPUTS }}
@@ -738,7 +783,7 @@ jobs:
         uses: actions/github-script@v8
         env:
           GITHUB_AW_SAFE_OUTPUTS: ${{ env.GITHUB_AW_SAFE_OUTPUTS }}
-          GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"add-issue-comment\":{\"enabled\":true,\"target\":\"*\"},\"add-issue-label\":true,\"create-code-scanning-alert\":{\"enabled\":true,\"max\":5},\"create-discussion\":{\"enabled\":true,\"max\":1},\"create-issue\":true,\"create-pull-request\":true,\"create-pull-request-review-comment\":{\"enabled\":true,\"max\":1},\"missing-tool\":{\"enabled\":true,\"max\":5},\"push-to-pr-branch\":{\"enabled\":true,\"target\":\"*\"},\"update-issue\":true}"
+          GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"add-comment\":{\"enabled\":true,\"target\":\"*\"},\"add-labels\":true,\"create-code-scanning-alert\":{\"enabled\":true,\"max\":5},\"create-discussion\":{\"enabled\":true,\"max\":1},\"create-issue\":true,\"create-pull-request\":true,\"create-pull-request-review-comment\":{\"enabled\":true,\"max\":1},\"missing-tool\":{\"enabled\":true,\"max\":5},\"push-to-pr-branch\":{\"enabled\":true,\"target\":\"*\"},\"update-issue\":true}"
         with:
           script: |
             async function main() {
@@ -771,15 +816,17 @@ jobs:
                 let sanitized = content;
                 // Neutralize @mentions to prevent unintended notifications
                 sanitized = neutralizeMentions(sanitized);
+                // Remove ANSI escape sequences BEFORE removing control characters
+                sanitized = sanitized.replace(/\x1b\[[0-9;]*[mGKH]/g, "");
                 // Remove control characters (except newlines and tabs)
                 sanitized = sanitized.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
-                // XML character escaping
-                sanitized = sanitized
-                  .replace(/&/g, "&amp;") // Must be first to avoid double-escaping
-                  .replace(/</g, "&lt;")
-                  .replace(/>/g, "&gt;")
-                  .replace(/"/g, "&quot;")
-                  .replace(/'/g, "&apos;");
+                // // XML character escaping
+                // sanitized = sanitized
+                //   .replace(/&/g, "&amp;") // Must be first to avoid double-escaping
+                //   .replace(/</g, "&lt;")
+                //   .replace(/>/g, "&gt;")
+                //   .replace(/"/g, "&quot;")
+                //   .replace(/'/g, "&apos;");
                 // URI filtering - replace non-https protocols with "(redacted)"
                 sanitized = sanitizeUrlProtocols(sanitized);
                 // Domain filtering for HTTPS URIs
@@ -799,8 +846,7 @@ jobs:
                     lines.slice(0, maxLines).join("\n") +
                     "\n[Content truncated due to line count]";
                 }
-                // Remove ANSI escape sequences
-                sanitized = sanitized.replace(/\x1b\[[0-9;]*[mGKH]/g, "");
+                // ANSI escape sequences already removed earlier in the function
                 // Neutralize common bot trigger phrases
                 sanitized = neutralizeBotTriggers(sanitized);
                 // Trim excessive whitespace
@@ -812,10 +858,12 @@ jobs:
                  */
                 function sanitizeUrlDomains(s) {
                   return s.replace(
-                    /\bhttps:\/\/([^\/\s\])}'"<>&\x00-\x1f]+)/gi,
-                    (match, domain) => {
+                    /\bhttps:\/\/[^\s\])}'"<>&\x00-\x1f,;]+/gi,
+                    (match) => {
+                      // Extract just the URL part after https://
+                      const urlAfterProtocol = match.slice(8); // Remove 'https://'
                       // Extract the hostname part (before first slash, colon, or other delimiter)
-                      const hostname = domain.split(/[\/:\?#]/)[0].toLowerCase();
+                      const hostname = urlAfterProtocol.split(/[\/:\?#]/)[0].toLowerCase();
                       // Check if this domain or any parent domain is in the allowlist
                       const isAllowed = allowedDomains.some(allowedDomain => {
                         const normalizedAllowed = allowedDomain.toLowerCase();
@@ -834,9 +882,10 @@ jobs:
                  * @returns {string} The string with non-https protocols redacted
                  */
                 function sanitizeUrlProtocols(s) {
-                  // Match both protocol:// and protocol: patterns
+                  // Match protocol:// patterns (URLs) and standalone protocol: patterns that look like URLs
+                  // Avoid matching command line flags like -v:10 or z3 -memory:high
                   return s.replace(
-                    /\b(\w+):(?:\/\/)?[^\s\])}'"<>&\x00-\x1f]+/gi,
+                    /\b(\w+):\/\/[^\s\])}'"<>&\x00-\x1f]+/gi,
                     (match, protocol) => {
                       // Allow https (case insensitive), redact everything else
                       return protocol.toLowerCase() === "https" ? match : "(redacted)";
@@ -888,13 +937,13 @@ jobs:
                 switch (itemType) {
                   case "create-issue":
                     return 1; // Only one issue allowed
-                  case "add-issue-comment":
+                  case "add-comment":
                     return 1; // Only one comment allowed
                   case "create-pull-request":
                     return 1; // Only one pull request allowed
                   case "create-pull-request-review-comment":
                     return 10; // Default to 10 review comments allowed
-                  case "add-issue-label":
+                  case "add-labels":
                     return 5; // Only one labels operation allowed
                   case "update-issue":
                     return 1; // Only one issue update allowed
@@ -1109,10 +1158,10 @@ jobs:
                         );
                       }
                       break;
-                    case "add-issue-comment":
+                    case "add-comment":
                       if (!item.body || typeof item.body !== "string") {
                         errors.push(
-                          `Line ${i + 1}: add-issue-comment requires a 'body' string field`
+                          `Line ${i + 1}: add-comment requires a 'body' string field`
                         );
                         continue;
                       }
@@ -1147,10 +1196,10 @@ jobs:
                         );
                       }
                       break;
-                    case "add-issue-label":
+                    case "add-labels":
                       if (!item.labels || !Array.isArray(item.labels)) {
                         errors.push(
-                          `Line ${i + 1}: add-issue-label requires a 'labels' array field`
+                          `Line ${i + 1}: add-labels requires a 'labels' array field`
                         );
                         continue;
                       }
@@ -1160,7 +1209,7 @@ jobs:
                         )
                       ) {
                         errors.push(
-                          `Line ${i + 1}: add-issue-label labels array must contain only strings`
+                          `Line ${i + 1}: add-labels labels array must contain only strings`
                         );
                         continue;
                       }
@@ -2188,11 +2237,11 @@ jobs:
       pull-requests: write
     timeout-minutes: 10
     outputs:
-      comment_id: ${{ steps.create_comment.outputs.comment_id }}
-      comment_url: ${{ steps.create_comment.outputs.comment_url }}
+      comment_id: ${{ steps.add_comment.outputs.comment_id }}
+      comment_url: ${{ steps.add_comment.outputs.comment_url }}
     steps:
       - name: Add Issue Comment
-        id: create_comment
+        id: add_comment
         uses: actions/github-script@v8
         env:
           GITHUB_AW_AGENT_OUTPUT: ${{ needs.test-safe-outputs-custom-engine.outputs.output }}
@@ -2227,15 +2276,15 @@ jobs:
                 core.info("No valid items found in agent output");
                 return;
               }
-              // Find all add-issue-comment items
+              // Find all add-comment items
               const commentItems = validatedOutput.items.filter(
-                /** @param {any} item */ item => item.type === "add-issue-comment"
+                /** @param {any} item */ item => item.type === "add-comment"
               );
               if (commentItems.length === 0) {
-                core.info("No add-issue-comment items found in agent output");
+                core.info("No add-comment items found in agent output");
                 return;
               }
-              core.info(`Found ${commentItems.length} add-issue-comment item(s)`);
+              core.info(`Found ${commentItems.length} add-comment item(s)`);
               // If in staged mode, emit step summary instead of creating comments
               if (isStaged) {
                 let summaryContent = "## 🎭 Staged Mode: Add Comments Preview\n\n";
@@ -2279,7 +2328,7 @@ jobs:
               for (let i = 0; i < commentItems.length; i++) {
                 const commentItem = commentItems[i];
                 core.info(
-                  `Processing add-issue-comment item ${i + 1}/${commentItems.length}: bodyLength=${commentItem.body.length}`
+                  `Processing add-comment item ${i + 1}/${commentItems.length}: bodyLength=${commentItem.body.length}`
                 );
                 // Determine the issue/PR number and comment endpoint for this comment
                 let issueNumber;
@@ -3327,16 +3376,16 @@ jobs:
                 core.warning("No valid items found in agent output");
                 return;
               }
-              // Find the add-issue-label item
+              // Find the add-labels item
               const labelsItem = validatedOutput.items.find(
-                /** @param {any} item */ item => item.type === "add-issue-label"
+                /** @param {any} item */ item => item.type === "add-labels"
               );
               if (!labelsItem) {
-                core.warning("No add-issue-label item found in agent output");
+                core.warning("No add-labels item found in agent output");
                 return;
               }
               core.debug(
-                `Found add-issue-label item with ${labelsItem.labels.length} labels`
+                `Found add-labels item with ${labelsItem.labels.length} labels`
               );
               // If in staged mode, emit step summary instead of adding labels
               if (process.env.GITHUB_AW_SAFE_OUTPUTS_STAGED === "true") {

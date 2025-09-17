@@ -170,10 +170,10 @@ get_workflow_dispatch_tests() {
 }
 
 get_issue_triggered_tests() {
-    echo "test-claude-add-issue-comment"
-    echo "test-claude-add-issue-labels"
-    echo "test-codex-add-issue-comment" 
-    echo "test-codex-add-issue-labels"
+    echo "test-claude-add-comment"
+    echo "test-claude-add-labels"
+    echo "test-codex-add-comment" 
+    echo "test-codex-add-labels"
     echo "test-claude-update-issue"
     echo "test-codex-update-issue"
 }
@@ -586,10 +586,10 @@ validate_issue_created() {
     
     if [[ -n "$issue_number" ]]; then
         if [[ -n "$expected_labels" ]]; then
-            local issue_labels=$(gh issue view "$issue_number" --json labels --jq '.labels[].name' | tr '\n' ',' | sed 's/,$//')
+            local labels=$(gh issue view "$issue_number" --json labels --jq '.labels[].name' | tr '\n' ',' | sed 's/,$//')
             for label in ${expected_labels//,/ }; do
-                if [[ "$issue_labels" != *"$label"* ]]; then
-                    error "Issue #$issue_number missing expected label: '$label'. Actual labels: '$issue_labels'"
+                if [[ "$labels" != *"$label"* ]]; then
+                    error "Issue #$issue_number missing expected label: '$label'. Actual labels: '$labels'"
                     return 1
                 fi
             done
@@ -602,7 +602,7 @@ validate_issue_created() {
     fi
 }
 
-validate_issue_comment() {
+validate_comment() {
     local issue_number="$1"
     local expected_comment_text="$2"
     
@@ -617,7 +617,7 @@ validate_issue_comment() {
     fi
 }
 
-validate_issue_labels() {
+validate_labels() {
     local issue_number="$1"
     local expected_label="$2"
     
@@ -787,7 +787,7 @@ validate_pr_reviews() {
 }
 
 # Polling functions for workflow validation
-wait_for_issue_comment() {
+wait_for_comment() {
     local issue_number="$1"
     local expected_text="$2"
     local test_name="$3"
@@ -795,7 +795,7 @@ wait_for_issue_comment() {
     local waited=0
     
     while [[ $waited -lt $max_wait ]]; do
-        if validate_issue_comment "$issue_number" "$expected_text"; then
+        if validate_comment "$issue_number" "$expected_text"; then
             PASSED_TESTS+=("$test_name")
             return 0
         fi
@@ -808,7 +808,7 @@ wait_for_issue_comment() {
     return 1
 }
 
-wait_for_issue_labels() {
+wait_for_labels() {
     local issue_number="$1"
     local expected_label="$2"
     local test_name="$3"
@@ -816,7 +816,7 @@ wait_for_issue_labels() {
     local waited=0
     
     while [[ $waited -lt $max_wait ]]; do
-        if validate_issue_labels "$issue_number" "$expected_label"; then
+        if validate_labels "$issue_number" "$expected_label"; then
             PASSED_TESTS+=("$test_name")
             return 0
         fi
@@ -858,7 +858,7 @@ wait_for_command_comment() {
     local waited=0
     
     while [[ $waited -lt $max_wait ]]; do
-        if validate_issue_comment "$issue_number" "$expected_text"; then
+        if validate_comment "$issue_number" "$expected_text"; then
             PASSED_TESTS+=("$test_name")
             return 0
         fi
@@ -1067,11 +1067,11 @@ run_issue_triggered_tests() {
                     # Run the appropriate test based on workflow type
                     # Note: wait_for_* functions handle their own success/failure tracking
                     case "$workflow" in
-                        *"add-issue-comment")
-                            wait_for_issue_comment "$issue_num" "Reply from $ai_display_name" "$workflow" || true
+                        *"add-comment")
+                            wait_for_comment "$issue_num" "Reply from $ai_display_name" "$workflow" || true
                             ;;
-                        *"add-issue-labels")
-                            wait_for_issue_labels "$issue_num" "${ai_type}-safe-output-label-test" "$workflow" || true
+                        *"add-labels")
+                            wait_for_labels "$issue_num" "${ai_type}-safe-output-label-test" "$workflow" || true
                             ;;
                         *"update-issue")
                             wait_for_issue_update "$issue_num" "$ai_display_name" "$workflow" || true

@@ -8,7 +8,7 @@ engine:
   id: claude
 
 safe-outputs:
-  add-issue-comment:
+  add-comment:
   missing-tool:
 ---
 
