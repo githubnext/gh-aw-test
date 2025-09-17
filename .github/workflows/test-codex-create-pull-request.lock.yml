@@ -2151,6 +2151,8 @@ jobs:
           else
             INITIAL_SHA="$GITHUB_SHA"
           fi
+          echo "Event name: $GITHUB_EVENT_NAME"
+          echo "SHA: $GITHUB_SHA"
           echo "Base commit SHA: $INITIAL_SHA"
           
           # If we have a branch name, check if that branch exists and get its diff
