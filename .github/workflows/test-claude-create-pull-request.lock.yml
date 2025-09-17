@@ -2345,8 +2345,6 @@ jobs:
         if: always()
         env:
           GITHUB_AW_SAFE_OUTPUTS: ${{ env.GITHUB_AW_SAFE_OUTPUTS }}
-          GITHUB_EVENT_NAME: ${{ github.event_name }}
-          GITHUB_BASE_REF: ${{ github.event.pull_request.base.ref }}
           GITHUB_SHA: ${{ github.sha }}
         run: |
           # Check current git status
@@ -2383,12 +2381,7 @@ jobs:
           fi
           
           # Get the initial commit SHA from the base branch of the pull request
-          if [ "$GITHUB_EVENT_NAME" = "pull_request" ] || [ "$GITHUB_EVENT_NAME" = "pull_request_review_comment" ]; then
-            INITIAL_SHA="$GITHUB_BASE_REF"
-          else
-            INITIAL_SHA="$GITHUB_SHA"
-          fi
-          echo "Event name: $GITHUB_EVENT_NAME"
+          INITIAL_SHA="$GITHUB_SHA"
           echo "SHA: $GITHUB_SHA"
           echo "Base commit SHA: $INITIAL_SHA"
           
