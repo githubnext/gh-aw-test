@@ -17,6 +17,8 @@ This test workflow specifically tests multi-commit functionality in push-to-pr-b
 
 **IMPORTANT: Create multiple separate commits for this test case**
 
+0. Checkout the branch for the pull request #${github.event.pull_request.number}
+
 1. **First commit**: Create a file called "README-codex-test.md" with:
    ```markdown
    # Codex Push-to-Branch Multi-Commit Test
