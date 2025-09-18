@@ -2385,11 +2385,6 @@ jobs:
             echo "No branch found, no patch generation"
           fi
           
-          # Get the initial commit SHA from the base branch of the pull request
-          INITIAL_SHA="$GITHUB_SHA"
-          echo "SHA: $GITHUB_SHA"
-          echo "Base commit SHA: $INITIAL_SHA"
-          
           # If we have a branch name, check if that branch exists and get its diff
           if [ -n "$BRANCH_NAME" ]; then
             echo "Looking for branch: $BRANCH_NAME"
