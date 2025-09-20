@@ -27,22 +27,22 @@ jobs:
           gh auth status
       - name: Run e2e tests and publish output to job summary
         env:
-          GITHUB_STEP_SUMMARY: ${{ github.step_summary }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        timeout-minutes: 30
         run: |
           set -o pipefail
           chmod +x ./e2e.sh
 
-          # Run the e2e script, capture all output
+          # Run the e2e script, tee output to both stdout and log, capture exit code
           set +e
-          ./e2e.sh > e2e-output.log 2>&1
-          rc=$?
+          ./e2e.sh 2>&1 | tee e2e-output.log
+          rc=${PIPESTATUS[0]}
           set -e
 
           echo "\n## E2E test run output" >> "$GITHUB_STEP_SUMMARY"
-          echo '```bash' >> "$GITHUB_STEP_SUMMARY"
+          echo '``````bash' >> "$GITHUB_STEP_SUMMARY"
           sed -n '1,50000p' e2e-output.log >> "$GITHUB_STEP_SUMMARY" || true
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo '``````' >> "$GITHUB_STEP_SUMMARY"
 
           echo "Detailed log attached as artifact: e2e-output.log"
 
@@ -51,7 +51,6 @@ jobs:
             echo "E2E script failed with exit code $rc"
             exit $rc
           fi
-
       - name: Upload e2e log artifact
         if: always()
         uses: actions/upload-artifact@v4
