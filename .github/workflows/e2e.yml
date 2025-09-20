@@ -9,10 +9,10 @@ on:
       - '.github/workflows/e2e.yml'
 
 permissions:
-  contents: read
+  contents: write
   issues: write
   pull-requests: write
-  actions: read
+  actions: write
 
 jobs:
   e2e:
