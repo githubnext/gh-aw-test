@@ -17,19 +17,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Ensure gh is available
-        run: |
-          gh --version
-
-      - name: Authenticate gh CLI using GITHUB_TOKEN
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          echo "Authenticating gh CLI..."
-          echo "$GITHUB_TOKEN" | gh auth login --with-token
-          gh auth status
-
       - name: Run e2e tests and publish output to job summary
         env:
           GITHUB_STEP_SUMMARY: ${{ github.step_summary }}
