@@ -37,23 +37,26 @@ jobs:
           set -o pipefail
           chmod +x ./e2e.sh
 
-          # Run the e2e script, tee output to both stdout and log, capture exit code
+          # Run the e2e script, tee output to both stdout and log file, capture exit code
+          # Using set +e to prevent immediate exit on script failure so we can capture exit code
           set +e
           ./e2e.sh 2>&1 | tee e2e-output.log
-          rc=${PIPESTATUS[0]}
+          script_exit_code=${PIPESTATUS[0]}
           set -e
 
-          echo "\n## E2E test run output" >> "$GITHUB_STEP_SUMMARY"
-          echo '``````bash' >> "$GITHUB_STEP_SUMMARY"
+          echo -e "\n## E2E test run output" >> "$GITHUB_STEP_SUMMARY"
+          echo '```bash' >> "$GITHUB_STEP_SUMMARY"
           sed -n '1,50000p' e2e-output.log >> "$GITHUB_STEP_SUMMARY" || true
-          echo '``````' >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
 
           echo "Detailed log attached as artifact: e2e-output.log"
 
-          # Fail the job if the script exited non-zero so GH shows failure status
-          if [[ $rc -ne 0 ]]; then
-            echo "E2E script failed with exit code $rc"
-            exit $rc
+          # Exit with the same code as the e2e script to preserve test result status
+          if [[ $script_exit_code -ne 0 ]]; then
+            echo "E2E script failed with exit code $script_exit_code"
+            exit $script_exit_code
+          else
+            echo "E2E script completed successfully"
           fi
       - name: Upload e2e log artifact
         if: always()
