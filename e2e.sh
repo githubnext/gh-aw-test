@@ -258,7 +258,7 @@ check_prerequisites() {
 
         local clone_dir="./gh-aw-src"
 
-        if [[ -d "$clone_dir" ]]; then
+        if [[ -d "$clone_dir" && -n "$(ls -A "$clone_dir" 2>/dev/null)" ]]; then
             info "Using existing directory $clone_dir to build gh-aw"
         else
             info "Cloning https://github.com/githubnext/gh-aw (main branch) into $clone_dir"
