@@ -1021,6 +1021,14 @@ run_issue_triggered_tests() {
         local ai_display_name="${ai_type^}"
         
         if [[ -n "$ai_type" ]]; then
+            # Ensure the compiled workflow file exists before proceeding
+            local workflow_file_path=".github/workflows/${workflow}.lock.yml"
+            if [[ ! -f "$workflow_file_path" ]]; then
+                error "Workflow file not found for '$workflow' at $workflow_file_path; marking as failed"
+                FAILED_TESTS+=("$workflow")
+                continue
+            fi
+
             # Try to enable the workflow - handle failures gracefully
             local enable_success=false
             if enable_workflow "$workflow"; then
