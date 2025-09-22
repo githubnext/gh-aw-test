@@ -432,6 +432,8 @@ trigger_workflow_dispatch_and_await_completion() {
     info "Triggering workflow_dispatch for '$workflow_name'..."
     
     # Enable the workflow first
+    # NOTE: This must return early only when enabling fails. A prior bug
+    # inverted this condition causing immediate failure even when enable succeeded.
     if ! enable_workflow "$workflow_name"; then
         return 1
     fi
