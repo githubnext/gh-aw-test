@@ -68,6 +68,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh auth status
+      - name: List files for debugging
+        run: |
+          ls -la
+          pwd
       - name: Run e2e tests and publish output to job summary
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
