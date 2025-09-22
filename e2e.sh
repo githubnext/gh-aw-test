@@ -431,7 +431,7 @@ trigger_workflow_dispatch_and_await_completion() {
     info "Triggering workflow_dispatch for '$workflow_name'..."
     
     # Enable the workflow first
-    if ! enable_workflow "$workflow_name"; then
+    if enable_workflow "$workflow_name"; then
         return 1
     fi
     
