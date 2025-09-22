@@ -170,10 +170,10 @@ get_workflow_dispatch_tests() {
 }
 
 get_issue_triggered_tests() {
-    echo "test-claude-add-comment"
-    echo "test-claude-add-labels"
-    echo "test-codex-add-comment" 
-    echo "test-codex-add-labels"
+    echo "test-claude-add-issue-comment"
+    echo "test-claude-add-issue-labels"
+    echo "test-codex-add-issue-comment"
+    echo "test-codex-add-issue-labels"
     echo "test-claude-update-issue"
     echo "test-codex-update-issue"
 }
