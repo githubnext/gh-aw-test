@@ -913,33 +913,6 @@ wait_for_pr_reviews() {
     return 1
 }
 
-cleanup_test_resources() {
-    info "Cleaning up test resources..."
-        
-    # Close all issues
-    gh issue list --limit 20 --json number --jq '.[].number' | while read -r issue_num; do
-        if [[ -n "$issue_num" ]]; then
-            gh issue close "$issue_num" --comment "Closed by e2e test cleanup" &>/dev/null || true
-        fi
-    done
-    
-    # Close all PRs
-    gh pr list --limit 20 --json number --jq '.[].number' | while read -r pr_num; do
-        if [[ -n "$pr_num" ]]; then
-            gh pr close "$pr_num" --comment "Closed by e2e test cleanup" &>/dev/null || true
-        fi
-    done
-
-    # Delete test branches
-    git branch -r | grep 'origin/test-pr-\|origin/claude-test-branch\|origin/codex-test-branch' | sed 's/origin\///' | while read -r branch; do
-        if [[ -n "$branch" ]]; then
-            git push origin --delete "$branch" &>/dev/null || true
-        fi
-    done
-    
-    success "Cleanup completed"
-}
-
 run_workflow_dispatch_tests() {
     local patterns=("$@")
     info "🚀 Running workflow_dispatch tests..."
@@ -1375,12 +1348,6 @@ main() {
     log "Starting e2e tests at $(date)"
     
     check_prerequisites
-    
-    if [[ "$dry_run" == true ]]; then
-        info "Dry run mode - skipping cleanup of test resources"
-    else
-        cleanup_test_resources
-    fi
 
     # If specific tests are provided, determine which test suites need to run
     if [[ ${#specific_tests[@]} -gt 0 ]]; then
