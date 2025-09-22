@@ -270,7 +270,7 @@ check_prerequisites() {
 
         info "Building gh-aw in $clone_dir (this may take a moment)"
         # Build inside clone_dir and log output to the main log file
-        if (cd "$clone_dir" && make build &>> "../$LOG_FILE"); then
+        if (cd "$clone_dir" && make deps-dev && make build &>> "../$LOG_FILE"); then
             info "Build completed in $clone_dir"
             if [[ -f "$clone_dir/gh-aw" ]]; then
                 ln -sf "$clone_dir/gh-aw" ./gh-aw
