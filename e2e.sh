@@ -1268,11 +1268,32 @@ main() {
                 dry_run=true
                 shift
                 ;;
+            --workflow-dispatch-only)
+                run_workflow_dispatch=true
+                run_issue_triggered=false
+                run_command_triggered=false
+                shift
+                ;;
+            --issue-triggered-only)
+                run_workflow_dispatch=false
+                run_issue_triggered=true
+                run_command_triggered=false
+                shift
+                ;;
+            --command-triggered-only)
+                run_workflow_dispatch=false
+                run_issue_triggered=false
+                run_command_triggered=true
+                shift
+                ;;
             --help|-h)
                 echo "Usage: $0 [OPTIONS] [TEST_PATTERNS...]"
                 echo ""
                 echo "Options:"
                 echo "  --dry-run, -n              Show what would be tested without running"
+                echo "  --workflow-dispatch-only   Run only workflow dispatch tests"
+                echo "  --issue-triggered-only     Run only issue-triggered tests"
+                echo "  --command-triggered-only   Run only command-triggered tests"
                 echo "  --help, -h                 Show this help message"
                 echo ""
                 echo "TEST_PATTERNS:"

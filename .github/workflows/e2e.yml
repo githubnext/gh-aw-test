@@ -17,6 +17,20 @@ permissions:
 jobs:
   e2e:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        test-suite:
+          - name: "workflow-dispatch"
+            option: "--workflow-dispatch-only"
+            description: "Direct workflow triggers"
+          - name: "issue-triggered"
+            option: "--issue-triggered-only"
+            description: "Tests via issue creation"
+          - name: "command-triggered"
+            option: "--command-triggered-only"
+            description: "Tests via comments"
+      fail-fast: false
+    name: "E2E Tests: ${{ matrix.test-suite.description }}"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -39,16 +53,16 @@ jobs:
 
           # Run the e2e script, tee output to both stdout and log, capture exit code
           set +e
-          ./e2e.sh 2>&1 | tee e2e-output.log
+          ./e2e.sh ${{ matrix.test-suite.option }} 2>&1 | tee e2e-output.log
           rc=${PIPESTATUS[0]}
           set -e
 
-          echo "\n## E2E test run output" >> "$GITHUB_STEP_SUMMARY"
+          echo "\n## E2E test run output (${{ matrix.test-suite.description }})" >> "$GITHUB_STEP_SUMMARY"
           echo '``````bash' >> "$GITHUB_STEP_SUMMARY"
           sed -n '1,50000p' e2e-output.log >> "$GITHUB_STEP_SUMMARY" || true
           echo '``````' >> "$GITHUB_STEP_SUMMARY"
 
-          echo "Detailed log attached as artifact: e2e-output.log"
+          echo "Detailed log attached as artifact: e2e-output-${{ matrix.test-suite.name }}.log"
 
           # Fail the job if the script exited non-zero so GH shows failure status
           if [[ $rc -ne 0 ]]; then
@@ -59,5 +73,5 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: e2e-output-log
+          name: e2e-output-${{ matrix.test-suite.name }}-log
           path: e2e-output.log
