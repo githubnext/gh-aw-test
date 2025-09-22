@@ -398,11 +398,13 @@ enable_workflow() {
     local workflow_name="$1"
     
     info "Enabling workflow '$workflow_name'..."
-    if ./gh-aw enable "$workflow_name" &>> "$LOG_FILE"; then
+    ./gh-aw enable "$workflow_name" &>> "$LOG_FILE"
+    local rc=$?
+    if [[ $rc -eq 0 ]]; then
         success "Successfully enabled '$workflow_name'"
         return 0
     else
-        error "Failed to enable '$workflow_name'"
+        error "Failed to enable '$workflow_name' (exit code: $rc)"
         return 1
     fi
 }
@@ -411,11 +413,13 @@ disable_workflow() {
     local workflow_name="$1"
     
     info "Disabling workflow '$workflow_name'..."
-    if ./gh-aw disable "$workflow_name" &>> "$LOG_FILE"; then
+    ./gh-aw disable "$workflow_name" &>> "$LOG_FILE"
+    local rc=$?
+    if [[ $rc -eq 0 ]]; then
         success "Successfully disabled '$workflow_name'"
         return 0
     else
-        warning "Failed to disable '$workflow_name' (may already be disabled)"
+        warning "Failed to disable '$workflow_name' (exit code: $rc; may already be disabled)"
         return 0  # Don't fail the test if disable fails
     fi
 }
