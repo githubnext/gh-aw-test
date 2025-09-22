@@ -399,7 +399,7 @@ enable_workflow() {
     
     info "Enabling workflow '$workflow_name'..."
     # Pipe output through tee but ensure the function sees gh-aw's exit code
-    ( ./gh-aw enable "$workflow_name" 2>&1 | tee -a "$LOG_FILE"; exit ${PIPESTATUS[0]} )
+    ./gh-aw enable "$workflow_name"
     local rc=$?
     if [[ $rc -eq 0 ]]; then
         success "Successfully enabled '$workflow_name'"
