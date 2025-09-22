@@ -55,6 +55,7 @@ jobs:
             option: "--command-triggered-only"
             description: "Tests via comments"
       fail-fast: false
+    if: ${{ !(github.event_name == 'schedule' && (matrix.test-suite.name == 'issue-triggered' || matrix.test-suite.name == 'command-triggered')) }}
     name: "E2E Tests: ${{ matrix.test-suite.description }}"
     steps:
       - name: Checkout
