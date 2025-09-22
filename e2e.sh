@@ -162,7 +162,7 @@ get_workflow_dispatch_tests() {
     echo "test-claude-create-pull-request"
     echo "test-codex-create-pull-request"
     echo "test-claude-create-code-scanning-alert"
-    echo "test-codex-create-code-scanning-alert"
+    echo "test-codex-create-repository-security-advisory"
     echo "test-claude-mcp"
     echo "test-codex-mcp"
     echo "test-claude-multi"
