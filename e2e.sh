@@ -22,11 +22,13 @@
 #
 # Options:
 #   --dry-run                  Show what would be tested without running
+#   --clean                    Enable cleanup of test resources (default: false)
 #   --help, -h                 Show help message
 #
 # Examples:
 #   ./e2e.sh                               # Run all tests
 #   ./e2e.sh --dry-run                     # See what would be tested
+#   ./e2e.sh --clean                       # Run tests and clean up resources
 #
 # Prerequisites:
 #   - GitHub CLI (gh) installed and authenticated
@@ -915,29 +917,50 @@ wait_for_pr_reviews() {
 
 cleanup_test_resources() {
     info "Cleaning up test resources..."
+    local issues_closed=0
+    local prs_closed=0
+    local branches_deleted=0
         
     # Close all issues
-    gh issue list --limit 20 --json number --jq '.[].number' | while read -r issue_num; do
+    info "Checking for open issues to close..."
+    while read -r issue_num; do
         if [[ -n "$issue_num" ]]; then
-            gh issue close "$issue_num" --comment "Closed by e2e test cleanup" &>/dev/null || true
+            if gh issue close "$issue_num" --comment "Closed by e2e test cleanup" &>/dev/null; then
+                info "Closed issue #$issue_num"
+                ((issues_closed++))
+            else
+                warning "Failed to close issue #$issue_num"
+            fi
         fi
-    done
+    done < <(gh issue list --limit 20 --json number --jq '.[].number' 2>/dev/null || true)
     
     # Close all PRs
-    gh pr list --limit 20 --json number --jq '.[].number' | while read -r pr_num; do
+    info "Checking for open pull requests to close..."
+    while read -r pr_num; do
         if [[ -n "$pr_num" ]]; then
-            gh pr close "$pr_num" --comment "Closed by e2e test cleanup" &>/dev/null || true
+            if gh pr close "$pr_num" --comment "Closed by e2e test cleanup" &>/dev/null; then
+                info "Closed pull request #$pr_num"
+                ((prs_closed++))
+            else
+                warning "Failed to close pull request #$pr_num"
+            fi
         fi
-    done
+    done < <(gh pr list --limit 20 --json number --jq '.[].number' 2>/dev/null || true)
 
     # Delete test branches
-    git branch -r | grep 'origin/test-pr-\|origin/claude-test-branch\|origin/codex-test-branch' | sed 's/origin\///' | while read -r branch; do
+    info "Checking for test branches to delete..."
+    while read -r branch; do
         if [[ -n "$branch" ]]; then
-            git push origin --delete "$branch" &>/dev/null || true
+            if git push origin --delete "$branch" &>/dev/null; then
+                info "Deleted branch: $branch"
+                ((branches_deleted++))
+            else
+                warning "Failed to delete branch: $branch"
+            fi
         fi
-    done
+    done < <(git branch -r 2>/dev/null | grep 'origin/test-pr-\|origin/claude-test-branch\|origin/codex-test-branch' | sed 's/origin\///' || true)
     
-    success "Cleanup completed"
+    success "Cleanup completed: $issues_closed issues closed, $prs_closed PRs closed, $branches_deleted branches deleted"
 }
 
 run_workflow_dispatch_tests() {
@@ -1260,12 +1283,17 @@ main() {
     local run_issue_triggered=true
     local run_command_triggered=true
     local dry_run=false
+    local clean_resources=false
     local specific_tests=()
     
     while [[ $# -gt 0 ]]; do
         case $1 in
             --dry-run|-n)
                 dry_run=true
+                shift
+                ;;
+            --clean)
+                clean_resources=true
                 shift
                 ;;
             --workflow-dispatch-only)
@@ -1291,6 +1319,7 @@ main() {
                 echo ""
                 echo "Options:"
                 echo "  --dry-run, -n              Show what would be tested without running"
+                echo "  --clean                    Enable cleanup of test resources (default: false)"
                 echo "  --workflow-dispatch-only   Run only workflow dispatch tests"
                 echo "  --issue-triggered-only     Run only issue-triggered tests"
                 echo "  --command-triggered-only   Run only command-triggered tests"
@@ -1378,8 +1407,11 @@ main() {
     
     if [[ "$dry_run" == true ]]; then
         info "Dry run mode - skipping cleanup of test resources"
-    else
+    elif [[ "$clean_resources" == true ]]; then
+        info "Cleanup enabled - running cleanup of test resources"
         cleanup_test_resources
+    else
+        info "Cleanup disabled - skipping cleanup of test resources (use --clean to enable)"
     fi
 
     # If specific tests are provided, determine which test suites need to run
