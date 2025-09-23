@@ -181,8 +181,8 @@ get_issue_triggered_tests() {
 get_command_triggered_tests() {
     echo "test-claude-command"
     echo "test-codex-command"
-    echo "test-claude-push-to-pr-branch"
-    echo "test-codex-push-to-pr-branch"
+    echo "test-claude-push-to-pull-request-branch"
+    echo "test-codex-push-to-pull-request-branch"
     echo "test-claude-create-pull-request-review-comment"
     echo "test-codex-create-pull-request-review-comment"
 }
@@ -302,7 +302,7 @@ check_prerequisites() {
     fi
 
     # Run "gh-aw compile"
-    if ! ./gh-aw compile &>> "$LOG_FILE"; then
+    if ! ./gh-aw compile 2>&1 | tee -a "$LOG_FILE"; then
         error "'gh-aw compile' failed. Check $LOG_FILE for details"
         exit 1
     fi
@@ -1119,8 +1119,8 @@ run_command_tests() {
             if [[ "$enable_success" == true ]]; then
                 # Different handling for different workflow types
                 case "$workflow" in
-                    *"push-to-pr-branch")
-                        # For push-to-pr-branch workflows, create a test PR instead of an issue
+                    *"push-to-pull-request-branch")
+                        # For push-to-pull-request-branch workflows, create a test PR instead of an issue
                         progress "Testing $workflow"
                         local pr_info=$(create_test_pr_with_branch "Test PR for $ai_display_name Push-to-Branch" "This PR is for testing $workflow")
                         
@@ -1128,8 +1128,8 @@ run_command_tests() {
                             IFS=',' read -r pr_num branch_name after_commit_sha <<< "$pr_info"
                             success "Created test PR #$pr_num for $workflow with branch '$branch_name': https://github.com/$REPO_OWNER/$REPO_NAME/pull/$pr_num"
                             
-                            progress "Testing $ai_display_name push-to-pr-branch workflow"
-                            post_pr_command "$pr_num" "/test-${ai_type}-push-to-pr-branch"
+                            progress "Testing $ai_display_name push-to-pull-request-branch workflow"
+                            post_pr_command "$pr_num" "/test-${ai_type}-push-to-pull-request-branch"
                             wait_for_branch_update "$branch_name" "$after_commit_sha" "$workflow" || true
                         else
                             error "Failed to create test PR for $workflow"
