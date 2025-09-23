@@ -2,6 +2,8 @@
 
 End-to-end tests for GitHub Agentic Workflows (gh-aw). Tests AI-powered workflows that automatically create issues, pull requests, and comments.
 
+[![E2E Tests](https://github.com/githubnext/gh-aw-test/actions/workflows/e2e.yml/badge.svg)](https://github.com/githubnext/gh-aw-test/actions/workflows/e2e.yml)
+
 ## Quick Start
 
 1. **Prerequisites**: [GitHub CLI](https://cli.github.com/), Git, authenticated GitHub account

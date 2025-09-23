@@ -48,12 +48,9 @@ jobs:
       - name: Plan
         id: plan
         run: |
-          # Set testsuites output based on event type
-          if [[ "${{ github.event_name }}" == "schedule" ]]; then
-            echo 'testsuites=["--workflow-dispatch-only"]' >> "$GITHUB_OUTPUT"
-          else
-            echo 'testsuites=["--issue-triggered-only", "--command-triggered-only", "--workflow-dispatch-only"]' >> "$GITHUB_OUTPUT"
-          fi
+          # trigered test suites do not work since issues/comments created from actions
+          # do not trigger actions
+          echo 'testsuites=["--workflow-dispatch-only"]' >> "$GITHUB_OUTPUT"
   e2e:
     runs-on: ubuntu-latest
     needs: clean
