@@ -11,13 +11,12 @@ safe-outputs:
 
 network: {}
 
-tools:
+mcp-servers:
   time:
-    mcp:
-      type: stdio
-      container: "mcp/time"
-      env:
-        LOCAL_TIMEZONE: "${LOCAL_TIMEZONE}"
+    type: stdio
+    container: "mcp/time"
+    env:
+      LOCAL_TIMEZONE: "${LOCAL_TIMEZONE}"
     allowed: ["get_current_time"]
 ---
 
