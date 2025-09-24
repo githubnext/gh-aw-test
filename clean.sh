@@ -11,7 +11,7 @@
 # 3. Delete test branches matching specific patterns
 # 4. Provide detailed logging of all cleanup operations
 
-set -uo pipefail
+set -euo pipefail
 
 # Colors for output
 RED='\033[0;31m'
@@ -100,6 +100,36 @@ main() {
     echo
     
     log "Starting cleanup at $(date)"
+
+    # Remove build artifacts (source staging dir & compiled binaries) before doing anything else
+    # Assumptions:
+    # - The working directory is the repo root
+    # - The compiled binary is named 'gh-aw' at repo root (and potentially under gh-aw-src during dev)
+    # - The user wants gh-aw-src fully removed (will be recreated by future build steps)
+    if [[ -d ./gh-aw-src ]]; then
+        info "Removing ./gh-aw-src directory"
+        rm -rf ./gh-aw-src || warning "Failed to remove ./gh-aw-src"
+    else
+        info "No ./gh-aw-src directory to remove"
+    fi
+
+    for bin in ./gh-aw ./gh-aw-src/gh-aw; do
+        if [[ -f "$bin" || -L "$bin" ]]; then
+            info "Removing compiled binary $bin"
+            rm -f "$bin" || warning "Failed to remove $bin"
+        fi
+    done
+
+    # Remove e2e test log files
+    if compgen -G "e2e-test-*.log" > /dev/null; then
+        info "Removing e2e test log files"
+        for logf in e2e-test-*.log; do
+            info "Deleting $logf"
+            rm -f "$logf" || warning "Failed to delete $logf"
+        done
+    else
+        info "No e2e test log files to remove"
+    fi
     
     # Check if gh CLI is available and authenticated
     if ! command -v gh &> /dev/null; then
