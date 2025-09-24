@@ -11,8 +11,6 @@
 # 3. Delete test branches matching specific patterns
 # 4. Provide detailed logging of all cleanup operations
 
-set -euo pipefail
-
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -130,6 +128,20 @@ main() {
     else
         info "No e2e test log files to remove"
     fi
+
+    # Remove old cleanup logs (but keep the current run's log)
+    if compgen -G "cleanup-*" > /dev/null; then
+        info "Removing old cleanup log files"
+        for clog in cleanup-*; do
+            if [[ "$clog" == "$LOG_FILE" ]]; then
+                continue
+            fi
+            info "Deleting $clog"
+            rm -f "$clog" || warning "Failed to delete $clog"
+        done
+    else
+        info "No prior cleanup-* log files to remove"
+    fi
     
     # Check if gh CLI is available and authenticated
     if ! command -v gh &> /dev/null; then
@@ -146,6 +158,7 @@ main() {
     
     echo
     echo -e "${CYAN}📄 Log file: $LOG_FILE${NC}"
+    exit 0
 }
 
 # Run main function
