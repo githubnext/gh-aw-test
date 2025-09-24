@@ -165,7 +165,7 @@ jobs:
             }
             await main();
 
-  test-codex-code-scanning-alert:
+  agent:
     runs-on: ubuntu-latest
     permissions: read-all
     outputs:
@@ -846,7 +846,7 @@ jobs:
         env:
           GITHUB_AW_SAFE_OUTPUTS: ${{ env.GITHUB_AW_SAFE_OUTPUTS }}
         run: |
-          echo "## Agent Output (JSONL)" >> $GITHUB_STEP_SUMMARY
+          echo "## Safe Outputs (JSONL)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo '``````json' >> $GITHUB_STEP_SUMMARY
           if [ -f ${{ env.GITHUB_AW_SAFE_OUTPUTS }} ]; then
@@ -1833,7 +1833,7 @@ jobs:
             }
 
   create_code_scanning_alert:
-    needs: test-codex-code-scanning-alert
+    needs: agent
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -1850,7 +1850,7 @@ jobs:
         id: create_code_scanning_alert
         uses: actions/github-script@v8
         env:
-          GITHUB_AW_AGENT_OUTPUT: ${{ needs.test-codex-code-scanning-alert.outputs.output }}
+          GITHUB_AW_AGENT_OUTPUT: ${{ needs.agent.outputs.output }}
           GITHUB_AW_SECURITY_REPORT_MAX: 10
           GITHUB_AW_SECURITY_REPORT_DRIVER: Test Codex Code Scanning Alert
           GITHUB_AW_WORKFLOW_FILENAME: test-codex-create-repository-security-advisory

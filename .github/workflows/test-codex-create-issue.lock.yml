@@ -15,7 +15,7 @@ concurrency:
 run-name: "Test Codex Create Issue"
 
 jobs:
-  test-codex-create-issue:
+  agent:
     runs-on: ubuntu-latest
     permissions: read-all
     outputs:
@@ -696,7 +696,7 @@ jobs:
         env:
           GITHUB_AW_SAFE_OUTPUTS: ${{ env.GITHUB_AW_SAFE_OUTPUTS }}
         run: |
-          echo "## Agent Output (JSONL)" >> $GITHUB_STEP_SUMMARY
+          echo "## Safe Outputs (JSONL)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo '``````json' >> $GITHUB_STEP_SUMMARY
           if [ -f ${{ env.GITHUB_AW_SAFE_OUTPUTS }} ]; then
@@ -1683,7 +1683,7 @@ jobs:
             }
 
   create_issue:
-    needs: test-codex-create-issue
+    needs: agent
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -1697,7 +1697,7 @@ jobs:
         id: create_issue
         uses: actions/github-script@v8
         env:
-          GITHUB_AW_AGENT_OUTPUT: ${{ needs.test-codex-create-issue.outputs.output }}
+          GITHUB_AW_AGENT_OUTPUT: ${{ needs.agent.outputs.output }}
           GITHUB_AW_ISSUE_TITLE_PREFIX: "[codex-test] "
           GITHUB_AW_ISSUE_LABELS: "codex,automation,haiku"
         with:

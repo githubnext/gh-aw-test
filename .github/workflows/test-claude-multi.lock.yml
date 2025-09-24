@@ -15,7 +15,7 @@ concurrency:
 run-name: "Test Project"
 
 jobs:
-  test-project:
+  agent:
     runs-on: ubuntu-latest
     permissions: read-all
     outputs:
@@ -888,7 +888,7 @@ jobs:
         env:
           GITHUB_AW_SAFE_OUTPUTS: ${{ env.GITHUB_AW_SAFE_OUTPUTS }}
         run: |
-          echo "## Agent Output (JSONL)" >> $GITHUB_STEP_SUMMARY
+          echo "## Safe Outputs (JSONL)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo '``````json' >> $GITHUB_STEP_SUMMARY
           if [ -f ${{ env.GITHUB_AW_SAFE_OUTPUTS }} ]; then
@@ -2028,7 +2028,7 @@ jobs:
           if-no-files-found: ignore
 
   create_issue:
-    needs: test-project
+    needs: agent
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -2042,7 +2042,7 @@ jobs:
         id: create_issue
         uses: actions/github-script@v8
         env:
-          GITHUB_AW_AGENT_OUTPUT: ${{ needs.test-project.outputs.output }}
+          GITHUB_AW_AGENT_OUTPUT: ${{ needs.agent.outputs.output }}
           GITHUB_AW_ISSUE_TITLE_PREFIX: "[claude-test] "
           GITHUB_AW_ISSUE_LABELS: "claude,automation,haiku"
         with:
@@ -2187,7 +2187,7 @@ jobs:
             })();
 
   create_pull_request:
-    needs: test-project
+    needs: agent
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -2221,8 +2221,8 @@ jobs:
         id: create_pull_request
         uses: actions/github-script@v8
         env:
-          GITHUB_AW_AGENT_OUTPUT: ${{ needs.test-project.outputs.output }}
-          GITHUB_AW_WORKFLOW_ID: "test-project"
+          GITHUB_AW_AGENT_OUTPUT: ${{ needs.agent.outputs.output }}
+          GITHUB_AW_WORKFLOW_ID: "agent"
           GITHUB_AW_BASE_BRANCH: ${{ github.ref_name }}
           GITHUB_AW_PR_TITLE_PREFIX: "[claude-test] "
           GITHUB_AW_PR_LABELS: "claude,automation,bot"

@@ -20,39 +20,30 @@ concurrency:
 run-name: "Test Proxy"
 
 jobs:
-  task:
+  check-membership:
     if: (github.event_name != 'pull_request') || (github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-latest
-    permissions:
-      actions: write  # Required for github.rest.actions.cancelWorkflowRun()
+    outputs:
+      error_message: ${{ steps.check-membership.outputs.error_message }}
+      is_team_member: ${{ steps.check-membership.outputs.is_team_member }}
+      result: ${{ steps.check-membership.outputs.result }}
+      user_permission: ${{ steps.check-membership.outputs.user_permission }}
     steps:
       - name: Check team membership for workflow
-        id: check-team-member
+        id: check-membership
         uses: actions/github-script@v8
         env:
           GITHUB_AW_REQUIRED_ROLES: admin,maintainer
         with:
           script: |
-            async function setCancelled(message) {
-              try {
-                await github.rest.actions.cancelWorkflowRun({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  run_id: context.runId,
-                });
-                core.info(`Cancellation requested for this workflow run: ${message}`);
-              } catch (error) {
-                const errorMessage = error instanceof Error ? error.message : String(error);
-                core.warning(`Failed to cancel workflow run: ${errorMessage}`);
-                core.setFailed(message); // Fallback if API call fails
-              }
-            }
             async function main() {
               const { eventName } = context;
               // skip check for safe events
               const safeEvents = ["workflow_dispatch", "workflow_run", "schedule"];
               if (safeEvents.includes(eventName)) {
                 core.info(`✅ Event ${eventName} does not require validation`);
+                core.setOutput("is_team_member", "true");
+                core.setOutput("result", "safe_event");
                 return;
               }
               const actor = context.actor;
@@ -60,8 +51,10 @@ jobs:
               const requiredPermissionsEnv = process.env.GITHUB_AW_REQUIRED_ROLES;
               const requiredPermissions = requiredPermissionsEnv ? requiredPermissionsEnv.split(",").filter(p => p.trim() !== "") : [];
               if (!requiredPermissions || requiredPermissions.length === 0) {
-                core.error("❌ Configuration error: Required permissions not specified. Contact repository administrator.");
-                await setCancelled("Configuration error: Required permissions not specified");
+                core.warning("❌ Configuration error: Required permissions not specified. Contact repository administrator.");
+                core.setOutput("is_team_member", "false");
+                core.setOutput("result", "config_error");
+                core.setOutput("error_message", "Configuration error: Required permissions not specified");
                 return;
               }
               // Check if the actor has the required repository permissions
@@ -79,27 +72,42 @@ jobs:
                 for (const requiredPerm of requiredPermissions) {
                   if (permission === requiredPerm || (requiredPerm === "maintainer" && permission === "maintain")) {
                     core.info(`✅ User has ${permission} access to repository`);
+                    core.setOutput("is_team_member", "true");
+                    core.setOutput("result", "authorized");
+                    core.setOutput("user_permission", permission);
                     return;
                   }
                 }
                 core.warning(`User permission '${permission}' does not meet requirements: ${requiredPermissions.join(", ")}`);
+                core.setOutput("is_team_member", "false");
+                core.setOutput("result", "insufficient_permissions");
+                core.setOutput("user_permission", permission);
+                core.setOutput(
+                  "error_message",
+                  `Access denied: User '${actor}' is not authorized. Required permissions: ${requiredPermissions.join(", ")}`
+                );
               } catch (repoError) {
                 const errorMessage = repoError instanceof Error ? repoError.message : String(repoError);
                 core.warning(`Repository permission check failed: ${errorMessage}`);
-                await setCancelled(`Repository permission check failed: ${errorMessage}`);
+                core.setOutput("is_team_member", "false");
+                core.setOutput("result", "api_error");
+                core.setOutput("error_message", `Repository permission check failed: ${errorMessage}`);
                 return;
               }
-              // Cancel the workflow when permission check fails
-              core.warning(
-                `Access denied: Only authorized users can trigger this workflow. User '${actor}' is not authorized. Required permissions: ${requiredPermissions.join(", ")}`
-              );
-              await setCancelled(`Access denied: User '${actor}' is not authorized. Required permissions: ${requiredPermissions.join(", ")}`);
             }
             await main();
 
-  test-proxy:
-    needs: task
-    if: (github.event_name != 'pull_request') || (github.event.pull_request.head.repo.full_name == github.repository)
+  activation:
+    needs: check-membership
+    if: >
+      (needs.check-membership.outputs.is_team_member == 'true') && ((github.event_name != 'pull_request') ||
+      (github.event.pull_request.head.repo.full_name == github.repository))
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Activation success"
+
+  agent:
+    needs: activation
     runs-on: ubuntu-latest
     permissions: read-all
     outputs:
@@ -230,137 +238,6 @@ jobs:
               core.setOutput("output_file", outputFile);
             }
             main();
-      - name: Setup Proxy Configuration for MCP Network Restrictions
-        run: |
-          echo "Generating proxy configuration files for MCP tools with network restrictions..."
-          
-          # Generate Squid proxy configuration
-          cat > squid.conf << 'EOF'
-          # Squid configuration for egress traffic control
-          # This configuration implements a allow-list-based proxy
-          
-          # Access log and cache configuration
-          access_log /var/log/squid/access.log squid
-          cache_log /var/log/squid/cache.log
-          cache deny all
-          
-          # Port configuration
-          http_port 3128
-          
-          # ACL definitions for allowed domains
-          acl allowed_domains dstdomain "/etc/squid/allowed_domains.txt"
-          acl localnet src 10.0.0.0/8
-          acl localnet src 172.16.0.0/12
-          acl localnet src 192.168.0.0/16
-          acl SSL_ports port 443
-          acl Safe_ports port 80
-          acl Safe_ports port 443
-          acl CONNECT method CONNECT
-          
-          # Access rules
-          # Deny requests to unknown domains (not in allow-list)
-          http_access deny !allowed_domains
-          http_access deny !Safe_ports
-          http_access deny CONNECT !SSL_ports
-          http_access allow localnet
-          http_access deny all
-          
-          # Disable caching
-          cache deny all
-          
-          # DNS settings
-          dns_nameservers 8.8.8.8 8.8.4.4
-          
-          # Forwarded headers
-          forwarded_for delete
-          via off
-          
-          # Error page customization
-          error_directory /usr/share/squid/errors/English
-          
-          # Logging
-          logformat combined %>a %[ui %[un [%tl] "%rm %ru HTTP/%rv" %>Hs %<st "%{Referer}>h" "%{User-Agent}>h" %Ss:%Sh
-          access_log /var/log/squid/access.log combined
-          
-          # Memory and file descriptor limits
-          cache_mem 64 MB
-          maximum_object_size 0 KB
-          EOF
-          
-          # Generate allowed domains file
-          cat > allowed_domains.txt << 'EOF'
-          # Allowed domains for egress traffic
-          # Add one domain per line
-          example.com
-          
-          EOF
-          
-          # Generate Docker Compose configuration for fetch
-          cat > docker-compose-fetch.yml << 'EOF'
-          services:
-            squid-proxy:
-              image: ubuntu/squid:latest
-              container_name: squid-proxy-fetch
-              ports:
-                - "3128:3128"
-              volumes:
-                - ./squid.conf:/etc/squid/squid.conf:ro
-                - ./allowed_domains.txt:/etc/squid/allowed_domains.txt:ro
-                - squid-logs:/var/log/squid
-              healthcheck:
-                test: ["CMD", "squid", "-k", "check"]
-                interval: 30s
-                timeout: 10s
-                retries: 3
-              restart: unless-stopped
-              networks:
-                awproxy-fetch:
-                  ipv4_address: 172.28.179.10
-          
-            fetch:
-              image: mcp/fetch
-              container_name: fetch-mcp
-              stdin_open: true
-              tty: true
-              environment:
-                - PROXY_HOST=squid-proxy
-                - PROXY_PORT=3128
-                - HTTP_PROXY=http://squid-proxy:3128
-                - HTTPS_PROXY=http://squid-proxy:3128
-              networks:
-                - awproxy-fetch
-              depends_on:
-                squid-proxy:
-                  condition: service_healthy
-          
-          volumes:
-            squid-logs:
-          
-          networks:
-            awproxy-fetch:
-              driver: bridge
-              ipam:
-                config:
-                  - subnet: 172.28.179.0/24
-          
-          EOF
-          
-          echo "Proxy configuration files generated."
-      - name: Pre-pull images and start Squid proxy
-        run: |
-          set -e
-          echo 'Pre-pulling Docker images for proxy-enabled MCP tools...'
-          docker pull ubuntu/squid:latest
-          echo 'Pulling mcp/fetch for tool fetch'
-          docker pull mcp/fetch
-          echo 'Starting squid-proxy service for fetch'
-          docker compose -f docker-compose-fetch.yml up -d squid-proxy
-          echo 'Enforcing egress to proxy for fetch (subnet 172.28.179.0/24, squid 172.28.179.10)'
-          if command -v sudo >/dev/null 2>&1; then SUDO=sudo; else SUDO=; fi
-          $SUDO iptables -C DOCKER-USER -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT 2>/dev/null || $SUDO iptables -I DOCKER-USER 1 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
-          $SUDO iptables -C DOCKER-USER -s 172.28.179.10 -j ACCEPT 2>/dev/null || $SUDO iptables -I DOCKER-USER 2 -s 172.28.179.10 -j ACCEPT
-          $SUDO iptables -C DOCKER-USER -s 172.28.179.0/24 -d 172.28.179.10 -p tcp --dport 3128 -j ACCEPT 2>/dev/null || $SUDO iptables -I DOCKER-USER 3 -s 172.28.179.0/24 -d 172.28.179.10 -p tcp --dport 3128 -j ACCEPT
-          $SUDO iptables -C DOCKER-USER -s 172.28.179.0/24 -j REJECT 2>/dev/null || $SUDO iptables -A DOCKER-USER -s 172.28.179.0/24 -j REJECT
       - name: Setup Safe Outputs Collector MCP
         run: |
           mkdir -p /tmp/safe-outputs
@@ -878,16 +755,6 @@ jobs:
           {
             "mcpServers": {
               "fetch": {
-                "command": "docker",
-                "args": [
-                  "compose",
-                  "-f",
-                  "docker-compose-fetch.yml",
-                  "run",
-                  "--rm",
-                  "fetch"
-                ]
-              },
               "github": {
                 "command": "docker",
                 "args": [
@@ -1105,7 +972,7 @@ jobs:
         env:
           GITHUB_AW_SAFE_OUTPUTS: ${{ env.GITHUB_AW_SAFE_OUTPUTS }}
         run: |
-          echo "## Agent Output (JSONL)" >> $GITHUB_STEP_SUMMARY
+          echo "## Safe Outputs (JSONL)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo '``````json' >> $GITHUB_STEP_SUMMARY
           if [ -f ${{ env.GITHUB_AW_SAFE_OUTPUTS }} ]; then
@@ -1754,23 +1621,6 @@ jobs:
           name: agent_output.json
           path: ${{ env.GITHUB_AW_AGENT_OUTPUT }}
           if-no-files-found: warn
-      - name: Extract squid access logs
-        if: always()
-        run: |
-          mkdir -p /tmp/access-logs
-          echo 'Extracting access.log from squid-proxy-fetch container'
-          if docker ps -a --format '{{.Names}}' | grep -q '^squid-proxy-fetch$'; then
-            docker cp squid-proxy-fetch:/var/log/squid/access.log /tmp/access-logs/access-fetch.log 2>/dev/null || echo 'No access.log found for fetch'
-          else
-            echo 'Container squid-proxy-fetch not found'
-          fi
-      - name: Upload squid access logs
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: access.log
-          path: /tmp/access-logs/
-          if-no-files-found: warn
       - name: Upload MCP logs
         if: always()
         uses: actions/upload-artifact@v4
@@ -2168,7 +2018,7 @@ jobs:
           if-no-files-found: warn
 
   create_issue_comment:
-    needs: test-proxy
+    needs: agent
     if: github.event.issue.number || github.event.pull_request.number
     runs-on: ubuntu-latest
     permissions:
@@ -2184,7 +2034,7 @@ jobs:
         id: add_comment
         uses: actions/github-script@v8
         env:
-          GITHUB_AW_AGENT_OUTPUT: ${{ needs.test-proxy.outputs.output }}
+          GITHUB_AW_AGENT_OUTPUT: ${{ needs.agent.outputs.output }}
         with:
           script: |
             async function main() {

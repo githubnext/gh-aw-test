@@ -15,7 +15,7 @@ concurrency:
 run-name: "Test Safe Outputs - Custom Engine"
 
 jobs:
-  test-safe-outputs-custom-engine:
+  agent:
     runs-on: ubuntu-latest
     permissions: read-all
     outputs:
@@ -845,7 +845,7 @@ jobs:
         env:
           GITHUB_AW_SAFE_OUTPUTS: ${{ env.GITHUB_AW_SAFE_OUTPUTS }}
         run: |
-          echo "## Agent Output (JSONL)" >> $GITHUB_STEP_SUMMARY
+          echo "## Safe Outputs (JSONL)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo '``````json' >> $GITHUB_STEP_SUMMARY
           if [ -f ${{ env.GITHUB_AW_SAFE_OUTPUTS }} ]; then
@@ -1604,7 +1604,7 @@ jobs:
           if-no-files-found: ignore
 
   create_issue:
-    needs: test-safe-outputs-custom-engine
+    needs: agent
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -1618,7 +1618,7 @@ jobs:
         id: create_issue
         uses: actions/github-script@v8
         env:
-          GITHUB_AW_AGENT_OUTPUT: ${{ needs.test-safe-outputs-custom-engine.outputs.output }}
+          GITHUB_AW_AGENT_OUTPUT: ${{ needs.agent.outputs.output }}
           GITHUB_AW_ISSUE_TITLE_PREFIX: "[Custom Engine Test] "
           GITHUB_AW_ISSUE_LABELS: "test-safe-outputs,automation,custom-engine"
         with:
@@ -1763,7 +1763,7 @@ jobs:
             })();
 
   create_discussion:
-    needs: test-safe-outputs-custom-engine
+    needs: agent
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -1777,7 +1777,7 @@ jobs:
         id: create_discussion
         uses: actions/github-script@v8
         env:
-          GITHUB_AW_AGENT_OUTPUT: ${{ needs.test-safe-outputs-custom-engine.outputs.output }}
+          GITHUB_AW_AGENT_OUTPUT: ${{ needs.agent.outputs.output }}
           GITHUB_AW_DISCUSSION_TITLE_PREFIX: "[Custom Engine Test] "
         with:
           script: |
@@ -1957,7 +1957,7 @@ jobs:
             await main();
 
   create_issue_comment:
-    needs: test-safe-outputs-custom-engine
+    needs: agent
     if: always()
     runs-on: ubuntu-latest
     permissions:
@@ -1973,7 +1973,7 @@ jobs:
         id: add_comment
         uses: actions/github-script@v8
         env:
-          GITHUB_AW_AGENT_OUTPUT: ${{ needs.test-safe-outputs-custom-engine.outputs.output }}
+          GITHUB_AW_AGENT_OUTPUT: ${{ needs.agent.outputs.output }}
           GITHUB_AW_COMMENT_TARGET: "*"
         with:
           script: |
@@ -2122,7 +2122,7 @@ jobs:
             await main();
 
   create_pr_review_comment:
-    needs: test-safe-outputs-custom-engine
+    needs: agent
     if: (github.event.issue.number && github.event.issue.pull_request) || github.event.pull_request
     runs-on: ubuntu-latest
     permissions:
@@ -2137,7 +2137,7 @@ jobs:
         id: create_pr_review_comment
         uses: actions/github-script@v8
         env:
-          GITHUB_AW_AGENT_OUTPUT: ${{ needs.test-safe-outputs-custom-engine.outputs.output }}
+          GITHUB_AW_AGENT_OUTPUT: ${{ needs.agent.outputs.output }}
           GITHUB_AW_PR_REVIEW_COMMENT_SIDE: "RIGHT"
         with:
           script: |
@@ -2314,7 +2314,7 @@ jobs:
             await main();
 
   create_code_scanning_alert:
-    needs: test-safe-outputs-custom-engine
+    needs: agent
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -2331,7 +2331,7 @@ jobs:
         id: create_code_scanning_alert
         uses: actions/github-script@v8
         env:
-          GITHUB_AW_AGENT_OUTPUT: ${{ needs.test-safe-outputs-custom-engine.outputs.output }}
+          GITHUB_AW_AGENT_OUTPUT: ${{ needs.agent.outputs.output }}
           GITHUB_AW_SECURITY_REPORT_MAX: 5
           GITHUB_AW_SECURITY_REPORT_DRIVER: Test Safe Outputs - Custom Engine
           GITHUB_AW_WORKFLOW_FILENAME: test-custom-safe-outputs
@@ -2554,7 +2554,7 @@ jobs:
           sarif_file: ${{ steps.create_code_scanning_alert.outputs.sarif_file }}
 
   create_pull_request:
-    needs: test-safe-outputs-custom-engine
+    needs: agent
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -2588,8 +2588,8 @@ jobs:
         id: create_pull_request
         uses: actions/github-script@v8
         env:
-          GITHUB_AW_AGENT_OUTPUT: ${{ needs.test-safe-outputs-custom-engine.outputs.output }}
-          GITHUB_AW_WORKFLOW_ID: "test-safe-outputs-custom-engine"
+          GITHUB_AW_AGENT_OUTPUT: ${{ needs.agent.outputs.output }}
+          GITHUB_AW_WORKFLOW_ID: "agent"
           GITHUB_AW_BASE_BRANCH: ${{ github.ref_name }}
           GITHUB_AW_PR_TITLE_PREFIX: "[Custom Engine Test] "
           GITHUB_AW_PR_LABELS: "test-safe-outputs,automation,custom-engine"
@@ -2883,7 +2883,7 @@ jobs:
             await main();
 
   add_labels:
-    needs: test-safe-outputs-custom-engine
+    needs: agent
     if: github.event.issue.number || github.event.pull_request.number
     runs-on: ubuntu-latest
     permissions:
@@ -2898,7 +2898,7 @@ jobs:
         id: add_labels
         uses: actions/github-script@v8
         env:
-          GITHUB_AW_AGENT_OUTPUT: ${{ needs.test-safe-outputs-custom-engine.outputs.output }}
+          GITHUB_AW_AGENT_OUTPUT: ${{ needs.agent.outputs.output }}
           GITHUB_AW_LABELS_ALLOWED: "test-safe-outputs,automation,custom-engine,bug,enhancement,documentation"
           GITHUB_AW_LABELS_MAX_COUNT: 3
         with:
@@ -3058,7 +3058,7 @@ jobs:
             await main();
 
   update_issue:
-    needs: test-safe-outputs-custom-engine
+    needs: agent
     if: always()
     runs-on: ubuntu-latest
     permissions:
@@ -3073,7 +3073,7 @@ jobs:
         id: update_issue
         uses: actions/github-script@v8
         env:
-          GITHUB_AW_AGENT_OUTPUT: ${{ needs.test-safe-outputs-custom-engine.outputs.output }}
+          GITHUB_AW_AGENT_OUTPUT: ${{ needs.agent.outputs.output }}
           GITHUB_AW_UPDATE_STATUS: true
           GITHUB_AW_UPDATE_TITLE: true
           GITHUB_AW_UPDATE_BODY: true
@@ -3250,7 +3250,7 @@ jobs:
             await main();
 
   push_to_pull_request_branch:
-    needs: test-safe-outputs-custom-engine
+    needs: agent
     if: always()
     runs-on: ubuntu-latest
     permissions:
@@ -3283,7 +3283,7 @@ jobs:
         uses: actions/github-script@v8
         env:
           GH_TOKEN: ${{ github.token }}
-          GITHUB_AW_AGENT_OUTPUT: ${{ needs.test-safe-outputs-custom-engine.outputs.output }}
+          GITHUB_AW_AGENT_OUTPUT: ${{ needs.agent.outputs.output }}
           GITHUB_AW_PUSH_TARGET: "*"
           GITHUB_AW_PUSH_IF_NO_CHANGES: "warn"
           GITHUB_AW_MAX_PATCH_SIZE: 1024
@@ -3510,7 +3510,7 @@ jobs:
             await main();
 
   missing_tool:
-    needs: test-safe-outputs-custom-engine
+    needs: agent
     if: ${{ always() }}
     runs-on: ubuntu-latest
     permissions:
@@ -3524,7 +3524,7 @@ jobs:
         id: missing_tool
         uses: actions/github-script@v8
         env:
-          GITHUB_AW_AGENT_OUTPUT: ${{ needs.test-safe-outputs-custom-engine.outputs.output }}
+          GITHUB_AW_AGENT_OUTPUT: ${{ needs.agent.outputs.output }}
           GITHUB_AW_MISSING_TOOL_MAX: 5
         with:
           script: |

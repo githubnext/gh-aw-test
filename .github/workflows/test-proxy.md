@@ -12,15 +12,14 @@ network:
   allowed:
     - "example.com"
 
-tools:
+mcp-servers:
   fetch:
-    mcp:
-      type: stdio
-      container: mcp/fetch
-      permissions:
-        network:
-          allowed: 
-            - "example.com"
+    type: stdio
+    container: mcp/fetch
+    permissions:
+      network:
+        allowed: 
+          - "example.com"
     allowed: 
       - "fetch"
   
