@@ -50,7 +50,7 @@ jobs:
         run: |
           # trigered test suites do not work since issues/comments created from actions
           # do not trigger actions
-          echo 'testsuites=["--workflow-dispatch-only"]' >> "$GITHUB_OUTPUT"
+          echo 'testsuites=["test-claude-* --workflow-dispatch-only", "test-codex-* --workflow-dispatch-only", "test-custom-* --workflow-dispatch-only"]' >> "$GITHUB_OUTPUT"
   e2e:
     runs-on: ubuntu-latest
     needs: clean

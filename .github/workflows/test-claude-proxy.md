@@ -16,10 +16,9 @@ mcp-servers:
   fetch:
     type: stdio
     container: mcp/fetch
-    permissions:
-      network:
-        allowed: 
-          - "example.com"
+    network:
+      allowed: 
+        - "example.com"
     allowed: 
       - "fetch"
   
