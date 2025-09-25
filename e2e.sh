@@ -126,6 +126,8 @@ extract_ai_type() {
         echo "claude"
     elif [[ "$workflow_name" == *"codex"* ]]; then
         echo "codex"
+    elif [[ "$workflow_name" == *"copilot"* ]]; then
+        echo "copilot"
     else
         echo ""
     fi
@@ -159,14 +161,22 @@ get_all_test_names() {
 get_workflow_dispatch_tests() {
     echo "test-claude-create-issue"
     echo "test-codex-create-issue"
+    echo "test-copilot-create-issue"
     echo "test-claude-create-pull-request"
     echo "test-codex-create-pull-request"
+    echo "test-copilot-create-pull-request"
     echo "test-claude-create-code-scanning-alert"
     echo "test-codex-create-repository-security-advisory"
+    echo "test-copilot-create-repository-security-advisory"
     echo "test-claude-mcp"
     echo "test-codex-mcp"
+    echo "test-copilot-mcp"
     echo "test-claude-multi"
     echo "test-codex-multi"
+    echo "test-copilot-multi"
+    echo "test-claude-safe-jobs"
+    echo "test-codex-safe-jobs"
+    echo "test-copilot-safe-jobs"
 }
 
 get_issue_triggered_tests() {
@@ -174,17 +184,23 @@ get_issue_triggered_tests() {
     echo "test-claude-add-labels"
     echo "test-codex-add-comment"
     echo "test-codex-add-labels"
+    echo "test-copilot-add-comment"
+    echo "test-copilot-add-labels"
     echo "test-claude-update-issue"
     echo "test-codex-update-issue"
+    echo "test-copilot-update-issue"
 }
 
 get_command_triggered_tests() {
     echo "test-claude-command"
     echo "test-codex-command"
+    echo "test-copilot-command"
     echo "test-claude-push-to-pull-request-branch"
     echo "test-codex-push-to-pull-request-branch"
+    echo "test-copilot-push-to-pull-request-branch"
     echo "test-claude-create-pull-request-review-comment"
     echo "test-codex-create-pull-request-review-comment"
+    echo "test-copilot-create-pull-request-review-comment"
 }
 
 filter_tests_by_patterns() {
@@ -641,7 +657,7 @@ validate_labels() {
 
 validate_issue_updated() {
     local issue_number="$1"
-    local ai_type="$2"  # "Claude" or "Codex"
+    local ai_type="$2"  # "Claude", "Codex", or "Copilot"
     
     # Check for various signs that the issue was updated by the AI
     local issue_data=$(gh issue view "$issue_number" --json title,body,comments,labels,state 2>/dev/null)
@@ -718,6 +734,8 @@ validate_code_scanning_alert() {
         expected_message="Claude wants security review."
     elif [[ "$workflow_name" == *"codex"* ]]; then
         expected_message="Codex wants security review."
+    elif [[ "$workflow_name" == *"copilot"* ]]; then
+        expected_message="Copilot wants security review."
     else
         expected_message="security review"  # Fallback for generic matching
     fi
@@ -778,7 +796,7 @@ validate_branch_updated() {
 
 validate_pr_reviews() {
     local pr_number="$1"
-    local ai_type="$2"  # "Claude" or "Codex"
+    local ai_type="$2"  # "Claude", "Codex", or "Copilot"
     
     # Get PR reviews (once a comment is made it shows up as a review)
     local reviews=$(gh api repos/:owner/:repo/pulls/"$pr_number"/reviews 2>/dev/null | jq -r '.[].state // empty' 2>/dev/null || echo "")
@@ -1287,7 +1305,7 @@ main() {
                 echo "TEST_PATTERNS:"
                 echo "  Specific test names or glob patterns to run:"
                 echo "    ./e2e.sh test-claude-create-issue"
-                echo "    ./e2e.sh test-claude-* test-codex-*"
+                echo "    ./e2e.sh test-claude-* test-codex-* test-copilot-*"
                 echo "    ./e2e.sh test-*-create-issue"
                 echo ""
                 echo "By default, all test suites are run."
