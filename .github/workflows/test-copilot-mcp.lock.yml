@@ -890,6 +890,9 @@ jobs:
               "safe_outputs": {
                 "type": "local",
                 "command": "node",
+                "tools": [
+                  "*"
+                ],
                 "args": ["/tmp/safe-outputs/mcp-server.cjs"],
                 "env": {
                   "GITHUB_AW_SAFE_OUTPUTS": "${{ env.GITHUB_AW_SAFE_OUTPUTS }}",
@@ -897,7 +900,11 @@ jobs:
                 }
               },
               "time": {
+                "type": "local",
                 "command": "docker",
+                "tools": [
+                  "get_current_time"
+                ],
                 "args": [
                   "run",
                   "--rm",
