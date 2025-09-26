@@ -1916,7 +1916,7 @@ jobs:
           GITHUB_AW_AGENT_OUTPUT: ${{ needs.agent.outputs.output }}
           GITHUB_AW_SECURITY_REPORT_MAX: 10
           GITHUB_AW_SECURITY_REPORT_DRIVER: Test Copilot Code Scanning Alert
-          GITHUB_AW_WORKFLOW_FILENAME: test-copilot-create-repository-security-advisory
+          GITHUB_AW_WORKFLOW_FILENAME: test-copilot-create-repository-code-scanning-alert
         with:
           script: |
             async function main() {
