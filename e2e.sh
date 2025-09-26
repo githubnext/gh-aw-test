@@ -758,6 +758,8 @@ validate_mcp_workflow() {
     # MCP workflows typically create issues with specific patterns indicating MCP tool usage
     # Look for issues with MCP-specific content patterns
     local recent_issues=$(gh issue list --limit 5 --json title,body --jq '.[] | select(.body | contains("MCP time tool") or contains("current time is") or contains("UTC")) | .title' | head -1)
+
+    echo "$recent_issues"  # For debugging purposes
     
     if [[ -n "$recent_issues" ]]; then
         success "MCP workflow '$workflow_name' appears to have used MCP tools successfully"
@@ -770,7 +772,7 @@ validate_mcp_workflow() {
             success "MCP workflow '$workflow_name' appears to have used MCP tools successfully (time-based detection)"
             return 0
         else
-            warning "MCP workflow '$workflow_name' completed but no clear evidence of MCP tool usage found"
+            error "MCP workflow '$workflow_name' completed but no clear evidence of MCP tool usage found"
             return 1
         fi
     fi
