@@ -29,9 +29,6 @@ jobs:
           node-version: '22'
       - name: Install GitHub Copilot CLI
         run: npm install -g @github/copilot
-      - name: Setup Copilot CLI MCP Configuration
-        run: |
-          mkdir -p /tmp/.copilot
       - name: Setup agent output
         id: setup_agent_output
         uses: actions/github-script@v8
@@ -618,7 +615,7 @@ jobs:
           GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"create-issue\":{}}"
         run: |
           mkdir -p /tmp/mcp-config
-          cat > /tmp/.copilot/mcp-config.json << 'EOF'
+          cat > ${{ env.HOME }}/.copilot/mcp-config.json << 'EOF'
           {
             "mcpServers": {
               "safe_outputs": {
@@ -743,8 +740,6 @@ jobs:
           GITHUB_AW_SAFE_OUTPUTS: ${{ env.GITHUB_AW_SAFE_OUTPUTS }}
           GITHUB_STEP_SUMMARY: ${{ env.GITHUB_STEP_SUMMARY }}
           GITHUB_TOKEN: ${{ secrets.COPILOT_CLI_TOKEN  }}
-          XDG_CONFIG_HOME: /tmp/.copilot
-          XDG_STATE_HOME: /tmp/.copilot
       - name: Ensure log file exists
         if: always()
         run: |
