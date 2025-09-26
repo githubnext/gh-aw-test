@@ -870,7 +870,8 @@ jobs:
           GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"push-to-pull-request-branch\":{}}"
         run: |
           mkdir -p /tmp/mcp-config
-          cat > ${{ env.HOME }}/.copilot/mcp-config.json << 'EOF'
+          mkdir -p ~/.copilot
+          cat > ~/.copilot/mcp-config.json << 'EOF'
           {
             "mcpServers": {
               "safe_outputs": {
