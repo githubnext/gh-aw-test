@@ -636,11 +636,8 @@ jobs:
             }
           }
           EOF
-
           echo "-------START MCP CONFIG-----------"
-
           cat ~/.copilot/mcp-config.json
-
           echo "-------END MCP CONFIG-----------"
       - name: Create prompt
         env:
