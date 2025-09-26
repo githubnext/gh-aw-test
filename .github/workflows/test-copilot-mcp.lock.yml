@@ -772,20 +772,19 @@ jobs:
               "safe_outputs": {
                 "type": "local",
                 "command": "node",
-                "args": [
-                  "/tmp/safe-outputs/mcp-server.cjs"
-                ],
+                "args": ["/tmp/safe-outputs/mcp-server.cjs"],
+                "tools": ["*"],
                 "env": {
                   "GITHUB_AW_SAFE_OUTPUTS": "${{ env.GITHUB_AW_SAFE_OUTPUTS }}",
-                  "GITHUB_AW_SAFE_OUTPUTS_CONFIG": "${{ toJSON(env.GITHUB_AW_SAFE_OUTPUTS_CONFIG) }}"
-                },
-                "tools": [
-                  "*"
-                ]
+                  "GITHUB_AW_SAFE_OUTPUTS_CONFIG": ${{ toJSON(env.GITHUB_AW_SAFE_OUTPUTS_CONFIG) }}
+                }
               },
               "time": {
                 "type": "local",
                 "command": "docker",
+                "tools": [
+                  "get_current_time"
+                ],
                 "args": [
                   "run",
                   "--rm",
@@ -796,10 +795,7 @@ jobs:
                 ],
                 "env": {
                   "LOCAL_TIMEZONE": "${LOCAL_TIMEZONE}"
-                },
-                "tools": [
-                  "get_current_time"
-                ]
+                }
               }
             }
           }
