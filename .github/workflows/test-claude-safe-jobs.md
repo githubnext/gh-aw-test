@@ -1,29 +1,30 @@
 ---
 on: 
   workflow_dispatch:
-engine: codex
-safe-jobs:
-  print:
-    #name: "print the message"
-    runs-on: ubuntu-latest
-    inputs:
-      message:
-        description: "Message to print"
-        required: true
-        type: string
-    steps:
-      - name: See artifacts
-        run: cd /tmp/safe-jobs && ls -lR
-      - name: print message
-        run: |
-            MESSAGE=$(cat "$GITHUB_AW_AGENT_OUTPUT" | jq -r '.items[] | select(.type == "print") | .message')
-            if [ -z "$MESSAGE" ]; then
-              echo "Error: message is empty"
-              exit 1
-            fi
-            echo "print: $MESSAGE"
-            echo "### Print Step Summary" >> "$GITHUB_STEP_SUMMARY"
-            echo "$MESSAGE" >> "$GITHUB_STEP_SUMMARY"    
+engine: claude
+safe-outputs:
+  jobs:
+    print:
+      #name: "print the message"
+      runs-on: ubuntu-latest
+      inputs:
+        message:
+          description: "Message to print"
+          required: true
+          type: string
+      steps:
+        - name: See artifacts
+          run: cd /tmp/safe-jobs && ls -lR
+        - name: print message
+          run: |
+              MESSAGE=$(cat "$GITHUB_AW_AGENT_OUTPUT" | jq -r '.items[] | select(.type == "print") | .message')
+              if [ -z "$MESSAGE" ]; then
+                echo "Error: message is empty"
+                exit 1
+              fi
+              echo "print: $MESSAGE"
+              echo "### Print Step Summary" >> "$GITHUB_STEP_SUMMARY"
+              echo "$MESSAGE" >> "$GITHUB_STEP_SUMMARY"    
             
 ---
 Summarize and use print the message using the `print` tool.

@@ -979,14 +979,22 @@ jobs:
           codex login --api-key "$OPENAI_API_KEY"
           
           # Run codex with log capture - pipefail ensures codex exit code is preserved
-          codex --full-auto exec --dangerously-bypass-approvals-and-sandbox "$INSTRUCTION" 2>&1 | tee /tmp/test-codex-add-labels.log
+          codex --full-auto exec --dangerously-bypass-approvals-and-sandbox "$INSTRUCTION" 2>&1 | tee /tmp/agent-stdio.log
         env:
           GITHUB_AW_MCP_CONFIG: /tmp/mcp-config/config.toml
           GITHUB_AW_PROMPT: /tmp/aw-prompts/prompt.txt
           GITHUB_AW_SAFE_OUTPUTS: ${{ env.GITHUB_AW_SAFE_OUTPUTS }}
           GITHUB_STEP_SUMMARY: ${{ env.GITHUB_STEP_SUMMARY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-      - name: Print Agent output
+      - name: Ensure log file exists
+        if: always()
+        run: |
+          # Ensure log file exists
+          touch /tmp/agent-stdio.log
+          # Show last few lines for debugging
+          echo "=== Last 10 lines of Codex execution log ==="
+          tail -10 /tmp/agent-stdio.log || echo "No log content available"
+      - name: Print Safe Outputs
         env:
           GITHUB_AW_SAFE_OUTPUTS: ${{ env.GITHUB_AW_SAFE_OUTPUTS }}
         run: |
@@ -1004,7 +1012,7 @@ jobs:
           fi
           echo '``````' >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-      - name: Upload agentic output file
+      - name: Upload Safe Outputs
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -1759,7 +1767,7 @@ jobs:
         if: always()
         uses: actions/github-script@v8
         env:
-          GITHUB_AW_AGENT_OUTPUT: /tmp/test-codex-add-labels.log
+          GITHUB_AW_AGENT_OUTPUT: /tmp/agent-stdio.log
         with:
           script: |
             function main() {
@@ -1970,18 +1978,18 @@ jobs:
               module.exports = { parseCodexLog, formatBashCommand, truncateString };
             }
             main();
-      - name: Upload agent logs
+      - name: Upload Agent Stdio
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-codex-add-labels.log
-          path: /tmp/test-codex-add-labels.log
+          name: agent-stdio.log
+          path: /tmp/agent-stdio.log
           if-no-files-found: warn
       - name: Validate agent logs for errors
         if: always()
         uses: actions/github-script@v8
         env:
-          GITHUB_AW_AGENT_OUTPUT: /tmp/test-codex-add-labels.log
+          GITHUB_AW_AGENT_OUTPUT: /tmp/agent-stdio.log
           GITHUB_AW_ERROR_PATTERNS: "[{\"pattern\":\"\\\\[(\\\\d{4}-\\\\d{2}-\\\\d{2}T\\\\d{2}:\\\\d{2}:\\\\d{2})\\\\]\\\\s+stream\\\\s+(error):\\\\s+(.+)\",\"level_group\":2,\"message_group\":3,\"description\":\"Codex stream errors with timestamp\"},{\"pattern\":\"\\\\[(\\\\d{4}-\\\\d{2}-\\\\d{2}T\\\\d{2}:\\\\d{2}:\\\\d{2})\\\\]\\\\s+(ERROR):\\\\s+(.+)\",\"level_group\":2,\"message_group\":3,\"description\":\"Codex ERROR messages with timestamp\"},{\"pattern\":\"\\\\[(\\\\d{4}-\\\\d{2}-\\\\d{2}T\\\\d{2}:\\\\d{2}:\\\\d{2})\\\\]\\\\s+(WARN|WARNING):\\\\s+(.+)\",\"level_group\":2,\"message_group\":3,\"description\":\"Codex warning messages with timestamp\"}]"
         with:
           script: |

@@ -897,9 +897,9 @@ jobs:
           GITHUB_AW_SAFE_OUTPUTS: ${{ env.GITHUB_AW_SAFE_OUTPUTS }}
       - name: Ensure log file exists
         run: |
-          echo "Custom steps execution completed" >> /tmp/test-safe-outputs-custom-engine.log
-          touch /tmp/test-safe-outputs-custom-engine.log
-      - name: Print Agent output
+          echo "Custom steps execution completed" >> /tmp/agent-stdio.log
+          touch /tmp/agent-stdio.log
+      - name: Print Safe Outputs
         env:
           GITHUB_AW_SAFE_OUTPUTS: ${{ env.GITHUB_AW_SAFE_OUTPUTS }}
         run: |
@@ -917,7 +917,7 @@ jobs:
           fi
           echo '``````' >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-      - name: Upload agentic output file
+      - name: Upload Safe Outputs
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -1668,12 +1668,12 @@ jobs:
           name: mcp-logs
           path: /tmp/mcp-logs/
           if-no-files-found: ignore
-      - name: Upload agent logs
+      - name: Upload Agent Stdio
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-safe-outputs-custom-engine.log
-          path: /tmp/test-safe-outputs-custom-engine.log
+          name: agent-stdio.log
+          path: /tmp/agent-stdio.log
           if-no-files-found: warn
       - name: Generate git patch
         if: always()
