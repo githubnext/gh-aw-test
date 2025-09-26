@@ -865,8 +865,8 @@ jobs:
           GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"create-pull-request-review-comment\":{\"max\":3}}"
         run: |
           mkdir -p /tmp/mcp-config
-          mkdir -p ~/.copilot
-          cat > ~/.copilot/mcp-config.json << 'EOF'
+          mkdir -p /home/runner/.copilot
+          cat > /home/runner/.copilot/mcp-config.json << 'EOF'
           {
             "mcpServers": {
               "safe_outputs": {
@@ -883,8 +883,13 @@ jobs:
           }
           EOF
           echo "-------START MCP CONFIG-----------"
-          cat ~/.copilot/mcp-config.json
+          cat /home/runner/.copilot/mcp-config.json
           echo "-------END MCP CONFIG-----------"
+          echo "HOME: $HOME"
+          echo "-------~/-----------"
+          find ~
+          echo "-------/home/runner/.copilot-----------"
+          find /home/runner/.copilot
       - name: Create prompt
         env:
           GITHUB_AW_PROMPT: /tmp/aw-prompts/prompt.txt
