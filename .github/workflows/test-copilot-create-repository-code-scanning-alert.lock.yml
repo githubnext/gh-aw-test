@@ -179,6 +179,9 @@ jobs:
           node-version: '22'
       - name: Install GitHub Copilot CLI
         run: npm install -g @github/copilot
+      - name: Setup Copilot CLI MCP Configuration
+        run: |
+          mkdir -p /tmp/.copilot
       - name: Setup agent output
         id: setup_agent_output
         uses: actions/github-script@v8
@@ -765,8 +768,7 @@ jobs:
           GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"create-code-scanning-alert\":{\"max\":10}}"
         run: |
           mkdir -p /tmp/mcp-config
-          mkdir -p ~/.copilot
-          cat > ~/.copilot/mcp-config.json << 'EOF'
+          cat > /tmp/.copilot/mcp-config.json << 'EOF'
           {
             "mcpServers": {
               "safe_outputs": {
@@ -886,11 +888,13 @@ jobs:
           INSTRUCTION=$(cat /tmp/aw-prompts/prompt.txt)
           
           # Run copilot CLI with log capture
-          copilot --add-dir /tmp/ --log-level debug --log-dir /tmp/.copilot/logs/ --allow-tool safe_outputs --prompt "$INSTRUCTION" 2>&1 | tee /tmp/agent-stdio.log
+          copilot --add-dir /tmp/ --log-level all --log-dir /tmp/.copilot/logs/ --allow-tool safe_outputs --prompt "$INSTRUCTION" 2>&1 | tee /tmp/agent-stdio.log
         env:
           GITHUB_AW_SAFE_OUTPUTS: ${{ env.GITHUB_AW_SAFE_OUTPUTS }}
           GITHUB_STEP_SUMMARY: ${{ env.GITHUB_STEP_SUMMARY }}
           GITHUB_TOKEN: ${{ secrets.COPILOT_CLI_TOKEN  }}
+          XDG_CONFIG_HOME: /tmp/.copilot
+          XDG_STATE_HOME: /tmp/.copilot
       - name: Ensure log file exists
         if: always()
         run: |
