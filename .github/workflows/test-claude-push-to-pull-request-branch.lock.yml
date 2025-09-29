@@ -268,8 +268,12 @@ jobs:
     needs: activation
     runs-on: ubuntu-latest
     permissions: read-all
+    env:
+      GITHUB_AW_SAFE_OUTPUTS: /tmp/safe-outputs/outputs.jsonl
+      GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"push-to-pull-request-branch\":{}}"
     outputs:
       output: ${{ steps.collect_output.outputs.output }}
+      output_types: ${{ steps.collect_output.outputs.output_types }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
@@ -386,37 +390,64 @@ jobs:
           
           EOF
           chmod +x .claude/hooks/network_permissions.py
-      - name: Setup agent output
-        id: setup_agent_output
-        uses: actions/github-script@v8
-        with:
-          script: |
-            const fs = require("fs");
-            const crypto = require("crypto");
-            function main() {
-              const randomSuffix = crypto.randomBytes(8).toString("hex");
-              const outputFile = `/tmp/aw_output_${randomSuffix}.txt`;
-              fs.mkdirSync("/tmp", { recursive: true });
-              core.exportVariable("GITHUB_AW_SAFE_OUTPUTS", outputFile);
-              core.setOutput("output_file", outputFile);
-            }
-            main();
       - name: Setup Safe Outputs Collector MCP
         run: |
           mkdir -p /tmp/safe-outputs
+          cat > /tmp/safe-outputs/config.json << 'EOF'
+          {"push-to-pull-request-branch":{}}
+          EOF
           cat > /tmp/safe-outputs/mcp-server.cjs << 'EOF'
             const fs = require("fs");
             const path = require("path");
             const crypto = require("crypto");
             const encoder = new TextEncoder();
-            const configEnv = process.env.GITHUB_AW_SAFE_OUTPUTS_CONFIG;
-            if (!configEnv) throw new Error("GITHUB_AW_SAFE_OUTPUTS_CONFIG not set");
-            const safeOutputsConfigRaw = JSON.parse(configEnv); 
-            const safeOutputsConfig = Object.fromEntries(Object.entries(safeOutputsConfigRaw).map(([k, v]) => [k.replace(/-/g, "_"), v]));
-            const outputFile = process.env.GITHUB_AW_SAFE_OUTPUTS;
-            if (!outputFile) throw new Error("GITHUB_AW_SAFE_OUTPUTS not set, no output file");
             const SERVER_INFO = { name: "safe-outputs-mcp-server", version: "1.0.0" };
             const debug = msg => process.stderr.write(`[${SERVER_INFO.name}] ${msg}\n`);
+            const configEnv = process.env.GITHUB_AW_SAFE_OUTPUTS_CONFIG;
+            let safeOutputsConfigRaw;
+            if (!configEnv) {
+              const defaultConfigPath = "/tmp/safe-outputs/config.json";
+              debug(`GITHUB_AW_SAFE_OUTPUTS_CONFIG not set, attempting to read from default path: ${defaultConfigPath}`);
+              try {
+                if (fs.existsSync(defaultConfigPath)) {
+                  debug(`Reading config from file: ${defaultConfigPath}`);
+                  const configFileContent = fs.readFileSync(defaultConfigPath, "utf8");
+                  debug(`Config file content length: ${configFileContent.length} characters`);
+                  debug(`Config file read successfully, attempting to parse JSON`);
+                  safeOutputsConfigRaw = JSON.parse(configFileContent);
+                  debug(`Successfully parsed config from file with ${Object.keys(safeOutputsConfigRaw).length} configuration keys`);
+                } else {
+                  debug(`Config file does not exist at: ${defaultConfigPath}`);
+                  debug(`Using minimal default configuration`);
+                  safeOutputsConfigRaw = {};
+                }
+              } catch (error) {
+                debug(`Error reading config file: ${error instanceof Error ? error.message : String(error)}`);
+                debug(`Falling back to empty configuration`);
+                safeOutputsConfigRaw = {};
+              }
+            } else {
+              debug(`Using GITHUB_AW_SAFE_OUTPUTS_CONFIG from environment variable`);
+              debug(`Config environment variable length: ${configEnv.length} characters`);
+              try {
+                safeOutputsConfigRaw = JSON.parse(configEnv); 
+                debug(`Successfully parsed config from environment: ${JSON.stringify(safeOutputsConfigRaw)}`);
+              } catch (error) {
+                debug(`Error parsing config from environment: ${error instanceof Error ? error.message : String(error)}`);
+                throw new Error(`Failed to parse GITHUB_AW_SAFE_OUTPUTS_CONFIG: ${error instanceof Error ? error.message : String(error)}`);
+              }
+            }
+            const safeOutputsConfig = Object.fromEntries(Object.entries(safeOutputsConfigRaw).map(([k, v]) => [k.replace(/-/g, "_"), v]));
+            debug(`Final processed config: ${JSON.stringify(safeOutputsConfig)}`);
+            const outputFile = process.env.GITHUB_AW_SAFE_OUTPUTS || "/tmp/safe-outputs/outputs.jsonl";
+            if (!process.env.GITHUB_AW_SAFE_OUTPUTS) {
+              debug(`GITHUB_AW_SAFE_OUTPUTS not set, using default: ${outputFile}`);
+              const outputDir = path.dirname(outputFile);
+              if (!fs.existsSync(outputDir)) {
+                debug(`Creating output directory: ${outputDir}`);
+                fs.mkdirSync(outputDir, { recursive: true });
+              }
+            }
             function writeMessage(obj) {
               const json = JSON.stringify(obj);
               debug(`send: ${json}`);
@@ -1131,6 +1162,9 @@ jobs:
       - name: Execute Claude Code CLI
         id: agentic_execution
         # Allowed tools (sorted):
+        # - Bash(cat)
+        # - Bash(date)
+        # - Bash(echo)
         # - Bash(git add:*)
         # - Bash(git branch:*)
         # - Bash(git checkout:*)
@@ -1138,6 +1172,14 @@ jobs:
         # - Bash(git merge:*)
         # - Bash(git rm:*)
         # - Bash(git switch:*)
+        # - Bash(grep)
+        # - Bash(head)
+        # - Bash(ls)
+        # - Bash(pwd)
+        # - Bash(sort)
+        # - Bash(tail)
+        # - Bash(uniq)
+        # - Bash(wc)
         # - BashOutput
         # - Edit
         # - ExitPlanMode
@@ -1207,7 +1249,7 @@ jobs:
         run: |
           set -o pipefail
           # Execute Claude Code CLI with prompt from file
-          npx @anthropic-ai/claude-code@latest --print --mcp-config /tmp/mcp-config/mcp-servers.json --allowed-tools "Bash(git add:*),Bash(git branch:*),Bash(git checkout:*),Bash(git commit:*),Bash(git merge:*),Bash(git rm:*),Bash(git switch:*),BashOutput,Edit,ExitPlanMode,Glob,Grep,KillBash,LS,MultiEdit,NotebookEdit,NotebookRead,Read,Task,TodoWrite,Write,mcp__github__download_workflow_run_artifact,mcp__github__get_code_scanning_alert,mcp__github__get_commit,mcp__github__get_dependabot_alert,mcp__github__get_discussion,mcp__github__get_discussion_comments,mcp__github__get_file_contents,mcp__github__get_issue,mcp__github__get_issue_comments,mcp__github__get_job_logs,mcp__github__get_latest_release,mcp__github__get_me,mcp__github__get_notification_details,mcp__github__get_pull_request,mcp__github__get_pull_request_comments,mcp__github__get_pull_request_diff,mcp__github__get_pull_request_files,mcp__github__get_pull_request_review_comments,mcp__github__get_pull_request_reviews,mcp__github__get_pull_request_status,mcp__github__get_release_by_tag,mcp__github__get_secret_scanning_alert,mcp__github__get_tag,mcp__github__get_workflow_run,mcp__github__get_workflow_run_logs,mcp__github__get_workflow_run_usage,mcp__github__list_branches,mcp__github__list_code_scanning_alerts,mcp__github__list_commits,mcp__github__list_dependabot_alerts,mcp__github__list_discussion_categories,mcp__github__list_discussions,mcp__github__list_issue_types,mcp__github__list_issues,mcp__github__list_notifications,mcp__github__list_pull_requests,mcp__github__list_releases,mcp__github__list_secret_scanning_alerts,mcp__github__list_starred_repositories,mcp__github__list_sub_issues,mcp__github__list_tags,mcp__github__list_workflow_jobs,mcp__github__list_workflow_run_artifacts,mcp__github__list_workflow_runs,mcp__github__list_workflows,mcp__github__search_code,mcp__github__search_issues,mcp__github__search_orgs,mcp__github__search_pull_requests,mcp__github__search_repositories,mcp__github__search_users" --debug --verbose --permission-mode bypassPermissions --output-format json --settings /tmp/.claude/settings.json "$(cat /tmp/aw-prompts/prompt.txt)" 2>&1 | tee /tmp/agent-stdio.log
+          npx @anthropic-ai/claude-code@latest --print --mcp-config /tmp/mcp-config/mcp-servers.json --allowed-tools "Bash(cat),Bash(date),Bash(echo),Bash(git add:*),Bash(git branch:*),Bash(git checkout:*),Bash(git commit:*),Bash(git merge:*),Bash(git rm:*),Bash(git switch:*),Bash(grep),Bash(head),Bash(ls),Bash(pwd),Bash(sort),Bash(tail),Bash(uniq),Bash(wc),BashOutput,Edit,ExitPlanMode,Glob,Grep,KillBash,LS,MultiEdit,NotebookEdit,NotebookRead,Read,Task,TodoWrite,Write,mcp__github__download_workflow_run_artifact,mcp__github__get_code_scanning_alert,mcp__github__get_commit,mcp__github__get_dependabot_alert,mcp__github__get_discussion,mcp__github__get_discussion_comments,mcp__github__get_file_contents,mcp__github__get_issue,mcp__github__get_issue_comments,mcp__github__get_job_logs,mcp__github__get_latest_release,mcp__github__get_me,mcp__github__get_notification_details,mcp__github__get_pull_request,mcp__github__get_pull_request_comments,mcp__github__get_pull_request_diff,mcp__github__get_pull_request_files,mcp__github__get_pull_request_review_comments,mcp__github__get_pull_request_reviews,mcp__github__get_pull_request_status,mcp__github__get_release_by_tag,mcp__github__get_secret_scanning_alert,mcp__github__get_tag,mcp__github__get_workflow_run,mcp__github__get_workflow_run_logs,mcp__github__get_workflow_run_usage,mcp__github__list_branches,mcp__github__list_code_scanning_alerts,mcp__github__list_commits,mcp__github__list_dependabot_alerts,mcp__github__list_discussion_categories,mcp__github__list_discussions,mcp__github__list_issue_types,mcp__github__list_issues,mcp__github__list_notifications,mcp__github__list_pull_requests,mcp__github__list_releases,mcp__github__list_secret_scanning_alerts,mcp__github__list_starred_repositories,mcp__github__list_sub_issues,mcp__github__list_tags,mcp__github__list_workflow_jobs,mcp__github__list_workflow_run_artifacts,mcp__github__list_workflow_runs,mcp__github__list_workflows,mcp__github__search_code,mcp__github__search_issues,mcp__github__search_orgs,mcp__github__search_pull_requests,mcp__github__search_repositories,mcp__github__search_users" --debug --verbose --permission-mode bypassPermissions --output-format json --settings /tmp/.claude/settings.json "$(cat /tmp/aw-prompts/prompt.txt)" 2>&1 | tee /tmp/agent-stdio.log
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           DISABLE_TELEMETRY: "1"
@@ -1356,6 +1398,13 @@ jobs:
                   default:
                     return 1;
                 }
+              }
+              function getMinRequiredForType(itemType, config) {
+                const itemConfig = config?.[itemType];
+                if (itemConfig && typeof itemConfig === "object" && "min" in itemConfig && itemConfig.min) {
+                  return itemConfig.min;
+                }
+                return 0;
               }
               function repairJson(jsonStr) {
                 let repaired = jsonStr.trim();
@@ -1627,8 +1676,6 @@ jobs:
               const outputContent = fs.readFileSync(outputFile, "utf8");
               if (outputContent.trim() === "") {
                 core.info("Output file is empty");
-                core.setOutput("output", "");
-                return;
               }
               core.info(`Raw output content length: ${outputContent.length}`);
               let expectedOutputTypes = {};
@@ -1954,6 +2001,15 @@ jobs:
                   return;
                 }
               }
+              for (const itemType of Object.keys(expectedOutputTypes)) {
+                const minRequired = getMinRequiredForType(itemType, expectedOutputTypes);
+                if (minRequired > 0) {
+                  const actualCount = parsedItems.filter(item => item.type === itemType).length;
+                  if (actualCount < minRequired) {
+                    errors.push(`Too few items of type '${itemType}'. Minimum required: ${minRequired}, found: ${actualCount}.`);
+                  }
+                }
+              }
               core.info(`Successfully parsed ${parsedItems.length} valid output items`);
               const validatedOutput = {
                 items: parsedItems,
@@ -1972,6 +2028,9 @@ jobs:
               }
               core.setOutput("output", JSON.stringify(validatedOutput));
               core.setOutput("raw_output", outputContent);
+              const outputTypes = Array.from(new Set(parsedItems.map(item => item.type)));
+              core.info(`output_types: ${outputTypes.join(", ")}`);
+              core.setOutput("output_types", outputTypes.join(","));
               try {
                 await core.summary
                   .addRaw("## Processed Output\n\n")
@@ -2388,6 +2447,119 @@ jobs:
           name: agent-stdio.log
           path: /tmp/agent-stdio.log
           if-no-files-found: warn
+      - name: Validate agent logs for errors
+        if: always()
+        uses: actions/github-script@v8
+        env:
+          GITHUB_AW_AGENT_OUTPUT: /tmp/agent-stdio.log
+          GITHUB_AW_ERROR_PATTERNS: "[{\"pattern\":\"access denied.*only authorized.*can trigger.*workflow\",\"level_group\":0,\"message_group\":0,\"description\":\"Permission denied - workflow access restriction\"},{\"pattern\":\"access denied.*user.*not authorized\",\"level_group\":0,\"message_group\":0,\"description\":\"Permission denied - user not authorized\"},{\"pattern\":\"repository permission check failed\",\"level_group\":0,\"message_group\":0,\"description\":\"Repository permission check failure\"},{\"pattern\":\"configuration error.*required permissions not specified\",\"level_group\":0,\"message_group\":0,\"description\":\"Configuration error - missing permissions\"},{\"pattern\":\"permission.*denied\",\"level_group\":0,\"message_group\":0,\"description\":\"Generic permission denied error\"},{\"pattern\":\"unauthorized\",\"level_group\":0,\"message_group\":0,\"description\":\"Unauthorized access error\"},{\"pattern\":\"forbidden\",\"level_group\":0,\"message_group\":0,\"description\":\"Forbidden access error\"},{\"pattern\":\"access.*restricted\",\"level_group\":0,\"message_group\":0,\"description\":\"Access restricted error\"},{\"pattern\":\"insufficient.*permission\",\"level_group\":0,\"message_group\":0,\"description\":\"Insufficient permissions error\"}]"
+        with:
+          script: |
+            function main() {
+              const fs = require("fs");
+              try {
+                const logFile = process.env.GITHUB_AW_AGENT_OUTPUT;
+                if (!logFile) {
+                  throw new Error("GITHUB_AW_AGENT_OUTPUT environment variable is required");
+                }
+                if (!fs.existsSync(logFile)) {
+                  throw new Error(`Log file not found: ${logFile}`);
+                }
+                const patterns = getErrorPatternsFromEnv();
+                if (patterns.length === 0) {
+                  throw new Error("GITHUB_AW_ERROR_PATTERNS environment variable is required and must contain at least one pattern");
+                }
+                const content = fs.readFileSync(logFile, "utf8");
+                const hasErrors = validateErrors(content, patterns);
+                if (hasErrors) {
+                  core.setFailed("Errors detected in agent logs - failing workflow step");
+                } else {
+                  core.info("Error validation completed successfully");
+                }
+              } catch (error) {
+                console.debug(error);
+                core.setFailed(`Error validating log: ${error instanceof Error ? error.message : String(error)}`);
+              }
+            }
+            function getErrorPatternsFromEnv() {
+              const patternsEnv = process.env.GITHUB_AW_ERROR_PATTERNS;
+              if (!patternsEnv) {
+                throw new Error("GITHUB_AW_ERROR_PATTERNS environment variable is required");
+              }
+              try {
+                const patterns = JSON.parse(patternsEnv);
+                if (!Array.isArray(patterns)) {
+                  throw new Error("GITHUB_AW_ERROR_PATTERNS must be a JSON array");
+                }
+                return patterns;
+              } catch (e) {
+                throw new Error(`Failed to parse GITHUB_AW_ERROR_PATTERNS as JSON: ${e instanceof Error ? e.message : String(e)}`);
+              }
+            }
+            function validateErrors(logContent, patterns) {
+              const lines = logContent.split("\n");
+              let hasErrors = false;
+              for (const pattern of patterns) {
+                let regex;
+                try {
+                  regex = new RegExp(pattern.pattern, "g");
+                } catch (e) {
+                  core.error(`invalid error regex pattern: ${pattern.pattern}`);
+                  continue;
+                }
+                for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+                  const line = lines[lineIndex];
+                  let match;
+                  while ((match = regex.exec(line)) !== null) {
+                    const level = extractLevel(match, pattern);
+                    const message = extractMessage(match, pattern, line);
+                    const errorMessage = `Line ${lineIndex + 1}: ${message} (Pattern: ${pattern.description || "Unknown pattern"}, Raw log: ${truncateString(line.trim(), 120)})`;
+                    if (level.toLowerCase() === "error") {
+                      core.error(errorMessage);
+                      hasErrors = true;
+                    } else {
+                      core.warning(errorMessage);
+                    }
+                  }
+                }
+              }
+              return hasErrors;
+            }
+            function extractLevel(match, pattern) {
+              if (pattern.level_group && pattern.level_group > 0 && match[pattern.level_group]) {
+                return match[pattern.level_group];
+              }
+              const fullMatch = match[0];
+              if (fullMatch.toLowerCase().includes("error")) {
+                return "error";
+              } else if (fullMatch.toLowerCase().includes("warn")) {
+                return "warning";
+              }
+              return "unknown";
+            }
+            function extractMessage(match, pattern, fullLine) {
+              if (pattern.message_group && pattern.message_group > 0 && match[pattern.message_group]) {
+                return match[pattern.message_group].trim();
+              }
+              return match[0] || fullLine.trim();
+            }
+            function truncateString(str, maxLength) {
+              if (!str) return "";
+              if (str.length <= maxLength) return str;
+              return str.substring(0, maxLength) + "...";
+            }
+            if (typeof module !== "undefined" && module.exports) {
+              module.exports = {
+                validateErrors,
+                extractLevel,
+                extractMessage,
+                getErrorPatternsFromEnv,
+                truncateString,
+              };
+            }
+            if (typeof module === "undefined" || require.main === module) {
+              main();
+            }
       - name: Generate git patch
         if: always()
         env:
@@ -2654,15 +2826,32 @@ jobs:
                 pullNumber = parseInt(target, 10);
               }
               let branchName;
+              let prTitle = "";
+              let prLabels = [];
               try {
                 let prInfo = "";
-                const prInfoRes = await exec.exec(`gh`, [`pr`, `view`, `${pullNumber}`, `--json`, `headRefName`, `--jq`, `.headRefName`], {
-                  listeners: { stdout: data => (prInfo += data.toString()) },
-                });
+                const prInfoRes = await exec.exec(
+                  `gh`,
+                  [
+                    `pr`,
+                    `view`,
+                    `${pullNumber}`,
+                    `--json`,
+                    `headRefName,title,labels`,
+                    `--jq`,
+                    `{headRefName, title, labels: (.labels // [] | map(.name))}`,
+                  ],
+                  {
+                    listeners: { stdout: data => (prInfo += data.toString()) },
+                  }
+                );
                 if (!prInfoRes) {
-                  branchName = prInfo.trim();
+                  const prData = JSON.parse(prInfo.trim());
+                  branchName = prData.headRefName;
+                  prTitle = prData.title || "";
+                  prLabels = prData.labels || [];
                 } else {
-                  throw new Error("No head branch found for PR");
+                  throw new Error("No PR data found");
                 }
               } catch (error) {
                 core.info(`Warning: Could not fetch PR ${pullNumber} details: ${error instanceof Error ? error.message : String(error)}`);
@@ -2670,6 +2859,28 @@ jobs:
                 return;
               }
               core.info(`Target branch: ${branchName}`);
+              core.info(`PR title: ${prTitle}`);
+              core.info(`PR labels: ${prLabels.join(", ")}`);
+              const titlePrefix = process.env.GITHUB_AW_PR_TITLE_PREFIX;
+              if (titlePrefix && !prTitle.startsWith(titlePrefix)) {
+                core.setFailed(`Pull request title "${prTitle}" does not start with required prefix "${titlePrefix}"`);
+                return;
+              }
+              const requiredLabelsStr = process.env.GITHUB_AW_PR_LABELS;
+              if (requiredLabelsStr) {
+                const requiredLabels = requiredLabelsStr.split(",").map(label => label.trim());
+                const missingLabels = requiredLabels.filter(label => !prLabels.includes(label));
+                if (missingLabels.length > 0) {
+                  core.setFailed(`Pull request is missing required labels: ${missingLabels.join(", ")}. Current labels: ${prLabels.join(", ")}`);
+                  return;
+                }
+              }
+              if (titlePrefix) {
+                core.info(`✓ Title prefix validation passed: "${titlePrefix}"`);
+              }
+              if (requiredLabelsStr) {
+                core.info(`✓ Labels validation passed: ${requiredLabelsStr}`);
+              }
               const hasChanges = !isEmpty;
               core.info(`Switching to branch: ${branchName}`);
               try {
