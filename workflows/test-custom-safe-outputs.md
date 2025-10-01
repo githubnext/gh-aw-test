@@ -15,9 +15,11 @@ safe-outputs:
     title-prefix: "[Custom Engine Test] "
     labels: [test-safe-outputs, automation, custom-engine]
     max: 1
+    min: 1
   add-comment:
     max: 1
     target: "*"
+    min: 1
   create-pull-request:
     title-prefix: "[Custom Engine Test] "
     labels: [test-safe-outputs, automation, custom-engine]
@@ -25,12 +27,14 @@ safe-outputs:
   add-labels:
     allowed: [test-safe-outputs, automation, custom-engine, bug, enhancement, documentation]
     max: 3
+    min: 1
   update-issue:
     status:
     title:
     body:
     target: "*"
     max: 1
+    min: 1
   push-to-pull-request-branch:
     target: "*"
   missing-tool:
@@ -38,11 +42,14 @@ safe-outputs:
   create-discussion:
     title-prefix: "[Custom Engine Test] "
     max: 1
+    min: 1
   create-pull-request-review-comment:
     max: 1
     side: "RIGHT"
+    min: 1
   create-code-scanning-alert:
     max: 5
+    min: 1
 
 engine:
   id: custom

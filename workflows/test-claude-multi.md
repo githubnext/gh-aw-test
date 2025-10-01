@@ -1,13 +1,15 @@
 ---
 on:
   workflow_dispatch:
-
+concurrency:
+  group: "gh-aw-${{ github.workflow }}-${{ github.run_id }}"
 engine:
   id: claude
 safe-outputs:
   create-issue:
     title-prefix: "[claude-test] "
     labels: [claude, automation, haiku]
+    min: 1
   create-pull-request:
     title-prefix: "[claude-test] "
     labels: [claude, automation, bot]
