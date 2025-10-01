@@ -1,9 +1,8 @@
 ---
 on:
   workflow_dispatch:
-
-engine:
-  id: codex
+concurrency:
+  group: "gh-aw-${{ github.workflow }}-${{ github.run_id }}"
 safe-outputs:
   create-issue:
     title-prefix: "[codex-test] "

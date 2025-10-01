@@ -1,7 +1,8 @@
 ---
 on:
   workflow_dispatch:
-
+concurrency:
+  group: "gh-aw-${{ github.workflow }}-${{ github.run_id }}"
 engine:
   id: claude
 safe-outputs:
