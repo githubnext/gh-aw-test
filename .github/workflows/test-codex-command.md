@@ -9,6 +9,7 @@ engine:
 
 safe-outputs:
   add-comment:
+    min: 1
   missing-tool:
 ---
 

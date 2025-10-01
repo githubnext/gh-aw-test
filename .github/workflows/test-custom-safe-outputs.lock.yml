@@ -20,7 +20,7 @@ jobs:
     permissions: read-all
     env:
       GITHUB_AW_SAFE_OUTPUTS: /tmp/safe-outputs/outputs.jsonl
-      GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"add-comment\":{\"max\":1,\"target\":\"*\"},\"add-labels\":{\"max\":3},\"create-code-scanning-alert\":{\"max\":5},\"create-discussion\":{\"max\":1},\"create-issue\":{\"max\":1},\"create-pull-request\":{},\"create-pull-request-review-comment\":{\"max\":1},\"missing-tool\":{\"max\":5},\"push-to-pull-request-branch\":{\"target\":\"*\"},\"update-issue\":{\"max\":1}}"
+      GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"add-comment\":{\"max\":1,\"min\":1,\"target\":\"*\"},\"add-labels\":{\"max\":3,\"min\":1},\"create-code-scanning-alert\":{\"max\":5,\"min\":1},\"create-discussion\":{\"max\":1,\"min\":1},\"create-issue\":{\"max\":1,\"min\":1},\"create-pull-request\":{},\"create-pull-request-review-comment\":{\"max\":1,\"min\":1},\"missing-tool\":{\"max\":5},\"push-to-pull-request-branch\":{\"target\":\"*\"},\"update-issue\":{\"max\":1,\"min\":1}}"
     outputs:
       output: ${{ steps.collect_output.outputs.output }}
       output_types: ${{ steps.collect_output.outputs.output_types }}
@@ -36,7 +36,7 @@ jobs:
         run: |
           mkdir -p /tmp/safe-outputs
           cat > /tmp/safe-outputs/config.json << 'EOF'
-          {"add-comment":{"max":1,"target":"*"},"add-labels":{"max":3},"create-code-scanning-alert":{"max":5},"create-discussion":{"max":1},"create-issue":{"max":1},"create-pull-request":{},"create-pull-request-review-comment":{"max":1},"missing-tool":{"max":5},"push-to-pull-request-branch":{"target":"*"},"update-issue":{"max":1}}
+          {"add-comment":{"max":1,"min":1,"target":"*"},"add-labels":{"max":3,"min":1},"create-code-scanning-alert":{"max":5,"min":1},"create-discussion":{"max":1,"min":1},"create-issue":{"max":1,"min":1},"create-pull-request":{},"create-pull-request-review-comment":{"max":1,"min":1},"missing-tool":{"max":5},"push-to-pull-request-branch":{"target":"*"},"update-issue":{"max":1,"min":1}}
           EOF
           cat > /tmp/safe-outputs/mcp-server.cjs << 'EOF'
             const fs = require("fs");
@@ -642,7 +642,7 @@ jobs:
       - name: Setup MCPs
         env:
           GITHUB_AW_SAFE_OUTPUTS: ${{ env.GITHUB_AW_SAFE_OUTPUTS }}
-          GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"add-comment\":{\"max\":1,\"target\":\"*\"},\"add-labels\":{\"max\":3},\"create-code-scanning-alert\":{\"max\":5},\"create-discussion\":{\"max\":1},\"create-issue\":{\"max\":1},\"create-pull-request\":{},\"create-pull-request-review-comment\":{\"max\":1},\"missing-tool\":{\"max\":5},\"push-to-pull-request-branch\":{\"target\":\"*\"},\"update-issue\":{\"max\":1}}"
+          GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"add-comment\":{\"max\":1,\"min\":1,\"target\":\"*\"},\"add-labels\":{\"max\":3,\"min\":1},\"create-code-scanning-alert\":{\"max\":5,\"min\":1},\"create-discussion\":{\"max\":1,\"min\":1},\"create-issue\":{\"max\":1,\"min\":1},\"create-pull-request\":{},\"create-pull-request-review-comment\":{\"max\":1,\"min\":1},\"missing-tool\":{\"max\":5},\"push-to-pull-request-branch\":{\"target\":\"*\"},\"update-issue\":{\"max\":1,\"min\":1}}"
         run: |
           mkdir -p /tmp/mcp-config
           cat > /tmp/mcp-config/mcp-servers.json << 'EOF'
@@ -783,6 +783,8 @@ jobs:
           echo '``````markdown' >> $GITHUB_STEP_SUMMARY
           cat $GITHUB_AW_PROMPT >> $GITHUB_STEP_SUMMARY
           echo '``````' >> $GITHUB_STEP_SUMMARY
+      - name: Set agent version (not available)
+        run: echo "AGENT_VERSION=" >> $GITHUB_ENV
       - name: Generate agentic run info
         uses: actions/github-script@v8
         with:
@@ -794,6 +796,7 @@ jobs:
               engine_name: "Custom Steps",
               model: "",
               version: "",
+              agent_version: process.env.AGENT_VERSION || "",
               workflow_name: "Test Safe Outputs - Custom Engine",
               experimental: false,
               supports_tools_allowlist: false,
@@ -960,7 +963,7 @@ jobs:
         uses: actions/github-script@v8
         env:
           GITHUB_AW_SAFE_OUTPUTS: ${{ env.GITHUB_AW_SAFE_OUTPUTS }}
-          GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"add-comment\":{\"max\":1,\"target\":\"*\"},\"add-labels\":{\"max\":3},\"create-code-scanning-alert\":{\"max\":5},\"create-discussion\":{\"max\":1},\"create-issue\":{\"max\":1},\"create-pull-request\":{},\"create-pull-request-review-comment\":{\"max\":1},\"missing-tool\":{\"max\":5},\"push-to-pull-request-branch\":{\"target\":\"*\"},\"update-issue\":{\"max\":1}}"
+          GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"add-comment\":{\"max\":1,\"min\":1,\"target\":\"*\"},\"add-labels\":{\"max\":3,\"min\":1},\"create-code-scanning-alert\":{\"max\":5,\"min\":1},\"create-discussion\":{\"max\":1,\"min\":1},\"create-issue\":{\"max\":1,\"min\":1},\"create-pull-request\":{},\"create-pull-request-review-comment\":{\"max\":1,\"min\":1},\"missing-tool\":{\"max\":5},\"push-to-pull-request-branch\":{\"target\":\"*\"},\"update-issue\":{\"max\":1,\"min\":1}}"
         with:
           script: |
             async function main() {
@@ -1820,7 +1823,7 @@ jobs:
 
   create_issue:
     needs: agent
-    if: contains(needs.agent.outputs.output_types, 'create-issue')
+    if: (always()) && (contains(needs.agent.outputs.output_types, 'create-issue'))
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -2002,6 +2005,7 @@ jobs:
 
   create_discussion:
     needs: agent
+    if: (always()) && (contains(needs.agent.outputs.output_types, 'create-discussion'))
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -2194,9 +2198,9 @@ jobs:
             }
             await main();
 
-  create_issue_comment:
+  add_comment:
     needs: agent
-    if: always()
+    if: (always()) && (contains(needs.agent.outputs.output_types, 'add-comment'))
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -2361,7 +2365,9 @@ jobs:
 
   create_pr_review_comment:
     needs: agent
-    if: (github.event.issue.number && github.event.issue.pull_request) || github.event.pull_request
+    if: >
+      ((always()) && (contains(needs.agent.outputs.output_types, 'create-pull-request-review-comment'))) &&
+      (((github.event.issue.number) && (github.event.issue.pull_request)) || (github.event.pull_request))
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -2553,6 +2559,7 @@ jobs:
 
   create_code_scanning_alert:
     needs: agent
+    if: (always()) && (contains(needs.agent.outputs.output_types, 'create-code-scanning-alert'))
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -2793,7 +2800,7 @@ jobs:
 
   create_pull_request:
     needs: agent
-    if: contains(needs.agent.outputs.output_types, 'create-pull-request')
+    if: (always()) && (contains(needs.agent.outputs.output_types, 'create-pull-request'))
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -3123,7 +3130,9 @@ jobs:
 
   add_labels:
     needs: agent
-    if: github.event.issue.number || github.event.pull_request.number
+    if: >
+      ((always()) && (contains(needs.agent.outputs.output_types, 'add-labels'))) && ((github.event.issue.number) ||
+      (github.event.pull_request.number))
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -3319,7 +3328,7 @@ jobs:
 
   update_issue:
     needs: agent
-    if: always()
+    if: (always()) && (contains(needs.agent.outputs.output_types, 'update-issue'))
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -3511,7 +3520,10 @@ jobs:
 
   push_to_pull_request_branch:
     needs: agent
-    if: always()
+    if: >
+      ((always()) && (contains(needs.agent.outputs.output_types, 'push-to-pull-request-branch'))) &&
+      (((github.event.issue.number) &&
+      (github.event.issue.pull_request)) || (github.event.pull_request))
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -3810,7 +3822,7 @@ jobs:
 
   missing_tool:
     needs: agent
-    if: ${{ always() }}
+    if: (always()) && (contains(needs.agent.outputs.output_types, 'missing-tool'))
     runs-on: ubuntu-latest
     permissions:
       contents: read
