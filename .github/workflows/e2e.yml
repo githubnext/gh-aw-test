@@ -104,9 +104,3 @@ jobs:
             echo "E2E script failed with exit code $rc"
             exit $rc
           fi
-      - name: Upload e2e log artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: e2e-output-${{ matrix.testsuite }}-log
-          path: e2e-output.log
