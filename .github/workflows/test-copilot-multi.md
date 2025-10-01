@@ -8,9 +8,11 @@ safe-outputs:
   create-issue:
     title-prefix: "[copilot-test] "
     labels: [copilot, automation, haiku]
+    min: 1
   create-pull-request:
     title-prefix: "[copilot-test] "
     labels: [copilot, automation, bot]
+    min: 1
 ---
 
 Create an issue with title "Hello from Copilot (multi)" and body "World"

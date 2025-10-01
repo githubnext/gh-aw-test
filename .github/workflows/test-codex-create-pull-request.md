@@ -9,6 +9,7 @@ safe-outputs:
   create-pull-request:
     title-prefix: "[codex-test] "
     labels: [codex, automation, bot]
+    min: 1
 ---
 
 # Test Codex Create Pull Request

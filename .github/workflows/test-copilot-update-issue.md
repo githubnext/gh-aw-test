@@ -12,6 +12,7 @@ safe-outputs:
     status:
     title:
     body:
+    min: 1
 ---
 
 If the title of the issue #${{ github.event.issue.number }} is exactly "Hello from Copilot" then:

@@ -9,6 +9,7 @@ safe-outputs:
   create-issue:
     title-prefix: "[codex-test] "
     labels: [codex, automation, haiku]
+    min: 1
 ---
 
 Create an issue with title "Hello from Codex" and body "World"

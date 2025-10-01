@@ -8,9 +8,11 @@ safe-outputs:
   create-issue:
     title-prefix: "[codex-test] "
     labels: [codex, automation, haiku]
+    min: 1
   create-pull-request:
     title-prefix: "[codex-test] "
     labels: [codex, automation, bot]
+    min: 1
 ---
 
 Create an issue with title "Hello from Codex (multi)" and body "World"

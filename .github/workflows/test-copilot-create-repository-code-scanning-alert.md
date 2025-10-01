@@ -10,6 +10,7 @@ engine:
 safe-outputs:
   create-code-scanning-alert:
     max: 10
+    min: 1
 ---
 
 # Test Copilot Create Code Scanning Alert

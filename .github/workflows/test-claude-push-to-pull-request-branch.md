@@ -9,6 +9,7 @@ engine:
 
 safe-outputs:
   push-to-pull-request-branch:
+    min: 1
 ---
 
 # Test Claude Push to Branch

@@ -9,6 +9,7 @@ safe-outputs:
   create-pull-request:
     title-prefix: "[claude-test] "
     labels: [claude, automation, bot]
+    min: 1
 ---
 
 # Test Claude Create Pull Request
