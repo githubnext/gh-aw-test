@@ -270,9 +270,10 @@ jobs:
     permissions: read-all
     env:
       GITHUB_AW_SAFE_OUTPUTS: /tmp/safe-outputs/outputs.jsonl
-      GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"push-to-pull-request-branch\":{}}"
+      GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"missing-tool\":{},\"push-to-pull-request-branch\":{}}"
     outputs:
       output: ${{ steps.collect_output.outputs.output }}
+      output_types: ${{ steps.collect_output.outputs.output_types }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
@@ -393,7 +394,7 @@ jobs:
         run: |
           mkdir -p /tmp/safe-outputs
           cat > /tmp/safe-outputs/config.json << 'EOF'
-          {"push-to-pull-request-branch":{}}
+          {"missing-tool":{},"push-to-pull-request-branch":{}}
           EOF
           cat > /tmp/safe-outputs/mcp-server.cjs << 'EOF'
             const fs = require("fs");
@@ -999,7 +1000,7 @@ jobs:
       - name: Setup MCPs
         env:
           GITHUB_AW_SAFE_OUTPUTS: ${{ env.GITHUB_AW_SAFE_OUTPUTS }}
-          GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"push-to-pull-request-branch\":{}}"
+          GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"missing-tool\":{},\"push-to-pull-request-branch\":{}}"
         run: |
           mkdir -p /tmp/mcp-config
           cat > /tmp/mcp-config/mcp-servers.json << 'EOF'
@@ -1101,6 +1102,10 @@ jobs:
           2. Add and commit your changes to the local copy of the pull request branch. Be careful to add exactly the files you intend, and check there are no extra files left un-added. Check you haven't deleted or changed any files you didn't intend to.
           3. Push the branch to the repo by using the push-to-pull-request-branch tool from the safe-outputs MCP
           
+          **Reporting Missing Tools or Functionality**
+          
+          To report a missing tool use the missing-tool tool from the safe-outputs MCP.
+          
           EOF
       - name: Print prompt to step summary
         env:
@@ -1111,6 +1116,13 @@ jobs:
           echo '``````markdown' >> $GITHUB_STEP_SUMMARY
           cat $GITHUB_AW_PROMPT >> $GITHUB_STEP_SUMMARY
           echo '``````' >> $GITHUB_STEP_SUMMARY
+      - name: Capture agent version
+        run: |
+          VERSION_OUTPUT=$(claude --version 2>&1 || echo "unknown")
+          # Extract semantic version pattern (e.g., 1.2.3, v1.2.3-beta)
+          CLEAN_VERSION=$(echo "$VERSION_OUTPUT" | grep -oE 'v?[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?' | head -n1 || echo "unknown")
+          echo "AGENT_VERSION=$CLEAN_VERSION" >> $GITHUB_ENV
+          echo "Agent version: $VERSION_OUTPUT"
       - name: Generate agentic run info
         uses: actions/github-script@v8
         with:
@@ -1122,6 +1134,7 @@ jobs:
               engine_name: "Claude Code",
               model: "",
               version: "",
+              agent_version: process.env.AGENT_VERSION || "",
               workflow_name: "Test Claude Push to Branch",
               experimental: false,
               supports_tools_allowlist: true,
@@ -1161,6 +1174,9 @@ jobs:
       - name: Execute Claude Code CLI
         id: agentic_execution
         # Allowed tools (sorted):
+        # - Bash(cat)
+        # - Bash(date)
+        # - Bash(echo)
         # - Bash(git add:*)
         # - Bash(git branch:*)
         # - Bash(git checkout:*)
@@ -1168,6 +1184,14 @@ jobs:
         # - Bash(git merge:*)
         # - Bash(git rm:*)
         # - Bash(git switch:*)
+        # - Bash(grep)
+        # - Bash(head)
+        # - Bash(ls)
+        # - Bash(pwd)
+        # - Bash(sort)
+        # - Bash(tail)
+        # - Bash(uniq)
+        # - Bash(wc)
         # - BashOutput
         # - Edit
         # - ExitPlanMode
@@ -1237,7 +1261,7 @@ jobs:
         run: |
           set -o pipefail
           # Execute Claude Code CLI with prompt from file
-          npx @anthropic-ai/claude-code@latest --print --mcp-config /tmp/mcp-config/mcp-servers.json --allowed-tools "Bash(git add:*),Bash(git branch:*),Bash(git checkout:*),Bash(git commit:*),Bash(git merge:*),Bash(git rm:*),Bash(git switch:*),BashOutput,Edit,ExitPlanMode,Glob,Grep,KillBash,LS,MultiEdit,NotebookEdit,NotebookRead,Read,Task,TodoWrite,Write,mcp__github__download_workflow_run_artifact,mcp__github__get_code_scanning_alert,mcp__github__get_commit,mcp__github__get_dependabot_alert,mcp__github__get_discussion,mcp__github__get_discussion_comments,mcp__github__get_file_contents,mcp__github__get_issue,mcp__github__get_issue_comments,mcp__github__get_job_logs,mcp__github__get_latest_release,mcp__github__get_me,mcp__github__get_notification_details,mcp__github__get_pull_request,mcp__github__get_pull_request_comments,mcp__github__get_pull_request_diff,mcp__github__get_pull_request_files,mcp__github__get_pull_request_review_comments,mcp__github__get_pull_request_reviews,mcp__github__get_pull_request_status,mcp__github__get_release_by_tag,mcp__github__get_secret_scanning_alert,mcp__github__get_tag,mcp__github__get_workflow_run,mcp__github__get_workflow_run_logs,mcp__github__get_workflow_run_usage,mcp__github__list_branches,mcp__github__list_code_scanning_alerts,mcp__github__list_commits,mcp__github__list_dependabot_alerts,mcp__github__list_discussion_categories,mcp__github__list_discussions,mcp__github__list_issue_types,mcp__github__list_issues,mcp__github__list_notifications,mcp__github__list_pull_requests,mcp__github__list_releases,mcp__github__list_secret_scanning_alerts,mcp__github__list_starred_repositories,mcp__github__list_sub_issues,mcp__github__list_tags,mcp__github__list_workflow_jobs,mcp__github__list_workflow_run_artifacts,mcp__github__list_workflow_runs,mcp__github__list_workflows,mcp__github__search_code,mcp__github__search_issues,mcp__github__search_orgs,mcp__github__search_pull_requests,mcp__github__search_repositories,mcp__github__search_users" --debug --verbose --permission-mode bypassPermissions --output-format json --settings /tmp/.claude/settings.json "$(cat /tmp/aw-prompts/prompt.txt)" 2>&1 | tee /tmp/agent-stdio.log
+          npx @anthropic-ai/claude-code@2.0.1 --print --mcp-config /tmp/mcp-config/mcp-servers.json --allowed-tools "Bash(cat),Bash(date),Bash(echo),Bash(git add:*),Bash(git branch:*),Bash(git checkout:*),Bash(git commit:*),Bash(git merge:*),Bash(git rm:*),Bash(git switch:*),Bash(grep),Bash(head),Bash(ls),Bash(pwd),Bash(sort),Bash(tail),Bash(uniq),Bash(wc),BashOutput,Edit,ExitPlanMode,Glob,Grep,KillBash,LS,MultiEdit,NotebookEdit,NotebookRead,Read,Task,TodoWrite,Write,mcp__github__download_workflow_run_artifact,mcp__github__get_code_scanning_alert,mcp__github__get_commit,mcp__github__get_dependabot_alert,mcp__github__get_discussion,mcp__github__get_discussion_comments,mcp__github__get_file_contents,mcp__github__get_issue,mcp__github__get_issue_comments,mcp__github__get_job_logs,mcp__github__get_latest_release,mcp__github__get_me,mcp__github__get_notification_details,mcp__github__get_pull_request,mcp__github__get_pull_request_comments,mcp__github__get_pull_request_diff,mcp__github__get_pull_request_files,mcp__github__get_pull_request_review_comments,mcp__github__get_pull_request_reviews,mcp__github__get_pull_request_status,mcp__github__get_release_by_tag,mcp__github__get_secret_scanning_alert,mcp__github__get_tag,mcp__github__get_workflow_run,mcp__github__get_workflow_run_logs,mcp__github__get_workflow_run_usage,mcp__github__list_branches,mcp__github__list_code_scanning_alerts,mcp__github__list_commits,mcp__github__list_dependabot_alerts,mcp__github__list_discussion_categories,mcp__github__list_discussions,mcp__github__list_issue_types,mcp__github__list_issues,mcp__github__list_notifications,mcp__github__list_pull_requests,mcp__github__list_releases,mcp__github__list_secret_scanning_alerts,mcp__github__list_starred_repositories,mcp__github__list_sub_issues,mcp__github__list_tags,mcp__github__list_workflow_jobs,mcp__github__list_workflow_run_artifacts,mcp__github__list_workflow_runs,mcp__github__list_workflows,mcp__github__search_code,mcp__github__search_issues,mcp__github__search_orgs,mcp__github__search_pull_requests,mcp__github__search_repositories,mcp__github__search_users" --debug --verbose --permission-mode bypassPermissions --output-format json --settings /tmp/.claude/settings.json "$(cat /tmp/aw-prompts/prompt.txt)" 2>&1 | tee /tmp/agent-stdio.log
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           DISABLE_TELEMETRY: "1"
@@ -1291,7 +1315,7 @@ jobs:
         uses: actions/github-script@v8
         env:
           GITHUB_AW_SAFE_OUTPUTS: ${{ env.GITHUB_AW_SAFE_OUTPUTS }}
-          GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"push-to-pull-request-branch\":{}}"
+          GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"missing-tool\":{},\"push-to-pull-request-branch\":{}}"
         with:
           script: |
             async function main() {
@@ -1386,6 +1410,13 @@ jobs:
                   default:
                     return 1;
                 }
+              }
+              function getMinRequiredForType(itemType, config) {
+                const itemConfig = config?.[itemType];
+                if (itemConfig && typeof itemConfig === "object" && "min" in itemConfig && itemConfig.min) {
+                  return itemConfig.min;
+                }
+                return 0;
               }
               function repairJson(jsonStr) {
                 let repaired = jsonStr.trim();
@@ -1657,8 +1688,6 @@ jobs:
               const outputContent = fs.readFileSync(outputFile, "utf8");
               if (outputContent.trim() === "") {
                 core.info("Output file is empty");
-                core.setOutput("output", "");
-                return;
               }
               core.info(`Raw output content length: ${outputContent.length}`);
               let expectedOutputTypes = {};
@@ -1984,6 +2013,15 @@ jobs:
                   return;
                 }
               }
+              for (const itemType of Object.keys(expectedOutputTypes)) {
+                const minRequired = getMinRequiredForType(itemType, expectedOutputTypes);
+                if (minRequired > 0) {
+                  const actualCount = parsedItems.filter(item => item.type === itemType).length;
+                  if (actualCount < minRequired) {
+                    errors.push(`Too few items of type '${itemType}'. Minimum required: ${minRequired}, found: ${actualCount}.`);
+                  }
+                }
+              }
               core.info(`Successfully parsed ${parsedItems.length} valid output items`);
               const validatedOutput = {
                 items: parsedItems,
@@ -2002,6 +2040,9 @@ jobs:
               }
               core.setOutput("output", JSON.stringify(validatedOutput));
               core.setOutput("raw_output", outputContent);
+              const outputTypes = Array.from(new Set(parsedItems.map(item => item.type)));
+              core.info(`output_types: ${outputTypes.join(", ")}`);
+              core.setOutput("output_types", outputTypes.join(","));
               try {
                 await core.summary
                   .addRaw("## Processed Output\n\n")
@@ -2418,6 +2459,119 @@ jobs:
           name: agent-stdio.log
           path: /tmp/agent-stdio.log
           if-no-files-found: warn
+      - name: Validate agent logs for errors
+        if: always()
+        uses: actions/github-script@v8
+        env:
+          GITHUB_AW_AGENT_OUTPUT: /tmp/agent-stdio.log
+          GITHUB_AW_ERROR_PATTERNS: "[{\"pattern\":\"access denied.*only authorized.*can trigger.*workflow\",\"level_group\":0,\"message_group\":0,\"description\":\"Permission denied - workflow access restriction\"},{\"pattern\":\"access denied.*user.*not authorized\",\"level_group\":0,\"message_group\":0,\"description\":\"Permission denied - user not authorized\"},{\"pattern\":\"repository permission check failed\",\"level_group\":0,\"message_group\":0,\"description\":\"Repository permission check failure\"},{\"pattern\":\"configuration error.*required permissions not specified\",\"level_group\":0,\"message_group\":0,\"description\":\"Configuration error - missing permissions\"},{\"pattern\":\"permission.*denied\",\"level_group\":0,\"message_group\":0,\"description\":\"Generic permission denied error\"},{\"pattern\":\"unauthorized\",\"level_group\":0,\"message_group\":0,\"description\":\"Unauthorized access error\"},{\"pattern\":\"forbidden\",\"level_group\":0,\"message_group\":0,\"description\":\"Forbidden access error\"},{\"pattern\":\"access.*restricted\",\"level_group\":0,\"message_group\":0,\"description\":\"Access restricted error\"},{\"pattern\":\"insufficient.*permission\",\"level_group\":0,\"message_group\":0,\"description\":\"Insufficient permissions error\"}]"
+        with:
+          script: |
+            function main() {
+              const fs = require("fs");
+              try {
+                const logFile = process.env.GITHUB_AW_AGENT_OUTPUT;
+                if (!logFile) {
+                  throw new Error("GITHUB_AW_AGENT_OUTPUT environment variable is required");
+                }
+                if (!fs.existsSync(logFile)) {
+                  throw new Error(`Log file not found: ${logFile}`);
+                }
+                const patterns = getErrorPatternsFromEnv();
+                if (patterns.length === 0) {
+                  throw new Error("GITHUB_AW_ERROR_PATTERNS environment variable is required and must contain at least one pattern");
+                }
+                const content = fs.readFileSync(logFile, "utf8");
+                const hasErrors = validateErrors(content, patterns);
+                if (hasErrors) {
+                  core.setFailed("Errors detected in agent logs - failing workflow step");
+                } else {
+                  core.info("Error validation completed successfully");
+                }
+              } catch (error) {
+                console.debug(error);
+                core.setFailed(`Error validating log: ${error instanceof Error ? error.message : String(error)}`);
+              }
+            }
+            function getErrorPatternsFromEnv() {
+              const patternsEnv = process.env.GITHUB_AW_ERROR_PATTERNS;
+              if (!patternsEnv) {
+                throw new Error("GITHUB_AW_ERROR_PATTERNS environment variable is required");
+              }
+              try {
+                const patterns = JSON.parse(patternsEnv);
+                if (!Array.isArray(patterns)) {
+                  throw new Error("GITHUB_AW_ERROR_PATTERNS must be a JSON array");
+                }
+                return patterns;
+              } catch (e) {
+                throw new Error(`Failed to parse GITHUB_AW_ERROR_PATTERNS as JSON: ${e instanceof Error ? e.message : String(e)}`);
+              }
+            }
+            function validateErrors(logContent, patterns) {
+              const lines = logContent.split("\n");
+              let hasErrors = false;
+              for (const pattern of patterns) {
+                let regex;
+                try {
+                  regex = new RegExp(pattern.pattern, "g");
+                } catch (e) {
+                  core.error(`invalid error regex pattern: ${pattern.pattern}`);
+                  continue;
+                }
+                for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+                  const line = lines[lineIndex];
+                  let match;
+                  while ((match = regex.exec(line)) !== null) {
+                    const level = extractLevel(match, pattern);
+                    const message = extractMessage(match, pattern, line);
+                    const errorMessage = `Line ${lineIndex + 1}: ${message} (Pattern: ${pattern.description || "Unknown pattern"}, Raw log: ${truncateString(line.trim(), 120)})`;
+                    if (level.toLowerCase() === "error") {
+                      core.error(errorMessage);
+                      hasErrors = true;
+                    } else {
+                      core.warning(errorMessage);
+                    }
+                  }
+                }
+              }
+              return hasErrors;
+            }
+            function extractLevel(match, pattern) {
+              if (pattern.level_group && pattern.level_group > 0 && match[pattern.level_group]) {
+                return match[pattern.level_group];
+              }
+              const fullMatch = match[0];
+              if (fullMatch.toLowerCase().includes("error")) {
+                return "error";
+              } else if (fullMatch.toLowerCase().includes("warn")) {
+                return "warning";
+              }
+              return "unknown";
+            }
+            function extractMessage(match, pattern, fullLine) {
+              if (pattern.message_group && pattern.message_group > 0 && match[pattern.message_group]) {
+                return match[pattern.message_group].trim();
+              }
+              return match[0] || fullLine.trim();
+            }
+            function truncateString(str, maxLength) {
+              if (!str) return "";
+              if (str.length <= maxLength) return str;
+              return str.substring(0, maxLength) + "...";
+            }
+            if (typeof module !== "undefined" && module.exports) {
+              module.exports = {
+                validateErrors,
+                extractLevel,
+                extractMessage,
+                getErrorPatternsFromEnv,
+                truncateString,
+              };
+            }
+            if (typeof module === "undefined" || require.main === module) {
+              main();
+            }
       - name: Generate git patch
         if: always()
         env:
@@ -2516,9 +2670,9 @@ jobs:
   push_to_pull_request_branch:
     needs: agent
     if: >
-      (contains(github.event.issue.body, '/test-claude-push-to-pull-request-branch') || contains(github.event.comment.body, '/test-claude-push-to-pull-request-branch') ||
-      contains(github.event.pull_request.body, '/test-claude-push-to-pull-request-branch')) && ((github.event.issue.number &&
-      github.event.issue.pull_request) || github.event.pull_request)
+      ((always()) && (contains(needs.agent.outputs.output_types, 'push-to-pull-request-branch'))) &&
+      (((github.event.issue.number) &&
+      (github.event.issue.pull_request)) || (github.event.pull_request))
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -2684,15 +2838,32 @@ jobs:
                 pullNumber = parseInt(target, 10);
               }
               let branchName;
+              let prTitle = "";
+              let prLabels = [];
               try {
                 let prInfo = "";
-                const prInfoRes = await exec.exec(`gh`, [`pr`, `view`, `${pullNumber}`, `--json`, `headRefName`, `--jq`, `.headRefName`], {
-                  listeners: { stdout: data => (prInfo += data.toString()) },
-                });
+                const prInfoRes = await exec.exec(
+                  `gh`,
+                  [
+                    `pr`,
+                    `view`,
+                    `${pullNumber}`,
+                    `--json`,
+                    `headRefName,title,labels`,
+                    `--jq`,
+                    `{headRefName, title, labels: (.labels // [] | map(.name))}`,
+                  ],
+                  {
+                    listeners: { stdout: data => (prInfo += data.toString()) },
+                  }
+                );
                 if (!prInfoRes) {
-                  branchName = prInfo.trim();
+                  const prData = JSON.parse(prInfo.trim());
+                  branchName = prData.headRefName;
+                  prTitle = prData.title || "";
+                  prLabels = prData.labels || [];
                 } else {
-                  throw new Error("No head branch found for PR");
+                  throw new Error("No PR data found");
                 }
               } catch (error) {
                 core.info(`Warning: Could not fetch PR ${pullNumber} details: ${error instanceof Error ? error.message : String(error)}`);
@@ -2700,6 +2871,28 @@ jobs:
                 return;
               }
               core.info(`Target branch: ${branchName}`);
+              core.info(`PR title: ${prTitle}`);
+              core.info(`PR labels: ${prLabels.join(", ")}`);
+              const titlePrefix = process.env.GITHUB_AW_PR_TITLE_PREFIX;
+              if (titlePrefix && !prTitle.startsWith(titlePrefix)) {
+                core.setFailed(`Pull request title "${prTitle}" does not start with required prefix "${titlePrefix}"`);
+                return;
+              }
+              const requiredLabelsStr = process.env.GITHUB_AW_PR_LABELS;
+              if (requiredLabelsStr) {
+                const requiredLabels = requiredLabelsStr.split(",").map(label => label.trim());
+                const missingLabels = requiredLabels.filter(label => !prLabels.includes(label));
+                if (missingLabels.length > 0) {
+                  core.setFailed(`Pull request is missing required labels: ${missingLabels.join(", ")}. Current labels: ${prLabels.join(", ")}`);
+                  return;
+                }
+              }
+              if (titlePrefix) {
+                core.info(`✓ Title prefix validation passed: "${titlePrefix}"`);
+              }
+              if (requiredLabelsStr) {
+                core.info(`✓ Labels validation passed: ${requiredLabelsStr}`);
+              }
               const hasChanges = !isEmpty;
               core.info(`Switching to branch: ${branchName}`);
               try {
@@ -2774,4 +2967,109 @@ jobs:
               await core.summary.addRaw(summaryContent).write();
             }
             await main();
+
+  missing_tool:
+    needs: agent
+    if: (always()) && (contains(needs.agent.outputs.output_types, 'missing-tool'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 5
+    outputs:
+      tools_reported: ${{ steps.missing_tool.outputs.tools_reported }}
+      total_count: ${{ steps.missing_tool.outputs.total_count }}
+    steps:
+      - name: Record Missing Tool
+        id: missing_tool
+        uses: actions/github-script@v8
+        env:
+          GITHUB_AW_AGENT_OUTPUT: ${{ needs.agent.outputs.output }}
+        with:
+          script: |
+            async function main() {
+              const fs = require("fs");
+              const agentOutput = process.env.GITHUB_AW_AGENT_OUTPUT || "";
+              const maxReports = process.env.GITHUB_AW_MISSING_TOOL_MAX ? parseInt(process.env.GITHUB_AW_MISSING_TOOL_MAX) : null;
+              core.info("Processing missing-tool reports...");
+              core.info(`Agent output length: ${agentOutput.length}`);
+              if (maxReports) {
+                core.info(`Maximum reports allowed: ${maxReports}`);
+              }
+              const missingTools = [];
+              if (!agentOutput.trim()) {
+                core.info("No agent output to process");
+                core.setOutput("tools_reported", JSON.stringify(missingTools));
+                core.setOutput("total_count", missingTools.length.toString());
+                return;
+              }
+              let validatedOutput;
+              try {
+                validatedOutput = JSON.parse(agentOutput);
+              } catch (error) {
+                core.setFailed(`Error parsing agent output JSON: ${error instanceof Error ? error.message : String(error)}`);
+                return;
+              }
+              if (!validatedOutput.items || !Array.isArray(validatedOutput.items)) {
+                core.info("No valid items found in agent output");
+                core.setOutput("tools_reported", JSON.stringify(missingTools));
+                core.setOutput("total_count", missingTools.length.toString());
+                return;
+              }
+              core.info(`Parsed agent output with ${validatedOutput.items.length} entries`);
+              for (const entry of validatedOutput.items) {
+                if (entry.type === "missing-tool") {
+                  if (!entry.tool) {
+                    core.warning(`missing-tool entry missing 'tool' field: ${JSON.stringify(entry)}`);
+                    continue;
+                  }
+                  if (!entry.reason) {
+                    core.warning(`missing-tool entry missing 'reason' field: ${JSON.stringify(entry)}`);
+                    continue;
+                  }
+                  const missingTool = {
+                    tool: entry.tool,
+                    reason: entry.reason,
+                    alternatives: entry.alternatives || null,
+                    timestamp: new Date().toISOString(),
+                  };
+                  missingTools.push(missingTool);
+                  core.info(`Recorded missing tool: ${missingTool.tool}`);
+                  if (maxReports && missingTools.length >= maxReports) {
+                    core.info(`Reached maximum number of missing tool reports (${maxReports})`);
+                    break;
+                  }
+                }
+              }
+              core.info(`Total missing tools reported: ${missingTools.length}`);
+              core.setOutput("tools_reported", JSON.stringify(missingTools));
+              core.setOutput("total_count", missingTools.length.toString());
+              if (missingTools.length > 0) {
+                core.info("Missing tools summary:");
+                core.summary
+                  .addHeading("Missing Tools Report", 2)
+                  .addRaw(`Found **${missingTools.length}** missing tool${missingTools.length > 1 ? "s" : ""} in this workflow execution.\n\n`);
+                missingTools.forEach((tool, index) => {
+                  core.info(`${index + 1}. Tool: ${tool.tool}`);
+                  core.info(`   Reason: ${tool.reason}`);
+                  if (tool.alternatives) {
+                    core.info(`   Alternatives: ${tool.alternatives}`);
+                  }
+                  core.info(`   Reported at: ${tool.timestamp}`);
+                  core.info("");
+                  core.summary.addRaw(`### ${index + 1}. \`${tool.tool}\`\n\n`).addRaw(`**Reason:** ${tool.reason}\n\n`);
+                  if (tool.alternatives) {
+                    core.summary.addRaw(`**Alternatives:** ${tool.alternatives}\n\n`);
+                  }
+                  core.summary.addRaw(`**Reported at:** ${tool.timestamp}\n\n---\n\n`);
+                });
+                core.summary.write();
+              } else {
+                core.info("No missing tools reported in this workflow execution.");
+                core.summary.addHeading("Missing Tools Report", 2).addRaw("✅ No missing tools reported in this workflow execution.").write();
+              }
+            }
+            main().catch(error => {
+              core.error(`Error processing missing-tool reports: ${error}`);
+              core.setFailed(`Error processing missing-tool reports: ${error}`);
+            });
 

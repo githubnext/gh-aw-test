@@ -170,9 +170,10 @@ jobs:
     permissions: read-all
     env:
       GITHUB_AW_SAFE_OUTPUTS: /tmp/safe-outputs/outputs.jsonl
-      GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"create-code-scanning-alert\":{\"max\":10}}"
+      GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"create-code-scanning-alert\":{\"max\":10},\"missing-tool\":{}}"
     outputs:
       output: ${{ steps.collect_output.outputs.output }}
+      output_types: ${{ steps.collect_output.outputs.output_types }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
@@ -186,7 +187,7 @@ jobs:
         run: |
           mkdir -p /tmp/safe-outputs
           cat > /tmp/safe-outputs/config.json << 'EOF'
-          {"create-code-scanning-alert":{"max":10}}
+          {"create-code-scanning-alert":{"max":10},"missing-tool":{}}
           EOF
           cat > /tmp/safe-outputs/mcp-server.cjs << 'EOF'
             const fs = require("fs");
@@ -792,7 +793,7 @@ jobs:
       - name: Setup MCPs
         env:
           GITHUB_AW_SAFE_OUTPUTS: ${{ env.GITHUB_AW_SAFE_OUTPUTS }}
-          GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"create-code-scanning-alert\":{\"max\":10}}"
+          GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"create-code-scanning-alert\":{\"max\":10},\"missing-tool\":{}}"
         run: |
           mkdir -p /tmp/mcp-config
           cat > /tmp/mcp-config/config.toml << EOF
@@ -847,6 +848,10 @@ jobs:
           
           To create code scanning alert use the create-code-scanning-alert tool from the safe-outputs MCP
           
+          **Reporting Missing Tools or Functionality**
+          
+          To report a missing tool use the missing-tool tool from the safe-outputs MCP.
+          
           EOF
       - name: Print prompt to step summary
         env:
@@ -857,6 +862,13 @@ jobs:
           echo '``````markdown' >> $GITHUB_STEP_SUMMARY
           cat $GITHUB_AW_PROMPT >> $GITHUB_STEP_SUMMARY
           echo '``````' >> $GITHUB_STEP_SUMMARY
+      - name: Capture agent version
+        run: |
+          VERSION_OUTPUT=$(codex --version 2>&1 || echo "unknown")
+          # Extract semantic version pattern (e.g., 1.2.3, v1.2.3-beta)
+          CLEAN_VERSION=$(echo "$VERSION_OUTPUT" | grep -oE 'v?[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?' | head -n1 || echo "unknown")
+          echo "AGENT_VERSION=$CLEAN_VERSION" >> $GITHUB_ENV
+          echo "Agent version: $VERSION_OUTPUT"
       - name: Generate agentic run info
         uses: actions/github-script@v8
         with:
@@ -868,6 +880,7 @@ jobs:
               engine_name: "Codex",
               model: "",
               version: "",
+              agent_version: process.env.AGENT_VERSION || "",
               workflow_name: "Test Codex Code Scanning Alert",
               experimental: true,
               supports_tools_allowlist: true,
@@ -968,7 +981,7 @@ jobs:
         uses: actions/github-script@v8
         env:
           GITHUB_AW_SAFE_OUTPUTS: ${{ env.GITHUB_AW_SAFE_OUTPUTS }}
-          GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"create-code-scanning-alert\":{\"max\":10}}"
+          GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"create-code-scanning-alert\":{\"max\":10},\"missing-tool\":{}}"
         with:
           script: |
             async function main() {
@@ -1063,6 +1076,13 @@ jobs:
                   default:
                     return 1;
                 }
+              }
+              function getMinRequiredForType(itemType, config) {
+                const itemConfig = config?.[itemType];
+                if (itemConfig && typeof itemConfig === "object" && "min" in itemConfig && itemConfig.min) {
+                  return itemConfig.min;
+                }
+                return 0;
               }
               function repairJson(jsonStr) {
                 let repaired = jsonStr.trim();
@@ -1334,8 +1354,6 @@ jobs:
               const outputContent = fs.readFileSync(outputFile, "utf8");
               if (outputContent.trim() === "") {
                 core.info("Output file is empty");
-                core.setOutput("output", "");
-                return;
               }
               core.info(`Raw output content length: ${outputContent.length}`);
               let expectedOutputTypes = {};
@@ -1661,6 +1679,15 @@ jobs:
                   return;
                 }
               }
+              for (const itemType of Object.keys(expectedOutputTypes)) {
+                const minRequired = getMinRequiredForType(itemType, expectedOutputTypes);
+                if (minRequired > 0) {
+                  const actualCount = parsedItems.filter(item => item.type === itemType).length;
+                  if (actualCount < minRequired) {
+                    errors.push(`Too few items of type '${itemType}'. Minimum required: ${minRequired}, found: ${actualCount}.`);
+                  }
+                }
+              }
               core.info(`Successfully parsed ${parsedItems.length} valid output items`);
               const validatedOutput = {
                 items: parsedItems,
@@ -1679,6 +1706,9 @@ jobs:
               }
               core.setOutput("output", JSON.stringify(validatedOutput));
               core.setOutput("raw_output", outputContent);
+              const outputTypes = Array.from(new Set(parsedItems.map(item => item.type)));
+              core.info(`output_types: ${outputTypes.join(", ")}`);
+              core.setOutput("output_types", outputTypes.join(","));
               try {
                 await core.summary
                   .addRaw("## Processed Output\n\n")
@@ -1934,7 +1964,7 @@ jobs:
         uses: actions/github-script@v8
         env:
           GITHUB_AW_AGENT_OUTPUT: /tmp/agent-stdio.log
-          GITHUB_AW_ERROR_PATTERNS: "[{\"pattern\":\"\\\\[(\\\\d{4}-\\\\d{2}-\\\\d{2}T\\\\d{2}:\\\\d{2}:\\\\d{2})\\\\]\\\\s+stream\\\\s+(error):\\\\s+(.+)\",\"level_group\":2,\"message_group\":3,\"description\":\"Codex stream errors with timestamp\"},{\"pattern\":\"\\\\[(\\\\d{4}-\\\\d{2}-\\\\d{2}T\\\\d{2}:\\\\d{2}:\\\\d{2})\\\\]\\\\s+(ERROR):\\\\s+(.+)\",\"level_group\":2,\"message_group\":3,\"description\":\"Codex ERROR messages with timestamp\"},{\"pattern\":\"\\\\[(\\\\d{4}-\\\\d{2}-\\\\d{2}T\\\\d{2}:\\\\d{2}:\\\\d{2})\\\\]\\\\s+(WARN|WARNING):\\\\s+(.+)\",\"level_group\":2,\"message_group\":3,\"description\":\"Codex warning messages with timestamp\"}]"
+          GITHUB_AW_ERROR_PATTERNS: "[{\"pattern\":\"\\\\[(\\\\d{4}-\\\\d{2}-\\\\d{2}T\\\\d{2}:\\\\d{2}:\\\\d{2})\\\\]\\\\s+stream\\\\s+(error):\\\\s+(.+)\",\"level_group\":2,\"message_group\":3,\"description\":\"Codex stream errors with timestamp\"},{\"pattern\":\"\\\\[(\\\\d{4}-\\\\d{2}-\\\\d{2}T\\\\d{2}:\\\\d{2}:\\\\d{2})\\\\]\\\\s+(ERROR):\\\\s+(.+)\",\"level_group\":2,\"message_group\":3,\"description\":\"Codex ERROR messages with timestamp\"},{\"pattern\":\"\\\\[(\\\\d{4}-\\\\d{2}-\\\\d{2}T\\\\d{2}:\\\\d{2}:\\\\d{2})\\\\]\\\\s+(WARN|WARNING):\\\\s+(.+)\",\"level_group\":2,\"message_group\":3,\"description\":\"Codex warning messages with timestamp\"},{\"pattern\":\"access denied.*only authorized.*can trigger.*workflow\",\"level_group\":0,\"message_group\":0,\"description\":\"Permission denied - workflow access restriction\"},{\"pattern\":\"access denied.*user.*not authorized\",\"level_group\":0,\"message_group\":0,\"description\":\"Permission denied - user not authorized\"},{\"pattern\":\"repository permission check failed\",\"level_group\":0,\"message_group\":0,\"description\":\"Repository permission check failure\"},{\"pattern\":\"configuration error.*required permissions not specified\",\"level_group\":0,\"message_group\":0,\"description\":\"Configuration error - missing permissions\"},{\"pattern\":\"permission.*denied\",\"level_group\":0,\"message_group\":0,\"description\":\"Generic permission denied error\"},{\"pattern\":\"unauthorized\",\"level_group\":0,\"message_group\":0,\"description\":\"Unauthorized access error\"},{\"pattern\":\"forbidden\",\"level_group\":0,\"message_group\":0,\"description\":\"Forbidden access error\"},{\"pattern\":\"access.*restricted\",\"level_group\":0,\"message_group\":0,\"description\":\"Access restricted error\"},{\"pattern\":\"insufficient.*permission\",\"level_group\":0,\"message_group\":0,\"description\":\"Insufficient permissions error\"},{\"pattern\":\"failed in.*permission\",\"level_group\":0,\"message_group\":0,\"description\":\"Codex tool failed due to permission error\"},{\"pattern\":\"error in.*permission\",\"level_group\":0,\"message_group\":0,\"description\":\"Codex tool error due to permission issue\"}]"
         with:
           script: |
             function main() {
@@ -1982,7 +2012,13 @@ jobs:
               const lines = logContent.split("\n");
               let hasErrors = false;
               for (const pattern of patterns) {
-                const regex = new RegExp(pattern.pattern, "g");
+                let regex;
+                try {
+                  regex = new RegExp(pattern.pattern, "g");
+                } catch (e) {
+                  core.error(`invalid error regex pattern: ${pattern.pattern}`);
+                  continue;
+                }
                 for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
                   const line = lines[lineIndex];
                   let match;
@@ -2039,6 +2075,7 @@ jobs:
 
   create_code_scanning_alert:
     needs: agent
+    if: (always()) && (contains(needs.agent.outputs.output_types, 'create-code-scanning-alert'))
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -2276,4 +2313,109 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: ${{ steps.create_code_scanning_alert.outputs.sarif_file }}
+
+  missing_tool:
+    needs: agent
+    if: (always()) && (contains(needs.agent.outputs.output_types, 'missing-tool'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 5
+    outputs:
+      tools_reported: ${{ steps.missing_tool.outputs.tools_reported }}
+      total_count: ${{ steps.missing_tool.outputs.total_count }}
+    steps:
+      - name: Record Missing Tool
+        id: missing_tool
+        uses: actions/github-script@v8
+        env:
+          GITHUB_AW_AGENT_OUTPUT: ${{ needs.agent.outputs.output }}
+        with:
+          script: |
+            async function main() {
+              const fs = require("fs");
+              const agentOutput = process.env.GITHUB_AW_AGENT_OUTPUT || "";
+              const maxReports = process.env.GITHUB_AW_MISSING_TOOL_MAX ? parseInt(process.env.GITHUB_AW_MISSING_TOOL_MAX) : null;
+              core.info("Processing missing-tool reports...");
+              core.info(`Agent output length: ${agentOutput.length}`);
+              if (maxReports) {
+                core.info(`Maximum reports allowed: ${maxReports}`);
+              }
+              const missingTools = [];
+              if (!agentOutput.trim()) {
+                core.info("No agent output to process");
+                core.setOutput("tools_reported", JSON.stringify(missingTools));
+                core.setOutput("total_count", missingTools.length.toString());
+                return;
+              }
+              let validatedOutput;
+              try {
+                validatedOutput = JSON.parse(agentOutput);
+              } catch (error) {
+                core.setFailed(`Error parsing agent output JSON: ${error instanceof Error ? error.message : String(error)}`);
+                return;
+              }
+              if (!validatedOutput.items || !Array.isArray(validatedOutput.items)) {
+                core.info("No valid items found in agent output");
+                core.setOutput("tools_reported", JSON.stringify(missingTools));
+                core.setOutput("total_count", missingTools.length.toString());
+                return;
+              }
+              core.info(`Parsed agent output with ${validatedOutput.items.length} entries`);
+              for (const entry of validatedOutput.items) {
+                if (entry.type === "missing-tool") {
+                  if (!entry.tool) {
+                    core.warning(`missing-tool entry missing 'tool' field: ${JSON.stringify(entry)}`);
+                    continue;
+                  }
+                  if (!entry.reason) {
+                    core.warning(`missing-tool entry missing 'reason' field: ${JSON.stringify(entry)}`);
+                    continue;
+                  }
+                  const missingTool = {
+                    tool: entry.tool,
+                    reason: entry.reason,
+                    alternatives: entry.alternatives || null,
+                    timestamp: new Date().toISOString(),
+                  };
+                  missingTools.push(missingTool);
+                  core.info(`Recorded missing tool: ${missingTool.tool}`);
+                  if (maxReports && missingTools.length >= maxReports) {
+                    core.info(`Reached maximum number of missing tool reports (${maxReports})`);
+                    break;
+                  }
+                }
+              }
+              core.info(`Total missing tools reported: ${missingTools.length}`);
+              core.setOutput("tools_reported", JSON.stringify(missingTools));
+              core.setOutput("total_count", missingTools.length.toString());
+              if (missingTools.length > 0) {
+                core.info("Missing tools summary:");
+                core.summary
+                  .addHeading("Missing Tools Report", 2)
+                  .addRaw(`Found **${missingTools.length}** missing tool${missingTools.length > 1 ? "s" : ""} in this workflow execution.\n\n`);
+                missingTools.forEach((tool, index) => {
+                  core.info(`${index + 1}. Tool: ${tool.tool}`);
+                  core.info(`   Reason: ${tool.reason}`);
+                  if (tool.alternatives) {
+                    core.info(`   Alternatives: ${tool.alternatives}`);
+                  }
+                  core.info(`   Reported at: ${tool.timestamp}`);
+                  core.info("");
+                  core.summary.addRaw(`### ${index + 1}. \`${tool.tool}\`\n\n`).addRaw(`**Reason:** ${tool.reason}\n\n`);
+                  if (tool.alternatives) {
+                    core.summary.addRaw(`**Alternatives:** ${tool.alternatives}\n\n`);
+                  }
+                  core.summary.addRaw(`**Reported at:** ${tool.timestamp}\n\n---\n\n`);
+                });
+                core.summary.write();
+              } else {
+                core.info("No missing tools reported in this workflow execution.");
+                core.summary.addHeading("Missing Tools Report", 2).addRaw("✅ No missing tools reported in this workflow execution.").write();
+              }
+            }
+            main().catch(error => {
+              core.error(`Error processing missing-tool reports: ${error}`);
+              core.setFailed(`Error processing missing-tool reports: ${error}`);
+            });
 

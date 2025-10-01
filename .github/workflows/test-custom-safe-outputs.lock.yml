@@ -20,9 +20,10 @@ jobs:
     permissions: read-all
     env:
       GITHUB_AW_SAFE_OUTPUTS: /tmp/safe-outputs/outputs.jsonl
-      GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"add-comment\":{\"target\":\"*\"},\"add-labels\":{},\"create-code-scanning-alert\":{\"max\":5},\"create-discussion\":{\"max\":1},\"create-issue\":{},\"create-pull-request\":{},\"create-pull-request-review-comment\":{\"max\":1},\"missing-tool\":{\"max\":5},\"push-to-pull-request-branch\":{\"target\":\"*\"},\"update-issue\":{}}"
+      GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"add-comment\":{\"max\":1,\"target\":\"*\"},\"add-labels\":{\"max\":3},\"create-code-scanning-alert\":{\"max\":5},\"create-discussion\":{\"max\":1},\"create-issue\":{\"max\":1},\"create-pull-request\":{},\"create-pull-request-review-comment\":{\"max\":1},\"missing-tool\":{\"max\":5},\"push-to-pull-request-branch\":{\"target\":\"*\"},\"update-issue\":{\"max\":1}}"
     outputs:
       output: ${{ steps.collect_output.outputs.output }}
+      output_types: ${{ steps.collect_output.outputs.output_types }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
@@ -35,7 +36,7 @@ jobs:
         run: |
           mkdir -p /tmp/safe-outputs
           cat > /tmp/safe-outputs/config.json << 'EOF'
-          {"add-comment":{"target":"*"},"add-labels":{},"create-code-scanning-alert":{"max":5},"create-discussion":{"max":1},"create-issue":{},"create-pull-request":{},"create-pull-request-review-comment":{"max":1},"missing-tool":{"max":5},"push-to-pull-request-branch":{"target":"*"},"update-issue":{}}
+          {"add-comment":{"max":1,"target":"*"},"add-labels":{"max":3},"create-code-scanning-alert":{"max":5},"create-discussion":{"max":1},"create-issue":{"max":1},"create-pull-request":{},"create-pull-request-review-comment":{"max":1},"missing-tool":{"max":5},"push-to-pull-request-branch":{"target":"*"},"update-issue":{"max":1}}
           EOF
           cat > /tmp/safe-outputs/mcp-server.cjs << 'EOF'
             const fs = require("fs");
@@ -641,7 +642,7 @@ jobs:
       - name: Setup MCPs
         env:
           GITHUB_AW_SAFE_OUTPUTS: ${{ env.GITHUB_AW_SAFE_OUTPUTS }}
-          GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"add-comment\":{\"target\":\"*\"},\"add-labels\":{},\"create-code-scanning-alert\":{\"max\":5},\"create-discussion\":{\"max\":1},\"create-issue\":{},\"create-pull-request\":{},\"create-pull-request-review-comment\":{\"max\":1},\"missing-tool\":{\"max\":5},\"push-to-pull-request-branch\":{\"target\":\"*\"},\"update-issue\":{}}"
+          GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"add-comment\":{\"max\":1,\"target\":\"*\"},\"add-labels\":{\"max\":3},\"create-code-scanning-alert\":{\"max\":5},\"create-discussion\":{\"max\":1},\"create-issue\":{\"max\":1},\"create-pull-request\":{},\"create-pull-request-review-comment\":{\"max\":1},\"missing-tool\":{\"max\":5},\"push-to-pull-request-branch\":{\"target\":\"*\"},\"update-issue\":{\"max\":1}}"
         run: |
           mkdir -p /tmp/mcp-config
           cat > /tmp/mcp-config/mcp-servers.json << 'EOF'
@@ -782,6 +783,8 @@ jobs:
           echo '``````markdown' >> $GITHUB_STEP_SUMMARY
           cat $GITHUB_AW_PROMPT >> $GITHUB_STEP_SUMMARY
           echo '``````' >> $GITHUB_STEP_SUMMARY
+      - name: Set agent version (not available)
+        run: echo "AGENT_VERSION=" >> $GITHUB_ENV
       - name: Generate agentic run info
         uses: actions/github-script@v8
         with:
@@ -793,6 +796,7 @@ jobs:
               engine_name: "Custom Steps",
               model: "",
               version: "",
+              agent_version: process.env.AGENT_VERSION || "",
               workflow_name: "Test Safe Outputs - Custom Engine",
               experimental: false,
               supports_tools_allowlist: false,
@@ -959,7 +963,7 @@ jobs:
         uses: actions/github-script@v8
         env:
           GITHUB_AW_SAFE_OUTPUTS: ${{ env.GITHUB_AW_SAFE_OUTPUTS }}
-          GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"add-comment\":{\"target\":\"*\"},\"add-labels\":{},\"create-code-scanning-alert\":{\"max\":5},\"create-discussion\":{\"max\":1},\"create-issue\":{},\"create-pull-request\":{},\"create-pull-request-review-comment\":{\"max\":1},\"missing-tool\":{\"max\":5},\"push-to-pull-request-branch\":{\"target\":\"*\"},\"update-issue\":{}}"
+          GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"add-comment\":{\"max\":1,\"target\":\"*\"},\"add-labels\":{\"max\":3},\"create-code-scanning-alert\":{\"max\":5},\"create-discussion\":{\"max\":1},\"create-issue\":{\"max\":1},\"create-pull-request\":{},\"create-pull-request-review-comment\":{\"max\":1},\"missing-tool\":{\"max\":5},\"push-to-pull-request-branch\":{\"target\":\"*\"},\"update-issue\":{\"max\":1}}"
         with:
           script: |
             async function main() {
@@ -1054,6 +1058,13 @@ jobs:
                   default:
                     return 1;
                 }
+              }
+              function getMinRequiredForType(itemType, config) {
+                const itemConfig = config?.[itemType];
+                if (itemConfig && typeof itemConfig === "object" && "min" in itemConfig && itemConfig.min) {
+                  return itemConfig.min;
+                }
+                return 0;
               }
               function repairJson(jsonStr) {
                 let repaired = jsonStr.trim();
@@ -1325,8 +1336,6 @@ jobs:
               const outputContent = fs.readFileSync(outputFile, "utf8");
               if (outputContent.trim() === "") {
                 core.info("Output file is empty");
-                core.setOutput("output", "");
-                return;
               }
               core.info(`Raw output content length: ${outputContent.length}`);
               let expectedOutputTypes = {};
@@ -1652,6 +1661,15 @@ jobs:
                   return;
                 }
               }
+              for (const itemType of Object.keys(expectedOutputTypes)) {
+                const minRequired = getMinRequiredForType(itemType, expectedOutputTypes);
+                if (minRequired > 0) {
+                  const actualCount = parsedItems.filter(item => item.type === itemType).length;
+                  if (actualCount < minRequired) {
+                    errors.push(`Too few items of type '${itemType}'. Minimum required: ${minRequired}, found: ${actualCount}.`);
+                  }
+                }
+              }
               core.info(`Successfully parsed ${parsedItems.length} valid output items`);
               const validatedOutput = {
                 items: parsedItems,
@@ -1670,6 +1688,9 @@ jobs:
               }
               core.setOutput("output", JSON.stringify(validatedOutput));
               core.setOutput("raw_output", outputContent);
+              const outputTypes = Array.from(new Set(parsedItems.map(item => item.type)));
+              core.info(`output_types: ${outputTypes.join(", ")}`);
+              core.setOutput("output_types", outputTypes.join(","));
               try {
                 await core.summary
                   .addRaw("## Processed Output\n\n")
@@ -1802,6 +1823,7 @@ jobs:
 
   create_issue:
     needs: agent
+    if: (always()) && (contains(needs.agent.outputs.output_types, 'create-issue'))
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -1820,6 +1842,20 @@ jobs:
           GITHUB_AW_ISSUE_LABELS: "test-safe-outputs,automation,custom-engine"
         with:
           script: |
+            function sanitizeLabelContent(content) {
+              if (!content || typeof content !== "string") {
+                return "";
+              }
+              let sanitized = content.trim();
+              sanitized = sanitized.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
+              sanitized = sanitized.replace(/\x1b\[[0-9;]*[mGKH]/g, "");
+              sanitized = sanitized.replace(
+                /(^|[^\w`])@([A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?(?:\/[A-Za-z0-9._-]+)?)/g,
+                (_m, p1, p2) => `${p1}\`@${p2}\``
+              );
+              sanitized = sanitized.replace(/[<>&'"]/g, "");
+              return sanitized.trim();
+            }
             async function main() {
               const isStaged = process.env.GITHUB_AW_SAFE_OUTPUTS_STAGED === "true";
               const outputContent = process.env.GITHUB_AW_AGENT_OUTPUT;
@@ -1884,8 +1920,16 @@ jobs:
                 );
                 let labels = [...envLabels];
                 if (createIssueItem.labels && Array.isArray(createIssueItem.labels)) {
-                  labels = [...labels, ...createIssueItem.labels].filter(Boolean);
+                  labels = [...labels, ...createIssueItem.labels];
                 }
+                labels = labels
+                  .filter(label => label != null && label !== false && label !== 0)
+                  .map(label => String(label).trim())
+                  .filter(label => label)
+                  .map(label => sanitizeLabelContent(label))
+                  .filter(label => label)
+                  .map(label => (label.length > 64 ? label.substring(0, 64) : label))
+                  .filter((label, index, arr) => arr.indexOf(label) === index);
                 let title = createIssueItem.title ? createIssueItem.title.trim() : "";
                 let bodyLines = createIssueItem.body.split("\n");
                 if (!title) {
@@ -1961,6 +2005,7 @@ jobs:
 
   create_discussion:
     needs: agent
+    if: (always()) && (contains(needs.agent.outputs.output_types, 'create-discussion'))
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -2153,9 +2198,9 @@ jobs:
             }
             await main();
 
-  create_issue_comment:
+  add_comment:
     needs: agent
-    if: always()
+    if: (always()) && (contains(needs.agent.outputs.output_types, 'add-comment'))
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -2320,7 +2365,9 @@ jobs:
 
   create_pr_review_comment:
     needs: agent
-    if: (github.event.issue.number && github.event.issue.pull_request) || github.event.pull_request
+    if: >
+      ((always()) && (contains(needs.agent.outputs.output_types, 'create-pull-request-review-comment'))) &&
+      (((github.event.issue.number) && (github.event.issue.pull_request)) || (github.event.pull_request))
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -2512,6 +2559,7 @@ jobs:
 
   create_code_scanning_alert:
     needs: agent
+    if: (always()) && (contains(needs.agent.outputs.output_types, 'create-code-scanning-alert'))
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -2752,6 +2800,7 @@ jobs:
 
   create_pull_request:
     needs: agent
+    if: (always()) && (contains(needs.agent.outputs.output_types, 'create-pull-request'))
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -3081,7 +3130,9 @@ jobs:
 
   add_labels:
     needs: agent
-    if: github.event.issue.number || github.event.pull_request.number
+    if: >
+      ((always()) && (contains(needs.agent.outputs.output_types, 'add-labels'))) && ((github.event.issue.number) ||
+      (github.event.pull_request.number))
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -3100,6 +3151,20 @@ jobs:
           GITHUB_AW_LABELS_MAX_COUNT: 3
         with:
           script: |
+            function sanitizeLabelContent(content) {
+              if (!content || typeof content !== "string") {
+                return "";
+              }
+              let sanitized = content.trim();
+              sanitized = sanitized.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
+              sanitized = sanitized.replace(/\x1b\[[0-9;]*[mGKH]/g, "");
+              sanitized = sanitized.replace(
+                /(^|[^\w`])@([A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?(?:\/[A-Za-z0-9._-]+)?)/g,
+                (_m, p1, p2) => `${p1}\`@${p2}\``
+              );
+              sanitized = sanitized.replace(/[<>&'"]/g, "");
+              return sanitized.trim();
+            }
             async function main() {
               const outputContent = process.env.GITHUB_AW_AGENT_OUTPUT;
               if (!outputContent) {
@@ -3197,7 +3262,7 @@ jobs:
               const requestedLabels = labelsItem.labels || [];
               core.debug(`Requested labels: ${JSON.stringify(requestedLabels)}`);
               for (const label of requestedLabels) {
-                if (label.startsWith("-")) {
+                if (label && typeof label === "string" && label.startsWith("-")) {
                   core.setFailed(`Label removal is not permitted. Found line starting with '-': ${label}`);
                   return;
                 }
@@ -3208,7 +3273,14 @@ jobs:
               } else {
                 validLabels = requestedLabels;
               }
-              let uniqueLabels = [...new Set(validLabels)];
+              let uniqueLabels = validLabels
+                .filter(label => label != null && label !== false && label !== 0)
+                .map(label => String(label).trim())
+                .filter(label => label)
+                .map(label => sanitizeLabelContent(label))
+                .filter(label => label)
+                .map(label => (label.length > 64 ? label.substring(0, 64) : label))
+                .filter((label, index, arr) => arr.indexOf(label) === index);
               if (uniqueLabels.length > maxCount) {
                 core.debug(`too many labels, keep ${maxCount}`);
                 uniqueLabels = uniqueLabels.slice(0, maxCount);
@@ -3256,7 +3328,7 @@ jobs:
 
   update_issue:
     needs: agent
-    if: always()
+    if: (always()) && (contains(needs.agent.outputs.output_types, 'update-issue'))
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -3448,7 +3520,10 @@ jobs:
 
   push_to_pull_request_branch:
     needs: agent
-    if: always()
+    if: >
+      ((always()) && (contains(needs.agent.outputs.output_types, 'push-to-pull-request-branch'))) &&
+      (((github.event.issue.number) &&
+      (github.event.issue.pull_request)) || (github.event.pull_request))
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -3615,15 +3690,32 @@ jobs:
                 pullNumber = parseInt(target, 10);
               }
               let branchName;
+              let prTitle = "";
+              let prLabels = [];
               try {
                 let prInfo = "";
-                const prInfoRes = await exec.exec(`gh`, [`pr`, `view`, `${pullNumber}`, `--json`, `headRefName`, `--jq`, `.headRefName`], {
-                  listeners: { stdout: data => (prInfo += data.toString()) },
-                });
+                const prInfoRes = await exec.exec(
+                  `gh`,
+                  [
+                    `pr`,
+                    `view`,
+                    `${pullNumber}`,
+                    `--json`,
+                    `headRefName,title,labels`,
+                    `--jq`,
+                    `{headRefName, title, labels: (.labels // [] | map(.name))}`,
+                  ],
+                  {
+                    listeners: { stdout: data => (prInfo += data.toString()) },
+                  }
+                );
                 if (!prInfoRes) {
-                  branchName = prInfo.trim();
+                  const prData = JSON.parse(prInfo.trim());
+                  branchName = prData.headRefName;
+                  prTitle = prData.title || "";
+                  prLabels = prData.labels || [];
                 } else {
-                  throw new Error("No head branch found for PR");
+                  throw new Error("No PR data found");
                 }
               } catch (error) {
                 core.info(`Warning: Could not fetch PR ${pullNumber} details: ${error instanceof Error ? error.message : String(error)}`);
@@ -3631,6 +3723,28 @@ jobs:
                 return;
               }
               core.info(`Target branch: ${branchName}`);
+              core.info(`PR title: ${prTitle}`);
+              core.info(`PR labels: ${prLabels.join(", ")}`);
+              const titlePrefix = process.env.GITHUB_AW_PR_TITLE_PREFIX;
+              if (titlePrefix && !prTitle.startsWith(titlePrefix)) {
+                core.setFailed(`Pull request title "${prTitle}" does not start with required prefix "${titlePrefix}"`);
+                return;
+              }
+              const requiredLabelsStr = process.env.GITHUB_AW_PR_LABELS;
+              if (requiredLabelsStr) {
+                const requiredLabels = requiredLabelsStr.split(",").map(label => label.trim());
+                const missingLabels = requiredLabels.filter(label => !prLabels.includes(label));
+                if (missingLabels.length > 0) {
+                  core.setFailed(`Pull request is missing required labels: ${missingLabels.join(", ")}. Current labels: ${prLabels.join(", ")}`);
+                  return;
+                }
+              }
+              if (titlePrefix) {
+                core.info(`✓ Title prefix validation passed: "${titlePrefix}"`);
+              }
+              if (requiredLabelsStr) {
+                core.info(`✓ Labels validation passed: ${requiredLabelsStr}`);
+              }
               const hasChanges = !isEmpty;
               core.info(`Switching to branch: ${branchName}`);
               try {
@@ -3708,7 +3822,7 @@ jobs:
 
   missing_tool:
     needs: agent
-    if: ${{ always() }}
+    if: (always()) && (contains(needs.agent.outputs.output_types, 'missing-tool'))
     runs-on: ubuntu-latest
     permissions:
       contents: read

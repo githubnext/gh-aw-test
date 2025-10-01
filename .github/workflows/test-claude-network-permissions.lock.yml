@@ -265,6 +265,13 @@ jobs:
           echo '``````markdown' >> $GITHUB_STEP_SUMMARY
           cat $GITHUB_AW_PROMPT >> $GITHUB_STEP_SUMMARY
           echo '``````' >> $GITHUB_STEP_SUMMARY
+      - name: Capture agent version
+        run: |
+          VERSION_OUTPUT=$(claude --version 2>&1 || echo "unknown")
+          # Extract semantic version pattern (e.g., 1.2.3, v1.2.3-beta)
+          CLEAN_VERSION=$(echo "$VERSION_OUTPUT" | grep -oE 'v?[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?' | head -n1 || echo "unknown")
+          echo "AGENT_VERSION=$CLEAN_VERSION" >> $GITHUB_ENV
+          echo "Agent version: $VERSION_OUTPUT"
       - name: Generate agentic run info
         uses: actions/github-script@v8
         with:
@@ -276,6 +283,7 @@ jobs:
               engine_name: "Claude Code",
               model: "",
               version: "",
+              agent_version: process.env.AGENT_VERSION || "",
               workflow_name: "Secure Web Research Task",
               experimental: false,
               supports_tools_allowlist: true,
@@ -380,7 +388,7 @@ jobs:
         run: |
           set -o pipefail
           # Execute Claude Code CLI with prompt from file
-          npx @anthropic-ai/claude-code@latest --print --mcp-config /tmp/mcp-config/mcp-servers.json --allowed-tools "ExitPlanMode,Glob,Grep,LS,NotebookRead,Read,Task,TodoWrite,WebFetch,WebSearch,mcp__github__download_workflow_run_artifact,mcp__github__get_code_scanning_alert,mcp__github__get_commit,mcp__github__get_dependabot_alert,mcp__github__get_discussion,mcp__github__get_discussion_comments,mcp__github__get_file_contents,mcp__github__get_issue,mcp__github__get_issue_comments,mcp__github__get_job_logs,mcp__github__get_latest_release,mcp__github__get_me,mcp__github__get_notification_details,mcp__github__get_pull_request,mcp__github__get_pull_request_comments,mcp__github__get_pull_request_diff,mcp__github__get_pull_request_files,mcp__github__get_pull_request_review_comments,mcp__github__get_pull_request_reviews,mcp__github__get_pull_request_status,mcp__github__get_release_by_tag,mcp__github__get_secret_scanning_alert,mcp__github__get_tag,mcp__github__get_workflow_run,mcp__github__get_workflow_run_logs,mcp__github__get_workflow_run_usage,mcp__github__list_branches,mcp__github__list_code_scanning_alerts,mcp__github__list_commits,mcp__github__list_dependabot_alerts,mcp__github__list_discussion_categories,mcp__github__list_discussions,mcp__github__list_issue_types,mcp__github__list_issues,mcp__github__list_notifications,mcp__github__list_pull_requests,mcp__github__list_releases,mcp__github__list_secret_scanning_alerts,mcp__github__list_starred_repositories,mcp__github__list_sub_issues,mcp__github__list_tags,mcp__github__list_workflow_jobs,mcp__github__list_workflow_run_artifacts,mcp__github__list_workflow_runs,mcp__github__list_workflows,mcp__github__search_code,mcp__github__search_issues,mcp__github__search_orgs,mcp__github__search_pull_requests,mcp__github__search_repositories,mcp__github__search_users" --debug --verbose --permission-mode bypassPermissions --output-format json --settings /tmp/.claude/settings.json "$(cat /tmp/aw-prompts/prompt.txt)" 2>&1 | tee /tmp/agent-stdio.log
+          npx @anthropic-ai/claude-code@2.0.1 --print --mcp-config /tmp/mcp-config/mcp-servers.json --allowed-tools "ExitPlanMode,Glob,Grep,LS,NotebookRead,Read,Task,TodoWrite,WebFetch,WebSearch,mcp__github__download_workflow_run_artifact,mcp__github__get_code_scanning_alert,mcp__github__get_commit,mcp__github__get_dependabot_alert,mcp__github__get_discussion,mcp__github__get_discussion_comments,mcp__github__get_file_contents,mcp__github__get_issue,mcp__github__get_issue_comments,mcp__github__get_job_logs,mcp__github__get_latest_release,mcp__github__get_me,mcp__github__get_notification_details,mcp__github__get_pull_request,mcp__github__get_pull_request_comments,mcp__github__get_pull_request_diff,mcp__github__get_pull_request_files,mcp__github__get_pull_request_review_comments,mcp__github__get_pull_request_reviews,mcp__github__get_pull_request_status,mcp__github__get_release_by_tag,mcp__github__get_secret_scanning_alert,mcp__github__get_tag,mcp__github__get_workflow_run,mcp__github__get_workflow_run_logs,mcp__github__get_workflow_run_usage,mcp__github__list_branches,mcp__github__list_code_scanning_alerts,mcp__github__list_commits,mcp__github__list_dependabot_alerts,mcp__github__list_discussion_categories,mcp__github__list_discussions,mcp__github__list_issue_types,mcp__github__list_issues,mcp__github__list_notifications,mcp__github__list_pull_requests,mcp__github__list_releases,mcp__github__list_secret_scanning_alerts,mcp__github__list_starred_repositories,mcp__github__list_sub_issues,mcp__github__list_tags,mcp__github__list_workflow_jobs,mcp__github__list_workflow_run_artifacts,mcp__github__list_workflow_runs,mcp__github__list_workflows,mcp__github__search_code,mcp__github__search_issues,mcp__github__search_orgs,mcp__github__search_pull_requests,mcp__github__search_repositories,mcp__github__search_users" --debug --verbose --permission-mode bypassPermissions --output-format json --settings /tmp/.claude/settings.json "$(cat /tmp/aw-prompts/prompt.txt)" 2>&1 | tee /tmp/agent-stdio.log
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           DISABLE_TELEMETRY: "1"
@@ -798,4 +806,117 @@ jobs:
           name: agent-stdio.log
           path: /tmp/agent-stdio.log
           if-no-files-found: warn
+      - name: Validate agent logs for errors
+        if: always()
+        uses: actions/github-script@v8
+        env:
+          GITHUB_AW_AGENT_OUTPUT: /tmp/agent-stdio.log
+          GITHUB_AW_ERROR_PATTERNS: "[{\"pattern\":\"access denied.*only authorized.*can trigger.*workflow\",\"level_group\":0,\"message_group\":0,\"description\":\"Permission denied - workflow access restriction\"},{\"pattern\":\"access denied.*user.*not authorized\",\"level_group\":0,\"message_group\":0,\"description\":\"Permission denied - user not authorized\"},{\"pattern\":\"repository permission check failed\",\"level_group\":0,\"message_group\":0,\"description\":\"Repository permission check failure\"},{\"pattern\":\"configuration error.*required permissions not specified\",\"level_group\":0,\"message_group\":0,\"description\":\"Configuration error - missing permissions\"},{\"pattern\":\"permission.*denied\",\"level_group\":0,\"message_group\":0,\"description\":\"Generic permission denied error\"},{\"pattern\":\"unauthorized\",\"level_group\":0,\"message_group\":0,\"description\":\"Unauthorized access error\"},{\"pattern\":\"forbidden\",\"level_group\":0,\"message_group\":0,\"description\":\"Forbidden access error\"},{\"pattern\":\"access.*restricted\",\"level_group\":0,\"message_group\":0,\"description\":\"Access restricted error\"},{\"pattern\":\"insufficient.*permission\",\"level_group\":0,\"message_group\":0,\"description\":\"Insufficient permissions error\"}]"
+        with:
+          script: |
+            function main() {
+              const fs = require("fs");
+              try {
+                const logFile = process.env.GITHUB_AW_AGENT_OUTPUT;
+                if (!logFile) {
+                  throw new Error("GITHUB_AW_AGENT_OUTPUT environment variable is required");
+                }
+                if (!fs.existsSync(logFile)) {
+                  throw new Error(`Log file not found: ${logFile}`);
+                }
+                const patterns = getErrorPatternsFromEnv();
+                if (patterns.length === 0) {
+                  throw new Error("GITHUB_AW_ERROR_PATTERNS environment variable is required and must contain at least one pattern");
+                }
+                const content = fs.readFileSync(logFile, "utf8");
+                const hasErrors = validateErrors(content, patterns);
+                if (hasErrors) {
+                  core.setFailed("Errors detected in agent logs - failing workflow step");
+                } else {
+                  core.info("Error validation completed successfully");
+                }
+              } catch (error) {
+                console.debug(error);
+                core.setFailed(`Error validating log: ${error instanceof Error ? error.message : String(error)}`);
+              }
+            }
+            function getErrorPatternsFromEnv() {
+              const patternsEnv = process.env.GITHUB_AW_ERROR_PATTERNS;
+              if (!patternsEnv) {
+                throw new Error("GITHUB_AW_ERROR_PATTERNS environment variable is required");
+              }
+              try {
+                const patterns = JSON.parse(patternsEnv);
+                if (!Array.isArray(patterns)) {
+                  throw new Error("GITHUB_AW_ERROR_PATTERNS must be a JSON array");
+                }
+                return patterns;
+              } catch (e) {
+                throw new Error(`Failed to parse GITHUB_AW_ERROR_PATTERNS as JSON: ${e instanceof Error ? e.message : String(e)}`);
+              }
+            }
+            function validateErrors(logContent, patterns) {
+              const lines = logContent.split("\n");
+              let hasErrors = false;
+              for (const pattern of patterns) {
+                let regex;
+                try {
+                  regex = new RegExp(pattern.pattern, "g");
+                } catch (e) {
+                  core.error(`invalid error regex pattern: ${pattern.pattern}`);
+                  continue;
+                }
+                for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+                  const line = lines[lineIndex];
+                  let match;
+                  while ((match = regex.exec(line)) !== null) {
+                    const level = extractLevel(match, pattern);
+                    const message = extractMessage(match, pattern, line);
+                    const errorMessage = `Line ${lineIndex + 1}: ${message} (Pattern: ${pattern.description || "Unknown pattern"}, Raw log: ${truncateString(line.trim(), 120)})`;
+                    if (level.toLowerCase() === "error") {
+                      core.error(errorMessage);
+                      hasErrors = true;
+                    } else {
+                      core.warning(errorMessage);
+                    }
+                  }
+                }
+              }
+              return hasErrors;
+            }
+            function extractLevel(match, pattern) {
+              if (pattern.level_group && pattern.level_group > 0 && match[pattern.level_group]) {
+                return match[pattern.level_group];
+              }
+              const fullMatch = match[0];
+              if (fullMatch.toLowerCase().includes("error")) {
+                return "error";
+              } else if (fullMatch.toLowerCase().includes("warn")) {
+                return "warning";
+              }
+              return "unknown";
+            }
+            function extractMessage(match, pattern, fullLine) {
+              if (pattern.message_group && pattern.message_group > 0 && match[pattern.message_group]) {
+                return match[pattern.message_group].trim();
+              }
+              return match[0] || fullLine.trim();
+            }
+            function truncateString(str, maxLength) {
+              if (!str) return "";
+              if (str.length <= maxLength) return str;
+              return str.substring(0, maxLength) + "...";
+            }
+            if (typeof module !== "undefined" && module.exports) {
+              module.exports = {
+                validateErrors,
+                extractLevel,
+                extractMessage,
+                getErrorPatternsFromEnv,
+                truncateString,
+              };
+            }
+            if (typeof module === "undefined" || require.main === module) {
+              main();
+            }
 
