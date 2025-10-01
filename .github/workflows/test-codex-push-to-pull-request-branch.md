@@ -9,7 +9,6 @@ engine:
 
 safe-outputs:
   push-to-pull-request-branch:
-    min: 1
 ---
 
 # Test Codex Push to Branch

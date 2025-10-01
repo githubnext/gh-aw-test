@@ -12,7 +12,6 @@ safe-outputs:
   create-pull-request:
     title-prefix: "[claude-test] "
     labels: [claude, automation, bot]
-    min: 1
 ---
 
 Create an issue with title "Hello from Claude (multi)" and body "World"

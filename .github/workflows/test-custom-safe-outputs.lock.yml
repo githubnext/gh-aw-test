@@ -20,7 +20,7 @@ jobs:
     permissions: read-all
     env:
       GITHUB_AW_SAFE_OUTPUTS: /tmp/safe-outputs/outputs.jsonl
-      GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"add-comment\":{\"max\":1,\"target\":\"*\"},\"add-labels\":{\"max\":3},\"create-code-scanning-alert\":{\"max\":5},\"create-discussion\":{\"max\":1},\"create-issue\":{\"max\":1},\"create-pull-request\":{},\"create-pull-request-review-comment\":{\"max\":1},\"missing-tool\":{\"max\":5},\"push-to-pull-request-branch\":{\"target\":\"*\"},\"update-issue\":{\"max\":1}}"
+      GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"add-comment\":{\"max\":1,\"min\":1,\"target\":\"*\"},\"add-labels\":{\"max\":3,\"min\":1},\"create-code-scanning-alert\":{\"max\":5,\"min\":1},\"create-discussion\":{\"max\":1,\"min\":1},\"create-issue\":{\"max\":1,\"min\":1},\"create-pull-request\":{},\"create-pull-request-review-comment\":{\"max\":1,\"min\":1},\"missing-tool\":{\"max\":5},\"push-to-pull-request-branch\":{\"target\":\"*\"},\"update-issue\":{\"max\":1,\"min\":1}}"
     outputs:
       output: ${{ steps.collect_output.outputs.output }}
       output_types: ${{ steps.collect_output.outputs.output_types }}
@@ -36,7 +36,7 @@ jobs:
         run: |
           mkdir -p /tmp/safe-outputs
           cat > /tmp/safe-outputs/config.json << 'EOF'
-          {"add-comment":{"max":1,"target":"*"},"add-labels":{"max":3},"create-code-scanning-alert":{"max":5},"create-discussion":{"max":1},"create-issue":{"max":1},"create-pull-request":{},"create-pull-request-review-comment":{"max":1},"missing-tool":{"max":5},"push-to-pull-request-branch":{"target":"*"},"update-issue":{"max":1}}
+          {"add-comment":{"max":1,"min":1,"target":"*"},"add-labels":{"max":3,"min":1},"create-code-scanning-alert":{"max":5,"min":1},"create-discussion":{"max":1,"min":1},"create-issue":{"max":1,"min":1},"create-pull-request":{},"create-pull-request-review-comment":{"max":1,"min":1},"missing-tool":{"max":5},"push-to-pull-request-branch":{"target":"*"},"update-issue":{"max":1,"min":1}}
           EOF
           cat > /tmp/safe-outputs/mcp-server.cjs << 'EOF'
             const fs = require("fs");
@@ -642,7 +642,7 @@ jobs:
       - name: Setup MCPs
         env:
           GITHUB_AW_SAFE_OUTPUTS: ${{ env.GITHUB_AW_SAFE_OUTPUTS }}
-          GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"add-comment\":{\"max\":1,\"target\":\"*\"},\"add-labels\":{\"max\":3},\"create-code-scanning-alert\":{\"max\":5},\"create-discussion\":{\"max\":1},\"create-issue\":{\"max\":1},\"create-pull-request\":{},\"create-pull-request-review-comment\":{\"max\":1},\"missing-tool\":{\"max\":5},\"push-to-pull-request-branch\":{\"target\":\"*\"},\"update-issue\":{\"max\":1}}"
+          GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"add-comment\":{\"max\":1,\"min\":1,\"target\":\"*\"},\"add-labels\":{\"max\":3,\"min\":1},\"create-code-scanning-alert\":{\"max\":5,\"min\":1},\"create-discussion\":{\"max\":1,\"min\":1},\"create-issue\":{\"max\":1,\"min\":1},\"create-pull-request\":{},\"create-pull-request-review-comment\":{\"max\":1,\"min\":1},\"missing-tool\":{\"max\":5},\"push-to-pull-request-branch\":{\"target\":\"*\"},\"update-issue\":{\"max\":1,\"min\":1}}"
         run: |
           mkdir -p /tmp/mcp-config
           cat > /tmp/mcp-config/mcp-servers.json << 'EOF'
@@ -963,7 +963,7 @@ jobs:
         uses: actions/github-script@v8
         env:
           GITHUB_AW_SAFE_OUTPUTS: ${{ env.GITHUB_AW_SAFE_OUTPUTS }}
-          GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"add-comment\":{\"max\":1,\"target\":\"*\"},\"add-labels\":{\"max\":3},\"create-code-scanning-alert\":{\"max\":5},\"create-discussion\":{\"max\":1},\"create-issue\":{\"max\":1},\"create-pull-request\":{},\"create-pull-request-review-comment\":{\"max\":1},\"missing-tool\":{\"max\":5},\"push-to-pull-request-branch\":{\"target\":\"*\"},\"update-issue\":{\"max\":1}}"
+          GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"add-comment\":{\"max\":1,\"min\":1,\"target\":\"*\"},\"add-labels\":{\"max\":3,\"min\":1},\"create-code-scanning-alert\":{\"max\":5,\"min\":1},\"create-discussion\":{\"max\":1,\"min\":1},\"create-issue\":{\"max\":1,\"min\":1},\"create-pull-request\":{},\"create-pull-request-review-comment\":{\"max\":1,\"min\":1},\"missing-tool\":{\"max\":5},\"push-to-pull-request-branch\":{\"target\":\"*\"},\"update-issue\":{\"max\":1,\"min\":1}}"
         with:
           script: |
             async function main() {

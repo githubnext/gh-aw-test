@@ -24,7 +24,6 @@ safe-outputs:
     title-prefix: "[Custom Engine Test] "
     labels: [test-safe-outputs, automation, custom-engine]
     draft: true
-    min: 1
   add-labels:
     allowed: [test-safe-outputs, automation, custom-engine, bug, enhancement, documentation]
     max: 3
@@ -38,7 +37,6 @@ safe-outputs:
     min: 1
   push-to-pull-request-branch:
     target: "*"
-    min: 1
   missing-tool:
     max: 5
   create-discussion:
