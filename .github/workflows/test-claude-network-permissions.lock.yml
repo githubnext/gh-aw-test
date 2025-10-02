@@ -239,7 +239,7 @@ jobs:
                   "ghcr.io/github/github-mcp-server:sha-09deac4"
                 ],
                 "env": {
-                  "GITHUB_PERSONAL_ACCESS_TOKEN": "${{ secrets.GITHUB_TOKEN }}"
+                  "GITHUB_PERSONAL_ACCESS_TOKEN": "${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}"
                 }
               }
             }
@@ -262,9 +262,9 @@ jobs:
         run: |
           echo "## Generated Prompt" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo '``````markdown' >> $GITHUB_STEP_SUMMARY
+          echo '```markdown' >> $GITHUB_STEP_SUMMARY
           cat $GITHUB_AW_PROMPT >> $GITHUB_STEP_SUMMARY
-          echo '``````' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
       - name: Capture agent version
         run: |
           VERSION_OUTPUT=$(claude --version 2>&1 || echo "unknown")
@@ -397,14 +397,14 @@ jobs:
           GITHUB_AW_PROMPT: /tmp/aw-prompts/prompt.txt
           GITHUB_AW_MCP_CONFIG: /tmp/mcp-config/mcp-servers.json
           MCP_TIMEOUT: "60000"
-      - name: Ensure log file exists
+      - name: Print agent log
         if: always()
         run: |
-          # Ensure log file exists
           touch /tmp/agent-stdio.log
-          # Show last few lines for debugging
-          echo "=== Last 10 lines of Claude execution log ==="
-          tail -10 /tmp/agent-stdio.log || echo "No log content available"
+          echo "## Agent Log" >> $GITHUB_STEP_SUMMARY
+          echo '```markdown' >> $GITHUB_STEP_SUMMARY
+          cat /tmp/agent-stdio.log >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
       - name: Clean up network proxy hook files
         if: always()
         run: |

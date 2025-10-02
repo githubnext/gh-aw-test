@@ -282,7 +282,7 @@ safe-outputs:
 # Code Analysis Agent
 
 Analyze the latest code changes and provide insights.
-Create an issue in repository ${{ github.repository }} with your final analysis.
+Create an issue with your final analysis.
 ```
 
 **Key Benefits:**
@@ -628,7 +628,7 @@ safe-outputs:
 # Code Analysis Agent
 
 Analyze the latest code changes and provide insights.
-Create an issue in repository ${{ github.repository }} with your final analysis.
+Create an issue with your final analysis.
 ```
 
 **Key Benefits:**
