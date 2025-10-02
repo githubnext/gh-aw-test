@@ -12,6 +12,6 @@ safe-outputs:
     min: 1
 ---
 
-Create an issue with title "Hello from Copilot" and body "World"
+Create an issue in repository ${{ github.repository }} with title "Hello from Copilot" and body "World"
 
 Add a haiku about GitHub Actions and AI to the issue body.

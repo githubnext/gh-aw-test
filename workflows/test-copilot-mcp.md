@@ -23,7 +23,7 @@ mcp-servers:
 
 **First, get the current time using the get_current_time tool to timestamp your analysis.**
 
-Create an issue with title "Hello from Copilot" and a comment in the body saying what the current time is and if you were successful in using the MCP tool
+Create an issue in repository ${{ github.repository }} with title "Hello from Copilot" and a comment in the body saying what the current time is and if you were successful in using the MCP tool
 
 ### AI Attribution
 

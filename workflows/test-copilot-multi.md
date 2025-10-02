@@ -15,7 +15,7 @@ safe-outputs:
     labels: [copilot, automation, bot]
 ---
 
-Create an issue with title "Hello from Copilot (multi)" and body "World"
+Create an issue in repository ${{ github.repository }} with title "Hello from Copilot (multi)" and body "World"
 
 Create a pull request with one commit - Create a file "README-test.md" with content:
    ```markdown
