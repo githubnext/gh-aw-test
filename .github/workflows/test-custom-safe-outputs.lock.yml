@@ -1910,6 +1910,10 @@ jobs:
               .addCodeBlock(promptContent, 'text')
               .write();
             core.info('Threat detection setup completed');
+      - name: Ensure threat-detection directory and log
+        run: |
+          mkdir -p /tmp/threat-detection
+          touch /tmp/threat-detection/detection.log
       - name: Generate Create Issue Output
         run: |
           echo '{"type": "create-issue", "title": "[Custom Engine Test] Test Issue Created by Custom Engine", "body": "# Test Issue Created by Custom Engine\n\nThis issue was automatically created by the test-safe-outputs-custom-engine workflow to validate the create-issue safe output functionality.\n\n**Test Details:**\n- Engine: Custom\n- Trigger: ${{ github.event_name }}\n- Repository: ${{ github.repository }}\n- Run ID: ${{ github.run_id }}\n\nThis is a test issue and can be closed after verification.", "labels": ["test-safe-outputs", "automation", "custom-engine"]}' >> $GITHUB_AW_SAFE_OUTPUTS
