@@ -38,7 +38,7 @@ This workflow tests the ability to write files to different locations:
    Timestamp: [current timestamp]
    ```
 
-3. **Write to cache-memory folder**: Create a file named `cache-memory-test.txt` in the `/tmp/cache-memory/` directory with content:
+3. **Write to cache-memory folder**: Create a file named `cache-memory-test.txt` in the `/tmp/gh-aw/cache-memory/` directory with content:
    ```
    This file was written to the cache-memory directory.
    Timestamp: [current timestamp]

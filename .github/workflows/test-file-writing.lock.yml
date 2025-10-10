@@ -1053,7 +1053,7 @@ jobs:
              Timestamp: [current timestamp]
              ```
           
-          3. **Write to cache-memory folder**: Create a file named `cache-memory-test.txt` in the `/tmp/cache-memory/` directory with content:
+          3. **Write to cache-memory folder**: Create a file named `cache-memory-test.txt` in the `/tmp/gh-aw/cache-memory/` directory with content:
              ```
              This file was written to the cache-memory directory.
              Timestamp: [current timestamp]
@@ -2646,7 +2646,7 @@ jobs:
           AGENT_OUTPUT: ${{ needs.agent.outputs.output }}
           WORKFLOW_NAME: "File Writing Test Workflow"
           WORKFLOW_DESCRIPTION: "No description provided"
-          WORKFLOW_MARKDOWN: "# File Writing Test Workflow\n\nThis workflow tests the ability to write files to different locations:\n\n1. **Write to workspace**: Create a file named `workspace-test.txt` in the current workspace directory with content:\n   ```\n   This file was written to the workspace directory.\n   Timestamp: [current timestamp]\n   ```\n\n2. **Write to /tmp folder**: Create a file named `tmp-test.txt` in the `/tmp/` directory with content:\n   ```\n   This file was written to the /tmp directory.\n   Timestamp: [current timestamp]\n   ```\n\n3. **Write to cache-memory folder**: Create a file named `cache-memory-test.txt` in the `/tmp/cache-memory/` directory with content:\n   ```\n   This file was written to the cache-memory directory.\n   Timestamp: [current timestamp]\n   ```\n\nAfter creating all three files, verify their existence by listing the contents of each directory and reading each file.\n\nFinally, create an issue in repository ${{ github.repository }} with title \"File Writing Test Results\" and body containing:\n- Confirmation that all three files were created successfully\n- The actual content of each file\n- Directory listings showing the files exist\n"
+          WORKFLOW_MARKDOWN: "# File Writing Test Workflow\n\nThis workflow tests the ability to write files to different locations:\n\n1. **Write to workspace**: Create a file named `workspace-test.txt` in the current workspace directory with content:\n   ```\n   This file was written to the workspace directory.\n   Timestamp: [current timestamp]\n   ```\n\n2. **Write to /tmp folder**: Create a file named `tmp-test.txt` in the `/tmp/` directory with content:\n   ```\n   This file was written to the /tmp directory.\n   Timestamp: [current timestamp]\n   ```\n\n3. **Write to cache-memory folder**: Create a file named `cache-memory-test.txt` in the `/tmp/gh-aw/cache-memory/` directory with content:\n   ```\n   This file was written to the cache-memory directory.\n   Timestamp: [current timestamp]\n   ```\n\nAfter creating all three files, verify their existence by listing the contents of each directory and reading each file.\n\nFinally, create an issue in repository ${{ github.repository }} with title \"File Writing Test Results\" and body containing:\n- Confirmation that all three files were created successfully\n- The actual content of each file\n- Directory listings showing the files exist\n"
         with:
           script: |
             const fs = require('fs');
