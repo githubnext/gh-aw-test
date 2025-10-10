@@ -177,6 +177,7 @@ get_workflow_dispatch_tests() {
     echo "test-claude-safe-jobs"
     echo "test-codex-safe-jobs"
     echo "test-copilot-safe-jobs"
+    echo "test-file-writing"
 }
 
 get_issue_triggered_tests() {
