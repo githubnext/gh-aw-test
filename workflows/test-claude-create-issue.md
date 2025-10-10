@@ -1,7 +1,7 @@
 ---
 on:
   workflow_dispatch:
-
+roles: ["write"]
 engine: 
   id: claude
 safe-outputs:
