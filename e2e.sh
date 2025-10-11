@@ -513,6 +513,26 @@ create_test_issue() {
     fi
 }
 
+create_test_discussion() {
+    local title="$1"
+    local body="$2"
+    local category="${3:-General}"
+    
+    # Create discussion using GitHub API since gh CLI might not support discussions create
+    local discussion_data=$(gh api repos/:owner/:repo/discussions \
+        --method POST \
+        --field title="$title" \
+        --field body="$body" \
+        --field category_id="$(gh api repos/:owner/:repo/discussions/categories --jq '.[] | select(.name=="'$category'") | .id')" \
+        2>/dev/null | jq -r '.number // empty' 2>/dev/null)
+    
+    if [[ -n "$discussion_data" ]]; then
+        echo "$discussion_data"
+    else
+        echo ""
+    fi
+}
+
 create_test_pr() {
     local title="$1"
     local body="$2"
@@ -952,6 +972,43 @@ wait_for_pr_reviews() {
     
     while [[ $waited -lt $max_wait ]]; do
         if validate_pr_reviews "$pr_number" "$ai_type"; then
+            PASSED_TESTS+=("$test_name")
+            return 0
+        fi
+        info "..."
+        sleep 5
+        waited=$((waited + 5))
+    done
+    
+    FAILED_TESTS+=("$test_name")
+    return 1
+}
+
+validate_discussion_comment() {
+    local discussion_number="$1"
+    local expected_comment_text="$2"
+    
+    # Get discussion comments using GitHub API
+    local comments=$(gh api repos/:owner/:repo/discussions/"$discussion_number"/comments --jq '.[].body' 2>/dev/null || echo "")
+    
+    if echo "$comments" | grep -q "$expected_comment_text"; then
+        success "Discussion #$discussion_number has expected comment containing: $expected_comment_text"
+        return 0
+    else
+        warning "(polling) Discussion #$discussion_number missing expected comment containing: '$expected_comment_text'. Actual comments: ${comments:0:200}..."
+        return 1
+    fi
+}
+
+wait_for_discussion_comment() {
+    local discussion_number="$1"
+    local expected_text="$2"
+    local test_name="$3"
+    local max_wait=240 # Max wait time in seconds (4 minutes)
+    local waited=0
+    
+    while [[ $waited -lt $max_wait ]]; do
+        if validate_discussion_comment "$discussion_number" "$expected_text"; then
             PASSED_TESTS+=("$test_name")
             return 0
         fi
