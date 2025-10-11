@@ -8,7 +8,7 @@ engine:
 safe-outputs:
   create-discussion:
     title-prefix: "[copilot-test] "
-    labels: [copilot, automation, haiku]
+    # categories: [General]
     min: 1
 ---
 

@@ -7,7 +7,7 @@ engine:
 safe-outputs:
   create-discussion:
     title-prefix: "[claude-test] "
-    labels: [claude, automation, haiku]
+    # categories: [General]
     min: 1
 ---
 
