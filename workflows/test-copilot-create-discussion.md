@@ -1,0 +1,17 @@
+---
+on:
+  workflow_dispatch:
+
+engine: 
+  id: copilot
+
+safe-outputs:
+  create-discussion:
+    title-prefix: "[copilot-test] "
+    labels: [copilot, automation, haiku]
+    min: 1
+---
+
+Create a discussion in repository ${{ github.repository }} with title "Hello from Copilot Discussion" and body "World Discussion"
+
+Add a haiku about GitHub Discussions and AI to the discussion body.

@@ -162,6 +162,9 @@ get_workflow_dispatch_tests() {
     echo "test-claude-create-issue"
     echo "test-codex-create-issue"
     echo "test-copilot-create-issue"
+    echo "test-claude-create-discussion"
+    echo "test-codex-create-discussion"
+    echo "test-copilot-create-discussion"
     echo "test-claude-create-pull-request"
     echo "test-codex-create-pull-request"
     echo "test-copilot-create-pull-request"
@@ -182,10 +185,13 @@ get_workflow_dispatch_tests() {
 get_issue_triggered_tests() {
     echo "test-claude-add-comment"
     echo "test-claude-add-labels"
+    echo "test-claude-add-discussion-comment"
     echo "test-codex-add-comment"
     echo "test-codex-add-labels"
+    echo "test-codex-add-discussion-comment"
     echo "test-copilot-add-comment"
     echo "test-copilot-add-labels"
+    echo "test-copilot-add-discussion-comment"
     echo "test-claude-update-issue"
     echo "test-codex-update-issue"
     echo "test-copilot-update-issue"
@@ -725,6 +731,24 @@ validate_pr_created() {
     fi
 }
 
+validate_discussion_created() {
+    local title_prefix="$1"
+    local expected_labels="$2"
+    
+    # Look for recently created discussions with the title prefix
+    # Note: GitHub CLI discussions support may be limited, so we use API
+    local discussions=$(gh api repos/:owner/:repo/discussions --paginate --jq ".[] | select(.title | startswith(\"$title_prefix\")) | .number" 2>/dev/null | head -1)
+    
+    if [[ -n "$discussions" ]]; then
+        local discussion_number="$discussions"
+        success "Discussion #$discussion_number created successfully with title prefix '$title_prefix', URL: https://github.com/$REPO_OWNER/$REPO_NAME/discussions/$discussion_number"
+        return 0
+    else
+        error "No discussion found with title prefix: $title_prefix"
+        return 1
+    fi
+}
+
 validate_code_scanning_alert() {
     local workflow_name="$1"
     
@@ -990,6 +1014,14 @@ run_workflow_dispatch_tests() {
                         validation_success=true
                     fi
                     ;;
+                *"create-discussion")
+                    local title_prefix="[${ai_type}-test]"
+                    local expected_labels="${ai_type},automation"
+                    
+                    if validate_discussion_created "$title_prefix" "$expected_labels"; then
+                        validation_success=true
+                    fi
+                    ;;
                 *"create-pull-request")
                     local title_prefix="[${ai_type}-test]"
                     
@@ -1066,7 +1098,19 @@ run_issue_triggered_tests() {
             if [[ "$enable_success" == true ]]; then
                 # Create a test issue for this specific workflow
                 progress "Testing $workflow"
-                local issue_num=$(create_test_issue "Hello from $ai_display_name" "This is a test issue to trigger $workflow")
+                
+                # Determine the correct issue title based on workflow type
+                local issue_title
+                case "$workflow" in
+                    *"add-discussion-comment")
+                        issue_title="Hello from $ai_display_name Discussion"
+                        ;;
+                    *)
+                        issue_title="Hello from $ai_display_name"
+                        ;;
+                esac
+                
+                local issue_num=$(create_test_issue "$issue_title" "This is a test issue to trigger $workflow")
                 
                 if [[ -n "$issue_num" ]]; then
                     success "Created test issue #$issue_num for $workflow: https://github.com/$REPO_OWNER/$REPO_NAME/issues/$issue_num"
@@ -1075,6 +1119,9 @@ run_issue_triggered_tests() {
                     # Run the appropriate test based on workflow type
                     # Note: wait_for_* functions handle their own success/failure tracking
                     case "$workflow" in
+                        *"add-discussion-comment")
+                            wait_for_comment "$issue_num" "Reply from $ai_display_name Discussion" "$workflow" || true
+                            ;;
                         *"add-comment")
                             wait_for_comment "$issue_num" "Reply from $ai_display_name" "$workflow" || true
                             ;;
