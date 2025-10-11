@@ -5,15 +5,14 @@
 
 name: "Test Claude Add Discussion Comment"
 on:
-  issues:
+  discussion:
     types:
-    - opened
-    - reopened
+    - created
 
 permissions: {}
 
 concurrency:
-  group: "gh-aw-${{ github.workflow }}-${{ github.event.issue.number }}"
+  group: "gh-aw-${{ github.workflow }}-${{ github.event.discussion.number }}"
 
 run-name: "Test Claude Add Discussion Comment"
 
@@ -1204,7 +1203,7 @@ jobs:
         run: |
           mkdir -p $(dirname "$GITHUB_AW_PROMPT")
           cat > $GITHUB_AW_PROMPT << 'EOF'
-          If the title of the issue #${{ github.event.issue.number }} is "Hello from Claude Discussion" then add a comment on the issue "Reply from Claude Discussion".
+          If the title of the discussion #${{ github.event.discussion.number }} is "Hello from Claude Discussion" then add a comment on the discussion "Reply from Claude Discussion".
           
           EOF
       - name: Append XPIA security instructions to prompt
@@ -2804,7 +2803,7 @@ jobs:
           AGENT_OUTPUT: ${{ needs.agent.outputs.output }}
           WORKFLOW_NAME: "Test Claude Add Discussion Comment"
           WORKFLOW_DESCRIPTION: "No description provided"
-          WORKFLOW_MARKDOWN: "If the title of the issue #${{ github.event.issue.number }} is \"Hello from Claude Discussion\" then add a comment on the issue \"Reply from Claude Discussion\".\n"
+          WORKFLOW_MARKDOWN: "If the title of the discussion #${{ github.event.discussion.number }} is \"Hello from Claude Discussion\" then add a comment on the discussion \"Reply from Claude Discussion\".\n"
         with:
           script: |
             const fs = require('fs');

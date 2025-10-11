@@ -1,7 +1,7 @@
 ---
 on:
-  issues:
-    types: [opened, reopened]
+  discussion:
+    types: [created]
   reaction: eyes
 
 engine: 
@@ -12,4 +12,4 @@ safe-outputs:
     discussion: true
 ---
 
-If the title of the issue #${{ github.event.issue.number }} is "Hello from Codex Discussion" then add a comment on the issue "Reply from Codex Discussion".
+If the title of the discussion #${{ github.event.discussion.number }} is "Hello from Codex Discussion" then add a comment on the discussion "Reply from Codex Discussion".

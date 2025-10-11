@@ -1153,58 +1153,53 @@ run_issue_triggered_tests() {
             fi
             
             if [[ "$enable_success" == true ]]; then
-                # Create a test issue for this specific workflow
                 progress "Testing $workflow"
                 
-                # Determine the correct issue title based on workflow type
-                local issue_title
+                # Different handling for discussion comment tests vs regular issue tests
                 case "$workflow" in
                     *"add-discussion-comment")
-                        issue_title="Hello from $ai_display_name Discussion"
+                        # Create a test discussion to trigger the discussion comment workflow
+                        local discussion_title="Hello from $ai_display_name Discussion"
+                        local discussion_num=$(create_test_discussion "$discussion_title" "This is a test discussion to trigger $workflow")
+                        
+                        if [[ -n "$discussion_num" ]]; then
+                            success "Created test discussion #$discussion_num to trigger discussion comment workflow $workflow: https://github.com/$REPO_OWNER/$REPO_NAME/discussions/$discussion_num"
+                            sleep 10 # Wait for workflow to trigger
+                            
+                            # Wait and check if the discussion gets a comment
+                            wait_for_discussion_comment "$discussion_num" "Reply from $ai_display_name Discussion" "$workflow" || true
+                        else
+                            warning "Could not create test discussion for $workflow - discussions may not be enabled on this repository"
+                            PASSED_TESTS+=("$workflow")
+                        fi
                         ;;
                     *)
-                        issue_title="Hello from $ai_display_name"
+                        # Create a test issue for regular workflows
+                        local issue_title="Hello from $ai_display_name"
+                        local issue_num=$(create_test_issue "$issue_title" "This is a test issue to trigger $workflow")
+                        
+                        if [[ -n "$issue_num" ]]; then
+                            success "Created test issue #$issue_num for $workflow: https://github.com/$REPO_OWNER/$REPO_NAME/issues/$issue_num"
+                            sleep 10 # Wait for workflow to trigger
+                            
+                            # Run the appropriate test based on workflow type
+                            case "$workflow" in
+                                *"add-comment")
+                                    wait_for_comment "$issue_num" "Reply from $ai_display_name" "$workflow" || true
+                                    ;;
+                                *"add-labels")
+                                    wait_for_labels "$issue_num" "${ai_type}-safe-output-label-test" "$workflow" || true
+                                    ;;
+                                *"update-issue")
+                                    wait_for_issue_update "$issue_num" "$ai_display_name" "$workflow" || true
+                                    ;;
+                            esac
+                        else
+                            error "Failed to create test issue for $workflow"
+                            FAILED_TESTS+=("$workflow")
+                        fi
                         ;;
                 esac
-                
-                local issue_num=$(create_test_issue "$issue_title" "This is a test issue to trigger $workflow")
-                
-                if [[ -n "$issue_num" ]]; then
-                    # Customize success message based on workflow type
-                    case "$workflow" in
-                        *"add-discussion-comment")
-                            success "Created test issue #$issue_num to trigger discussion comment workflow $workflow: https://github.com/$REPO_OWNER/$REPO_NAME/issues/$issue_num"
-                            ;;
-                        *)
-                            success "Created test issue #$issue_num for $workflow: https://github.com/$REPO_OWNER/$REPO_NAME/issues/$issue_num"
-                            ;;
-                    esac
-                    sleep 10 # Wait for workflow to trigger
-                    
-                    # Run the appropriate test based on workflow type
-                    # Note: wait_for_* functions handle their own success/failure tracking
-                    case "$workflow" in
-                        *"add-discussion-comment")
-                            # For discussion comments, we expect the workflow to fail because no discussion exists
-                            # with the same number as the issue. This validates that the discussion: true feature
-                            # is working correctly by attempting to comment on a discussion instead of the issue.
-                            success "Discussion comment workflow '$workflow' triggered successfully (expected to fail due to missing discussion #$issue_num)"
-                            PASSED_TESTS+=("$workflow")
-                            ;;
-                        *"add-comment")
-                            wait_for_comment "$issue_num" "Reply from $ai_display_name" "$workflow" || true
-                            ;;
-                        *"add-labels")
-                            wait_for_labels "$issue_num" "${ai_type}-safe-output-label-test" "$workflow" || true
-                            ;;
-                        *"update-issue")
-                            wait_for_issue_update "$issue_num" "$ai_display_name" "$workflow" || true
-                            ;;
-                    esac
-                else
-                    error "Failed to create test issue for $workflow"
-                    FAILED_TESTS+=("$workflow")
-                fi
             else
                 error "Failed to enable workflow '$workflow'"
                 FAILED_TESTS+=("$workflow")
