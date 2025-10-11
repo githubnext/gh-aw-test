@@ -1170,7 +1170,15 @@ run_issue_triggered_tests() {
                 local issue_num=$(create_test_issue "$issue_title" "This is a test issue to trigger $workflow")
                 
                 if [[ -n "$issue_num" ]]; then
-                    success "Created test issue #$issue_num for $workflow: https://github.com/$REPO_OWNER/$REPO_NAME/issues/$issue_num"
+                    # Customize success message based on workflow type
+                    case "$workflow" in
+                        *"add-discussion-comment")
+                            success "Created test issue #$issue_num to trigger discussion comment workflow $workflow: https://github.com/$REPO_OWNER/$REPO_NAME/issues/$issue_num"
+                            ;;
+                        *)
+                            success "Created test issue #$issue_num for $workflow: https://github.com/$REPO_OWNER/$REPO_NAME/issues/$issue_num"
+                            ;;
+                    esac
                     sleep 10 # Wait for workflow to trigger
                     
                     # Run the appropriate test based on workflow type
