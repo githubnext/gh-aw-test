@@ -518,17 +518,17 @@ create_test_discussion() {
     local body="$2"
     local category="${3:-General}"
     
-    # Get repository ID and category ID using GraphQL
-    local repo_id=$(gh api graphql -f query='
-    {
-      repository(owner: "'$REPO_OWNER'", name: "'$REPO_NAME'") {
+    # Get repository ID using GraphQL
+    local repo_query="{
+      repository(owner: \"$REPO_OWNER\", name: \"$REPO_NAME\") {
         id
       }
-    }' --jq '.data.repository.id' 2>/dev/null)
+    }"
+    local repo_id=$(gh api graphql -f query="$repo_query" --jq '.data.repository.id' 2>/dev/null)
     
-    local category_id=$(gh api graphql -f query='
-    {
-      repository(owner: "'$REPO_OWNER'", name: "'$REPO_NAME'") {
+    # Get category ID using GraphQL  
+    local category_query="{
+      repository(owner: \"$REPO_OWNER\", name: \"$REPO_NAME\") {
         discussionCategories(first: 10) {
           nodes {
             id
@@ -536,7 +536,8 @@ create_test_discussion() {
           }
         }
       }
-    }' --jq '.data.repository.discussionCategories.nodes[] | select(.name=="'$category'") | .id' 2>/dev/null)
+    }"
+    local category_id=$(gh api graphql -f query="$category_query" --jq ".data.repository.discussionCategories.nodes[] | select(.name==\"$category\") | .id" 2>/dev/null)
     
     if [[ -z "$repo_id" || -z "$category_id" ]]; then
         echo ""
@@ -544,19 +545,19 @@ create_test_discussion() {
     fi
     
     # Create discussion using GraphQL mutation
-    local discussion_data=$(gh api graphql -f query='
-    mutation {
+    local mutation="mutation {
       createDiscussion(input: {
-        repositoryId: "'$repo_id'"
-        categoryId: "'$category_id'"
-        title: "'$title'"
-        body: "'$body'"
+        repositoryId: \"$repo_id\"
+        categoryId: \"$category_id\"
+        title: \"$title\"
+        body: \"$body\"
       }) {
         discussion {
           number
         }
       }
-    }' --jq '.data.createDiscussion.discussion.number // empty' 2>/dev/null)
+    }"
+    local discussion_data=$(gh api graphql -f query="$mutation" --jq '.data.createDiscussion.discussion.number // empty' 2>/dev/null)
     
     if [[ -n "$discussion_data" ]]; then
         echo "$discussion_data"
