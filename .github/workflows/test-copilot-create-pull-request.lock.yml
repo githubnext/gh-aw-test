@@ -191,7 +191,7 @@ jobs:
         with:
           node-version: '24'
       - name: Install GitHub Copilot CLI
-        run: npm install -g @github/copilot@0.0.338
+        run: npm install -g @github/copilot@0.0.339
       - name: Setup Safe Outputs Collector MCP
         run: |
           mkdir -p /tmp/gh-aw/safe-outputs
@@ -882,7 +882,7 @@ jobs:
         run: |
           mkdir -p /tmp/gh-aw/mcp-config
           mkdir -p /home/runner/.copilot
-          cat > /home/runner/.copilot/mcp-config.json << 'EOF'
+          cat > /home/runner/.copilot/mcp-config.json << EOF
           {
             "mcpServers": {
               "github": {
@@ -1048,15 +1048,6 @@ jobs:
           To report a missing tool use the missing-tool tool from the safe-outputs MCP.
           
           EOF
-      - name: Print prompt to step summary
-        env:
-          GITHUB_AW_PROMPT: /tmp/gh-aw/aw-prompts/prompt.txt
-        run: |
-          echo "## Generated Prompt" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo '```markdown' >> $GITHUB_STEP_SUMMARY
-          cat $GITHUB_AW_PROMPT >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
       - name: Capture agent version
         run: |
           VERSION_OUTPUT=$(copilot --version 2>&1 || echo "unknown")
@@ -1958,18 +1949,6 @@ jobs:
               const outputTypes = Array.from(new Set(parsedItems.map(item => item.type)));
               core.info(`output_types: ${outputTypes.join(", ")}`);
               core.setOutput("output_types", outputTypes.join(","));
-              try {
-                await core.summary
-                  .addRaw("## Processed Output\n\n")
-                  .addRaw("```json\n")
-                  .addRaw(JSON.stringify(validatedOutput))
-                  .addRaw("\n```\n")
-                  .write();
-                core.info("Successfully wrote processed output to step summary");
-              } catch (error) {
-                const errorMsg = error instanceof Error ? error.message : String(error);
-                core.warning(`Failed to write to step summary: ${errorMsg}`);
-              }
             }
             await main();
       - name: Upload sanitized agent output
@@ -2251,16 +2230,7 @@ jobs:
                 if (!Array.isArray(logEntries) || logEntries.length === 0) {
                   return "## Agent Log Summary\n\nLog format not recognized as Copilot JSON array or JSONL.\n";
                 }
-                let markdown = "";
-                const initEntry = logEntries.find(entry => entry.type === "system" && entry.subtype === "init");
-                if (initEntry) {
-                  markdown += "## 🚀 Initialization\n\n";
-                  markdown += formatInitializationSummary(initEntry);
-                  markdown += "\n";
-                }
-                markdown += "## 🤖 Commands and Tools\n\n";
                 const toolUsePairs = new Map(); 
-                const commandSummary = []; 
                 for (const entry of logEntries) {
                   if (entry.type === "user" && entry.message?.content) {
                     for (const content of entry.message.content) {
@@ -2270,6 +2240,34 @@ jobs:
                     }
                   }
                 }
+                let markdown = "";
+                const initEntry = logEntries.find(entry => entry.type === "system" && entry.subtype === "init");
+                if (initEntry) {
+                  markdown += "## 🚀 Initialization\n\n";
+                  markdown += formatInitializationSummary(initEntry);
+                  markdown += "\n";
+                }
+                markdown += "\n## 🤖 Reasoning\n\n";
+                for (const entry of logEntries) {
+                  if (entry.type === "assistant" && entry.message?.content) {
+                    for (const content of entry.message.content) {
+                      if (content.type === "text" && content.text) {
+                        const text = content.text.trim();
+                        if (text && text.length > 0) {
+                          markdown += text + "\n\n";
+                        }
+                      } else if (content.type === "tool_use") {
+                        const toolResult = toolUsePairs.get(content.id);
+                        const toolMarkdown = formatToolUseWithDetails(content, toolResult);
+                        if (toolMarkdown) {
+                          markdown += toolMarkdown;
+                        }
+                      }
+                    }
+                  }
+                }
+                markdown += "## 🤖 Commands and Tools\n\n";
+                const commandSummary = []; 
                 for (const entry of logEntries) {
                   if (entry.type === "assistant" && entry.message?.content) {
                     for (const content of entry.message.content) {
@@ -2328,25 +2326,6 @@ jobs:
                       if (usage.cache_read_input_tokens) markdown += `- Cache Read: ${usage.cache_read_input_tokens.toLocaleString()}\n`;
                       if (usage.output_tokens) markdown += `- Output: ${usage.output_tokens.toLocaleString()}\n`;
                       markdown += "\n";
-                    }
-                  }
-                }
-                markdown += "\n## 🤖 Reasoning\n\n";
-                for (const entry of logEntries) {
-                  if (entry.type === "assistant" && entry.message?.content) {
-                    for (const content of entry.message.content) {
-                      if (content.type === "text" && content.text) {
-                        const text = content.text.trim();
-                        if (text && text.length > 0) {
-                          markdown += text + "\n\n";
-                        }
-                      } else if (content.type === "tool_use") {
-                        const toolResult = toolUsePairs.get(content.id);
-                        const toolMarkdown = formatToolUseWithDetails(content, toolResult);
-                        if (toolMarkdown) {
-                          markdown += toolMarkdown;
-                        }
-                      }
                     }
                   }
                 }
@@ -2757,6 +2736,15 @@ jobs:
               };
             }
             main();
+      - name: Print prompt to step summary
+        env:
+          GITHUB_AW_PROMPT: /tmp/gh-aw/aw-prompts/prompt.txt
+        run: |
+          echo "## Generated Prompt" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```markdown' >> $GITHUB_STEP_SUMMARY
+          cat $GITHUB_AW_PROMPT >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
       - name: Upload Agent Stdio
         if: always()
         uses: actions/upload-artifact@v4
@@ -3147,7 +3135,7 @@ jobs:
         with:
           node-version: '24'
       - name: Install GitHub Copilot CLI
-        run: npm install -g @github/copilot@0.0.338
+        run: npm install -g @github/copilot@0.0.339
       - name: Execute GitHub Copilot CLI
         id: agentic_execution
         timeout-minutes: 20
@@ -3256,6 +3244,25 @@ jobs:
           script: |
             const fs = require("fs");
             const crypto = require("crypto");
+            function generatePatchPreview(patchContent) {
+              if (!patchContent || !patchContent.trim()) {
+                return "";
+              }
+              const lines = patchContent.split("\n");
+              const maxLines = 500;
+              const maxChars = 2000;
+              let preview = lines.length <= maxLines ? patchContent : lines.slice(0, maxLines).join("\n");
+              const lineTruncated = lines.length > maxLines;
+              const charTruncated = preview.length > maxChars;
+              if (charTruncated) {
+                preview = preview.slice(0, maxChars);
+              }
+              const truncated = lineTruncated || charTruncated;
+              const summary = truncated
+                ? `Show patch preview (${Math.min(maxLines, lines.length)} of ${lines.length} lines)`
+                : `Show patch (${lines.length} lines)`;
+              return `\n\n<details><summary>${summary}</summary>\n\n\`\`\`diff\n${preview}${truncated ? "\n... (truncated)" : ""}\n\`\`\`\n\n</details>`;
+            }
             async function main() {
               const isStaged = process.env.GITHUB_AW_SAFE_OUTPUTS_STAGED === "true";
               const workflowId = process.env.GITHUB_AW_WORKFLOW_ID;
@@ -3474,6 +3481,11 @@ jobs:
                   const runUrl = context.payload.repository
                     ? `${context.payload.repository.html_url}/actions/runs/${runId}`
                     : `${githubServer}/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}`;
+                  let patchPreview = "";
+                  if (fs.existsSync("/tmp/gh-aw/aw.patch")) {
+                    const patchContent = fs.readFileSync("/tmp/gh-aw/aw.patch", "utf8");
+                    patchPreview = generatePatchPreview(patchContent);
+                  }
                   const fallbackBody = `${body}
             ---
             > [!NOTE]
@@ -3490,7 +3502,7 @@ jobs:
             # Apply the patch
             git am aw.patch
             \`\`\`
-            `;
+            ${patchPreview}`;
                   try {
                     const { data: issue } = await github.rest.issues.create({
                       owner: context.repo.owner,
@@ -3578,11 +3590,16 @@ jobs:
                 const branchUrl = context.payload.repository
                   ? `${context.payload.repository.html_url}/tree/${branchName}`
                   : `${githubServer}/${context.repo.owner}/${context.repo.repo}/tree/${branchName}`;
+                let patchPreview = "";
+                if (fs.existsSync("/tmp/gh-aw/aw.patch")) {
+                  const patchContent = fs.readFileSync("/tmp/gh-aw/aw.patch", "utf8");
+                  patchPreview = generatePatchPreview(patchContent);
+                }
                 const fallbackBody = `${body}
             ---
             **Note:** This was originally intended as a pull request, but PR creation failed. The changes have been pushed to the branch [\`${branchName}\`](${branchUrl}).
             **Original error:** ${prError instanceof Error ? prError.message : String(prError)}
-            You can manually create a pull request from the branch if needed.`;
+            You can manually create a pull request from the branch if needed.${patchPreview}`;
                 try {
                   const { data: issue } = await github.rest.issues.create({
                     owner: context.repo.owner,

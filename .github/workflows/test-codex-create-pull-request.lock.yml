@@ -1037,15 +1037,6 @@ jobs:
           To report a missing tool use the missing-tool tool from the safe-outputs MCP.
           
           EOF
-      - name: Print prompt to step summary
-        env:
-          GITHUB_AW_PROMPT: /tmp/gh-aw/aw-prompts/prompt.txt
-        run: |
-          echo "## Generated Prompt" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo '```markdown' >> $GITHUB_STEP_SUMMARY
-          cat $GITHUB_AW_PROMPT >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
       - name: Capture agent version
         run: |
           VERSION_OUTPUT=$(codex --version 2>&1 || echo "unknown")
@@ -1871,18 +1862,6 @@ jobs:
               const outputTypes = Array.from(new Set(parsedItems.map(item => item.type)));
               core.info(`output_types: ${outputTypes.join(", ")}`);
               core.setOutput("output_types", outputTypes.join(","));
-              try {
-                await core.summary
-                  .addRaw("## Processed Output\n\n")
-                  .addRaw("```json\n")
-                  .addRaw(JSON.stringify(validatedOutput))
-                  .addRaw("\n```\n")
-                  .write();
-                core.info("Successfully wrote processed output to step summary");
-              } catch (error) {
-                const errorMsg = error instanceof Error ? error.message : String(error);
-                core.warning(`Failed to write to step summary: ${errorMsg}`);
-              }
             }
             await main();
       - name: Upload sanitized agent output
@@ -2101,8 +2080,58 @@ jobs:
             function parseCodexLog(logContent) {
               try {
                 const lines = logContent.split("\n");
-                let markdown = "## 🤖 Commands and Tools\n\n";
                 const LOOKAHEAD_WINDOW = 50;
+                let markdown = "";
+                markdown += "## 🤖 Reasoning\n\n";
+                let inThinkingSection = false;
+                for (let i = 0; i < lines.length; i++) {
+                  const line = lines[i];
+                  if (
+                    line.includes("OpenAI Codex") ||
+                    line.startsWith("--------") ||
+                    line.includes("workdir:") ||
+                    line.includes("model:") ||
+                    line.includes("provider:") ||
+                    line.includes("approval:") ||
+                    line.includes("sandbox:") ||
+                    line.includes("reasoning effort:") ||
+                    line.includes("reasoning summaries:") ||
+                    line.includes("tokens used:") ||
+                    line.includes("DEBUG codex") ||
+                    line.includes("INFO codex") ||
+                    line.match(/^\d{4}-\d{2}-\d{2}T[\d:.]+Z\s+(DEBUG|INFO|WARN|ERROR)/)
+                  ) {
+                    continue;
+                  }
+                  if (line.trim() === "thinking") {
+                    inThinkingSection = true;
+                    continue;
+                  }
+                  const toolMatch = line.match(/^tool\s+(\w+)\.(\w+)\(/);
+                  if (toolMatch) {
+                    inThinkingSection = false;
+                    const server = toolMatch[1];
+                    const toolName = toolMatch[2];
+                    let statusIcon = "❓"; 
+                    for (let j = i + 1; j < Math.min(i + LOOKAHEAD_WINDOW, lines.length); j++) {
+                      const nextLine = lines[j];
+                      if (nextLine.includes(`${server}.${toolName}(`) && nextLine.includes("success in")) {
+                        statusIcon = "✅";
+                        break;
+                      } else if (nextLine.includes(`${server}.${toolName}(`) && (nextLine.includes("failed in") || nextLine.includes("error"))) {
+                        statusIcon = "❌";
+                        break;
+                      }
+                    }
+                    markdown += `${statusIcon} ${server}::${toolName}(...)\n\n`;
+                    continue;
+                  }
+                  if (inThinkingSection && line.trim().length > 20 && !line.match(/^\d{4}-\d{2}-\d{2}T/)) {
+                    const trimmed = line.trim();
+                    markdown += `${trimmed}\n\n`;
+                  }
+                }
+                markdown += "## 🤖 Commands and Tools\n\n";
                 for (let i = 0; i < lines.length; i++) {
                   const line = lines[i];
                   const toolMatch = line.match(/^\[.*?\]\s+tool\s+(\w+)\.(\w+)\((.+)\)/) || line.match(/ToolCall:\s+(\w+)__(\w+)\s+(\{.+\})/);
@@ -2196,55 +2225,6 @@ jobs:
                 if (toolCalls > 0) {
                   markdown += `**Tool Calls:** ${toolCalls}\n\n`;
                 }
-                markdown += "\n## 🤖 Reasoning\n\n";
-                let inThinkingSection = false;
-                for (let i = 0; i < lines.length; i++) {
-                  const line = lines[i];
-                  if (
-                    line.includes("OpenAI Codex") ||
-                    line.startsWith("--------") ||
-                    line.includes("workdir:") ||
-                    line.includes("model:") ||
-                    line.includes("provider:") ||
-                    line.includes("approval:") ||
-                    line.includes("sandbox:") ||
-                    line.includes("reasoning effort:") ||
-                    line.includes("reasoning summaries:") ||
-                    line.includes("tokens used:") ||
-                    line.includes("DEBUG codex") ||
-                    line.includes("INFO codex") ||
-                    line.match(/^\d{4}-\d{2}-\d{2}T[\d:.]+Z\s+(DEBUG|INFO|WARN|ERROR)/)
-                  ) {
-                    continue;
-                  }
-                  if (line.trim() === "thinking") {
-                    inThinkingSection = true;
-                    continue;
-                  }
-                  const toolMatch = line.match(/^tool\s+(\w+)\.(\w+)\(/);
-                  if (toolMatch) {
-                    inThinkingSection = false;
-                    const server = toolMatch[1];
-                    const toolName = toolMatch[2];
-                    let statusIcon = "❓"; 
-                    for (let j = i + 1; j < Math.min(i + LOOKAHEAD_WINDOW, lines.length); j++) {
-                      const nextLine = lines[j];
-                      if (nextLine.includes(`${server}.${toolName}(`) && nextLine.includes("success in")) {
-                        statusIcon = "✅";
-                        break;
-                      } else if (nextLine.includes(`${server}.${toolName}(`) && (nextLine.includes("failed in") || nextLine.includes("error"))) {
-                        statusIcon = "❌";
-                        break;
-                      }
-                    }
-                    markdown += `${statusIcon} ${server}::${toolName}(...)\n\n`;
-                    continue;
-                  }
-                  if (inThinkingSection && line.trim().length > 20 && !line.match(/^\d{4}-\d{2}-\d{2}T/)) {
-                    const trimmed = line.trim();
-                    markdown += `${trimmed}\n\n`;
-                  }
-                }
                 return markdown;
               } catch (error) {
                 core.error(`Error parsing Codex log: ${error}`);
@@ -2298,6 +2278,15 @@ jobs:
               module.exports = { parseCodexLog, formatCodexToolCall, formatCodexBashCall, truncateString };
             }
             main();
+      - name: Print prompt to step summary
+        env:
+          GITHUB_AW_PROMPT: /tmp/gh-aw/aw-prompts/prompt.txt
+        run: |
+          echo "## Generated Prompt" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```markdown' >> $GITHUB_STEP_SUMMARY
+          cat $GITHUB_AW_PROMPT >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
       - name: Upload Agent Stdio
         if: always()
         uses: actions/upload-artifact@v4
@@ -2796,6 +2785,25 @@ jobs:
           script: |
             const fs = require("fs");
             const crypto = require("crypto");
+            function generatePatchPreview(patchContent) {
+              if (!patchContent || !patchContent.trim()) {
+                return "";
+              }
+              const lines = patchContent.split("\n");
+              const maxLines = 500;
+              const maxChars = 2000;
+              let preview = lines.length <= maxLines ? patchContent : lines.slice(0, maxLines).join("\n");
+              const lineTruncated = lines.length > maxLines;
+              const charTruncated = preview.length > maxChars;
+              if (charTruncated) {
+                preview = preview.slice(0, maxChars);
+              }
+              const truncated = lineTruncated || charTruncated;
+              const summary = truncated
+                ? `Show patch preview (${Math.min(maxLines, lines.length)} of ${lines.length} lines)`
+                : `Show patch (${lines.length} lines)`;
+              return `\n\n<details><summary>${summary}</summary>\n\n\`\`\`diff\n${preview}${truncated ? "\n... (truncated)" : ""}\n\`\`\`\n\n</details>`;
+            }
             async function main() {
               const isStaged = process.env.GITHUB_AW_SAFE_OUTPUTS_STAGED === "true";
               const workflowId = process.env.GITHUB_AW_WORKFLOW_ID;
@@ -3014,6 +3022,11 @@ jobs:
                   const runUrl = context.payload.repository
                     ? `${context.payload.repository.html_url}/actions/runs/${runId}`
                     : `${githubServer}/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}`;
+                  let patchPreview = "";
+                  if (fs.existsSync("/tmp/gh-aw/aw.patch")) {
+                    const patchContent = fs.readFileSync("/tmp/gh-aw/aw.patch", "utf8");
+                    patchPreview = generatePatchPreview(patchContent);
+                  }
                   const fallbackBody = `${body}
             ---
             > [!NOTE]
@@ -3030,7 +3043,7 @@ jobs:
             # Apply the patch
             git am aw.patch
             \`\`\`
-            `;
+            ${patchPreview}`;
                   try {
                     const { data: issue } = await github.rest.issues.create({
                       owner: context.repo.owner,
@@ -3118,11 +3131,16 @@ jobs:
                 const branchUrl = context.payload.repository
                   ? `${context.payload.repository.html_url}/tree/${branchName}`
                   : `${githubServer}/${context.repo.owner}/${context.repo.repo}/tree/${branchName}`;
+                let patchPreview = "";
+                if (fs.existsSync("/tmp/gh-aw/aw.patch")) {
+                  const patchContent = fs.readFileSync("/tmp/gh-aw/aw.patch", "utf8");
+                  patchPreview = generatePatchPreview(patchContent);
+                }
                 const fallbackBody = `${body}
             ---
             **Note:** This was originally intended as a pull request, but PR creation failed. The changes have been pushed to the branch [\`${branchName}\`](${branchUrl}).
             **Original error:** ${prError instanceof Error ? prError.message : String(prError)}
-            You can manually create a pull request from the branch if needed.`;
+            You can manually create a pull request from the branch if needed.${patchPreview}`;
                 try {
                   const { data: issue } = await github.rest.issues.create({
                     owner: context.repo.owner,

@@ -363,7 +363,7 @@ jobs:
         with:
           node-version: '24'
       - name: Install Claude Code CLI
-        run: npm install -g @anthropic-ai/claude-code@2.0.13
+        run: npm install -g @anthropic-ai/claude-code@2.0.14
       - name: Generate Claude Settings
         run: |
           mkdir -p /tmp/gh-aw/.claude
@@ -400,6 +400,7 @@ jobs:
           import re
           
           # Domain allow-list (populated during generation)
+          # JSON array safely embedded as Python list literal
           ALLOWED_DOMAINS = []
           
           def extract_domain(url_or_query):
@@ -1161,7 +1162,7 @@ jobs:
           GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"create-issue\":{\"max\":1,\"min\":1},\"missing-tool\":{}}"
         run: |
           mkdir -p /tmp/gh-aw/mcp-config
-          cat > /tmp/gh-aw/mcp-config/mcp-servers.json << 'EOF'
+          cat > /tmp/gh-aw/mcp-config/mcp-servers.json << EOF
           {
             "mcpServers": {
               "github": {
@@ -1282,15 +1283,6 @@ jobs:
           To report a missing tool use the missing-tool tool from the safe-outputs MCP.
           
           EOF
-      - name: Print prompt to step summary
-        env:
-          GITHUB_AW_PROMPT: /tmp/gh-aw/aw-prompts/prompt.txt
-        run: |
-          echo "## Generated Prompt" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo '```markdown' >> $GITHUB_STEP_SUMMARY
-          cat $GITHUB_AW_PROMPT >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
       - name: Capture agent version
         run: |
           VERSION_OUTPUT=$(claude --version 2>&1 || echo "unknown")
@@ -2188,18 +2180,6 @@ jobs:
               const outputTypes = Array.from(new Set(parsedItems.map(item => item.type)));
               core.info(`output_types: ${outputTypes.join(", ")}`);
               core.setOutput("output_types", outputTypes.join(","));
-              try {
-                await core.summary
-                  .addRaw("## Processed Output\n\n")
-                  .addRaw("```json\n")
-                  .addRaw(JSON.stringify(validatedOutput))
-                  .addRaw("\n```\n")
-                  .write();
-                core.info("Successfully wrote processed output to step summary");
-              } catch (error) {
-                const errorMsg = error instanceof Error ? error.message : String(error);
-                core.warning(`Failed to write to step summary: ${errorMsg}`);
-              }
             }
             await main();
       - name: Upload sanitized agent output
@@ -2292,6 +2272,16 @@ jobs:
                     mcpFailures: [],
                   };
                 }
+                const toolUsePairs = new Map(); 
+                for (const entry of logEntries) {
+                  if (entry.type === "user" && entry.message?.content) {
+                    for (const content of entry.message.content) {
+                      if (content.type === "tool_result" && content.tool_use_id) {
+                        toolUsePairs.set(content.tool_use_id, content);
+                      }
+                    }
+                  }
+                }
                 let markdown = "";
                 const mcpFailures = [];
                 const initEntry = logEntries.find(entry => entry.type === "system" && entry.subtype === "init");
@@ -2302,18 +2292,27 @@ jobs:
                   mcpFailures.push(...initResult.mcpFailures);
                   markdown += "\n";
                 }
-                markdown += "## 🤖 Commands and Tools\n\n";
-                const toolUsePairs = new Map(); 
-                const commandSummary = []; 
+                markdown += "\n## 🤖 Reasoning\n\n";
                 for (const entry of logEntries) {
-                  if (entry.type === "user" && entry.message?.content) {
+                  if (entry.type === "assistant" && entry.message?.content) {
                     for (const content of entry.message.content) {
-                      if (content.type === "tool_result" && content.tool_use_id) {
-                        toolUsePairs.set(content.tool_use_id, content);
+                      if (content.type === "text" && content.text) {
+                        const text = content.text.trim();
+                        if (text && text.length > 0) {
+                          markdown += text + "\n\n";
+                        }
+                      } else if (content.type === "tool_use") {
+                        const toolResult = toolUsePairs.get(content.id);
+                        const toolMarkdown = formatToolUse(content, toolResult);
+                        if (toolMarkdown) {
+                          markdown += toolMarkdown;
+                        }
                       }
                     }
                   }
                 }
+                markdown += "## 🤖 Commands and Tools\n\n";
+                const commandSummary = []; 
                 for (const entry of logEntries) {
                   if (entry.type === "assistant" && entry.message?.content) {
                     for (const content of entry.message.content) {
@@ -2376,25 +2375,6 @@ jobs:
                   }
                   if (lastEntry.permission_denials && lastEntry.permission_denials.length > 0) {
                     markdown += `**Permission Denials:** ${lastEntry.permission_denials.length}\n\n`;
-                  }
-                }
-                markdown += "\n## 🤖 Reasoning\n\n";
-                for (const entry of logEntries) {
-                  if (entry.type === "assistant" && entry.message?.content) {
-                    for (const content of entry.message.content) {
-                      if (content.type === "text" && content.text) {
-                        const text = content.text.trim();
-                        if (text && text.length > 0) {
-                          markdown += text + "\n\n";
-                        }
-                      } else if (content.type === "tool_use") {
-                        const toolResult = toolUsePairs.get(content.id);
-                        const toolMarkdown = formatToolUse(content, toolResult);
-                        if (toolMarkdown) {
-                          markdown += toolMarkdown;
-                        }
-                      }
-                    }
                   }
                 }
                 return { markdown, mcpFailures };
@@ -2613,6 +2593,15 @@ jobs:
               };
             }
             main();
+      - name: Print prompt to step summary
+        env:
+          GITHUB_AW_PROMPT: /tmp/gh-aw/aw-prompts/prompt.txt
+        run: |
+          echo "## Generated Prompt" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```markdown' >> $GITHUB_STEP_SUMMARY
+          cat $GITHUB_AW_PROMPT >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
       - name: Upload Agent Stdio
         if: always()
         uses: actions/upload-artifact@v4
@@ -2913,7 +2902,7 @@ jobs:
         with:
           node-version: '24'
       - name: Install Claude Code CLI
-        run: npm install -g @anthropic-ai/claude-code@2.0.13
+        run: npm install -g @anthropic-ai/claude-code@2.0.14
       - name: Execute Claude Code CLI
         id: agentic_execution
         # Allowed tools (sorted):
