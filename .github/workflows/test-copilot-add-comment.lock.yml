@@ -3213,7 +3213,7 @@ jobs:
     needs:
       - agent
       - detection
-    if: (always()) && ((github.event.issue.number) || (github.event.pull_request.number))
+    if: (always()) && (((github.event.issue.number) || (github.event.pull_request.number)) || (github.event.discussion.number))
     runs-on: ubuntu-latest
     permissions:
       contents: read
