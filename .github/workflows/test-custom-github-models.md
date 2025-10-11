@@ -59,4 +59,4 @@ Summarize the issue inlined below and provide suggestions for next steps.
 
 ---
 
-${{ needs.task.outputs.text }}
+${{ needs.activation.outputs.text }}
