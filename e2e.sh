@@ -518,13 +518,45 @@ create_test_discussion() {
     local body="$2"
     local category="${3:-General}"
     
-    # Create discussion using GitHub API since gh CLI might not support discussions create
-    local discussion_data=$(gh api repos/:owner/:repo/discussions \
-        --method POST \
-        --field title="$title" \
-        --field body="$body" \
-        --field category_id="$(gh api repos/:owner/:repo/discussions/categories --jq '.[] | select(.name=="'$category'") | .id')" \
-        2>/dev/null | jq -r '.number // empty' 2>/dev/null)
+    # Get repository ID and category ID using GraphQL
+    local repo_id=$(gh api graphql -f query='
+    {
+      repository(owner: "'$REPO_OWNER'", name: "'$REPO_NAME'") {
+        id
+      }
+    }' --jq '.data.repository.id' 2>/dev/null)
+    
+    local category_id=$(gh api graphql -f query='
+    {
+      repository(owner: "'$REPO_OWNER'", name: "'$REPO_NAME'") {
+        discussionCategories(first: 10) {
+          nodes {
+            id
+            name
+          }
+        }
+      }
+    }' --jq '.data.repository.discussionCategories.nodes[] | select(.name=="'$category'") | .id' 2>/dev/null)
+    
+    if [[ -z "$repo_id" || -z "$category_id" ]]; then
+        echo ""
+        return
+    fi
+    
+    # Create discussion using GraphQL mutation
+    local discussion_data=$(gh api graphql -f query='
+    mutation {
+      createDiscussion(input: {
+        repositoryId: "'$repo_id'"
+        categoryId: "'$category_id'"
+        title: "'$title'"
+        body: "'$body'"
+      }) {
+        discussion {
+          number
+        }
+      }
+    }' --jq '.data.createDiscussion.discussion.number // empty' 2>/dev/null)
     
     if [[ -n "$discussion_data" ]]; then
         echo "$discussion_data"
