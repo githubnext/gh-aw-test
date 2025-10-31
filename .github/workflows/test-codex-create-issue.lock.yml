@@ -18,6 +18,18 @@
 #   agent --> missing_tool
 #   detection --> missing_tool
 # ```
+#
+# Pinned GitHub Actions:
+#   - actions/checkout@v5 (08c6903cd8c0fde910a37f88322edcfb5dd907a8)
+#     https://github.com/actions/checkout/commit/08c6903cd8c0fde910a37f88322edcfb5dd907a8
+#   - actions/download-artifact@v5 (634f93cb2916e3fdff6788551b99b062d0335ce0)
+#     https://github.com/actions/download-artifact/commit/634f93cb2916e3fdff6788551b99b062d0335ce0
+#   - actions/github-script@v8 (ed597411d8f924073f98dfc5c65a23a2325f34cd)
+#     https://github.com/actions/github-script/commit/ed597411d8f924073f98dfc5c65a23a2325f34cd
+#   - actions/setup-node@v6 (2028fbc5c25fe9cf00d9f06a71cc4710d4507903)
+#     https://github.com/actions/setup-node/commit/2028fbc5c25fe9cf00d9f06a71cc4710d4507903
+#   - actions/upload-artifact@v4 (ea165f8d65b6e75b540449e92b4886f43607fa02)
+#     https://github.com/actions/upload-artifact/commit/ea165f8d65b6e75b540449e92b4886f43607fa02
 
 name: "Test Codex Create Issue"
 "on":
@@ -32,7 +44,7 @@ run-name: "Test Codex Create Issue"
 
 jobs:
   activation:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     steps:
       - name: Check workflow file timestamps
         run: |
@@ -65,6 +77,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+        with:
+          persist-credentials: false
       - name: Create gh-aw temp directory
         run: |
           mkdir -p /tmp/gh-aw/agent
@@ -72,7 +86,11 @@ jobs:
       - name: Configure Git credentials
         run: |
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git config --global user.name "${{ github.workflow }}"
+          git config --global user.name "github-actions[bot]"
+          # Re-authenticate git with GitHub token
+          SERVER_URL="${{ github.server_url }}"
+          SERVER_URL="${SERVER_URL#https://}"
+          git remote set-url origin "https://x-access-token:${{ github.token }}@${SERVER_URL}/${{ github.repository }}.git"
           echo "Git configured with standard GitHub Actions identity"
       - name: Checkout PR branch
         if: |
@@ -129,15 +147,15 @@ jobs:
           CODEX_API_KEY: ${{ secrets.CODEX_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       - name: Setup Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903
         with:
           node-version: '24'
       - name: Install Codex
-        run: npm install -g @openai/codex@0.49.0
+        run: npm install -g @openai/codex@0.50.0
       - name: Downloading container images
         run: |
           set -e
-          docker pull ghcr.io/github/github-mcp-server:v0.19.1
+          docker pull ghcr.io/github/github-mcp-server:v0.20.1
       - name: Setup Safe Outputs Collector MCP
         run: |
           mkdir -p /tmp/gh-aw/safeoutputs
@@ -205,11 +223,11 @@ jobs:
             const outputFile = process.env.GH_AW_SAFE_OUTPUTS || "/tmp/gh-aw/safeoutputs/outputs.jsonl";
             if (!process.env.GH_AW_SAFE_OUTPUTS) {
               debug(`GH_AW_SAFE_OUTPUTS not set, using default: ${outputFile}`);
-              const outputDir = path.dirname(outputFile);
-              if (!fs.existsSync(outputDir)) {
-                debug(`Creating output directory: ${outputDir}`);
-                fs.mkdirSync(outputDir, { recursive: true });
-              }
+            }
+            const outputDir = path.dirname(outputFile);
+            if (!fs.existsSync(outputDir)) {
+              debug(`Creating output directory: ${outputDir}`);
+              fs.mkdirSync(outputDir, { recursive: true });
             }
             function writeMessage(obj) {
               const json = JSON.stringify(obj);
@@ -513,6 +531,10 @@ jobs:
                       type: "array",
                       items: { type: "string" },
                       description: "Issue labels",
+                    },
+                    parent: {
+                      type: "number",
+                      description: "Parent issue number to create this issue as a sub-issue of",
                     },
                   },
                   additionalProperties: false,
@@ -944,7 +966,7 @@ jobs:
             "GITHUB_READ_ONLY=1",
             "-e",
             "GITHUB_TOOLSETS=default",
-            "ghcr.io/github/github-mcp-server:v0.19.1"
+            "ghcr.io/github/github-mcp-server:v0.20.1"
           ]
           
           [mcp_servers.github.env]
@@ -1155,6 +1177,9 @@ jobs:
               actor: context.actor,
               event_name: context.eventName,
               staged: false,
+              steps: {
+                firewall: ""
+              },
               created_at: new Date().toISOString()
             };
             
@@ -1320,7 +1345,7 @@ jobs:
           script: |
             async function main() {
               const fs = require("fs");
-              const maxBodyLength = 16384;
+              const maxBodyLength = 65000;
               function sanitizeContent(content, maxLength) {
                 if (!content || typeof content !== "string") {
                   return "";
@@ -2607,7 +2632,7 @@ jobs:
       - agent
       - detection
     if: (!cancelled()) && (contains(needs.agent.outputs.output_types, 'create_issue'))
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     permissions:
       contents: read
       issues: write
@@ -2751,7 +2776,10 @@ jobs:
                 core.info(
                   `Processing create-issue item ${i + 1}/${createIssueItems.length}: title=${createIssueItem.title}, bodyLength=${createIssueItem.body.length}`
                 );
+                core.info(`Debug: createIssueItem.parent = ${JSON.stringify(createIssueItem.parent)}`);
+                core.info(`Debug: parentIssueNumber from context = ${JSON.stringify(parentIssueNumber)}`);
                 const effectiveParentIssueNumber = createIssueItem.parent !== undefined ? createIssueItem.parent : parentIssueNumber;
+                core.info(`Debug: effectiveParentIssueNumber = ${JSON.stringify(effectiveParentIssueNumber)}`);
                 if (effectiveParentIssueNumber && createIssueItem.parent !== undefined) {
                   core.info(`Using explicit parent issue number from item: #${effectiveParentIssueNumber}`);
                 }
@@ -2816,8 +2844,11 @@ jobs:
                   });
                   core.info("Created issue #" + issue.number + ": " + issue.html_url);
                   createdIssues.push(issue);
+                  core.info(`Debug: About to check if sub-issue linking is needed. effectiveParentIssueNumber = ${effectiveParentIssueNumber}`);
                   if (effectiveParentIssueNumber) {
+                    core.info(`Attempting to link issue #${issue.number} as sub-issue of #${effectiveParentIssueNumber}`);
                     try {
+                      core.info(`Fetching node ID for parent issue #${effectiveParentIssueNumber}...`);
                       const getIssueNodeIdQuery = `
                         query($owner: String!, $repo: String!, $issueNumber: Int!) {
                           repository(owner: $owner, name: $repo) {
@@ -2833,16 +2864,20 @@ jobs:
                         issueNumber: effectiveParentIssueNumber,
                       });
                       const parentNodeId = parentResult.repository.issue.id;
+                      core.info(`Parent issue node ID: ${parentNodeId}`);
+                      core.info(`Fetching node ID for child issue #${issue.number}...`);
                       const childResult = await github.graphql(getIssueNodeIdQuery, {
                         owner: context.repo.owner,
                         repo: context.repo.repo,
                         issueNumber: issue.number,
                       });
                       const childNodeId = childResult.repository.issue.id;
+                      core.info(`Child issue node ID: ${childNodeId}`);
+                      core.info(`Executing addSubIssue mutation...`);
                       const addSubIssueMutation = `
-                        mutation($parentId: ID!, $subIssueId: ID!) {
+                        mutation($issueId: ID!, $subIssueId: ID!) {
                           addSubIssue(input: {
-                            parentId: $parentId,
+                            issueId: $issueId,
                             subIssueId: $subIssueId
                           }) {
                             subIssue {
@@ -2853,26 +2888,30 @@ jobs:
                         }
                       `;
                       await github.graphql(addSubIssueMutation, {
-                        parentId: parentNodeId,
+                        issueId: parentNodeId,
                         subIssueId: childNodeId,
                       });
-                      core.info("Linked issue #" + issue.number + " as sub-issue of #" + effectiveParentIssueNumber);
+                      core.info("✓ Successfully linked issue #" + issue.number + " as sub-issue of #" + effectiveParentIssueNumber);
                     } catch (error) {
                       core.info(`Warning: Could not link sub-issue to parent: ${error instanceof Error ? error.message : String(error)}`);
+                      core.info(`Error details: ${error instanceof Error ? error.stack : String(error)}`);
                       try {
+                        core.info(`Attempting fallback: adding comment to parent issue #${effectiveParentIssueNumber}...`);
                         await github.rest.issues.createComment({
                           owner: context.repo.owner,
                           repo: context.repo.repo,
                           issue_number: effectiveParentIssueNumber,
                           body: `Created related issue: #${issue.number}`,
                         });
-                        core.info("Added comment to parent issue #" + effectiveParentIssueNumber + " (sub-issue linking not available)");
+                        core.info("✓ Added comment to parent issue #" + effectiveParentIssueNumber + " (sub-issue linking not available)");
                       } catch (commentError) {
                         core.info(
                           `Warning: Could not add comment to parent issue: ${commentError instanceof Error ? commentError.message : String(commentError)}`
                         );
                       }
                     }
+                  } else {
+                    core.info(`Debug: No parent issue number set, skipping sub-issue linking`);
                   }
                   if (i === createIssueItems.length - 1) {
                     core.setOutput("issue_number", issue.number);
@@ -2905,7 +2944,7 @@ jobs:
   detection:
     needs: agent
     runs-on: ubuntu-latest
-    permissions: read-all
+    permissions: {}
     concurrency:
       group: "gh-aw-codex-${{ github.workflow }}"
     timeout-minutes: 10
@@ -3061,11 +3100,11 @@ jobs:
           CODEX_API_KEY: ${{ secrets.CODEX_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       - name: Setup Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903
         with:
           node-version: '24'
       - name: Install Codex
-        run: npm install -g @openai/codex@0.49.0
+        run: npm install -g @openai/codex@0.50.0
       - name: Run Codex
         run: |
           set -o pipefail
@@ -3129,7 +3168,7 @@ jobs:
       - agent
       - detection
     if: (!cancelled()) && (contains(needs.agent.outputs.output_types, 'missing_tool'))
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     permissions:
       contents: read
     timeout-minutes: 5

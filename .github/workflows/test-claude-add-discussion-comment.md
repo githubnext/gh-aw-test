@@ -14,7 +14,7 @@ safe-outputs:
 
 tools:
   github:
-    toolset: [all]
+    toolsets: [all]
 ---
 
 If the title of the discussion #${{ github.event.discussion.number }} is "Hello from Claude Discussion" then add a comment on the discussion "Reply from Claude Discussion".

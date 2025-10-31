@@ -12,6 +12,8 @@ on:
 permissions:
   contents: read
   models: read
+  issues: read
+  pull-requests: read
 
 engine:
   id: custom

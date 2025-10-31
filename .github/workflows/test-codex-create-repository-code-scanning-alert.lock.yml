@@ -18,6 +18,20 @@
 #   agent --> missing_tool
 #   detection --> missing_tool
 # ```
+#
+# Pinned GitHub Actions:
+#   - actions/checkout@v5 (08c6903cd8c0fde910a37f88322edcfb5dd907a8)
+#     https://github.com/actions/checkout/commit/08c6903cd8c0fde910a37f88322edcfb5dd907a8
+#   - actions/download-artifact@v5 (634f93cb2916e3fdff6788551b99b062d0335ce0)
+#     https://github.com/actions/download-artifact/commit/634f93cb2916e3fdff6788551b99b062d0335ce0
+#   - actions/github-script@v8 (ed597411d8f924073f98dfc5c65a23a2325f34cd)
+#     https://github.com/actions/github-script/commit/ed597411d8f924073f98dfc5c65a23a2325f34cd
+#   - actions/setup-node@v6 (2028fbc5c25fe9cf00d9f06a71cc4710d4507903)
+#     https://github.com/actions/setup-node/commit/2028fbc5c25fe9cf00d9f06a71cc4710d4507903
+#   - actions/upload-artifact@v4 (ea165f8d65b6e75b540449e92b4886f43607fa02)
+#     https://github.com/actions/upload-artifact/commit/ea165f8d65b6e75b540449e92b4886f43607fa02
+#   - github/codeql-action/upload-sarif@v3 (ab2e54f42aa112ff08704159b88a57517f6f0ebb)
+#     https://github.com/github/codeql-action/commit/ab2e54f42aa112ff08704159b88a57517f6f0ebb
 
 name: "Test Codex Code Scanning Alert"
 "on":
@@ -32,7 +46,7 @@ run-name: "Test Codex Code Scanning Alert"
 
 jobs:
   activation:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     permissions:
       discussions: write
       issues: write
@@ -404,6 +418,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+        with:
+          persist-credentials: false
       - name: Create gh-aw temp directory
         run: |
           mkdir -p /tmp/gh-aw/agent
@@ -411,7 +427,11 @@ jobs:
       - name: Configure Git credentials
         run: |
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git config --global user.name "${{ github.workflow }}"
+          git config --global user.name "github-actions[bot]"
+          # Re-authenticate git with GitHub token
+          SERVER_URL="${{ github.server_url }}"
+          SERVER_URL="${SERVER_URL#https://}"
+          git remote set-url origin "https://x-access-token:${{ github.token }}@${SERVER_URL}/${{ github.repository }}.git"
           echo "Git configured with standard GitHub Actions identity"
       - name: Checkout PR branch
         if: |
@@ -468,15 +488,15 @@ jobs:
           CODEX_API_KEY: ${{ secrets.CODEX_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       - name: Setup Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903
         with:
           node-version: '24'
       - name: Install Codex
-        run: npm install -g @openai/codex@0.49.0
+        run: npm install -g @openai/codex@0.50.0
       - name: Downloading container images
         run: |
           set -e
-          docker pull ghcr.io/github/github-mcp-server:v0.19.1
+          docker pull ghcr.io/github/github-mcp-server:v0.20.1
       - name: Setup Safe Outputs Collector MCP
         run: |
           mkdir -p /tmp/gh-aw/safeoutputs
@@ -544,11 +564,11 @@ jobs:
             const outputFile = process.env.GH_AW_SAFE_OUTPUTS || "/tmp/gh-aw/safeoutputs/outputs.jsonl";
             if (!process.env.GH_AW_SAFE_OUTPUTS) {
               debug(`GH_AW_SAFE_OUTPUTS not set, using default: ${outputFile}`);
-              const outputDir = path.dirname(outputFile);
-              if (!fs.existsSync(outputDir)) {
-                debug(`Creating output directory: ${outputDir}`);
-                fs.mkdirSync(outputDir, { recursive: true });
-              }
+            }
+            const outputDir = path.dirname(outputFile);
+            if (!fs.existsSync(outputDir)) {
+              debug(`Creating output directory: ${outputDir}`);
+              fs.mkdirSync(outputDir, { recursive: true });
             }
             function writeMessage(obj) {
               const json = JSON.stringify(obj);
@@ -852,6 +872,10 @@ jobs:
                       type: "array",
                       items: { type: "string" },
                       description: "Issue labels",
+                    },
+                    parent: {
+                      type: "number",
+                      description: "Parent issue number to create this issue as a sub-issue of",
                     },
                   },
                   additionalProperties: false,
@@ -1283,7 +1307,7 @@ jobs:
             "GITHUB_READ_ONLY=1",
             "-e",
             "GITHUB_TOOLSETS=default",
-            "ghcr.io/github/github-mcp-server:v0.19.1"
+            "ghcr.io/github/github-mcp-server:v0.20.1"
           ]
           
           [mcp_servers.github.env]
@@ -1494,6 +1518,9 @@ jobs:
               actor: context.actor,
               event_name: context.eventName,
               staged: false,
+              steps: {
+                firewall: ""
+              },
               created_at: new Date().toISOString()
             };
             
@@ -1659,7 +1686,7 @@ jobs:
           script: |
             async function main() {
               const fs = require("fs");
-              const maxBodyLength = 16384;
+              const maxBodyLength = 65000;
               function sanitizeContent(content, maxLength) {
                 if (!content || typeof content !== "string") {
                   return "";
@@ -2946,7 +2973,7 @@ jobs:
       - agent
       - detection
     if: (!cancelled())
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     permissions:
       actions: read
       contents: read
@@ -3199,14 +3226,14 @@ jobs:
           path: ${{ steps.create_code_scanning_alert.outputs.sarif_file }}
       - name: Upload SARIF to GitHub Security
         if: steps.create_code_scanning_alert.outputs.sarif_file
-        uses: github/codeql-action/upload-sarif@562257dc84ee23987d348302b161ee561898ec02
+        uses: github/codeql-action/upload-sarif@ab2e54f42aa112ff08704159b88a57517f6f0ebb
         with:
           sarif_file: ${{ steps.create_code_scanning_alert.outputs.sarif_file }}
 
   detection:
     needs: agent
     runs-on: ubuntu-latest
-    permissions: read-all
+    permissions: {}
     concurrency:
       group: "gh-aw-codex-${{ github.workflow }}"
     timeout-minutes: 10
@@ -3362,11 +3389,11 @@ jobs:
           CODEX_API_KEY: ${{ secrets.CODEX_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       - name: Setup Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903
         with:
           node-version: '24'
       - name: Install Codex
-        run: npm install -g @openai/codex@0.49.0
+        run: npm install -g @openai/codex@0.50.0
       - name: Run Codex
         run: |
           set -o pipefail
@@ -3430,7 +3457,7 @@ jobs:
       - agent
       - detection
     if: (!cancelled()) && (contains(needs.agent.outputs.output_types, 'missing_tool'))
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     permissions:
       contents: read
     timeout-minutes: 5
