@@ -14,7 +14,7 @@ safe-outputs:
                 type: string
         steps:
         - name: See artifacts
-          run: cd /tmp/safe-jobs && ls -lR
+          run: cd /tmp/gh-aw/safe-jobs && ls -lR
         - name: print message
           run: |
                 MESSAGE=$(cat "$GITHUB_AW_AGENT_OUTPUT" | jq -r '.items[] | select(.type == "print") | .message')
