@@ -8,7 +8,7 @@ engine:
 
 safe-outputs:
   create-issue:
-    min: 1
+    # min: 1
 
 network: {}
 

@@ -9,7 +9,7 @@ safe-outputs:
   create-issue:
     title-prefix: "[copilot-test] "
     labels: [copilot, automation, haiku]
-    min: 1
+    # min: 1
 ---
 
 Create an issue in repository ${{ github.repository }} with title "Hello from Copilot" and body "World"

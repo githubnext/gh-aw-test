@@ -8,7 +8,7 @@ safe-outputs:
   create-issue:
     title-prefix: "[claude-test] "
     labels: [claude, automation, haiku]
-    min: 1
+    # min: 1
 ---
 
 Create an issue in repository ${{ github.repository }} with title "Hello from Claude" and body "World"

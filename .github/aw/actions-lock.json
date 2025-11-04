@@ -1,0 +1,14 @@
+{
+  "entries": {
+    "actions/ai-inference@v1": {
+      "repo": "actions/ai-inference",
+      "version": "v1",
+      "sha": "b81b2afb8390ee6839b494a404766bef6493c7d9"
+    },
+    "actions/github-script@v7": {
+      "repo": "actions/github-script",
+      "version": "v7",
+      "sha": "f28e40c7f34bde8b3046d885e986cb6290c5673b"
+    }
+  }
+}

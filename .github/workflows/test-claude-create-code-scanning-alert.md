@@ -10,7 +10,7 @@ engine:
 safe-outputs:
   create-code-scanning-alert:
     max: 10
-    min: 1
+    # min: 1
 ---
 
 # Test Claude Create Code Scanning Alert

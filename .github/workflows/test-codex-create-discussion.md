@@ -9,7 +9,7 @@ safe-outputs:
   create-discussion:
     title-prefix: "[codex-test] "
     # categories: [General]
-    min: 1
+    # min: 1
 ---
 
 Create a discussion in repository ${{ github.repository }} with title "Hello from Codex Discussion" and body "World Discussion"

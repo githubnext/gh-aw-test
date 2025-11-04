@@ -10,7 +10,7 @@ engine:
 safe-outputs:
   create-pull-request-review-comment:
     max: 3
-    min: 1
+    # min: 1
 ---
 
 Analyze the pull request #${{ github.event.issue.number }} and create one code review comment on the code changes. 

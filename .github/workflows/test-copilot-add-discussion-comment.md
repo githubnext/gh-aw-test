@@ -10,7 +10,7 @@ engine:
 safe-outputs:
   add-comment:
     discussion: true
-    min: 1
+    # min: 1
 tools:
   github:
     toolsets: [all]

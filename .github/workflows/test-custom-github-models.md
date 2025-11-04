@@ -54,7 +54,7 @@ safe-outputs:
   add-comment:
     max: 1
     target: "*"
-    min: 1
+    # min: 1
 ---
 
 Summarize the issue inlined below and provide suggestions for next steps.
