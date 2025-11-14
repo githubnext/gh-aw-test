@@ -22,14 +22,14 @@
 # Pinned GitHub Actions:
 #   - actions/checkout@v5 (08c6903cd8c0fde910a37f88322edcfb5dd907a8)
 #     https://github.com/actions/checkout/commit/08c6903cd8c0fde910a37f88322edcfb5dd907a8
-#   - actions/download-artifact@v5 (634f93cb2916e3fdff6788551b99b062d0335ce0)
-#     https://github.com/actions/download-artifact/commit/634f93cb2916e3fdff6788551b99b062d0335ce0
+#   - actions/download-artifact@v6 (018cc2cf5baa6db3ef3c5f8a56943fffe632ef53)
+#     https://github.com/actions/download-artifact/commit/018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
 #   - actions/github-script@v8 (ed597411d8f924073f98dfc5c65a23a2325f34cd)
 #     https://github.com/actions/github-script/commit/ed597411d8f924073f98dfc5c65a23a2325f34cd
 #   - actions/setup-node@v6 (2028fbc5c25fe9cf00d9f06a71cc4710d4507903)
 #     https://github.com/actions/setup-node/commit/2028fbc5c25fe9cf00d9f06a71cc4710d4507903
-#   - actions/upload-artifact@v4 (ea165f8d65b6e75b540449e92b4886f43607fa02)
-#     https://github.com/actions/upload-artifact/commit/ea165f8d65b6e75b540449e92b4886f43607fa02
+#   - actions/upload-artifact@v5 (330a01c490aca151604b8cf639adc76d48f6c5d4)
+#     https://github.com/actions/upload-artifact/commit/330a01c490aca151604b8cf639adc76d48f6c5d4
 
 name: "Test Codex Create Discussion"
 "on":
@@ -45,9 +45,11 @@ run-name: "Test Codex Create Discussion"
 jobs:
   activation:
     runs-on: ubuntu-slim
+    permissions:
+      contents: read
     steps:
       - name: Checkout workflows
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
         with:
           sparse-checkout: |
             .github/workflows
@@ -55,7 +57,7 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
       - name: Check workflow file timestamps
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
           GH_AW_WORKFLOW_FILE: "test-codex-create-discussion.lock.yml"
         with:
@@ -104,14 +106,22 @@ jobs:
               core.info(`  Source modified: ${workflowStat.mtime.toISOString()}`);
               core.info(`  Lock modified: ${lockStat.mtime.toISOString()}`);
               if (workflowMtime > lockMtime) {
-                const warningMessage = `🔴🔴🔴 WARNING: Lock file '${lockFile}' is outdated! The workflow file '${workflowMdFile}' has been modified more recently. Run 'gh aw compile' to regenerate the lock file.`;
+                const warningMessage = `WARNING: Lock file '${lockFile}' is outdated! The workflow file '${workflowMdFile}' has been modified more recently. Run 'gh aw compile' to regenerate the lock file.`;
                 core.error(warningMessage);
-                await core.summary
-                  .addRaw("## ⚠️ Workflow Lock File Warning\n\n")
-                  .addRaw(`🔴🔴🔴 **WARNING**: Lock file \`${lockFile}\` is outdated!\n\n`)
-                  .addRaw(`The workflow file \`${workflowMdFile}\` has been modified more recently.\n\n`)
-                  .addRaw("Run `gh aw compile` to regenerate the lock file.\n\n")
-                  .write();
+                const workflowTimestamp = workflowStat.mtime.toISOString();
+                const lockTimestamp = lockStat.mtime.toISOString();
+                const gitSha = process.env.GITHUB_SHA;
+                let summary = core.summary
+                  .addRaw("### ⚠️ Workflow Lock File Warning\n\n")
+                  .addRaw("**WARNING**: Lock file is outdated and needs to be regenerated.\n\n")
+                  .addRaw("**Files:**\n")
+                  .addRaw(`- Source: \`${workflowMdFile}\` (modified: ${workflowTimestamp})\n`)
+                  .addRaw(`- Lock: \`${lockFile}\` (modified: ${lockTimestamp})\n\n`);
+                if (gitSha) {
+                  summary = summary.addRaw(`**Git Commit:** \`${gitSha}\`\n\n`);
+                }
+                summary = summary.addRaw("**Action Required:** Run `gh aw compile` to regenerate the lock file.\n\n");
+                await summary.write();
               } else {
                 core.info("✅ Lock file is up to date");
               }
@@ -129,11 +139,12 @@ jobs:
     env:
       GH_AW_SAFE_OUTPUTS: /tmp/gh-aw/safeoutputs/outputs.jsonl
     outputs:
+      has_patch: ${{ steps.collect_output.outputs.has_patch }}
       output: ${{ steps.collect_output.outputs.output }}
       output_types: ${{ steps.collect_output.outputs.output_types }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
         with:
           persist-credentials: false
       - name: Create gh-aw temp directory
@@ -154,7 +165,7 @@ jobs:
       - name: Checkout PR branch
         if: |
           github.event.pull_request
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         with:
           script: |
             async function main() {
@@ -206,15 +217,15 @@ jobs:
           CODEX_API_KEY: ${{ secrets.CODEX_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       - name: Setup Node.js
-        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6
         with:
           node-version: '24'
       - name: Install Codex
-        run: npm install -g @openai/codex@0.53.0
+        run: npm install -g @openai/codex@0.57.0
       - name: Downloading container images
         run: |
           set -e
-          docker pull ghcr.io/github/github-mcp-server:v0.20.1
+          docker pull ghcr.io/github/github-mcp-server:v0.20.2
       - name: Setup Safe Outputs Collector MCP
         run: |
           mkdir -p /tmp/gh-aw/safeoutputs
@@ -1010,14 +1021,15 @@ jobs:
         env:
           GITHUB_MCP_SERVER_TOKEN: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           GH_AW_SAFE_OUTPUTS: ${{ env.GH_AW_SAFE_OUTPUTS }}
-          GH_AW_ASSETS_BRANCH: ${{ env.GH_AW_ASSETS_BRANCH }}
-          GH_AW_ASSETS_MAX_SIZE_KB: ${{ env.GH_AW_ASSETS_MAX_SIZE_KB }}
-          GH_AW_ASSETS_ALLOWED_EXTS: ${{ env.GH_AW_ASSETS_ALLOWED_EXTS }}
         run: |
           mkdir -p /tmp/gh-aw/mcp-config
           cat > /tmp/gh-aw/mcp-config/config.toml << EOF
           [history]
           persistence = "none"
+          
+          [shell_environment_policy]
+          inherit = "core"
+          include_only = ["CODEX_API_KEY", "GH_AW_ASSETS_ALLOWED_EXTS", "GH_AW_ASSETS_BRANCH", "GH_AW_ASSETS_MAX_SIZE_KB", "GH_AW_SAFE_OUTPUTS", "GITHUB_PERSONAL_ACCESS_TOKEN", "GITHUB_REPOSITORY", "GITHUB_SERVER_URL", "HOME", "OPENAI_API_KEY", "PATH"]
           
           [mcp_servers.github]
           user_agent = "test-codex-create-discussion"
@@ -1034,27 +1046,25 @@ jobs:
             "GITHUB_READ_ONLY=1",
             "-e",
             "GITHUB_TOOLSETS=default",
-            "ghcr.io/github/github-mcp-server:v0.20.1"
+            "ghcr.io/github/github-mcp-server:v0.20.2"
           ]
-          
-          [mcp_servers.github.env]
-          GITHUB_PERSONAL_ACCESS_TOKEN = "${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}"
+          env_vars = ["GITHUB_PERSONAL_ACCESS_TOKEN"]
           
           [mcp_servers.safeoutputs]
           command = "node"
           args = [
             "/tmp/gh-aw/safeoutputs/mcp-server.cjs",
           ]
-          env = { "GH_AW_SAFE_OUTPUTS" = "${{ env.GH_AW_SAFE_OUTPUTS }}", "GH_AW_ASSETS_BRANCH" = "${{ env.GH_AW_ASSETS_BRANCH }}", "GH_AW_ASSETS_MAX_SIZE_KB" = "${{ env.GH_AW_ASSETS_MAX_SIZE_KB }}", "GH_AW_ASSETS_ALLOWED_EXTS" = "${{ env.GH_AW_ASSETS_ALLOWED_EXTS }}", "GITHUB_REPOSITORY" = "${{ github.repository }}", "GITHUB_SERVER_URL" = "${{ github.server_url }}" }
+          env_vars = ["GH_AW_SAFE_OUTPUTS", "GH_AW_ASSETS_BRANCH", "GH_AW_ASSETS_MAX_SIZE_KB", "GH_AW_ASSETS_ALLOWED_EXTS", "GITHUB_REPOSITORY", "GITHUB_SERVER_URL"]
           EOF
       - name: Create prompt
         env:
           GH_AW_PROMPT: /tmp/gh-aw/aw-prompts/prompt.txt
           GH_AW_SAFE_OUTPUTS: ${{ env.GH_AW_SAFE_OUTPUTS }}
-          GH_AW_EXPR_D892F163: ${{ github.repository }}
         run: |
           PROMPT_DIR="$(dirname "$GH_AW_PROMPT")"
           mkdir -p "$PROMPT_DIR"
+          # shellcheck disable=SC2006,SC2287
           cat > "$GH_AW_PROMPT" << 'PROMPT_EOF'
           Create a discussion in repository ${GH_AW_EXPR_D892F163} with title "Hello from Codex Discussion" and body "World Discussion"
           
@@ -1065,7 +1075,8 @@ jobs:
         env:
           GH_AW_PROMPT: /tmp/gh-aw/aw-prompts/prompt.txt
         run: |
-          cat >> "$GH_AW_PROMPT" << 'PROMPT_EOF'
+          # shellcheck disable=SC2006,SC2287
+          cat >> "$GH_AW_PROMPT" << PROMPT_EOF
           
           ---
           
@@ -1097,7 +1108,8 @@ jobs:
         env:
           GH_AW_PROMPT: /tmp/gh-aw/aw-prompts/prompt.txt
         run: |
-          cat >> "$GH_AW_PROMPT" << 'PROMPT_EOF'
+          # shellcheck disable=SC2006,SC2287
+          cat >> "$GH_AW_PROMPT" << PROMPT_EOF
           
           ---
           
@@ -1110,7 +1122,8 @@ jobs:
         env:
           GH_AW_PROMPT: /tmp/gh-aw/aw-prompts/prompt.txt
         run: |
-          cat >> "$GH_AW_PROMPT" << 'PROMPT_EOF'
+          # shellcheck disable=SC2006,SC2287
+          cat >> "$GH_AW_PROMPT" << PROMPT_EOF
           
           ---
           
@@ -1127,7 +1140,8 @@ jobs:
         env:
           GH_AW_PROMPT: /tmp/gh-aw/aw-prompts/prompt.txt
         run: |
-          cat >> "$GH_AW_PROMPT" << 'PROMPT_EOF'
+          # shellcheck disable=SC2006,SC2287
+          cat >> "$GH_AW_PROMPT" << PROMPT_EOF
           
           ---
           
@@ -1157,10 +1171,11 @@ jobs:
           Use this context information to understand the scope of your work.
           
           PROMPT_EOF
-      - name: Render template conditionals
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+      - name: Interpolate variables and render templates
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
           GH_AW_PROMPT: /tmp/gh-aw/aw-prompts/prompt.txt
+          GH_AW_EXPR_D892F163: ${{ github.repository }}
         with:
           script: |
             const fs = require("fs");
@@ -1168,34 +1183,61 @@ jobs:
               const v = expr.trim().toLowerCase();
               return !(v === "" || v === "false" || v === "0" || v === "null" || v === "undefined");
             }
+            function interpolateVariables(content, variables) {
+              let result = content;
+              for (const [varName, value] of Object.entries(variables)) {
+                const pattern = new RegExp(`\\$\\{${varName}\\}`, "g");
+                result = result.replace(pattern, value);
+              }
+              return result;
+            }
             function renderMarkdownTemplate(markdown) {
               return markdown.replace(/{{#if\s+([^}]+)}}([\s\S]*?){{\/if}}/g, (_, cond, body) => (isTruthy(cond) ? body : ""));
             }
-            function main() {
+            async function main() {
               try {
                 const promptPath = process.env.GH_AW_PROMPT;
                 if (!promptPath) {
                   core.setFailed("GH_AW_PROMPT environment variable is not set");
-                  process.exit(1);
+                  return;
                 }
-                const markdown = fs.readFileSync(promptPath, "utf8");
-                const hasConditionals = /{{#if\s+[^}]+}}/.test(markdown);
-                if (!hasConditionals) {
+                let content = fs.readFileSync(promptPath, "utf8");
+                const variables = {};
+                for (const [key, value] of Object.entries(process.env)) {
+                  if (key.startsWith("GH_AW_EXPR_")) {
+                    variables[key] = value || "";
+                  }
+                }
+                const varCount = Object.keys(variables).length;
+                if (varCount > 0) {
+                  core.info(`Found ${varCount} expression variable(s) to interpolate`);
+                  content = interpolateVariables(content, variables);
+                  core.info(`Successfully interpolated ${varCount} variable(s) in prompt`);
+                } else {
+                  core.info("No expression variables found, skipping interpolation");
+                }
+                const hasConditionals = /{{#if\s+[^}]+}}/.test(content);
+                if (hasConditionals) {
+                  core.info("Processing conditional template blocks");
+                  content = renderMarkdownTemplate(content);
+                  core.info("Template rendered successfully");
+                } else {
                   core.info("No conditional blocks found in prompt, skipping template rendering");
-                  process.exit(0);
                 }
-                const rendered = renderMarkdownTemplate(markdown);
-                fs.writeFileSync(promptPath, rendered, "utf8");
-                core.info("Template rendered successfully");
+                fs.writeFileSync(promptPath, content, "utf8");
               } catch (error) {
                 core.setFailed(error instanceof Error ? error.message : String(error));
               }
             }
             main();
-      - name: Print prompt to step summary
+      - name: Print prompt
         env:
           GH_AW_PROMPT: /tmp/gh-aw/aw-prompts/prompt.txt
         run: |
+          # Print prompt to workflow logs (equivalent to core.info)
+          echo "Generated Prompt:"
+          cat "$GH_AW_PROMPT"
+          # Print prompt to step summary
           {
             echo "<details>"
             echo "<summary>Generated Prompt</summary>"
@@ -1208,13 +1250,13 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Upload prompt
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: prompt.txt
           path: /tmp/gh-aw/aw-prompts/prompt.txt
           if-no-files-found: warn
       - name: Generate agentic run info
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         with:
           script: |
             const fs = require('fs');
@@ -1224,7 +1266,7 @@ jobs:
               engine_name: "Codex",
               model: "",
               version: "",
-              agent_version: "0.53.0",
+              agent_version: "0.57.0",
               workflow_name: "Test Codex Create Discussion",
               experimental: true,
               supports_tools_allowlist: true,
@@ -1251,7 +1293,7 @@ jobs:
             console.log(JSON.stringify(awInfo, null, 2));
       - name: Upload agentic run info
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: aw_info.json
           path: /tmp/gh-aw/aw_info.json
@@ -1269,11 +1311,13 @@ jobs:
           GH_AW_MCP_CONFIG: /tmp/gh-aw/mcp-config/config.toml
           GH_AW_PROMPT: /tmp/gh-aw/aw-prompts/prompt.txt
           GH_AW_SAFE_OUTPUTS: ${{ env.GH_AW_SAFE_OUTPUTS }}
+          GITHUB_PERSONAL_ACCESS_TOKEN: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           GITHUB_STEP_SUMMARY: ${{ env.GITHUB_STEP_SUMMARY }}
+          OPENAI_API_KEY: ${{ secrets.CODEX_API_KEY || secrets.OPENAI_API_KEY }}
           RUST_LOG: trace,hyper_util=info,mio=info,reqwest=info,os_info=info,codex_otel=warn,codex_core=debug,ocodex_exec=debug
       - name: Redact secrets in logs
         if: always()
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         with:
           script: |
             const fs = require("fs");
@@ -1389,14 +1433,14 @@ jobs:
           SECRET_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       - name: Upload Safe Outputs
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: safe_output.jsonl
           path: ${{ env.GH_AW_SAFE_OUTPUTS }}
           if-no-files-found: warn
       - name: Ingest agent output
         id: collect_output
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
           GH_AW_SAFE_OUTPUTS: ${{ env.GH_AW_SAFE_OUTPUTS }}
           GH_AW_ALLOWED_DOMAINS: "crl3.digicert.com,crl4.digicert.com,ocsp.digicert.com,ts-crl.ws.symantec.com,ts-ocsp.ws.symantec.com,crl.geotrust.com,ocsp.geotrust.com,crl.thawte.com,ocsp.thawte.com,crl.verisign.com,ocsp.verisign.com,crl.globalsign.com,ocsp.globalsign.com,crls.ssl.com,ocsp.ssl.com,crl.identrust.com,ocsp.identrust.com,crl.sectigo.com,ocsp.sectigo.com,crl.usertrust.com,ocsp.usertrust.com,s.symcb.com,s.symcd.com,json-schema.org,json.schemastore.org,archive.ubuntu.com,security.ubuntu.com,ppa.launchpad.net,keyserver.ubuntu.com,azure.archive.ubuntu.com,api.snapcraft.io,packagecloud.io,packages.cloud.google.com,packages.microsoft.com"
@@ -2260,17 +2304,21 @@ jobs:
               const outputTypes = Array.from(new Set(parsedItems.map(item => item.type)));
               core.info(`output_types: ${outputTypes.join(", ")}`);
               core.setOutput("output_types", outputTypes.join(","));
+              const patchPath = "/tmp/gh-aw/aw.patch";
+              const hasPatch = fs.existsSync(patchPath);
+              core.info(`Patch file ${hasPatch ? "exists" : "does not exist"} at: ${patchPath}`);
+              core.setOutput("has_patch", hasPatch ? "true" : "false");
             }
             await main();
       - name: Upload sanitized agent output
         if: always() && env.GH_AW_AGENT_OUTPUT
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: agent_output.json
           path: ${{ env.GH_AW_AGENT_OUTPUT }}
           if-no-files-found: warn
       - name: Upload engine output files
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: agent_outputs
           path: |
@@ -2278,42 +2326,97 @@ jobs:
           if-no-files-found: ignore
       - name: Upload MCP logs
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: mcp-logs
           path: /tmp/gh-aw/mcp-logs/
           if-no-files-found: ignore
       - name: Parse agent logs for step summary
         if: always()
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
           GH_AW_AGENT_OUTPUT: /tmp/gh-aw/agent-stdio.log
         with:
           script: |
-            function main() {
+            function runLogParser(options) {
               const fs = require("fs");
+              const path = require("path");
+              const { parseLog, parserName, supportsDirectories = false } = options;
               try {
-                const logFile = process.env.GH_AW_AGENT_OUTPUT;
-                if (!logFile) {
+                const logPath = process.env.GH_AW_AGENT_OUTPUT;
+                if (!logPath) {
                   core.info("No agent log file specified");
                   return;
                 }
-                if (!fs.existsSync(logFile)) {
-                  core.info(`Log file not found: ${logFile}`);
+                if (!fs.existsSync(logPath)) {
+                  core.info(`Log path not found: ${logPath}`);
                   return;
                 }
-                const content = fs.readFileSync(logFile, "utf8");
-                const parsedLog = parseCodexLog(content);
-                if (parsedLog) {
-                  core.info(parsedLog);
-                  core.summary.addRaw(parsedLog).write();
-                  core.info("Codex log parsed successfully");
+                let content = "";
+                const stat = fs.statSync(logPath);
+                if (stat.isDirectory()) {
+                  if (!supportsDirectories) {
+                    core.info(`Log path is a directory but ${parserName} parser does not support directories: ${logPath}`);
+                    return;
+                  }
+                  const files = fs.readdirSync(logPath);
+                  const logFiles = files.filter(file => file.endsWith(".log") || file.endsWith(".txt"));
+                  if (logFiles.length === 0) {
+                    core.info(`No log files found in directory: ${logPath}`);
+                    return;
+                  }
+                  logFiles.sort();
+                  for (const file of logFiles) {
+                    const filePath = path.join(logPath, file);
+                    const fileContent = fs.readFileSync(filePath, "utf8");
+                    if (content.length > 0 && !content.endsWith("\n")) {
+                      content += "\n";
+                    }
+                    content += fileContent;
+                  }
                 } else {
-                  core.error("Failed to parse Codex log");
+                  content = fs.readFileSync(logPath, "utf8");
+                }
+                const result = parseLog(content);
+                let markdown = "";
+                let mcpFailures = [];
+                let maxTurnsHit = false;
+                if (typeof result === "string") {
+                  markdown = result;
+                } else if (result && typeof result === "object") {
+                  markdown = result.markdown || "";
+                  mcpFailures = result.mcpFailures || [];
+                  maxTurnsHit = result.maxTurnsHit || false;
+                }
+                if (markdown) {
+                  core.info(markdown);
+                  core.summary.addRaw(markdown).write();
+                  core.info(`${parserName} log parsed successfully`);
+                } else {
+                  core.error(`Failed to parse ${parserName} log`);
+                }
+                if (mcpFailures && mcpFailures.length > 0) {
+                  const failedServers = mcpFailures.join(", ");
+                  core.setFailed(`MCP server(s) failed to launch: ${failedServers}`);
+                }
+                if (maxTurnsHit) {
+                  core.setFailed(`Agent execution stopped: max-turns limit reached. The agent did not complete its task successfully.`);
                 }
               } catch (error) {
                 core.setFailed(error instanceof Error ? error : String(error));
               }
+            }
+            if (typeof module !== "undefined" && module.exports) {
+              module.exports = {
+                runLogParser,
+              };
+            }
+            function main() {
+              runLogParser({
+                parseLog: parseCodexLog,
+                parserName: "Codex",
+                supportsDirectories: false,
+              });
             }
             function parseCodexLog(logContent) {
               try {
@@ -2552,14 +2655,14 @@ jobs:
             main();
       - name: Upload Agent Stdio
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: agent-stdio.log
           path: /tmp/gh-aw/agent-stdio.log
           if-no-files-found: warn
       - name: Validate agent logs for errors
         if: always()
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
           GH_AW_AGENT_OUTPUT: /tmp/gh-aw/agent-stdio.log
           GH_AW_ERROR_PATTERNS: "[{\"id\":\"\",\"pattern\":\"::(error)(?:\\\\s+[^:]*)?::(.+)\",\"level_group\":1,\"message_group\":2,\"description\":\"GitHub Actions workflow command - error\"},{\"id\":\"\",\"pattern\":\"::(warning)(?:\\\\s+[^:]*)?::(.+)\",\"level_group\":1,\"message_group\":2,\"description\":\"GitHub Actions workflow command - warning\"},{\"id\":\"\",\"pattern\":\"::(notice)(?:\\\\s+[^:]*)?::(.+)\",\"level_group\":1,\"message_group\":2,\"description\":\"GitHub Actions workflow command - notice\"},{\"id\":\"\",\"pattern\":\"(ERROR|Error):\\\\s+(.+)\",\"level_group\":1,\"message_group\":2,\"description\":\"Generic ERROR messages\"},{\"id\":\"\",\"pattern\":\"(WARNING|Warning):\\\\s+(.+)\",\"level_group\":1,\"message_group\":2,\"description\":\"Generic WARNING messages\"},{\"id\":\"\",\"pattern\":\"(\\\\d{4}-\\\\d{2}-\\\\d{2}T[\\\\d:.]+Z)\\\\s+(ERROR)\\\\s+(.+)\",\"level_group\":2,\"message_group\":3,\"description\":\"Codex ERROR messages with timestamp\"},{\"id\":\"\",\"pattern\":\"(\\\\d{4}-\\\\d{2}-\\\\d{2}T[\\\\d:.]+Z)\\\\s+(WARN|WARNING)\\\\s+(.+)\",\"level_group\":2,\"message_group\":3,\"description\":\"Codex warning messages with timestamp\"}]"
@@ -2798,7 +2901,8 @@ jobs:
       - agent
       - detection
     if: >
-      ((!cancelled()) && (needs.agent.result != 'skipped')) && (contains(needs.agent.outputs.output_types, 'create_discussion'))
+      (((!cancelled()) && (needs.agent.result != 'skipped')) && (contains(needs.agent.outputs.output_types, 'create_discussion'))) &&
+      (needs.detection.outputs.success == 'true')
     runs-on: ubuntu-slim
     permissions:
       contents: read
@@ -2810,7 +2914,7 @@ jobs:
     steps:
       - name: Download agent output artifact
         continue-on-error: true
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
         with:
           name: agent_output.json
           path: /tmp/gh-aw/safeoutputs/
@@ -2821,46 +2925,64 @@ jobs:
           echo "GH_AW_AGENT_OUTPUT=/tmp/gh-aw/safeoutputs/agent_output.json" >> "$GITHUB_ENV"
       - name: Create Output Discussion
         id: create_discussion
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
           GH_AW_AGENT_OUTPUT: ${{ env.GH_AW_AGENT_OUTPUT }}
-          GH_AW_WORKFLOW_NAME: "Test Codex Create Discussion"
           GH_AW_DISCUSSION_TITLE_PREFIX: "[codex-test] "
+          GH_AW_WORKFLOW_NAME: "Test Codex Create Discussion"
         with:
           github-token: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           script: |
-            async function main() {
-              core.setOutput("discussion_number", "");
-              core.setOutput("discussion_url", "");
+            const fs = require("fs");
+            function loadAgentOutput() {
               const agentOutputFile = process.env.GH_AW_AGENT_OUTPUT;
               if (!agentOutputFile) {
                 core.info("No GH_AW_AGENT_OUTPUT environment variable found");
-                return;
+                return { success: false };
               }
               let outputContent;
               try {
-                outputContent = require("fs").readFileSync(agentOutputFile, "utf8");
+                outputContent = fs.readFileSync(agentOutputFile, "utf8");
               } catch (error) {
-                core.setFailed(`Error reading agent output file: ${error instanceof Error ? error.message : String(error)}`);
-                return;
+                const errorMessage = `Error reading agent output file: ${error instanceof Error ? error.message : String(error)}`;
+                core.setFailed(errorMessage);
+                return { success: false, error: errorMessage };
               }
               if (outputContent.trim() === "") {
                 core.info("Agent output content is empty");
-                return;
+                return { success: false };
               }
               core.info(`Agent output content length: ${outputContent.length}`);
               let validatedOutput;
               try {
                 validatedOutput = JSON.parse(outputContent);
               } catch (error) {
-                core.setFailed(`Error parsing agent output JSON: ${error instanceof Error ? error.message : String(error)}`);
-                return;
+                const errorMessage = `Error parsing agent output JSON: ${error instanceof Error ? error.message : String(error)}`;
+                core.setFailed(errorMessage);
+                return { success: false, error: errorMessage };
               }
               if (!validatedOutput.items || !Array.isArray(validatedOutput.items)) {
-                core.warning("No valid items found in agent output");
+                core.info("No valid items found in agent output");
+                return { success: false };
+              }
+              return { success: true, items: validatedOutput.items };
+            }
+            function getCampaign(format) {
+              const campaign = process.env.GH_AW_CAMPAIGN || "";
+              if (campaign) {
+                core.info(`Campaign: ${campaign}`);
+                return format === "markdown" ? `\n\n<!-- campaign: ${campaign} -->` : campaign;
+              }
+              return "";
+            }
+            async function main() {
+              core.setOutput("discussion_number", "");
+              core.setOutput("discussion_url", "");
+              const result = loadAgentOutput();
+              if (!result.success) {
                 return;
               }
-              const createDiscussionItems = validatedOutput.items.filter(item => item.type === "create_discussion");
+              const createDiscussionItems = result.items.filter(item => item.type === "create_discussion");
               if (createDiscussionItems.length === 0) {
                 core.warning("No create-discussion items found in agent output");
                 return;
@@ -2986,6 +3108,10 @@ jobs:
                 const runUrl = context.payload.repository
                   ? `${context.payload.repository.html_url}/actions/runs/${runId}`
                   : `${githubServer}/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}`;
+                const fingerprintComment = getCampaign("markdown");
+                if (fingerprintComment) {
+                  bodyLines.push(fingerprintComment);
+                }
                 bodyLines.push(``, ``, `> AI generated by [${workflowName}](${runUrl})`, "");
                 const body = bodyLines.join("\n").trim();
                 core.info(`Creating discussion with title: ${title}`);
@@ -3044,27 +3170,30 @@ jobs:
 
   detection:
     needs: agent
+    if: needs.agent.outputs.output_types != '' || needs.agent.outputs.has_patch == 'true'
     runs-on: ubuntu-latest
     permissions: {}
     concurrency:
       group: "gh-aw-codex-${{ github.workflow }}"
     timeout-minutes: 10
+    outputs:
+      success: ${{ steps.parse_results.outputs.success }}
     steps:
       - name: Download prompt artifact
         continue-on-error: true
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
         with:
           name: prompt.txt
           path: /tmp/gh-aw/threat-detection/
       - name: Download agent output artifact
         continue-on-error: true
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
         with:
           name: agent_output.json
           path: /tmp/gh-aw/threat-detection/
       - name: Download patch artifact
         continue-on-error: true
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
         with:
           name: aw.patch
           path: /tmp/gh-aw/threat-detection/
@@ -3074,7 +3203,7 @@ jobs:
         run: |
           echo "Agent output-types: $AGENT_OUTPUT_TYPES"
       - name: Setup threat detection
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
           WORKFLOW_NAME: "Test Codex Create Discussion"
           WORKFLOW_DESCRIPTION: "No description provided"
@@ -3201,11 +3330,11 @@ jobs:
           CODEX_API_KEY: ${{ secrets.CODEX_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       - name: Setup Node.js
-        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6
         with:
           node-version: '24'
       - name: Install Codex
-        run: npm install -g @openai/codex@0.53.0
+        run: npm install -g @openai/codex@0.57.0
       - name: Run Codex
         run: |
           set -o pipefail
@@ -3218,10 +3347,13 @@ jobs:
           GH_AW_GITHUB_TOKEN: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           GH_AW_MCP_CONFIG: /tmp/gh-aw/mcp-config/config.toml
           GH_AW_PROMPT: /tmp/gh-aw/aw-prompts/prompt.txt
+          GITHUB_PERSONAL_ACCESS_TOKEN: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           GITHUB_STEP_SUMMARY: ${{ env.GITHUB_STEP_SUMMARY }}
+          OPENAI_API_KEY: ${{ secrets.CODEX_API_KEY || secrets.OPENAI_API_KEY }}
           RUST_LOG: trace,hyper_util=info,mio=info,reqwest=info,os_info=info,codex_otel=warn,codex_core=debug,ocodex_exec=debug
       - name: Parse threat detection results
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        id: parse_results
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         with:
           script: |
             const fs = require('fs');
@@ -3252,13 +3384,15 @@ jobs:
               const reasonsText = verdict.reasons && verdict.reasons.length > 0 
                 ? '\\nReasons: ' + verdict.reasons.join('; ')
                 : '';
+              core.setOutput('success', 'false');
               core.setFailed('❌ Security threats detected: ' + threats.join(', ') + reasonsText);
             } else {
               core.info('✅ No security threats detected. Safe outputs may proceed.');
+              core.setOutput('success', 'true');
             }
       - name: Upload threat detection log
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: threat-detection.log
           path: /tmp/gh-aw/threat-detection/detection.log
@@ -3268,7 +3402,9 @@ jobs:
     needs:
       - agent
       - detection
-    if: ((!cancelled()) && (needs.agent.result != 'skipped')) && (contains(needs.agent.outputs.output_types, 'missing_tool'))
+    if: >
+      (((!cancelled()) && (needs.agent.result != 'skipped')) && (contains(needs.agent.outputs.output_types, 'missing_tool'))) &&
+      (needs.detection.outputs.success == 'true')
     runs-on: ubuntu-slim
     permissions:
       contents: read
@@ -3279,7 +3415,7 @@ jobs:
     steps:
       - name: Download agent output artifact
         continue-on-error: true
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
         with:
           name: agent_output.json
           path: /tmp/gh-aw/safeoutputs/
@@ -3290,9 +3426,10 @@ jobs:
           echo "GH_AW_AGENT_OUTPUT=/tmp/gh-aw/safeoutputs/agent_output.json" >> "$GITHUB_ENV"
       - name: Record Missing Tool
         id: missing_tool
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
           GH_AW_AGENT_OUTPUT: ${{ env.GH_AW_AGENT_OUTPUT }}
+          GH_AW_WORKFLOW_NAME: "Test Codex Create Discussion"
         with:
           github-token: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           script: |

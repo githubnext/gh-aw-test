@@ -36,11 +36,13 @@
 #   agent --> create_pr_review_comment
 #   detection --> create_pr_review_comment
 #   agent --> create_pull_request
+#   activation --> create_pull_request
 #   detection --> create_pull_request
 #   agent --> detection
 #   agent --> missing_tool
 #   detection --> missing_tool
 #   agent --> push_to_pull_request_branch
+#   activation --> push_to_pull_request_branch
 #   detection --> push_to_pull_request_branch
 #   agent --> update_issue
 #   detection --> update_issue
@@ -49,12 +51,12 @@
 # Pinned GitHub Actions:
 #   - actions/checkout@v5 (08c6903cd8c0fde910a37f88322edcfb5dd907a8)
 #     https://github.com/actions/checkout/commit/08c6903cd8c0fde910a37f88322edcfb5dd907a8
-#   - actions/download-artifact@v5 (634f93cb2916e3fdff6788551b99b062d0335ce0)
-#     https://github.com/actions/download-artifact/commit/634f93cb2916e3fdff6788551b99b062d0335ce0
+#   - actions/download-artifact@v6 (018cc2cf5baa6db3ef3c5f8a56943fffe632ef53)
+#     https://github.com/actions/download-artifact/commit/018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
 #   - actions/github-script@v8 (ed597411d8f924073f98dfc5c65a23a2325f34cd)
 #     https://github.com/actions/github-script/commit/ed597411d8f924073f98dfc5c65a23a2325f34cd
-#   - actions/upload-artifact@v4 (ea165f8d65b6e75b540449e92b4886f43607fa02)
-#     https://github.com/actions/upload-artifact/commit/ea165f8d65b6e75b540449e92b4886f43607fa02
+#   - actions/upload-artifact@v5 (330a01c490aca151604b8cf639adc76d48f6c5d4)
+#     https://github.com/actions/upload-artifact/commit/330a01c490aca151604b8cf639adc76d48f6c5d4
 #   - github/codeql-action/upload-sarif@v3 (ab2e54f42aa112ff08704159b88a57517f6f0ebb)
 #     https://github.com/github/codeql-action/commit/ab2e54f42aa112ff08704159b88a57517f6f0ebb
 
@@ -72,9 +74,11 @@ run-name: "Test Safe Outputs - Custom Engine"
 jobs:
   activation:
     runs-on: ubuntu-slim
+    permissions:
+      contents: read
     steps:
       - name: Checkout workflows
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
         with:
           sparse-checkout: |
             .github/workflows
@@ -82,7 +86,7 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
       - name: Check workflow file timestamps
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
           GH_AW_WORKFLOW_FILE: "test-custom-safe-outputs.lock.yml"
         with:
@@ -131,14 +135,22 @@ jobs:
               core.info(`  Source modified: ${workflowStat.mtime.toISOString()}`);
               core.info(`  Lock modified: ${lockStat.mtime.toISOString()}`);
               if (workflowMtime > lockMtime) {
-                const warningMessage = `🔴🔴🔴 WARNING: Lock file '${lockFile}' is outdated! The workflow file '${workflowMdFile}' has been modified more recently. Run 'gh aw compile' to regenerate the lock file.`;
+                const warningMessage = `WARNING: Lock file '${lockFile}' is outdated! The workflow file '${workflowMdFile}' has been modified more recently. Run 'gh aw compile' to regenerate the lock file.`;
                 core.error(warningMessage);
-                await core.summary
-                  .addRaw("## ⚠️ Workflow Lock File Warning\n\n")
-                  .addRaw(`🔴🔴🔴 **WARNING**: Lock file \`${lockFile}\` is outdated!\n\n`)
-                  .addRaw(`The workflow file \`${workflowMdFile}\` has been modified more recently.\n\n`)
-                  .addRaw("Run `gh aw compile` to regenerate the lock file.\n\n")
-                  .write();
+                const workflowTimestamp = workflowStat.mtime.toISOString();
+                const lockTimestamp = lockStat.mtime.toISOString();
+                const gitSha = process.env.GITHUB_SHA;
+                let summary = core.summary
+                  .addRaw("### ⚠️ Workflow Lock File Warning\n\n")
+                  .addRaw("**WARNING**: Lock file is outdated and needs to be regenerated.\n\n")
+                  .addRaw("**Files:**\n")
+                  .addRaw(`- Source: \`${workflowMdFile}\` (modified: ${workflowTimestamp})\n`)
+                  .addRaw(`- Lock: \`${lockFile}\` (modified: ${lockTimestamp})\n\n`);
+                if (gitSha) {
+                  summary = summary.addRaw(`**Git Commit:** \`${gitSha}\`\n\n`);
+                }
+                summary = summary.addRaw("**Action Required:** Run `gh aw compile` to regenerate the lock file.\n\n");
+                await summary.write();
               } else {
                 core.info("✅ Lock file is up to date");
               }
@@ -154,7 +166,9 @@ jobs:
       - create_discussion
       - create_pull_request
       - detection
-    if: ((!cancelled()) && (needs.agent.result != 'skipped')) && (contains(needs.agent.outputs.output_types, 'add_comment'))
+    if: >
+      (((!cancelled()) && (needs.agent.result != 'skipped')) && (contains(needs.agent.outputs.output_types, 'add_comment'))) &&
+      (needs.detection.outputs.success == 'true')
     runs-on: ubuntu-slim
     permissions:
       contents: read
@@ -175,7 +189,7 @@ jobs:
           echo "Output types: $AGENT_OUTPUT_TYPES"
       - name: Download agent output artifact
         continue-on-error: true
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
         with:
           name: agent_output.json
           path: /tmp/gh-aw/safeoutputs/
@@ -186,10 +200,9 @@ jobs:
           echo "GH_AW_AGENT_OUTPUT=/tmp/gh-aw/safeoutputs/agent_output.json" >> "$GITHUB_ENV"
       - name: Add Issue Comment
         id: add_comment
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
           GH_AW_AGENT_OUTPUT: ${{ env.GH_AW_AGENT_OUTPUT }}
-          GH_AW_WORKFLOW_NAME: "Test Safe Outputs - Custom Engine"
           GH_AW_COMMENT_TARGET: "*"
           GH_AW_CREATED_ISSUE_URL: ${{ needs.create_issue.outputs.issue_url }}
           GH_AW_CREATED_ISSUE_NUMBER: ${{ needs.create_issue.outputs.issue_number }}
@@ -197,9 +210,44 @@ jobs:
           GH_AW_CREATED_DISCUSSION_NUMBER: ${{ needs.create_discussion.outputs.discussion_number }}
           GH_AW_CREATED_PULL_REQUEST_URL: ${{ needs.create_pull_request.outputs.pull_request_url }}
           GH_AW_CREATED_PULL_REQUEST_NUMBER: ${{ needs.create_pull_request.outputs.pull_request_number }}
+          GH_AW_WORKFLOW_NAME: "Test Safe Outputs - Custom Engine"
         with:
           github-token: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           script: |
+            const fs = require("fs");
+            function loadAgentOutput() {
+              const agentOutputFile = process.env.GH_AW_AGENT_OUTPUT;
+              if (!agentOutputFile) {
+                core.info("No GH_AW_AGENT_OUTPUT environment variable found");
+                return { success: false };
+              }
+              let outputContent;
+              try {
+                outputContent = fs.readFileSync(agentOutputFile, "utf8");
+              } catch (error) {
+                const errorMessage = `Error reading agent output file: ${error instanceof Error ? error.message : String(error)}`;
+                core.setFailed(errorMessage);
+                return { success: false, error: errorMessage };
+              }
+              if (outputContent.trim() === "") {
+                core.info("Agent output content is empty");
+                return { success: false };
+              }
+              core.info(`Agent output content length: ${outputContent.length}`);
+              let validatedOutput;
+              try {
+                validatedOutput = JSON.parse(outputContent);
+              } catch (error) {
+                const errorMessage = `Error parsing agent output JSON: ${error instanceof Error ? error.message : String(error)}`;
+                core.setFailed(errorMessage);
+                return { success: false, error: errorMessage };
+              }
+              if (!validatedOutput.items || !Array.isArray(validatedOutput.items)) {
+                core.info("No valid items found in agent output");
+                return { success: false };
+              }
+              return { success: true, items: validatedOutput.items };
+            }
             function generateFooter(
               workflowName,
               runUrl,
@@ -222,6 +270,26 @@ jobs:
               }
               footer += "\n";
               return footer;
+            }
+            function getCampaign(format) {
+              const campaign = process.env.GH_AW_CAMPAIGN || "";
+              if (campaign) {
+                core.info(`Campaign: ${campaign}`);
+                return format === "markdown" ? `\n\n<!-- campaign: ${campaign} -->` : campaign;
+              }
+              return "";
+            }
+            function getRepositoryUrl() {
+              const targetRepoSlug = process.env.GH_AW_TARGET_REPO_SLUG;
+              if (targetRepoSlug) {
+                const githubServer = process.env.GITHUB_SERVER_URL || "https://github.com";
+                return `${githubServer}/${targetRepoSlug}`;
+              } else if (context.payload.repository?.html_url) {
+                return context.payload.repository.html_url;
+              } else {
+                const githubServer = process.env.GITHUB_SERVER_URL || "https://github.com";
+                return `${githubServer}/${context.repo.owner}/${context.repo.repo}`;
+              }
             }
             async function commentOnDiscussion(github, owner, repo, discussionNumber, message, replyToId) {
               const { repository } = await github.graphql(
@@ -283,52 +351,16 @@ jobs:
             async function main() {
               const isStaged = process.env.GH_AW_SAFE_OUTPUTS_STAGED === "true";
               const isDiscussionExplicit = process.env.GITHUB_AW_COMMENT_DISCUSSION === "true";
-              const agentOutputFile = process.env.GH_AW_AGENT_OUTPUT;
-              if (!agentOutputFile) {
-                core.info("No GH_AW_AGENT_OUTPUT environment variable found");
+              const result = loadAgentOutput();
+              if (!result.success) {
                 return;
               }
-              let outputContent;
-              try {
-                outputContent = require("fs").readFileSync(agentOutputFile, "utf8");
-              } catch (error) {
-                core.setFailed(`Error reading agent output file: ${error instanceof Error ? error.message : String(error)}`);
-                return;
-              }
-              if (outputContent.trim() === "") {
-                core.info("Agent output content is empty");
-                return;
-              }
-              core.info(`Agent output content length: ${outputContent.length}`);
-              let validatedOutput;
-              try {
-                validatedOutput = JSON.parse(outputContent);
-              } catch (error) {
-                core.setFailed(`Error parsing agent output JSON: ${error instanceof Error ? error.message : String(error)}`);
-                return;
-              }
-              if (!validatedOutput.items || !Array.isArray(validatedOutput.items)) {
-                core.info("No valid items found in agent output");
-                return;
-              }
-              const commentItems = validatedOutput.items.filter( item => item.type === "add_comment");
+              const commentItems = result.items.filter( item => item.type === "add_comment");
               if (commentItems.length === 0) {
                 core.info("No add-comment items found in agent output");
                 return;
               }
               core.info(`Found ${commentItems.length} add-comment item(s)`);
-              function getRepositoryUrl() {
-                const targetRepoSlug = process.env.GH_AW_TARGET_REPO_SLUG;
-                if (targetRepoSlug) {
-                  const githubServer = process.env.GITHUB_SERVER_URL || "https://github.com";
-                  return `${githubServer}/${targetRepoSlug}`;
-                } else if (context.payload.repository) {
-                  return context.payload.repository.html_url;
-                } else {
-                  const githubServer = process.env.GITHUB_SERVER_URL || "https://github.com";
-                  return `${githubServer}/${context.repo.owner}/${context.repo.repo}`;
-                }
-              }
               function getTargetNumber(item) {
                 return item.item_number;
               }
@@ -488,6 +520,7 @@ jobs:
                 const runUrl = context.payload.repository
                   ? `${context.payload.repository.html_url}/actions/runs/${runId}`
                   : `${githubServer}/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}`;
+                body += getCampaign("markdown");
                 body += generateFooter(
                   workflowName,
                   runUrl,
@@ -549,8 +582,8 @@ jobs:
       - agent
       - detection
     if: >
-      (((!cancelled()) && (needs.agent.result != 'skipped')) && (contains(needs.agent.outputs.output_types, 'add_labels'))) &&
-      ((github.event.issue.number) || (github.event.pull_request.number))
+      ((((!cancelled()) && (needs.agent.result != 'skipped')) && (contains(needs.agent.outputs.output_types, 'add_labels'))) &&
+      ((github.event.issue.number) || (github.event.pull_request.number))) && (needs.detection.outputs.success == 'true')
     runs-on: ubuntu-slim
     permissions:
       contents: read
@@ -562,7 +595,7 @@ jobs:
     steps:
       - name: Download agent output artifact
         continue-on-error: true
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
         with:
           name: agent_output.json
           path: /tmp/gh-aw/safeoutputs/
@@ -573,11 +606,12 @@ jobs:
           echo "GH_AW_AGENT_OUTPUT=/tmp/gh-aw/safeoutputs/agent_output.json" >> "$GITHUB_ENV"
       - name: Add Labels
         id: add_labels
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
           GH_AW_AGENT_OUTPUT: ${{ env.GH_AW_AGENT_OUTPUT }}
           GH_AW_LABELS_ALLOWED: "test-safe-outputs,automation,custom-engine,bug,enhancement,documentation"
           GH_AW_LABELS_MAX_COUNT: 3
+          GH_AW_WORKFLOW_NAME: "Test Safe Outputs - Custom Engine"
         with:
           github-token: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           script: |
@@ -595,54 +629,86 @@ jobs:
               sanitized = sanitized.replace(/[<>&'"]/g, "");
               return sanitized.trim();
             }
-            async function main() {
+            const fs = require("fs");
+            function loadAgentOutput() {
               const agentOutputFile = process.env.GH_AW_AGENT_OUTPUT;
               if (!agentOutputFile) {
                 core.info("No GH_AW_AGENT_OUTPUT environment variable found");
-                return;
+                return { success: false };
               }
               let outputContent;
               try {
-                outputContent = require("fs").readFileSync(agentOutputFile, "utf8");
+                outputContent = fs.readFileSync(agentOutputFile, "utf8");
               } catch (error) {
-                core.setFailed(`Error reading agent output file: ${error instanceof Error ? error.message : String(error)}`);
-                return;
+                const errorMessage = `Error reading agent output file: ${error instanceof Error ? error.message : String(error)}`;
+                core.setFailed(errorMessage);
+                return { success: false, error: errorMessage };
               }
               if (outputContent.trim() === "") {
                 core.info("Agent output content is empty");
-                return;
+                return { success: false };
               }
               core.info(`Agent output content length: ${outputContent.length}`);
               let validatedOutput;
               try {
                 validatedOutput = JSON.parse(outputContent);
               } catch (error) {
-                core.setFailed(`Error parsing agent output JSON: ${error instanceof Error ? error.message : String(error)}`);
-                return;
+                const errorMessage = `Error parsing agent output JSON: ${error instanceof Error ? error.message : String(error)}`;
+                core.setFailed(errorMessage);
+                return { success: false, error: errorMessage };
               }
               if (!validatedOutput.items || !Array.isArray(validatedOutput.items)) {
-                core.warning("No valid items found in agent output");
+                core.info("No valid items found in agent output");
+                return { success: false };
+              }
+              return { success: true, items: validatedOutput.items };
+            }
+            async function generateStagedPreview(options) {
+              const { title, description, items, renderItem } = options;
+              let summaryContent = `## 🎭 Staged Mode: ${title} Preview\n\n`;
+              summaryContent += `${description}\n\n`;
+              for (let i = 0; i < items.length; i++) {
+                const item = items[i];
+                summaryContent += renderItem(item, i);
+                summaryContent += "---\n\n";
+              }
+              try {
+                await core.summary.addRaw(summaryContent).write();
+                core.info(summaryContent);
+                core.info(`📝 ${title} preview written to step summary`);
+              } catch (error) {
+                core.setFailed(error instanceof Error ? error : String(error));
+              }
+            }
+            async function main() {
+              const result = loadAgentOutput();
+              if (!result.success) {
                 return;
               }
-              const labelsItem = validatedOutput.items.find(item => item.type === "add_labels");
+              const labelsItem = result.items.find(item => item.type === "add_labels");
               if (!labelsItem) {
                 core.warning("No add-labels item found in agent output");
                 return;
               }
               core.info(`Found add-labels item with ${labelsItem.labels.length} labels`);
               if (process.env.GH_AW_SAFE_OUTPUTS_STAGED === "true") {
-                let summaryContent = "## 🎭 Staged Mode: Add Labels Preview\n\n";
-                summaryContent += "The following labels would be added if staged mode was disabled:\n\n";
-                if (labelsItem.item_number) {
-                  summaryContent += `**Target Issue:** #${labelsItem.item_number}\n\n`;
-                } else {
-                  summaryContent += `**Target:** Current issue/PR\n\n`;
-                }
-                if (labelsItem.labels && labelsItem.labels.length > 0) {
-                  summaryContent += `**Labels to add:** ${labelsItem.labels.join(", ")}\n\n`;
-                }
-                await core.summary.addRaw(summaryContent).write();
-                core.info("📝 Label addition preview written to step summary");
+                await generateStagedPreview({
+                  title: "Add Labels",
+                  description: "The following labels would be added if staged mode was disabled:",
+                  items: [labelsItem],
+                  renderItem: item => {
+                    let content = "";
+                    if (item.item_number) {
+                      content += `**Target Issue:** #${item.item_number}\n\n`;
+                    } else {
+                      content += `**Target:** Current issue/PR\n\n`;
+                    }
+                    if (item.labels && item.labels.length > 0) {
+                      content += `**Labels to add:** ${item.labels.join(", ")}\n\n`;
+                    }
+                    return content;
+                  },
+                });
                 return;
               }
               const allowedLabelsEnv = process.env.GH_AW_LABELS_ALLOWED?.trim();
@@ -795,11 +861,12 @@ jobs:
     env:
       GH_AW_SAFE_OUTPUTS: /tmp/gh-aw/safeoutputs/outputs.jsonl
     outputs:
+      has_patch: ${{ steps.collect_output.outputs.has_patch }}
       output: ${{ steps.collect_output.outputs.output }}
       output_types: ${{ steps.collect_output.outputs.output_types }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
         with:
           persist-credentials: false
       - name: Create gh-aw temp directory
@@ -820,7 +887,7 @@ jobs:
       - name: Checkout PR branch
         if: |
           github.event.pull_request
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         with:
           script: |
             async function main() {
@@ -857,7 +924,7 @@ jobs:
       - name: Downloading container images
         run: |
           set -e
-          docker pull ghcr.io/github/github-mcp-server:v0.20.1
+          docker pull ghcr.io/github/github-mcp-server:v0.20.2
       - name: Setup Safe Outputs Collector MCP
         run: |
           mkdir -p /tmp/gh-aw/safeoutputs
@@ -1653,9 +1720,6 @@ jobs:
         env:
           GITHUB_MCP_SERVER_TOKEN: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           GH_AW_SAFE_OUTPUTS: ${{ env.GH_AW_SAFE_OUTPUTS }}
-          GH_AW_ASSETS_BRANCH: ${{ env.GH_AW_ASSETS_BRANCH }}
-          GH_AW_ASSETS_MAX_SIZE_KB: ${{ env.GH_AW_ASSETS_MAX_SIZE_KB }}
-          GH_AW_ASSETS_ALLOWED_EXTS: ${{ env.GH_AW_ASSETS_ALLOWED_EXTS }}
         run: |
           mkdir -p /tmp/gh-aw/mcp-config
           cat > /tmp/gh-aw/mcp-config/mcp-servers.json << EOF
@@ -1671,7 +1735,9 @@ jobs:
                   "GITHUB_PERSONAL_ACCESS_TOKEN",
                   "-e",
                   "GITHUB_READ_ONLY=1",
-                  "ghcr.io/github/github-mcp-server:v0.20.1"
+                  "-e",
+                  "GITHUB_TOOLSETS=default",
+                  "ghcr.io/github/github-mcp-server:v0.20.2"
                 ],
                 "env": {
                   "GITHUB_PERSONAL_ACCESS_TOKEN": "$GITHUB_MCP_SERVER_TOKEN"
@@ -1699,6 +1765,7 @@ jobs:
         run: |
           PROMPT_DIR="$(dirname "$GH_AW_PROMPT")"
           mkdir -p "$PROMPT_DIR"
+          # shellcheck disable=SC2006,SC2287
           cat > "$GH_AW_PROMPT" << 'PROMPT_EOF'
           # Test Safe Outputs - Custom Engine
           
@@ -1738,7 +1805,8 @@ jobs:
         env:
           GH_AW_PROMPT: /tmp/gh-aw/aw-prompts/prompt.txt
         run: |
-          cat >> "$GH_AW_PROMPT" << 'PROMPT_EOF'
+          # shellcheck disable=SC2006,SC2287
+          cat >> "$GH_AW_PROMPT" << PROMPT_EOF
           
           ---
           
@@ -1770,7 +1838,8 @@ jobs:
         env:
           GH_AW_PROMPT: /tmp/gh-aw/aw-prompts/prompt.txt
         run: |
-          cat >> "$GH_AW_PROMPT" << 'PROMPT_EOF'
+          # shellcheck disable=SC2006,SC2287
+          cat >> "$GH_AW_PROMPT" << PROMPT_EOF
           
           ---
           
@@ -1783,7 +1852,8 @@ jobs:
         env:
           GH_AW_PROMPT: /tmp/gh-aw/aw-prompts/prompt.txt
         run: |
-          cat >> "$GH_AW_PROMPT" << 'PROMPT_EOF'
+          # shellcheck disable=SC2006,SC2287
+          cat >> "$GH_AW_PROMPT" << PROMPT_EOF
           
           
           ---
@@ -1802,7 +1872,8 @@ jobs:
         env:
           GH_AW_PROMPT: /tmp/gh-aw/aw-prompts/prompt.txt
         run: |
-          cat >> "$GH_AW_PROMPT" << 'PROMPT_EOF'
+          # shellcheck disable=SC2006,SC2287
+          cat >> "$GH_AW_PROMPT" << PROMPT_EOF
           
           ---
           
@@ -1859,7 +1930,8 @@ jobs:
         env:
           GH_AW_PROMPT: /tmp/gh-aw/aw-prompts/prompt.txt
         run: |
-          cat >> "$GH_AW_PROMPT" << 'PROMPT_EOF'
+          # shellcheck disable=SC2006,SC2287
+          cat >> "$GH_AW_PROMPT" << PROMPT_EOF
           
           ---
           
@@ -1889,8 +1961,8 @@ jobs:
           Use this context information to understand the scope of your work.
           
           PROMPT_EOF
-      - name: Render template conditionals
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+      - name: Interpolate variables and render templates
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
           GH_AW_PROMPT: /tmp/gh-aw/aw-prompts/prompt.txt
         with:
@@ -1900,34 +1972,61 @@ jobs:
               const v = expr.trim().toLowerCase();
               return !(v === "" || v === "false" || v === "0" || v === "null" || v === "undefined");
             }
+            function interpolateVariables(content, variables) {
+              let result = content;
+              for (const [varName, value] of Object.entries(variables)) {
+                const pattern = new RegExp(`\\$\\{${varName}\\}`, "g");
+                result = result.replace(pattern, value);
+              }
+              return result;
+            }
             function renderMarkdownTemplate(markdown) {
               return markdown.replace(/{{#if\s+([^}]+)}}([\s\S]*?){{\/if}}/g, (_, cond, body) => (isTruthy(cond) ? body : ""));
             }
-            function main() {
+            async function main() {
               try {
                 const promptPath = process.env.GH_AW_PROMPT;
                 if (!promptPath) {
                   core.setFailed("GH_AW_PROMPT environment variable is not set");
-                  process.exit(1);
+                  return;
                 }
-                const markdown = fs.readFileSync(promptPath, "utf8");
-                const hasConditionals = /{{#if\s+[^}]+}}/.test(markdown);
-                if (!hasConditionals) {
+                let content = fs.readFileSync(promptPath, "utf8");
+                const variables = {};
+                for (const [key, value] of Object.entries(process.env)) {
+                  if (key.startsWith("GH_AW_EXPR_")) {
+                    variables[key] = value || "";
+                  }
+                }
+                const varCount = Object.keys(variables).length;
+                if (varCount > 0) {
+                  core.info(`Found ${varCount} expression variable(s) to interpolate`);
+                  content = interpolateVariables(content, variables);
+                  core.info(`Successfully interpolated ${varCount} variable(s) in prompt`);
+                } else {
+                  core.info("No expression variables found, skipping interpolation");
+                }
+                const hasConditionals = /{{#if\s+[^}]+}}/.test(content);
+                if (hasConditionals) {
+                  core.info("Processing conditional template blocks");
+                  content = renderMarkdownTemplate(content);
+                  core.info("Template rendered successfully");
+                } else {
                   core.info("No conditional blocks found in prompt, skipping template rendering");
-                  process.exit(0);
                 }
-                const rendered = renderMarkdownTemplate(markdown);
-                fs.writeFileSync(promptPath, rendered, "utf8");
-                core.info("Template rendered successfully");
+                fs.writeFileSync(promptPath, content, "utf8");
               } catch (error) {
                 core.setFailed(error instanceof Error ? error.message : String(error));
               }
             }
             main();
-      - name: Print prompt to step summary
+      - name: Print prompt
         env:
           GH_AW_PROMPT: /tmp/gh-aw/aw-prompts/prompt.txt
         run: |
+          # Print prompt to workflow logs (equivalent to core.info)
+          echo "Generated Prompt:"
+          cat "$GH_AW_PROMPT"
+          # Print prompt to step summary
           {
             echo "<details>"
             echo "<summary>Generated Prompt</summary>"
@@ -1940,13 +2039,13 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Upload prompt
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: prompt.txt
           path: /tmp/gh-aw/aw-prompts/prompt.txt
           if-no-files-found: warn
       - name: Generate agentic run info
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         with:
           script: |
             const fs = require('fs');
@@ -1983,7 +2082,7 @@ jobs:
             console.log(JSON.stringify(awInfo, null, 2));
       - name: Upload agentic run info
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: aw_info.json
           path: /tmp/gh-aw/aw_info.json
@@ -2090,7 +2189,7 @@ jobs:
           touch /tmp/gh-aw/agent-stdio.log
       - name: Redact secrets in logs
         if: always()
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         with:
           script: |
             const fs = require("fs");
@@ -2204,14 +2303,14 @@ jobs:
           SECRET_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Upload Safe Outputs
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: safe_output.jsonl
           path: ${{ env.GH_AW_SAFE_OUTPUTS }}
           if-no-files-found: warn
       - name: Ingest agent output
         id: collect_output
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
           GH_AW_SAFE_OUTPUTS: ${{ env.GH_AW_SAFE_OUTPUTS }}
           GH_AW_ALLOWED_DOMAINS: "crl3.digicert.com,crl4.digicert.com,ocsp.digicert.com,ts-crl.ws.symantec.com,ts-ocsp.ws.symantec.com,crl.geotrust.com,ocsp.geotrust.com,crl.thawte.com,ocsp.thawte.com,crl.verisign.com,ocsp.verisign.com,crl.globalsign.com,ocsp.globalsign.com,crls.ssl.com,ocsp.ssl.com,crl.identrust.com,ocsp.identrust.com,crl.sectigo.com,ocsp.sectigo.com,crl.usertrust.com,ocsp.usertrust.com,s.symcb.com,s.symcd.com,json-schema.org,json.schemastore.org,archive.ubuntu.com,security.ubuntu.com,ppa.launchpad.net,keyserver.ubuntu.com,azure.archive.ubuntu.com,api.snapcraft.io,packagecloud.io,packages.cloud.google.com,packages.microsoft.com"
@@ -3075,25 +3174,29 @@ jobs:
               const outputTypes = Array.from(new Set(parsedItems.map(item => item.type)));
               core.info(`output_types: ${outputTypes.join(", ")}`);
               core.setOutput("output_types", outputTypes.join(","));
+              const patchPath = "/tmp/gh-aw/aw.patch";
+              const hasPatch = fs.existsSync(patchPath);
+              core.info(`Patch file ${hasPatch ? "exists" : "does not exist"} at: ${patchPath}`);
+              core.setOutput("has_patch", hasPatch ? "true" : "false");
             }
             await main();
       - name: Upload sanitized agent output
         if: always() && env.GH_AW_AGENT_OUTPUT
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: agent_output.json
           path: ${{ env.GH_AW_AGENT_OUTPUT }}
           if-no-files-found: warn
       - name: Upload MCP logs
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: mcp-logs
           path: /tmp/gh-aw/mcp-logs/
           if-no-files-found: ignore
       - name: Upload Agent Stdio
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: agent-stdio.log
           path: /tmp/gh-aw/agent-stdio.log
@@ -3224,7 +3327,7 @@ jobs:
           fi
       - name: Upload git patch
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: aw.patch
           path: /tmp/gh-aw/aw.patch
@@ -3235,7 +3338,8 @@ jobs:
       - agent
       - detection
     if: >
-      ((!cancelled()) && (needs.agent.result != 'skipped')) && (contains(needs.agent.outputs.output_types, 'create_code_scanning_alert'))
+      (((!cancelled()) && (needs.agent.result != 'skipped')) && (contains(needs.agent.outputs.output_types, 'create_code_scanning_alert'))) &&
+      (needs.detection.outputs.success == 'true')
     runs-on: ubuntu-slim
     permissions:
       actions: read
@@ -3250,7 +3354,7 @@ jobs:
     steps:
       - name: Download agent output artifact
         continue-on-error: true
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
         with:
           name: agent_output.json
           path: /tmp/gh-aw/safeoutputs/
@@ -3261,45 +3365,56 @@ jobs:
           echo "GH_AW_AGENT_OUTPUT=/tmp/gh-aw/safeoutputs/agent_output.json" >> "$GITHUB_ENV"
       - name: Create Code Scanning Alert
         id: create_code_scanning_alert
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
           GH_AW_AGENT_OUTPUT: ${{ env.GH_AW_AGENT_OUTPUT }}
           GH_AW_SECURITY_REPORT_MAX: 5
           GH_AW_SECURITY_REPORT_DRIVER: Test Safe Outputs - Custom Engine
           GH_AW_WORKFLOW_FILENAME: test-custom-safe-outputs
+          GH_AW_WORKFLOW_NAME: "Test Safe Outputs - Custom Engine"
         with:
           github-token: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           script: |
-            async function main() {
+            const fs = require("fs");
+            function loadAgentOutput() {
               const agentOutputFile = process.env.GH_AW_AGENT_OUTPUT;
               if (!agentOutputFile) {
                 core.info("No GH_AW_AGENT_OUTPUT environment variable found");
-                return;
+                return { success: false };
               }
               let outputContent;
               try {
-                outputContent = require("fs").readFileSync(agentOutputFile, "utf8");
+                outputContent = fs.readFileSync(agentOutputFile, "utf8");
               } catch (error) {
-                core.setFailed(`Error reading agent output file: ${error instanceof Error ? error.message : String(error)}`);
-                return;
+                const errorMessage = `Error reading agent output file: ${error instanceof Error ? error.message : String(error)}`;
+                core.setFailed(errorMessage);
+                return { success: false, error: errorMessage };
               }
               if (outputContent.trim() === "") {
                 core.info("Agent output content is empty");
-                return;
+                return { success: false };
               }
               core.info(`Agent output content length: ${outputContent.length}`);
               let validatedOutput;
               try {
                 validatedOutput = JSON.parse(outputContent);
               } catch (error) {
-                core.setFailed(`Error parsing agent output JSON: ${error instanceof Error ? error.message : String(error)}`);
-                return;
+                const errorMessage = `Error parsing agent output JSON: ${error instanceof Error ? error.message : String(error)}`;
+                core.setFailed(errorMessage);
+                return { success: false, error: errorMessage };
               }
               if (!validatedOutput.items || !Array.isArray(validatedOutput.items)) {
                 core.info("No valid items found in agent output");
+                return { success: false };
+              }
+              return { success: true, items: validatedOutput.items };
+            }
+            async function main() {
+              const result = loadAgentOutput();
+              if (!result.success) {
                 return;
               }
-              const securityItems = validatedOutput.items.filter( item => item.type === "create_code_scanning_alert");
+              const securityItems = result.items.filter( item => item.type === "create_code_scanning_alert");
               if (securityItems.length === 0) {
                 core.info("No create-code-scanning-alert items found in agent output");
                 return;
@@ -3448,7 +3563,6 @@ jobs:
                   },
                 ],
               };
-              const fs = require("fs");
               const path = require("path");
               const sarifFileName = "code-scanning-alert.sarif";
               const sarifFilePath = path.join(process.cwd(), sarifFileName);
@@ -3483,13 +3597,13 @@ jobs:
             await main();
       - name: Upload SARIF artifact
         if: steps.create_code_scanning_alert.outputs.sarif_file
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: code-scanning-alert.sarif
           path: ${{ steps.create_code_scanning_alert.outputs.sarif_file }}
       - name: Upload SARIF to GitHub Security
         if: steps.create_code_scanning_alert.outputs.sarif_file
-        uses: github/codeql-action/upload-sarif@ab2e54f42aa112ff08704159b88a57517f6f0ebb
+        uses: github/codeql-action/upload-sarif@ab2e54f42aa112ff08704159b88a57517f6f0ebb # v3
         with:
           sarif_file: ${{ steps.create_code_scanning_alert.outputs.sarif_file }}
 
@@ -3498,7 +3612,8 @@ jobs:
       - agent
       - detection
     if: >
-      ((!cancelled()) && (needs.agent.result != 'skipped')) && (contains(needs.agent.outputs.output_types, 'create_discussion'))
+      (((!cancelled()) && (needs.agent.result != 'skipped')) && (contains(needs.agent.outputs.output_types, 'create_discussion'))) &&
+      (needs.detection.outputs.success == 'true')
     runs-on: ubuntu-slim
     permissions:
       contents: read
@@ -3510,7 +3625,7 @@ jobs:
     steps:
       - name: Download agent output artifact
         continue-on-error: true
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
         with:
           name: agent_output.json
           path: /tmp/gh-aw/safeoutputs/
@@ -3521,46 +3636,64 @@ jobs:
           echo "GH_AW_AGENT_OUTPUT=/tmp/gh-aw/safeoutputs/agent_output.json" >> "$GITHUB_ENV"
       - name: Create Output Discussion
         id: create_discussion
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
           GH_AW_AGENT_OUTPUT: ${{ env.GH_AW_AGENT_OUTPUT }}
-          GH_AW_WORKFLOW_NAME: "Test Safe Outputs - Custom Engine"
           GH_AW_DISCUSSION_TITLE_PREFIX: "[Custom Engine Test] "
+          GH_AW_WORKFLOW_NAME: "Test Safe Outputs - Custom Engine"
         with:
           github-token: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           script: |
-            async function main() {
-              core.setOutput("discussion_number", "");
-              core.setOutput("discussion_url", "");
+            const fs = require("fs");
+            function loadAgentOutput() {
               const agentOutputFile = process.env.GH_AW_AGENT_OUTPUT;
               if (!agentOutputFile) {
                 core.info("No GH_AW_AGENT_OUTPUT environment variable found");
-                return;
+                return { success: false };
               }
               let outputContent;
               try {
-                outputContent = require("fs").readFileSync(agentOutputFile, "utf8");
+                outputContent = fs.readFileSync(agentOutputFile, "utf8");
               } catch (error) {
-                core.setFailed(`Error reading agent output file: ${error instanceof Error ? error.message : String(error)}`);
-                return;
+                const errorMessage = `Error reading agent output file: ${error instanceof Error ? error.message : String(error)}`;
+                core.setFailed(errorMessage);
+                return { success: false, error: errorMessage };
               }
               if (outputContent.trim() === "") {
                 core.info("Agent output content is empty");
-                return;
+                return { success: false };
               }
               core.info(`Agent output content length: ${outputContent.length}`);
               let validatedOutput;
               try {
                 validatedOutput = JSON.parse(outputContent);
               } catch (error) {
-                core.setFailed(`Error parsing agent output JSON: ${error instanceof Error ? error.message : String(error)}`);
-                return;
+                const errorMessage = `Error parsing agent output JSON: ${error instanceof Error ? error.message : String(error)}`;
+                core.setFailed(errorMessage);
+                return { success: false, error: errorMessage };
               }
               if (!validatedOutput.items || !Array.isArray(validatedOutput.items)) {
-                core.warning("No valid items found in agent output");
+                core.info("No valid items found in agent output");
+                return { success: false };
+              }
+              return { success: true, items: validatedOutput.items };
+            }
+            function getCampaign(format) {
+              const campaign = process.env.GH_AW_CAMPAIGN || "";
+              if (campaign) {
+                core.info(`Campaign: ${campaign}`);
+                return format === "markdown" ? `\n\n<!-- campaign: ${campaign} -->` : campaign;
+              }
+              return "";
+            }
+            async function main() {
+              core.setOutput("discussion_number", "");
+              core.setOutput("discussion_url", "");
+              const result = loadAgentOutput();
+              if (!result.success) {
                 return;
               }
-              const createDiscussionItems = validatedOutput.items.filter(item => item.type === "create_discussion");
+              const createDiscussionItems = result.items.filter(item => item.type === "create_discussion");
               if (createDiscussionItems.length === 0) {
                 core.warning("No create-discussion items found in agent output");
                 return;
@@ -3686,6 +3819,10 @@ jobs:
                 const runUrl = context.payload.repository
                   ? `${context.payload.repository.html_url}/actions/runs/${runId}`
                   : `${githubServer}/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}`;
+                const fingerprintComment = getCampaign("markdown");
+                if (fingerprintComment) {
+                  bodyLines.push(fingerprintComment);
+                }
                 bodyLines.push(``, ``, `> AI generated by [${workflowName}](${runUrl})`, "");
                 const body = bodyLines.join("\n").trim();
                 core.info(`Creating discussion with title: ${title}`);
@@ -3746,7 +3883,9 @@ jobs:
     needs:
       - agent
       - detection
-    if: ((!cancelled()) && (needs.agent.result != 'skipped')) && (contains(needs.agent.outputs.output_types, 'create_issue'))
+    if: >
+      (((!cancelled()) && (needs.agent.result != 'skipped')) && (contains(needs.agent.outputs.output_types, 'create_issue'))) &&
+      (needs.detection.outputs.success == 'true')
     runs-on: ubuntu-slim
     permissions:
       contents: read
@@ -3758,7 +3897,7 @@ jobs:
     steps:
       - name: Download agent output artifact
         continue-on-error: true
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
         with:
           name: agent_output.json
           path: /tmp/gh-aw/safeoutputs/
@@ -3769,12 +3908,12 @@ jobs:
           echo "GH_AW_AGENT_OUTPUT=/tmp/gh-aw/safeoutputs/agent_output.json" >> "$GITHUB_ENV"
       - name: Create Output Issue
         id: create_issue
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
           GH_AW_AGENT_OUTPUT: ${{ env.GH_AW_AGENT_OUTPUT }}
-          GH_AW_WORKFLOW_NAME: "Test Safe Outputs - Custom Engine"
           GH_AW_ISSUE_TITLE_PREFIX: "[Custom Engine Test] "
           GH_AW_ISSUE_LABELS: "test-safe-outputs,automation,custom-engine"
+          GH_AW_WORKFLOW_NAME: "Test Safe Outputs - Custom Engine"
         with:
           github-token: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           script: |
@@ -3791,6 +3930,57 @@ jobs:
               );
               sanitized = sanitized.replace(/[<>&'"]/g, "");
               return sanitized.trim();
+            }
+            const fs = require("fs");
+            function loadAgentOutput() {
+              const agentOutputFile = process.env.GH_AW_AGENT_OUTPUT;
+              if (!agentOutputFile) {
+                core.info("No GH_AW_AGENT_OUTPUT environment variable found");
+                return { success: false };
+              }
+              let outputContent;
+              try {
+                outputContent = fs.readFileSync(agentOutputFile, "utf8");
+              } catch (error) {
+                const errorMessage = `Error reading agent output file: ${error instanceof Error ? error.message : String(error)}`;
+                core.setFailed(errorMessage);
+                return { success: false, error: errorMessage };
+              }
+              if (outputContent.trim() === "") {
+                core.info("Agent output content is empty");
+                return { success: false };
+              }
+              core.info(`Agent output content length: ${outputContent.length}`);
+              let validatedOutput;
+              try {
+                validatedOutput = JSON.parse(outputContent);
+              } catch (error) {
+                const errorMessage = `Error parsing agent output JSON: ${error instanceof Error ? error.message : String(error)}`;
+                core.setFailed(errorMessage);
+                return { success: false, error: errorMessage };
+              }
+              if (!validatedOutput.items || !Array.isArray(validatedOutput.items)) {
+                core.info("No valid items found in agent output");
+                return { success: false };
+              }
+              return { success: true, items: validatedOutput.items };
+            }
+            async function generateStagedPreview(options) {
+              const { title, description, items, renderItem } = options;
+              let summaryContent = `## 🎭 Staged Mode: ${title} Preview\n\n`;
+              summaryContent += `${description}\n\n`;
+              for (let i = 0; i < items.length; i++) {
+                const item = items[i];
+                summaryContent += renderItem(item, i);
+                summaryContent += "---\n\n";
+              }
+              try {
+                await core.summary.addRaw(summaryContent).write();
+                core.info(summaryContent);
+                core.info(`📝 ${title} preview written to step summary`);
+              } catch (error) {
+                core.setFailed(error instanceof Error ? error : String(error));
+              }
             }
             function generateFooter(
               workflowName,
@@ -3815,62 +4005,45 @@ jobs:
               footer += "\n";
               return footer;
             }
+            function getCampaign(format) {
+              const campaign = process.env.GH_AW_CAMPAIGN || "";
+              if (campaign) {
+                core.info(`Campaign: ${campaign}`);
+                return format === "markdown" ? `\n\n<!-- campaign: ${campaign} -->` : campaign;
+              }
+              return "";
+            }
             async function main() {
               core.setOutput("issue_number", "");
               core.setOutput("issue_url", "");
               const isStaged = process.env.GH_AW_SAFE_OUTPUTS_STAGED === "true";
-              const agentOutputFile = process.env.GH_AW_AGENT_OUTPUT;
-              if (!agentOutputFile) {
-                core.info("No GH_AW_AGENT_OUTPUT environment variable found");
+              const result = loadAgentOutput();
+              if (!result.success) {
                 return;
               }
-              let outputContent;
-              try {
-                outputContent = require("fs").readFileSync(agentOutputFile, "utf8");
-              } catch (error) {
-                core.setFailed(`Error reading agent output file: ${error instanceof Error ? error.message : String(error)}`);
-                return;
-              }
-              if (outputContent.trim() === "") {
-                core.info("Agent output content is empty");
-                return;
-              }
-              core.info(`Agent output content length: ${outputContent.length}`);
-              let validatedOutput;
-              try {
-                validatedOutput = JSON.parse(outputContent);
-              } catch (error) {
-                core.setFailed(`Error parsing agent output JSON: ${error instanceof Error ? error.message : String(error)}`);
-                return;
-              }
-              if (!validatedOutput.items || !Array.isArray(validatedOutput.items)) {
-                core.info("No valid items found in agent output");
-                return;
-              }
-              const createIssueItems = validatedOutput.items.filter(item => item.type === "create_issue");
+              const createIssueItems = result.items.filter(item => item.type === "create_issue");
               if (createIssueItems.length === 0) {
                 core.info("No create-issue items found in agent output");
                 return;
               }
               core.info(`Found ${createIssueItems.length} create-issue item(s)`);
               if (isStaged) {
-                let summaryContent = "## 🎭 Staged Mode: Create Issues Preview\n\n";
-                summaryContent += "The following issues would be created if staged mode was disabled:\n\n";
-                for (let i = 0; i < createIssueItems.length; i++) {
-                  const item = createIssueItems[i];
-                  summaryContent += `### Issue ${i + 1}\n`;
-                  summaryContent += `**Title:** ${item.title || "No title provided"}\n\n`;
-                  if (item.body) {
-                    summaryContent += `**Body:**\n${item.body}\n\n`;
-                  }
-                  if (item.labels && item.labels.length > 0) {
-                    summaryContent += `**Labels:** ${item.labels.join(", ")}\n\n`;
-                  }
-                  summaryContent += "---\n\n";
-                }
-                await core.summary.addRaw(summaryContent).write();
-                core.info(summaryContent);
-                core.info("📝 Issue creation preview written to step summary");
+                await generateStagedPreview({
+                  title: "Create Issues",
+                  description: "The following issues would be created if staged mode was disabled:",
+                  items: createIssueItems,
+                  renderItem: (item, index) => {
+                    let content = `### Issue ${index + 1}\n`;
+                    content += `**Title:** ${item.title || "No title provided"}\n\n`;
+                    if (item.body) {
+                      content += `**Body:**\n${item.body}\n\n`;
+                    }
+                    if (item.labels && item.labels.length > 0) {
+                      content += `**Labels:** ${item.labels.join(", ")}\n\n`;
+                    }
+                    return content;
+                  },
+                });
                 return;
               }
               const parentIssueNumber = context.payload?.issue?.number;
@@ -3932,6 +4105,10 @@ jobs:
                 const runUrl = context.payload.repository
                   ? `${context.payload.repository.html_url}/actions/runs/${runId}`
                   : `${githubServer}/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}`;
+                const fingerprintComment = getCampaign("markdown");
+                if (fingerprintComment) {
+                  bodyLines.push(fingerprintComment);
+                }
                 bodyLines.push(
                   ``,
                   ``,
@@ -4062,8 +4239,9 @@ jobs:
       - agent
       - detection
     if: >
-      (((!cancelled()) && (needs.agent.result != 'skipped')) && (contains(needs.agent.outputs.output_types, 'create_pull_request_review_comment'))) &&
-      (((github.event.issue.number) && (github.event.issue.pull_request)) || (github.event.pull_request))
+      ((((!cancelled()) && (needs.agent.result != 'skipped')) && (contains(needs.agent.outputs.output_types, 'create_pull_request_review_comment'))) &&
+      (((github.event.issue.number) && (github.event.issue.pull_request)) || (github.event.pull_request))) &&
+      (needs.detection.outputs.success == 'true')
     runs-on: ubuntu-slim
     permissions:
       contents: read
@@ -4075,7 +4253,7 @@ jobs:
     steps:
       - name: Download agent output artifact
         continue-on-error: true
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
         with:
           name: agent_output.json
           path: /tmp/gh-aw/safeoutputs/
@@ -4086,14 +4264,65 @@ jobs:
           echo "GH_AW_AGENT_OUTPUT=/tmp/gh-aw/safeoutputs/agent_output.json" >> "$GITHUB_ENV"
       - name: Create PR Review Comment
         id: create_pr_review_comment
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
           GH_AW_AGENT_OUTPUT: ${{ env.GH_AW_AGENT_OUTPUT }}
-          GH_AW_WORKFLOW_NAME: "Test Safe Outputs - Custom Engine"
           GH_AW_PR_REVIEW_COMMENT_SIDE: "RIGHT"
+          GH_AW_WORKFLOW_NAME: "Test Safe Outputs - Custom Engine"
         with:
           github-token: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           script: |
+            const fs = require("fs");
+            function loadAgentOutput() {
+              const agentOutputFile = process.env.GH_AW_AGENT_OUTPUT;
+              if (!agentOutputFile) {
+                core.info("No GH_AW_AGENT_OUTPUT environment variable found");
+                return { success: false };
+              }
+              let outputContent;
+              try {
+                outputContent = fs.readFileSync(agentOutputFile, "utf8");
+              } catch (error) {
+                const errorMessage = `Error reading agent output file: ${error instanceof Error ? error.message : String(error)}`;
+                core.setFailed(errorMessage);
+                return { success: false, error: errorMessage };
+              }
+              if (outputContent.trim() === "") {
+                core.info("Agent output content is empty");
+                return { success: false };
+              }
+              core.info(`Agent output content length: ${outputContent.length}`);
+              let validatedOutput;
+              try {
+                validatedOutput = JSON.parse(outputContent);
+              } catch (error) {
+                const errorMessage = `Error parsing agent output JSON: ${error instanceof Error ? error.message : String(error)}`;
+                core.setFailed(errorMessage);
+                return { success: false, error: errorMessage };
+              }
+              if (!validatedOutput.items || !Array.isArray(validatedOutput.items)) {
+                core.info("No valid items found in agent output");
+                return { success: false };
+              }
+              return { success: true, items: validatedOutput.items };
+            }
+            async function generateStagedPreview(options) {
+              const { title, description, items, renderItem } = options;
+              let summaryContent = `## 🎭 Staged Mode: ${title} Preview\n\n`;
+              summaryContent += `${description}\n\n`;
+              for (let i = 0; i < items.length; i++) {
+                const item = items[i];
+                summaryContent += renderItem(item, i);
+                summaryContent += "---\n\n";
+              }
+              try {
+                await core.summary.addRaw(summaryContent).write();
+                core.info(summaryContent);
+                core.info(`📝 ${title} preview written to step summary`);
+              } catch (error) {
+                core.setFailed(error instanceof Error ? error : String(error));
+              }
+            }
             function generateFooter(
               workflowName,
               runUrl,
@@ -4117,80 +4346,54 @@ jobs:
               footer += "\n";
               return footer;
             }
+            function getRepositoryUrl() {
+              const targetRepoSlug = process.env.GH_AW_TARGET_REPO_SLUG;
+              if (targetRepoSlug) {
+                const githubServer = process.env.GITHUB_SERVER_URL || "https://github.com";
+                return `${githubServer}/${targetRepoSlug}`;
+              } else if (context.payload.repository?.html_url) {
+                return context.payload.repository.html_url;
+              } else {
+                const githubServer = process.env.GITHUB_SERVER_URL || "https://github.com";
+                return `${githubServer}/${context.repo.owner}/${context.repo.repo}`;
+              }
+            }
             async function main() {
               const isStaged = process.env.GH_AW_SAFE_OUTPUTS_STAGED === "true";
-              function getRepositoryUrl() {
-                const targetRepoSlug = process.env.GH_AW_TARGET_REPO_SLUG;
-                if (targetRepoSlug) {
-                  const githubServer = process.env.GITHUB_SERVER_URL || "https://github.com";
-                  return `${githubServer}/${targetRepoSlug}`;
-                } else if (context.payload.repository) {
-                  return context.payload.repository.html_url;
-                } else {
-                  const githubServer = process.env.GITHUB_SERVER_URL || "https://github.com";
-                  return `${githubServer}/${context.repo.owner}/${context.repo.repo}`;
-                }
-              }
-              const agentOutputFile = process.env.GH_AW_AGENT_OUTPUT;
-              if (!agentOutputFile) {
-                core.info("No GH_AW_AGENT_OUTPUT environment variable found");
+              const result = loadAgentOutput();
+              if (!result.success) {
                 return;
               }
-              let outputContent;
-              try {
-                outputContent = require("fs").readFileSync(agentOutputFile, "utf8");
-              } catch (error) {
-                core.setFailed(`Error reading agent output file: ${error instanceof Error ? error.message : String(error)}`);
-                return;
-              }
-              if (outputContent.trim() === "") {
-                core.info("Agent output content is empty");
-                return;
-              }
-              core.info(`Agent output content length: ${outputContent.length}`);
-              let validatedOutput;
-              try {
-                validatedOutput = JSON.parse(outputContent);
-              } catch (error) {
-                core.setFailed(`Error parsing agent output JSON: ${error instanceof Error ? error.message : String(error)}`);
-                return;
-              }
-              if (!validatedOutput.items || !Array.isArray(validatedOutput.items)) {
-                core.info("No valid items found in agent output");
-                return;
-              }
-              const reviewCommentItems = validatedOutput.items.filter(
-                 item => item.type === "create_pull_request_review_comment"
-              );
+              const reviewCommentItems = result.items.filter( item => item.type === "create_pull_request_review_comment");
               if (reviewCommentItems.length === 0) {
                 core.info("No create-pull-request-review-comment items found in agent output");
                 return;
               }
               core.info(`Found ${reviewCommentItems.length} create-pull-request-review-comment item(s)`);
               if (isStaged) {
-                let summaryContent = "## 🎭 Staged Mode: Create PR Review Comments Preview\n\n";
-                summaryContent += "The following review comments would be created if staged mode was disabled:\n\n";
-                for (let i = 0; i < reviewCommentItems.length; i++) {
-                  const item = reviewCommentItems[i];
-                  summaryContent += `### Review Comment ${i + 1}\n`;
-                  if (item.pull_request_number) {
-                    const repoUrl = getRepositoryUrl();
-                    const pullUrl = `${repoUrl}/pull/${item.pull_request_number}`;
-                    summaryContent += `**Target PR:** [#${item.pull_request_number}](${pullUrl})\n\n`;
-                  } else {
-                    summaryContent += `**Target:** Current PR\n\n`;
-                  }
-                  summaryContent += `**File:** ${item.path || "No path provided"}\n\n`;
-                  summaryContent += `**Line:** ${item.line || "No line provided"}\n\n`;
-                  if (item.start_line) {
-                    summaryContent += `**Start Line:** ${item.start_line}\n\n`;
-                  }
-                  summaryContent += `**Side:** ${item.side || "RIGHT"}\n\n`;
-                  summaryContent += `**Body:**\n${item.body || "No content provided"}\n\n`;
-                  summaryContent += "---\n\n";
-                }
-                await core.summary.addRaw(summaryContent).write();
-                core.info("📝 PR review comment creation preview written to step summary");
+                await generateStagedPreview({
+                  title: "Create PR Review Comments",
+                  description: "The following review comments would be created if staged mode was disabled:",
+                  items: reviewCommentItems,
+                  renderItem: (item, index) => {
+                    let content = `### Review Comment ${index + 1}\n`;
+                    if (item.pull_request_number) {
+                      const repoUrl = getRepositoryUrl();
+                      const pullUrl = `${repoUrl}/pull/${item.pull_request_number}`;
+                      content += `**Target PR:** [#${item.pull_request_number}](${pullUrl})\n\n`;
+                    } else {
+                      content += `**Target:** Current PR\n\n`;
+                    }
+                    content += `**File:** ${item.path || "No path provided"}\n\n`;
+                    content += `**Line:** ${item.line || "No line provided"}\n\n`;
+                    if (item.start_line) {
+                      content += `**Start Line:** ${item.start_line}\n\n`;
+                    }
+                    content += `**Side:** ${item.side || "RIGHT"}\n\n`;
+                    content += `**Body:**\n${item.body || "No content provided"}\n\n`;
+                    return content;
+                  },
+                });
                 return;
               }
               const defaultSide = process.env.GH_AW_PR_REVIEW_COMMENT_SIDE || "RIGHT";
@@ -4366,9 +4569,11 @@ jobs:
   create_pull_request:
     needs:
       - agent
+      - activation
       - detection
     if: >
-      ((!cancelled()) && (needs.agent.result != 'skipped')) && (contains(needs.agent.outputs.output_types, 'create_pull_request'))
+      (((!cancelled()) && (needs.agent.result != 'skipped')) && (contains(needs.agent.outputs.output_types, 'create_pull_request'))) &&
+      (needs.detection.outputs.success == 'true')
     runs-on: ubuntu-slim
     permissions:
       contents: write
@@ -4385,12 +4590,12 @@ jobs:
     steps:
       - name: Download patch artifact
         continue-on-error: true
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
         with:
           name: aw.patch
           path: /tmp/gh-aw/
       - name: Checkout repository
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
         with:
           persist-credentials: false
           fetch-depth: 0
@@ -4407,7 +4612,7 @@ jobs:
           echo "Git configured with standard GitHub Actions identity"
       - name: Download agent output artifact
         continue-on-error: true
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
         with:
           name: agent_output.json
           path: /tmp/gh-aw/safeoutputs/
@@ -4418,22 +4623,135 @@ jobs:
           echo "GH_AW_AGENT_OUTPUT=/tmp/gh-aw/safeoutputs/agent_output.json" >> "$GITHUB_ENV"
       - name: Create Pull Request
         id: create_pull_request
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
           GH_AW_AGENT_OUTPUT: ${{ env.GH_AW_AGENT_OUTPUT }}
           GH_AW_WORKFLOW_ID: "agent"
-          GH_AW_WORKFLOW_NAME: "Test Safe Outputs - Custom Engine"
           GH_AW_BASE_BRANCH: ${{ github.ref_name }}
           GH_AW_PR_TITLE_PREFIX: "[Custom Engine Test] "
           GH_AW_PR_LABELS: "test-safe-outputs,automation,custom-engine"
           GH_AW_PR_DRAFT: "true"
           GH_AW_PR_IF_NO_CHANGES: "warn"
           GH_AW_MAX_PATCH_SIZE: 1024
+          GH_AW_WORKFLOW_NAME: "Test Safe Outputs - Custom Engine"
         with:
           github-token: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           script: |
             const fs = require("fs");
             const crypto = require("crypto");
+            async function updateActivationComment(github, context, core, itemUrl, itemNumber, itemType = "pull_request") {
+              const itemLabel = itemType === "issue" ? "issue" : "pull request";
+              const linkMessage =
+                itemType === "issue"
+                  ? `\n\n✅ Issue created: [#${itemNumber}](${itemUrl})`
+                  : `\n\n✅ Pull request created: [#${itemNumber}](${itemUrl})`;
+              await updateActivationCommentWithMessage(github, context, core, linkMessage, itemLabel);
+            }
+            async function updateActivationCommentWithCommit(github, context, core, commitSha, commitUrl) {
+              const shortSha = commitSha.substring(0, 7);
+              const message = `\n\n✅ Commit pushed: [\`${shortSha}\`](${commitUrl})`;
+              await updateActivationCommentWithMessage(github, context, core, message, "commit");
+            }
+            async function updateActivationCommentWithMessage(github, context, core, message, label = "") {
+              const commentId = process.env.GH_AW_COMMENT_ID;
+              const commentRepo = process.env.GH_AW_COMMENT_REPO;
+              if (!commentId) {
+                core.info("No activation comment to update (GH_AW_COMMENT_ID not set)");
+                return;
+              }
+              core.info(`Updating activation comment ${commentId}`);
+              let repoOwner = context.repo.owner;
+              let repoName = context.repo.repo;
+              if (commentRepo) {
+                const parts = commentRepo.split("/");
+                if (parts.length === 2) {
+                  repoOwner = parts[0];
+                  repoName = parts[1];
+                } else {
+                  core.warning(`Invalid comment repo format: ${commentRepo}, expected "owner/repo". Falling back to context.repo.`);
+                }
+              }
+              core.info(`Updating comment in ${repoOwner}/${repoName}`);
+              const isDiscussionComment = commentId.startsWith("DC_");
+              try {
+                if (isDiscussionComment) {
+                  const currentComment = await github.graphql(
+                    `
+                    query($commentId: ID!) {
+                      node(id: $commentId) {
+                        ... on DiscussionComment {
+                          body
+                        }
+                      }
+                    }`,
+                    { commentId: commentId }
+                  );
+                  if (!currentComment?.node?.body) {
+                    core.warning("Unable to fetch current comment body, comment may have been deleted or is inaccessible");
+                    return;
+                  }
+                  const currentBody = currentComment.node.body;
+                  const updatedBody = currentBody + message;
+                  const result = await github.graphql(
+                    `
+                    mutation($commentId: ID!, $body: String!) {
+                      updateDiscussionComment(input: { commentId: $commentId, body: $body }) {
+                        comment {
+                          id
+                          url
+                        }
+                      }
+                    }`,
+                    { commentId: commentId, body: updatedBody }
+                  );
+                  const comment = result.updateDiscussionComment.comment;
+                  const successMessage = label
+                    ? `Successfully updated discussion comment with ${label} link`
+                    : "Successfully updated discussion comment";
+                  core.info(successMessage);
+                  core.info(`Comment ID: ${comment.id}`);
+                  core.info(`Comment URL: ${comment.url}`);
+                } else {
+                  const currentComment = await github.request("GET /repos/{owner}/{repo}/issues/comments/{comment_id}", {
+                    owner: repoOwner,
+                    repo: repoName,
+                    comment_id: parseInt(commentId, 10),
+                    headers: {
+                      Accept: "application/vnd.github+json",
+                    },
+                  });
+                  if (!currentComment?.data?.body) {
+                    core.warning("Unable to fetch current comment body, comment may have been deleted");
+                    return;
+                  }
+                  const currentBody = currentComment.data.body;
+                  const updatedBody = currentBody + message;
+                  const response = await github.request("PATCH /repos/{owner}/{repo}/issues/comments/{comment_id}", {
+                    owner: repoOwner,
+                    repo: repoName,
+                    comment_id: parseInt(commentId, 10),
+                    body: updatedBody,
+                    headers: {
+                      Accept: "application/vnd.github+json",
+                    },
+                  });
+                  const successMessage = label ? `Successfully updated comment with ${label} link` : "Successfully updated comment";
+                  core.info(successMessage);
+                  core.info(`Comment ID: ${response.data.id}`);
+                  core.info(`Comment URL: ${response.data.html_url}`);
+                }
+              } catch (error) {
+                core.warning(`Failed to update activation comment: ${error instanceof Error ? error.message : String(error)}`);
+              }
+            }
+            function getCampaign(format) {
+              const campaign = process.env.GH_AW_CAMPAIGN || "";
+              if (campaign) {
+                core.info(`Campaign: ${campaign}`);
+                return format === "markdown" ? `\n\n<!-- campaign: ${campaign} -->` : campaign;
+              }
+              return "";
+            }
             function generatePatchPreview(patchContent) {
               if (!patchContent || !patchContent.trim()) {
                 return "";
@@ -4623,6 +4941,10 @@ jobs:
               const runUrl = context.payload.repository
                 ? `${context.payload.repository.html_url}/actions/runs/${runId}`
                 : `${githubServer}/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}`;
+              const fingerprintComment = getCampaign("markdown");
+              if (fingerprintComment) {
+                bodyLines.push(fingerprintComment);
+              }
               bodyLines.push(``, ``, `> AI generated by [${workflowName}](${runUrl})`, "");
               const body = bodyLines.join("\n").trim();
               const labelsEnv = process.env.GH_AW_PR_LABELS;
@@ -4742,6 +5064,7 @@ jobs:
                       labels: labels,
                     });
                     core.info(`Created fallback issue #${issue.number}: ${issue.html_url}`);
+                    await updateActivationComment(github, context, core, issue.html_url, issue.number, "issue");
                     core.setOutput("issue_number", issue.number);
                     core.setOutput("issue_url", issue.html_url);
                     core.setOutput("branch_name", branchName);
@@ -4803,6 +5126,7 @@ jobs:
                 core.setOutput("pull_request_number", pullRequest.number);
                 core.setOutput("pull_request_url", pullRequest.html_url);
                 core.setOutput("branch_name", branchName);
+                await updateActivationComment(github, context, core, pullRequest.html_url, pullRequest.number);
                 await core.summary
                   .addRaw(
                     `
@@ -4839,6 +5163,7 @@ jobs:
                     labels: labels,
                   });
                   core.info(`Created fallback issue #${issue.number}: ${issue.html_url}`);
+                  await updateActivationComment(github, context, core, issue.html_url, issue.number, "issue");
                   core.setOutput("issue_number", issue.number);
                   core.setOutput("issue_url", issue.html_url);
                   core.setOutput("branch_name", branchName);
@@ -4866,27 +5191,30 @@ jobs:
 
   detection:
     needs: agent
+    if: needs.agent.outputs.output_types != '' || needs.agent.outputs.has_patch == 'true'
     runs-on: ubuntu-latest
     permissions: {}
     concurrency:
       group: "gh-aw-custom-${{ github.workflow }}"
     timeout-minutes: 10
+    outputs:
+      success: ${{ steps.parse_results.outputs.success }}
     steps:
       - name: Download prompt artifact
         continue-on-error: true
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
         with:
           name: prompt.txt
           path: /tmp/gh-aw/threat-detection/
       - name: Download agent output artifact
         continue-on-error: true
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
         with:
           name: agent_output.json
           path: /tmp/gh-aw/threat-detection/
       - name: Download patch artifact
         continue-on-error: true
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
         with:
           name: aw.patch
           path: /tmp/gh-aw/threat-detection/
@@ -4896,7 +5224,7 @@ jobs:
         run: |
           echo "Agent output-types: $AGENT_OUTPUT_TYPES"
       - name: Setup threat detection
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
           WORKFLOW_NAME: "Test Safe Outputs - Custom Engine"
           WORKFLOW_DESCRIPTION: "No description provided"
@@ -5095,7 +5423,8 @@ jobs:
           echo "Custom steps execution completed" >> /tmp/gh-aw/threat-detection/detection.log
           touch /tmp/gh-aw/threat-detection/detection.log
       - name: Parse threat detection results
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        id: parse_results
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         with:
           script: |
             const fs = require('fs');
@@ -5126,13 +5455,15 @@ jobs:
               const reasonsText = verdict.reasons && verdict.reasons.length > 0 
                 ? '\\nReasons: ' + verdict.reasons.join('; ')
                 : '';
+              core.setOutput('success', 'false');
               core.setFailed('❌ Security threats detected: ' + threats.join(', ') + reasonsText);
             } else {
               core.info('✅ No security threats detected. Safe outputs may proceed.');
+              core.setOutput('success', 'true');
             }
       - name: Upload threat detection log
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: threat-detection.log
           path: /tmp/gh-aw/threat-detection/detection.log
@@ -5142,7 +5473,9 @@ jobs:
     needs:
       - agent
       - detection
-    if: ((!cancelled()) && (needs.agent.result != 'skipped')) && (contains(needs.agent.outputs.output_types, 'missing_tool'))
+    if: >
+      (((!cancelled()) && (needs.agent.result != 'skipped')) && (contains(needs.agent.outputs.output_types, 'missing_tool'))) &&
+      (needs.detection.outputs.success == 'true')
     runs-on: ubuntu-slim
     permissions:
       contents: read
@@ -5153,7 +5486,7 @@ jobs:
     steps:
       - name: Download agent output artifact
         continue-on-error: true
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
         with:
           name: agent_output.json
           path: /tmp/gh-aw/safeoutputs/
@@ -5164,10 +5497,11 @@ jobs:
           echo "GH_AW_AGENT_OUTPUT=/tmp/gh-aw/safeoutputs/agent_output.json" >> "$GITHUB_ENV"
       - name: Record Missing Tool
         id: missing_tool
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
           GH_AW_AGENT_OUTPUT: ${{ env.GH_AW_AGENT_OUTPUT }}
           GH_AW_MISSING_TOOL_MAX: 5
+          GH_AW_WORKFLOW_NAME: "Test Safe Outputs - Custom Engine"
         with:
           github-token: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           script: |
@@ -5274,10 +5608,12 @@ jobs:
   push_to_pull_request_branch:
     needs:
       - agent
+      - activation
       - detection
     if: >
-      (((!cancelled()) && (needs.agent.result != 'skipped')) && (contains(needs.agent.outputs.output_types, 'push_to_pull_request_branch'))) &&
-      (((github.event.issue.number) && (github.event.issue.pull_request)) || (github.event.pull_request))
+      ((((!cancelled()) && (needs.agent.result != 'skipped')) && (contains(needs.agent.outputs.output_types, 'push_to_pull_request_branch'))) &&
+      (((github.event.issue.number) && (github.event.issue.pull_request)) || (github.event.pull_request))) &&
+      (needs.detection.outputs.success == 'true')
     runs-on: ubuntu-slim
     permissions:
       contents: write
@@ -5291,12 +5627,12 @@ jobs:
     steps:
       - name: Download patch artifact
         continue-on-error: true
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
         with:
           name: aw.patch
           path: /tmp/gh-aw/
       - name: Checkout repository
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
         with:
           persist-credentials: false
           fetch-depth: 0
@@ -5313,7 +5649,7 @@ jobs:
           echo "Git configured with standard GitHub Actions identity"
       - name: Download agent output artifact
         continue-on-error: true
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
         with:
           name: agent_output.json
           path: /tmp/gh-aw/safeoutputs/
@@ -5324,17 +5660,140 @@ jobs:
           echo "GH_AW_AGENT_OUTPUT=/tmp/gh-aw/safeoutputs/agent_output.json" >> "$GITHUB_ENV"
       - name: Push to Branch
         id: push_to_pull_request_branch
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
           GH_AW_AGENT_OUTPUT: ${{ env.GH_AW_AGENT_OUTPUT }}
           GH_TOKEN: ${{ github.token }}
           GH_AW_PUSH_TARGET: "*"
           GH_AW_PUSH_IF_NO_CHANGES: "warn"
           GH_AW_MAX_PATCH_SIZE: 1024
+          GH_AW_WORKFLOW_NAME: "Test Safe Outputs - Custom Engine"
         with:
           github-token: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           script: |
             const fs = require("fs");
+            async function generateStagedPreview(options) {
+              const { title, description, items, renderItem } = options;
+              let summaryContent = `## 🎭 Staged Mode: ${title} Preview\n\n`;
+              summaryContent += `${description}\n\n`;
+              for (let i = 0; i < items.length; i++) {
+                const item = items[i];
+                summaryContent += renderItem(item, i);
+                summaryContent += "---\n\n";
+              }
+              try {
+                await core.summary.addRaw(summaryContent).write();
+                core.info(summaryContent);
+                core.info(`📝 ${title} preview written to step summary`);
+              } catch (error) {
+                core.setFailed(error instanceof Error ? error : String(error));
+              }
+            }
+            async function updateActivationComment(github, context, core, itemUrl, itemNumber, itemType = "pull_request") {
+              const itemLabel = itemType === "issue" ? "issue" : "pull request";
+              const linkMessage =
+                itemType === "issue"
+                  ? `\n\n✅ Issue created: [#${itemNumber}](${itemUrl})`
+                  : `\n\n✅ Pull request created: [#${itemNumber}](${itemUrl})`;
+              await updateActivationCommentWithMessage(github, context, core, linkMessage, itemLabel);
+            }
+            async function updateActivationCommentWithCommit(github, context, core, commitSha, commitUrl) {
+              const shortSha = commitSha.substring(0, 7);
+              const message = `\n\n✅ Commit pushed: [\`${shortSha}\`](${commitUrl})`;
+              await updateActivationCommentWithMessage(github, context, core, message, "commit");
+            }
+            async function updateActivationCommentWithMessage(github, context, core, message, label = "") {
+              const commentId = process.env.GH_AW_COMMENT_ID;
+              const commentRepo = process.env.GH_AW_COMMENT_REPO;
+              if (!commentId) {
+                core.info("No activation comment to update (GH_AW_COMMENT_ID not set)");
+                return;
+              }
+              core.info(`Updating activation comment ${commentId}`);
+              let repoOwner = context.repo.owner;
+              let repoName = context.repo.repo;
+              if (commentRepo) {
+                const parts = commentRepo.split("/");
+                if (parts.length === 2) {
+                  repoOwner = parts[0];
+                  repoName = parts[1];
+                } else {
+                  core.warning(`Invalid comment repo format: ${commentRepo}, expected "owner/repo". Falling back to context.repo.`);
+                }
+              }
+              core.info(`Updating comment in ${repoOwner}/${repoName}`);
+              const isDiscussionComment = commentId.startsWith("DC_");
+              try {
+                if (isDiscussionComment) {
+                  const currentComment = await github.graphql(
+                    `
+                    query($commentId: ID!) {
+                      node(id: $commentId) {
+                        ... on DiscussionComment {
+                          body
+                        }
+                      }
+                    }`,
+                    { commentId: commentId }
+                  );
+                  if (!currentComment?.node?.body) {
+                    core.warning("Unable to fetch current comment body, comment may have been deleted or is inaccessible");
+                    return;
+                  }
+                  const currentBody = currentComment.node.body;
+                  const updatedBody = currentBody + message;
+                  const result = await github.graphql(
+                    `
+                    mutation($commentId: ID!, $body: String!) {
+                      updateDiscussionComment(input: { commentId: $commentId, body: $body }) {
+                        comment {
+                          id
+                          url
+                        }
+                      }
+                    }`,
+                    { commentId: commentId, body: updatedBody }
+                  );
+                  const comment = result.updateDiscussionComment.comment;
+                  const successMessage = label
+                    ? `Successfully updated discussion comment with ${label} link`
+                    : "Successfully updated discussion comment";
+                  core.info(successMessage);
+                  core.info(`Comment ID: ${comment.id}`);
+                  core.info(`Comment URL: ${comment.url}`);
+                } else {
+                  const currentComment = await github.request("GET /repos/{owner}/{repo}/issues/comments/{comment_id}", {
+                    owner: repoOwner,
+                    repo: repoName,
+                    comment_id: parseInt(commentId, 10),
+                    headers: {
+                      Accept: "application/vnd.github+json",
+                    },
+                  });
+                  if (!currentComment?.data?.body) {
+                    core.warning("Unable to fetch current comment body, comment may have been deleted");
+                    return;
+                  }
+                  const currentBody = currentComment.data.body;
+                  const updatedBody = currentBody + message;
+                  const response = await github.request("PATCH /repos/{owner}/{repo}/issues/comments/{comment_id}", {
+                    owner: repoOwner,
+                    repo: repoName,
+                    comment_id: parseInt(commentId, 10),
+                    body: updatedBody,
+                    headers: {
+                      Accept: "application/vnd.github+json",
+                    },
+                  });
+                  const successMessage = label ? `Successfully updated comment with ${label} link` : "Successfully updated comment";
+                  core.info(successMessage);
+                  core.info(`Comment ID: ${response.data.id}`);
+                  core.info(`Comment URL: ${response.data.html_url}`);
+                }
+              } catch (error) {
+                core.warning(`Failed to update activation comment: ${error instanceof Error ? error.message : String(error)}`);
+              }
+            }
             async function main() {
               const isStaged = process.env.GH_AW_SAFE_OUTPUTS_STAGED === "true";
               const agentOutputFile = process.env.GH_AW_AGENT_OUTPUT || "";
@@ -5431,23 +5890,28 @@ jobs:
               }
               core.info("Found push-to-pull-request-branch item");
               if (isStaged) {
-                let summaryContent = "## 🎭 Staged Mode: Push to PR Branch Preview\n\n";
-                summaryContent += "The following changes would be pushed if staged mode was disabled:\n\n";
-                summaryContent += `**Target:** ${target}\n\n`;
-                if (pushItem.commit_message) {
-                  summaryContent += `**Commit Message:** ${pushItem.commit_message}\n\n`;
-                }
-                if (fs.existsSync("/tmp/gh-aw/aw.patch")) {
-                  const patchStats = fs.readFileSync("/tmp/gh-aw/aw.patch", "utf8");
-                  if (patchStats.trim()) {
-                    summaryContent += `**Changes:** Patch file exists with ${patchStats.split("\n").length} lines\n\n`;
-                    summaryContent += `<details><summary>Show patch preview</summary>\n\n\`\`\`diff\n${patchStats.slice(0, 2000)}${patchStats.length > 2000 ? "\n... (truncated)" : ""}\n\`\`\`\n\n</details>\n\n`;
-                  } else {
-                    summaryContent += `**Changes:** No changes (empty patch)\n\n`;
-                  }
-                }
-                await core.summary.addRaw(summaryContent).write();
-                core.info("📝 Push to PR branch preview written to step summary");
+                await generateStagedPreview({
+                  title: "Push to PR Branch",
+                  description: "The following changes would be pushed if staged mode was disabled:",
+                  items: [{ target, commit_message: pushItem.commit_message }],
+                  renderItem: item => {
+                    let content = "";
+                    content += `**Target:** ${item.target}\n\n`;
+                    if (item.commit_message) {
+                      content += `**Commit Message:** ${item.commit_message}\n\n`;
+                    }
+                    if (fs.existsSync("/tmp/gh-aw/aw.patch")) {
+                      const patchStats = fs.readFileSync("/tmp/gh-aw/aw.patch", "utf8");
+                      if (patchStats.trim()) {
+                        content += `**Changes:** Patch file exists with ${patchStats.split("\n").length} lines\n\n`;
+                        content += `<details><summary>Show patch preview</summary>\n\n\`\`\`diff\n${patchStats.slice(0, 2000)}${patchStats.length > 2000 ? "\n... (truncated)" : ""}\n\`\`\`\n\n</details>\n\n`;
+                      } else {
+                        content += `**Changes:** No changes (empty patch)\n\n`;
+                      }
+                    }
+                    return content;
+                  },
+                });
                 return;
               }
               if (target !== "*" && target !== "triggering") {
@@ -5616,12 +6080,17 @@ jobs:
               if (commitShaRes.exitCode !== 0) throw new Error("Failed to get commit SHA");
               const commitSha = commitShaRes.stdout.trim();
               const githubServer = process.env.GITHUB_SERVER_URL || "https://github.com";
-              const pushUrl = context.payload.repository
-                ? `${context.payload.repository.html_url}/tree/${branchName}`
-                : `${githubServer}/${context.repo.owner}/${context.repo.repo}/tree/${branchName}`;
+              const repoUrl = context.payload.repository
+                ? context.payload.repository.html_url
+                : `${githubServer}/${context.repo.owner}/${context.repo.repo}`;
+              const pushUrl = `${repoUrl}/tree/${branchName}`;
+              const commitUrl = `${repoUrl}/commit/${commitSha}`;
               core.setOutput("branch_name", branchName);
               core.setOutput("commit_sha", commitSha);
               core.setOutput("push_url", pushUrl);
+              if (hasChanges) {
+                await updateActivationCommentWithCommit(github, context, core, commitSha, commitUrl);
+              }
               const summaryTitle = hasChanges ? "Push to Branch" : "Push to Branch (No Changes)";
               const summaryContent = hasChanges
                 ? `
@@ -5644,7 +6113,9 @@ jobs:
     needs:
       - agent
       - detection
-    if: ((!cancelled()) && (needs.agent.result != 'skipped')) && (contains(needs.agent.outputs.output_types, 'update_issue'))
+    if: >
+      (((!cancelled()) && (needs.agent.result != 'skipped')) && (contains(needs.agent.outputs.output_types, 'update_issue'))) &&
+      (needs.detection.outputs.success == 'true')
     runs-on: ubuntu-slim
     permissions:
       contents: read
@@ -5656,7 +6127,7 @@ jobs:
     steps:
       - name: Download agent output artifact
         continue-on-error: true
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
         with:
           name: agent_output.json
           path: /tmp/gh-aw/safeoutputs/
@@ -5667,76 +6138,104 @@ jobs:
           echo "GH_AW_AGENT_OUTPUT=/tmp/gh-aw/safeoutputs/agent_output.json" >> "$GITHUB_ENV"
       - name: Update Issue
         id: update_issue
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
           GH_AW_AGENT_OUTPUT: ${{ env.GH_AW_AGENT_OUTPUT }}
           GH_AW_UPDATE_STATUS: true
           GH_AW_UPDATE_TITLE: true
           GH_AW_UPDATE_BODY: true
           GH_AW_UPDATE_TARGET: "*"
+          GH_AW_WORKFLOW_NAME: "Test Safe Outputs - Custom Engine"
         with:
           github-token: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           script: |
-            async function main() {
-              const isStaged = process.env.GH_AW_SAFE_OUTPUTS_STAGED === "true";
+            const fs = require("fs");
+            function loadAgentOutput() {
               const agentOutputFile = process.env.GH_AW_AGENT_OUTPUT;
               if (!agentOutputFile) {
                 core.info("No GH_AW_AGENT_OUTPUT environment variable found");
-                return;
+                return { success: false };
               }
               let outputContent;
               try {
-                outputContent = require("fs").readFileSync(agentOutputFile, "utf8");
+                outputContent = fs.readFileSync(agentOutputFile, "utf8");
               } catch (error) {
-                core.setFailed(`Error reading agent output file: ${error instanceof Error ? error.message : String(error)}`);
-                return;
+                const errorMessage = `Error reading agent output file: ${error instanceof Error ? error.message : String(error)}`;
+                core.setFailed(errorMessage);
+                return { success: false, error: errorMessage };
               }
               if (outputContent.trim() === "") {
                 core.info("Agent output content is empty");
-                return;
+                return { success: false };
               }
               core.info(`Agent output content length: ${outputContent.length}`);
               let validatedOutput;
               try {
                 validatedOutput = JSON.parse(outputContent);
               } catch (error) {
-                core.setFailed(`Error parsing agent output JSON: ${error instanceof Error ? error.message : String(error)}`);
-                return;
+                const errorMessage = `Error parsing agent output JSON: ${error instanceof Error ? error.message : String(error)}`;
+                core.setFailed(errorMessage);
+                return { success: false, error: errorMessage };
               }
               if (!validatedOutput.items || !Array.isArray(validatedOutput.items)) {
                 core.info("No valid items found in agent output");
+                return { success: false };
+              }
+              return { success: true, items: validatedOutput.items };
+            }
+            async function generateStagedPreview(options) {
+              const { title, description, items, renderItem } = options;
+              let summaryContent = `## 🎭 Staged Mode: ${title} Preview\n\n`;
+              summaryContent += `${description}\n\n`;
+              for (let i = 0; i < items.length; i++) {
+                const item = items[i];
+                summaryContent += renderItem(item, i);
+                summaryContent += "---\n\n";
+              }
+              try {
+                await core.summary.addRaw(summaryContent).write();
+                core.info(summaryContent);
+                core.info(`📝 ${title} preview written to step summary`);
+              } catch (error) {
+                core.setFailed(error instanceof Error ? error : String(error));
+              }
+            }
+            async function main() {
+              const isStaged = process.env.GH_AW_SAFE_OUTPUTS_STAGED === "true";
+              const result = loadAgentOutput();
+              if (!result.success) {
                 return;
               }
-              const updateItems = validatedOutput.items.filter( item => item.type === "update_issue");
+              const updateItems = result.items.filter( item => item.type === "update_issue");
               if (updateItems.length === 0) {
                 core.info("No update-issue items found in agent output");
                 return;
               }
               core.info(`Found ${updateItems.length} update-issue item(s)`);
               if (isStaged) {
-                let summaryContent = "## 🎭 Staged Mode: Update Issues Preview\n\n";
-                summaryContent += "The following issue updates would be applied if staged mode was disabled:\n\n";
-                for (let i = 0; i < updateItems.length; i++) {
-                  const item = updateItems[i];
-                  summaryContent += `### Issue Update ${i + 1}\n`;
-                  if (item.issue_number) {
-                    summaryContent += `**Target Issue:** #${item.issue_number}\n\n`;
-                  } else {
-                    summaryContent += `**Target:** Current issue\n\n`;
-                  }
-                  if (item.title !== undefined) {
-                    summaryContent += `**New Title:** ${item.title}\n\n`;
-                  }
-                  if (item.body !== undefined) {
-                    summaryContent += `**New Body:**\n${item.body}\n\n`;
-                  }
-                  if (item.status !== undefined) {
-                    summaryContent += `**New Status:** ${item.status}\n\n`;
-                  }
-                  summaryContent += "---\n\n";
-                }
-                await core.summary.addRaw(summaryContent).write();
-                core.info("📝 Issue update preview written to step summary");
+                await generateStagedPreview({
+                  title: "Update Issues",
+                  description: "The following issue updates would be applied if staged mode was disabled:",
+                  items: updateItems,
+                  renderItem: (item, index) => {
+                    let content = `### Issue Update ${index + 1}\n`;
+                    if (item.issue_number) {
+                      content += `**Target Issue:** #${item.issue_number}\n\n`;
+                    } else {
+                      content += `**Target:** Current issue\n\n`;
+                    }
+                    if (item.title !== undefined) {
+                      content += `**New Title:** ${item.title}\n\n`;
+                    }
+                    if (item.body !== undefined) {
+                      content += `**New Body:**\n${item.body}\n\n`;
+                    }
+                    if (item.status !== undefined) {
+                      content += `**New Status:** ${item.status}\n\n`;
+                    }
+                    return content;
+                  },
+                });
                 return;
               }
               const updateTarget = process.env.GH_AW_UPDATE_TARGET || "triggering";
