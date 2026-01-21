@@ -4,7 +4,7 @@ on:
     types: [created]
   reaction: eyes
 
-permissions: read
+permissions: read-all
 
 engine: 
   id: codex

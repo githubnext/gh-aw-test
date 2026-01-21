@@ -4,7 +4,7 @@ on:
     name: test-claude-create-pull-request-review-comment
   reaction: eyes
 
-permissions: read
+permissions: read-all
 
 engine: 
   id: claude

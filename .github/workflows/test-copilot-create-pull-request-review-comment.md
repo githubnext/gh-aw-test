@@ -4,7 +4,7 @@ on:
     name: test-copilot-create-pull-request-review-comment
   reaction: eyes
 
-permissions: read
+permissions: read-all
 
 engine: 
   id: copilot

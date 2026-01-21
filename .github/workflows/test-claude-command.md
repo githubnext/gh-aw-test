@@ -4,7 +4,7 @@ on:
     name: test-claude-command
   reaction: eyes
 
-permissions: read
+permissions: read-all
 
 engine: 
   id: claude

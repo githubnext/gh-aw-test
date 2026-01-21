@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   reaction: eyes
 
-permissions: read
+permissions: read-all
 
 engine: 
   id: claude

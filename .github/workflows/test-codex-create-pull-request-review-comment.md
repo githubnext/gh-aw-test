@@ -4,7 +4,7 @@ on:
     name: test-codex-create-pull-request-review-comment
   reaction: eyes
 
-permissions: read
+permissions: read-all
 
 engine: 
   id: codex

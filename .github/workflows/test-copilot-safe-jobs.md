@@ -2,7 +2,7 @@
 on: 
   workflow_dispatch:
 
-permissions: read
+permissions: read-all
 
 engine: claude
 

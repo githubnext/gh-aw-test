@@ -2,7 +2,7 @@
 on:
   workflow_dispatch:
 roles: ["write"]
-permissions: read
+permissions: read-all
 
 engine: 
   id: claude
