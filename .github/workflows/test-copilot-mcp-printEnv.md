@@ -12,7 +12,10 @@ safe-outputs:
   create-issue:
     # min: 1
 
-network: {}
+network:
+  allowed:
+    - defaults
+    - github
 
 mcp-servers:
   time:

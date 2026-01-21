@@ -1,6 +1,6 @@
 ---
 on:
-  command:
+  slash_command:
     name: test-codex-push-to-pull-request-branch
   reaction: eyes
 

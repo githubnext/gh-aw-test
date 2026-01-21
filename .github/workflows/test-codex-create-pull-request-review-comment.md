@@ -1,6 +1,6 @@
 ---
 on:
-  command:
+  slash_command:
     name: test-codex-create-pull-request-review-comment
   reaction: eyes
 

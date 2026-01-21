@@ -1,6 +1,6 @@
 ---
 on:
-  command:
+  slash_command:
     name: test-copilot-create-pull-request-review-comment
   reaction: eyes
 

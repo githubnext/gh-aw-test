@@ -1,6 +1,6 @@
 ---
 on:
-  command:
+  slash_command:
     name: test-copilot-command
   reaction: eyes
 

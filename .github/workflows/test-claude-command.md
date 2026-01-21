@@ -1,6 +1,6 @@
 ---
 on:
-  command:
+  slash_command:
     name: test-claude-command
   reaction: eyes
 

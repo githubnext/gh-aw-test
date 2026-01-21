@@ -5,14 +5,17 @@ on:
 
 permissions: read
 
+network:
+  allowed:
+    - defaults
+    - github
+
 engine: 
   id: codex
 
 safe-outputs:
   create-issue:
     # min: 1
-
-network: {}
 
 mcp-servers:
   time:

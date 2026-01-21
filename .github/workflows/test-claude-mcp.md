@@ -12,15 +12,18 @@ safe-outputs:
   create-issue:
     # min: 1
 
-network: {}
+network:
+  allowed:
+    - defaults
+    - github
 
 mcp-servers:
   time:
-    type: stdio
     container: "mcp/time"
     env:
       LOCAL_TIMEZONE: "${LOCAL_TIMEZONE}"
     allowed: ["get_current_time"]
+
 ---
 
 **First, get the current time using the get_current_time tool to timestamp your analysis.**
