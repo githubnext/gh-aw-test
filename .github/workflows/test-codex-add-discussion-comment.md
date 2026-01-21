@@ -4,6 +4,8 @@ on:
     types: [created]
   reaction: eyes
 
+permissions: read
+
 engine: 
   id: codex
 

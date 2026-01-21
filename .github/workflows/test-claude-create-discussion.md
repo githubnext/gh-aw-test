@@ -2,6 +2,8 @@
 on:
   workflow_dispatch:
 roles: ["write"]
+permissions: read
+
 engine: 
   id: claude
 safe-outputs:

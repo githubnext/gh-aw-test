@@ -4,6 +4,8 @@ on:
     types: [created]
   reaction: eyes
 
+permissions: read
+
 engine: 
   id: claude
 
@@ -14,7 +16,7 @@ safe-outputs:
 
 tools:
   github:
-    toolsets: [all]
+    toolsets: [discussions]
 ---
 
 If the title of the discussion #${{ github.event.discussion.number }} is "Hello from Claude Discussion" then add a comment on the discussion "Reply from Claude Discussion".

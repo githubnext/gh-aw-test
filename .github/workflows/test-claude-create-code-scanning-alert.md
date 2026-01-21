@@ -4,6 +4,8 @@ on:
   workflow_dispatch:
   reaction: eyes
 
+permissions: read
+
 engine: 
   id: claude
 

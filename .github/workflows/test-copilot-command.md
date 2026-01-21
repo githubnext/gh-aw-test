@@ -4,6 +4,8 @@ on:
     name: test-copilot-command
   reaction: eyes
 
+permissions: read
+
 engine: 
   id: claude
 

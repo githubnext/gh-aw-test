@@ -4,6 +4,8 @@ on:
     name: test-claude-push-to-pull-request-branch
   reaction: eyes
 
+permissions: read
+
 engine: 
   id: claude
 

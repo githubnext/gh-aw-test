@@ -1,7 +1,11 @@
 ---
 on: 
   workflow_dispatch:
+
+permissions: read
+
 engine: claude
+
 safe-outputs:
   jobs:
     print:

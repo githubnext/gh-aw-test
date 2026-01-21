@@ -1,9 +1,14 @@
 ---
 on:
   workflow_dispatch:
+
 roles: ["admin", "maintainer", "write"]
+
+permissions: read
+
 engine: 
   id: claude
+
 safe-outputs:
   create-issue:
     title-prefix: "[claude-test] "

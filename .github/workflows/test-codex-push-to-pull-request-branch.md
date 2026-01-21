@@ -4,6 +4,8 @@ on:
     name: test-codex-push-to-pull-request-branch
   reaction: eyes
 
+permissions: read
+
 engine: 
   id: codex
 

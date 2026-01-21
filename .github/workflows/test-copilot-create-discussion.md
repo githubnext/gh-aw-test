@@ -2,6 +2,8 @@
 on:
   workflow_dispatch:
 
+permissions: read
+
 engine: 
   id: copilot
 
