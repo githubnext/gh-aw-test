@@ -256,62 +256,32 @@ check_prerequisites() {
         exit 1
     fi
 
-    # Locate or obtain the gh-aw binary. The binary may be provided in one of three ways:
-    # 1. Already present as a top-level executable at ./gh-aw
-    # 2. Present in the sibling checkout at ../gh-aw/gh-aw
-    # 3. Not present anywhere: attempt to clone the main branch of https://github.com/githubnext/gh-aw into ./gh-aw-src and build it
-
-    if [[ -f "./gh-aw" ]]; then
-        info "Found local ./gh-aw binary"
-    elif [[ -f "../gh-aw/gh-aw" ]]; then
-        info "Found gh-aw binary in sibling checkout at ../gh-aw/gh-aw; creating symlink ./gh-aw -> ../gh-aw/gh-aw"
-        ln -sf ../gh-aw/gh-aw ./gh-aw
-        success "Symlink created: ./gh-aw -> ../gh-aw/gh-aw"
+    # Install or upgrade the gh-aw extension
+    info "Checking gh-aw extension..."
+    
+    # Check if the extension is already installed
+    if gh extension list | grep -q "githubnext/gh-aw"; then
+        info "gh-aw extension already installed, upgrading to latest version..."
+        if gh extension upgrade githubnext/gh-aw &>> "$LOG_FILE"; then
+            success "gh-aw extension upgraded successfully"
+        else
+            warning "Failed to upgrade gh-aw extension, continuing with existing version"
+        fi
     else
-        info "gh-aw binary not found locally; attempting to clone and build gh-aw into ./gh-aw-src"
-
-        if ! command -v git &> /dev/null; then
-            error "git is not installed; cannot clone gh-aw. Please either build gh-aw and place binary at ./gh-aw or ensure ../gh-aw/gh-aw exists"
-            exit 1
-        fi
-
-        local clone_dir="./gh-aw-src"
-
-        if [[ -d "$clone_dir" && -n "$(ls -A "$clone_dir" 2>/dev/null)" ]]; then
-            info "Using existing directory $clone_dir to build gh-aw"
+        info "Installing gh-aw extension..."
+        if gh extension install githubnext/gh-aw &>> "$LOG_FILE"; then
+            success "gh-aw extension installed successfully"
         else
-            info "Cloning https://github.com/githubnext/gh-aw (main branch) into $clone_dir"
-            if ! git clone --depth=1 https://github.com/githubnext/gh-aw.git "$clone_dir" &>> "$LOG_FILE"; then
-                error "Failed to clone gh-aw repository. Please clone manually or provide gh-aw binary at ./gh-aw or ../gh-aw/gh-aw"
-                exit 1
-            fi
-        fi
-
-        info "Building gh-aw in $clone_dir (this may take a moment)"
-        # Build inside clone_dir and log output to the main log file
-        if (cd "$clone_dir" && make deps-dev && make build &>> "../$LOG_FILE"); then
-            info "Build completed in $clone_dir"
-            if [[ -f "$clone_dir/gh-aw" ]]; then
-                ln -sf "$clone_dir/gh-aw" ./gh-aw
-                chmod +x "$clone_dir/gh-aw" || true
-                success "gh-aw built and symlinked to ./gh-aw"
-            else
-                error "Build succeeded but could not locate $clone_dir/gh-aw"
-                exit 1
-            fi
-        else
-            error "Failed to build gh-aw in $clone_dir. Check $LOG_FILE for build output"
+            error "Failed to install gh-aw extension. Check $LOG_FILE for details"
             exit 1
         fi
     fi
-
-    # Final sanity check
-    if [[ ! -f "./gh-aw" ]]; then
-        error "gh-aw binary not found. Run 'make build' or ensure ../gh-aw/gh-aw exists"
+    
+    # Verify the extension is available
+    if ! gh aw --version &>> "$LOG_FILE"; then
+        error "gh-aw extension is not available after installation"
         exit 1
     fi
-
-    chmod +x ./gh-aw || true
 
     # Check we're in the right repo
     local current_repo=$(gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null || echo "")
@@ -320,9 +290,9 @@ check_prerequisites() {
         exit 1
     fi
 
-    # Run "gh-aw compile"
-    if ! ./gh-aw compile 2>&1 | tee -a "$LOG_FILE"; then
-        error "'gh-aw compile' failed. Check $LOG_FILE for details"
+    # Run "gh aw compile"
+    if ! gh aw compile 2>&1 | tee -a "$LOG_FILE"; then
+        error "'gh aw compile' failed. Check $LOG_FILE for details"
         exit 1
     fi
 
@@ -332,7 +302,7 @@ check_prerequisites() {
     local git_status
     git_status=$(git status --porcelain)
     if [[ -n "$git_status" ]]; then
-        info "Detected changes after 'gh-aw compile'; committing and pushing to main branch"
+        info "Detected changes after 'gh aw compile'; committing and pushing to main branch"
         git add . &>> "$LOG_FILE"
         git commit -m "chore: update compiled workflows via e2e.sh" &>> "$LOG_FILE"
         if git push origin main &>> "$LOG_FILE"; then
@@ -418,7 +388,7 @@ enable_workflow() {
     
     info "Enabling workflow '$workflow_name'..."
     # Pipe output through tee but ensure the function sees gh-aw's exit code
-    ./gh-aw enable "$workflow_name"
+    gh aw enable "$workflow_name"
     local rc=$?
     if [[ $rc -eq 0 ]]; then
         success "Successfully enabled '$workflow_name'"
@@ -433,7 +403,7 @@ disable_workflow() {
     local workflow_name="$1"
     
     info "Disabling workflow '$workflow_name'..."
-    ./gh-aw disable "$workflow_name" &>> "$LOG_FILE"
+    gh aw disable "$workflow_name" &>> "$LOG_FILE"
     local rc=$?
     if [[ $rc -eq 0 ]]; then
         success "Successfully disabled '$workflow_name'"
@@ -461,7 +431,7 @@ trigger_workflow_dispatch_and_await_completion() {
     local before_run_id=$(get_latest_run_id "$workflow_file")
     
     # Trigger the workflow using gh aw run
-    if ./gh-aw run "$workflow_name" &>> "$LOG_FILE"; then
+    if gh aw run "$workflow_name" &>> "$LOG_FILE"; then
         success "Successfully triggered '$workflow_name'"
         
         # Wait a bit for the new run to appear
