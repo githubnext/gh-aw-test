@@ -7,9 +7,10 @@
 #
 # This script will:
 # 1. Close all open issues with cleanup comment
-# 2. Close all open pull requests with cleanup comment  
-# 3. Delete test branches matching specific patterns
-# 4. Provide detailed logging of all cleanup operations
+# 2. Close all open pull requests with cleanup comment
+# 3. Close all open discussions
+# 4. Delete test branches matching specific patterns
+# 5. Provide detailed logging of all cleanup operations
 
 # Colors for output
 RED='\033[0;31m'
@@ -48,6 +49,7 @@ cleanup_test_resources() {
     info "Cleaning up test resources..."
     local issues_closed=0
     local prs_closed=0
+    local discussions_closed=0
     local branches_deleted=0
         
     # Close all issues
@@ -76,6 +78,27 @@ cleanup_test_resources() {
         fi
     done < <(gh pr list --limit 20 --json number --jq '.[].number' 2>/dev/null || true)
 
+    # Close all discussions
+    info "Checking for open discussions to close..."
+    while read -r discussion_id; do
+        if [[ -n "$discussion_id" ]]; then
+            # Close discussion using GraphQL mutation
+            local mutation="mutation {
+              closeDiscussion(input: {discussionId: \"$discussion_id\"}) {
+                discussion {
+                  number
+                }
+              }
+            }"
+            if gh api graphql -f query="$mutation" &>/dev/null; then
+                info "Closed discussion with ID $discussion_id"
+                ((discussions_closed++))
+            else
+                warning "Failed to close discussion with ID $discussion_id"
+            fi
+        fi
+    done < <(gh api repos/:owner/:repo/discussions --paginate --jq '.[] | select(.closed == false) | .id' 2>/dev/null || true)
+
     # Delete test branches
     info "Checking for test branches to delete..."
     while read -r branch; do
@@ -89,7 +112,7 @@ cleanup_test_resources() {
         fi
     done < <(git branch -r 2>/dev/null | grep 'origin/test-pr-\|origin/claude-test-branch\|origin/codex-test-branch' | sed 's/origin\///' || true)
     
-    success "Cleanup completed: $issues_closed issues closed, $prs_closed PRs closed, $branches_deleted branches deleted"
+    success "Cleanup completed: $issues_closed issues closed, $prs_closed PRs closed, $discussions_closed discussions closed, $branches_deleted branches deleted"
 }
 
 main() {

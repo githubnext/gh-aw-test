@@ -152,13 +152,8 @@ should_run_test() {
     return 1
 }
 
-get_all_test_names() {
-    get_workflow_dispatch_tests
-    get_issue_triggered_tests
-    get_command_triggered_tests
-}
-
-get_workflow_dispatch_tests() {
+get_all_tests() {
+    # Workflow dispatch tests
     echo "test-claude-create-issue"
     echo "test-codex-create-issue"
     echo "test-copilot-create-issue"
@@ -177,9 +172,7 @@ get_workflow_dispatch_tests() {
     echo "test-claude-safe-jobs"
     echo "test-codex-safe-jobs"
     echo "test-copilot-safe-jobs"
-}
-
-get_issue_triggered_tests() {
+    # Issue-triggered tests
     echo "test-claude-add-comment"
     echo "test-claude-add-labels"
     echo "test-claude-add-discussion-comment"
@@ -192,9 +185,7 @@ get_issue_triggered_tests() {
     echo "test-claude-update-issue"
     echo "test-codex-update-issue"
     echo "test-copilot-update-issue"
-}
-
-get_command_triggered_tests() {
+    # Command-triggered tests
     echo "test-claude-command"
     echo "test-codex-command"
     echo "test-copilot-command"
@@ -206,27 +197,11 @@ get_command_triggered_tests() {
     echo "test-copilot-create-pull-request-review-comment"
 }
 
-filter_tests_by_patterns() {
-    local test_type="$1"
-    shift
+filter_tests() {
     local patterns=("$@")
     
     local all_tests
-    case "$test_type" in
-        "workflow-dispatch")
-            all_tests=($(get_workflow_dispatch_tests))
-            ;;
-        "issue-triggered") 
-            all_tests=($(get_issue_triggered_tests))
-            ;;
-        "command-triggered")
-            all_tests=($(get_command_triggered_tests))
-            ;;
-        *)
-            error "Unknown test type: $test_type"
-            return 1
-            ;;
-    esac
+    all_tests=($(get_all_tests))
     
     local filtered_tests=()
     for test in "${all_tests[@]}"; do
@@ -1021,304 +996,209 @@ wait_for_discussion_comment() {
     return 1
 }
 
-run_workflow_dispatch_tests() {
+run_tests() {
     local patterns=("$@")
-    info "🚀 Running workflow_dispatch tests..."
+    info "🧪 Running tests..."
     
     local workflows
-    readarray -t workflows < <(filter_tests_by_patterns "workflow-dispatch" "${patterns[@]}")
+    readarray -t workflows < <(filter_tests "${patterns[@]}")
     
     if [[ ${#workflows[@]} -eq 0 ]]; then
-        warning "No workflow_dispatch tests match the specified patterns"
+        warning "No tests match the specified patterns"
         return 0
     fi
+    
+    local workflows_to_disable=()
     
     for workflow in "${workflows[@]}"; do
         progress "Testing workflow: $workflow"
         
-        # Extract AI type early to unify logic
         local ai_type=$(extract_ai_type "$workflow")
-        # Capitalize first letter for display
         local ai_display_name="${ai_type^}"
-
-
-        # Use explicit result tracking to handle failures gracefully
-        local workflow_success=false
-        if trigger_workflow_dispatch_and_await_completion "$workflow"; then
-            workflow_success=true
-        fi
         
-        if [[ "$workflow_success" == true ]]; then
-            # Validate specific outcomes based on workflow type
-            local validation_success=false
-            case "$workflow" in
-                *"multi")
-                    local title_prefix="[${ai_type}-test]"
-                    local expected_labels="${ai_type},automation"
+        # Determine test execution strategy based on workflow name pattern
+        case "$workflow" in
+            # Workflow dispatch tests - triggered with gh aw run
+            *"create-issue"|*"create-discussion"|*"create-pull-request"|*"code-scanning-alert"|*"mcp"|*"safe-jobs")
+                local workflow_success=false
+                if trigger_workflow_dispatch_and_await_completion "$workflow"; then
+                    workflow_success=true
+                fi
+                
+                if [[ "$workflow_success" == true ]]; then
+                    local validation_success=false
+                    case "$workflow" in
+                        *"multi")
+                            local title_prefix="[${ai_type}-test]"
+                            local expected_labels="${ai_type},automation"
+                            if validate_issue_created "$title_prefix" "$expected_labels"; then
+                                validation_success=true
+                            fi
+                            if validate_pr_created "$title_prefix"; then
+                                validation_success=true
+                            fi
+                            ;;
+                        *"create-issue")
+                            local title_prefix="[${ai_type}-test]"
+                            local expected_labels="${ai_type},automation"
+                            if validate_issue_created "$title_prefix" "$expected_labels"; then
+                                validation_success=true
+                            fi
+                            ;;
+                        *"create-discussion")
+                            local title_prefix="[${ai_type}-test]"
+                            local expected_labels="${ai_type},automation"
+                            if validate_discussion_created "$title_prefix" "$expected_labels"; then
+                                validation_success=true
+                            fi
+                            ;;
+                        *"create-pull-request")
+                            local title_prefix="[${ai_type}-test]"
+                            if validate_pr_created "$title_prefix"; then
+                                validation_success=true
+                            fi
+                            ;;
+                        *"code-scanning-alert")
+                            if validate_code_scanning_alert "$workflow"; then
+                                validation_success=true
+                            fi
+                            ;;
+                        *"mcp")
+                            if validate_mcp_workflow "$workflow"; then
+                                validation_success=true
+                            fi
+                            ;;
+                        *)
+                            success "Workflow '$workflow' completed successfully (no specific validation available)"
+                            validation_success=true
+                            ;;
+                    esac
                     
-                    if validate_issue_created "$title_prefix" "$expected_labels"; then
-                        validation_success=true
+                    if [[ "$validation_success" == true ]]; then
+                        PASSED_TESTS+=("$workflow")
+                    else
+                        FAILED_TESTS+=("$workflow")
                     fi
-                    if validate_pr_created "$title_prefix"; then
-                        validation_success=true
-                    fi
-                    ;;
-                *"create-issue")
-                    local title_prefix="[${ai_type}-test]"
-                    local expected_labels="${ai_type},automation"
-                    
-                    if validate_issue_created "$title_prefix" "$expected_labels"; then
-                        validation_success=true
-                    fi
-                    ;;
-                *"create-discussion")
-                    local title_prefix="[${ai_type}-test]"
-                    local expected_labels="${ai_type},automation"
-                    
-                    if validate_discussion_created "$title_prefix" "$expected_labels"; then
-                        validation_success=true
-                    fi
-                    ;;
-                *"create-pull-request")
-                    local title_prefix="[${ai_type}-test]"
-                    
-                    if validate_pr_created "$title_prefix"; then
-                        validation_success=true
-                    fi
-                    ;;
-                *"code-scanning-alert")
-                    if validate_code_scanning_alert "$workflow"; then
-                        validation_success=true
-                    fi
-                    ;;
-                *"mcp")
-                    if validate_mcp_workflow "$workflow"; then
-                        validation_success=true
-                    fi
-                    ;;
-                *)
-                    # For truly unknown workflows, just check that they completed successfully
-                    success "Workflow '$workflow' completed successfully (no specific validation available)"
-                    validation_success=true
-                    ;;
-            esac
+                else
+                    error "Workflow '$workflow' failed to complete successfully"
+                    FAILED_TESTS+=("$workflow")
+                fi
+                ;;
             
-            if [[ "$validation_success" == true ]]; then
-                PASSED_TESTS+=("$workflow")
-            else
-                FAILED_TESTS+=("$workflow")
-            fi
-        else
-            error "Workflow '$workflow' failed to complete successfully"
-            FAILED_TESTS+=("$workflow")
-        fi
+            # Issue-triggered and command-triggered tests - need to enable, create trigger, wait
+            *)
+                local workflow_file_path=".github/workflows/${workflow}.lock.yml"
+                if [[ ! -f "$workflow_file_path" ]]; then
+                    error "Workflow file not found for '$workflow' at $workflow_file_path; marking as failed"
+                    FAILED_TESTS+=("$workflow")
+                    continue
+                fi
+
+                local enable_success=false
+                if enable_workflow "$workflow"; then
+                    enable_success=true
+                    workflows_to_disable+=("$workflow")
+                fi
+                
+                if [[ "$enable_success" == true ]]; then
+                    case "$workflow" in
+                        *"add-discussion-comment")
+                            local discussion_title="Hello from $ai_display_name Discussion"
+                            local discussion_num=$(create_test_discussion "$discussion_title" "This is a test discussion to trigger $workflow")
+                            if [[ -n "$discussion_num" ]]; then
+                                success "Created test discussion #$discussion_num to trigger $workflow: https://github.com/$REPO_OWNER/$REPO_NAME/discussions/$discussion_num"
+                                sleep 10
+                                wait_for_discussion_comment "$discussion_num" "Reply from $ai_display_name Discussion" "$workflow" || true
+                            else
+                                warning "Could not create test discussion for $workflow - discussions may not be enabled on this repository"
+                                PASSED_TESTS+=("$workflow")
+                            fi
+                            ;;
+                        *"add-comment")
+                            local issue_title="Hello from $ai_display_name"
+                            local issue_num=$(create_test_issue "$issue_title" "This is a test issue to trigger $workflow")
+                            if [[ -n "$issue_num" ]]; then
+                                success "Created test issue #$issue_num for $workflow: https://github.com/$REPO_OWNER/$REPO_NAME/issues/$issue_num"
+                                sleep 10
+                                wait_for_comment "$issue_num" "Reply from $ai_display_name" "$workflow" || true
+                            else
+                                error "Failed to create test issue for $workflow"
+                                FAILED_TESTS+=("$workflow")
+                            fi
+                            ;;
+                        *"add-labels")
+                            local issue_title="Hello from $ai_display_name"
+                            local issue_num=$(create_test_issue "$issue_title" "This is a test issue to trigger $workflow")
+                            if [[ -n "$issue_num" ]]; then
+                                success "Created test issue #$issue_num for $workflow: https://github.com/$REPO_OWNER/$REPO_NAME/issues/$issue_num"
+                                sleep 10
+                                wait_for_labels "$issue_num" "${ai_type}-safe-output-label-test" "$workflow" || true
+                            else
+                                error "Failed to create test issue for $workflow"
+                                FAILED_TESTS+=("$workflow")
+                            fi
+                            ;;
+                        *"update-issue")
+                            local issue_title="Hello from $ai_display_name"
+                            local issue_num=$(create_test_issue "$issue_title" "This is a test issue to trigger $workflow")
+                            if [[ -n "$issue_num" ]]; then
+                                success "Created test issue #$issue_num for $workflow: https://github.com/$REPO_OWNER/$REPO_NAME/issues/$issue_num"
+                                sleep 10
+                                wait_for_issue_update "$issue_num" "$ai_display_name" "$workflow" || true
+                            else
+                                error "Failed to create test issue for $workflow"
+                                FAILED_TESTS+=("$workflow")
+                            fi
+                            ;;
+                        *"push-to-pull-request-branch")
+                            local pr_info=$(create_test_pr_with_branch "Test PR for $ai_display_name Push-to-Branch" "This PR is for testing $workflow")
+                            if [[ -n "$pr_info" ]]; then
+                                IFS=',' read -r pr_num branch_name after_commit_sha <<< "$pr_info"
+                                success "Created test PR #$pr_num for $workflow with branch '$branch_name': https://github.com/$REPO_OWNER/$REPO_NAME/pull/$pr_num"
+                                post_pr_command "$pr_num" "/test-${ai_type}-push-to-pull-request-branch"
+                                wait_for_branch_update "$branch_name" "$after_commit_sha" "$workflow" || true
+                            else
+                                error "Failed to create test PR for $workflow"
+                                FAILED_TESTS+=("$workflow")
+                            fi
+                            ;;
+                        *"pull-request-review-comment")
+                            local pr_num=$(create_test_pr "Test PR for $ai_display_name Review Comments" "This PR is for testing $workflow. Please add review comments.")
+                            if [[ -n "$pr_num" ]]; then
+                                success "Created test PR #$pr_num for $workflow: https://github.com/$REPO_OWNER/$REPO_NAME/pull/$pr_num"
+                                post_pr_command "$pr_num" "/test-${ai_type}-create-pull-request-review-comment"
+                                wait_for_pr_reviews "$pr_num" "$ai_display_name" "$workflow" || true
+                            else
+                                error "Failed to create test PR for $workflow"
+                                FAILED_TESTS+=("$workflow")
+                            fi
+                            ;;
+                        *"command")
+                            local issue_num=$(create_test_issue "Test Issue for $ai_display_name Commands" "This issue is for testing $workflow")
+                            if [[ -n "$issue_num" ]]; then
+                                success "Created test issue #$issue_num for $workflow: https://github.com/$REPO_OWNER/$REPO_NAME/issues/$issue_num"
+                                post_issue_command "$issue_num" "/test-${ai_type}-command What is 102+103?"
+                                wait_for_command_comment "$issue_num" "205" "$workflow" || true
+                            else
+                                error "Failed to create test issue for $workflow"
+                                FAILED_TESTS+=("$workflow")
+                            fi
+                            ;;
+                    esac
+                else
+                    error "Failed to enable workflow '$workflow'"
+                    FAILED_TESTS+=("$workflow")
+                fi
+                ;;
+        esac
         
         echo # Add spacing between tests
     done
-}
-
-run_issue_triggered_tests() {
-    local patterns=("$@")
-    info "📝 Running issue-triggered tests..."
     
-    local workflows
-    readarray -t workflows < <(filter_tests_by_patterns "issue-triggered" "${patterns[@]}")
-    
-    if [[ ${#workflows[@]} -eq 0 ]]; then
-        warning "No issue-triggered tests match the specified patterns"
-        return 0
-    fi
-    
-    # Process each workflow individually
-    local workflows_to_disable=()
-    
-    for workflow in "${workflows[@]}"; do
-        local ai_type=$(extract_ai_type "$workflow")
-        local ai_display_name="${ai_type^}"
-        
-        if [[ -n "$ai_type" ]]; then
-            # Ensure the compiled workflow file exists before proceeding
-            local workflow_file_path=".github/workflows/${workflow}.lock.yml"
-            if [[ ! -f "$workflow_file_path" ]]; then
-                error "Workflow file not found for '$workflow' at $workflow_file_path; marking as failed"
-                FAILED_TESTS+=("$workflow")
-                continue
-            fi
-
-            # Try to enable the workflow - handle failures gracefully
-            local enable_success=false
-            if enable_workflow "$workflow"; then
-                enable_success=true
-                workflows_to_disable+=("$workflow")
-            fi
-            
-            if [[ "$enable_success" == true ]]; then
-                progress "Testing $workflow"
-                
-                # Different handling for discussion comment tests vs regular issue tests
-                case "$workflow" in
-                    *"add-discussion-comment")
-                        # Create a test discussion to trigger the discussion comment workflow
-                        local discussion_title="Hello from $ai_display_name Discussion"
-                        local discussion_num=$(create_test_discussion "$discussion_title" "This is a test discussion to trigger $workflow")
-                        
-                        if [[ -n "$discussion_num" ]]; then
-                            success "Created test discussion #$discussion_num to trigger discussion comment workflow $workflow: https://github.com/$REPO_OWNER/$REPO_NAME/discussions/$discussion_num"
-                            sleep 10 # Wait for workflow to trigger
-                            
-                            # Wait and check if the discussion gets a comment
-                            wait_for_discussion_comment "$discussion_num" "Reply from $ai_display_name Discussion" "$workflow" || true
-                        else
-                            warning "Could not create test discussion for $workflow - discussions may not be enabled on this repository"
-                            PASSED_TESTS+=("$workflow")
-                        fi
-                        ;;
-                    *)
-                        # Create a test issue for regular workflows
-                        local issue_title="Hello from $ai_display_name"
-                        local issue_num=$(create_test_issue "$issue_title" "This is a test issue to trigger $workflow")
-                        
-                        if [[ -n "$issue_num" ]]; then
-                            success "Created test issue #$issue_num for $workflow: https://github.com/$REPO_OWNER/$REPO_NAME/issues/$issue_num"
-                            sleep 10 # Wait for workflow to trigger
-                            
-                            # Run the appropriate test based on workflow type
-                            case "$workflow" in
-                                *"add-comment")
-                                    wait_for_comment "$issue_num" "Reply from $ai_display_name" "$workflow" || true
-                                    ;;
-                                *"add-labels")
-                                    wait_for_labels "$issue_num" "${ai_type}-safe-output-label-test" "$workflow" || true
-                                    ;;
-                                *"update-issue")
-                                    wait_for_issue_update "$issue_num" "$ai_display_name" "$workflow" || true
-                                    ;;
-                            esac
-                        else
-                            error "Failed to create test issue for $workflow"
-                            FAILED_TESTS+=("$workflow")
-                        fi
-                        ;;
-                esac
-            else
-                error "Failed to enable workflow '$workflow'"
-                FAILED_TESTS+=("$workflow")
-            fi
-        fi
-    done
-    
-    # Disable workflows after testing - handle failures gracefully
+    # Disable workflows after testing
     for workflow in "${workflows_to_disable[@]}"; do
         disable_workflow "$workflow" || warning "Failed to disable workflow '$workflow', continuing..."
     done
-    
-    if [[ ${#workflows_to_disable[@]} -eq 0 ]]; then
-        info "No issue-triggered tests selected that require creating test issues"
-    fi
-    
-    # Note: Additional issue-triggered tests could be added here
-    # For now, we only test the Claude ones as examples
-}
-
-run_command_tests() {
-    local patterns=("$@")
-    info "💬 Running command-triggered tests..."
-    
-    local workflows
-    readarray -t workflows < <(filter_tests_by_patterns "command-triggered" "${patterns[@]}")
-    
-    if [[ ${#workflows[@]} -eq 0 ]]; then
-        warning "No command-triggered tests match the specified patterns"
-        return 0
-    fi
-    
-    # Process each workflow individually
-    local workflows_to_disable=()
-    
-    for workflow in "${workflows[@]}"; do
-        local ai_type=$(extract_ai_type "$workflow")
-        local ai_display_name="${ai_type^}"
-        
-        if [[ -n "$ai_type" ]]; then
-            # Try to enable the workflow - handle failures gracefully
-            local enable_success=false
-            if enable_workflow "$workflow"; then
-                enable_success=true
-                workflows_to_disable+=("$workflow")
-            fi
-            
-            if [[ "$enable_success" == true ]]; then
-                # Different handling for different workflow types
-                case "$workflow" in
-                    *"push-to-pull-request-branch")
-                        # For push-to-pull-request-branch workflows, create a test PR instead of an issue
-                        progress "Testing $workflow"
-                        local pr_info=$(create_test_pr_with_branch "Test PR for $ai_display_name Push-to-Branch" "This PR is for testing $workflow")
-                        
-                        if [[ -n "$pr_info" ]]; then
-                            IFS=',' read -r pr_num branch_name after_commit_sha <<< "$pr_info"
-                            success "Created test PR #$pr_num for $workflow with branch '$branch_name': https://github.com/$REPO_OWNER/$REPO_NAME/pull/$pr_num"
-                            
-                            progress "Testing $ai_display_name push-to-pull-request-branch workflow"
-                            post_pr_command "$pr_num" "/test-${ai_type}-push-to-pull-request-branch"
-                            wait_for_branch_update "$branch_name" "$after_commit_sha" "$workflow" || true
-                        else
-                            error "Failed to create test PR for $workflow"
-                            FAILED_TESTS+=("$workflow")
-                        fi
-                        ;;
-                    *"pull-request-review-comment")
-                        # For PR review comment workflows, create a test PR and wait for review comments
-                        progress "Testing $workflow"
-                        local pr_num=$(create_test_pr "Test PR for $ai_display_name Review Comments" "This PR is for testing $workflow. Please add review comments.")
-                        
-                        if [[ -n "$pr_num" ]]; then
-                            success "Created test PR #$pr_num for $workflow: https://github.com/$REPO_OWNER/$REPO_NAME/pull/$pr_num"
-                            
-                            progress "Testing $ai_display_name PR review comment workflow"
-                            post_pr_command "$pr_num" "/test-${ai_type}-create-pull-request-review-comment"
-                            wait_for_pr_reviews "$pr_num" "$ai_display_name" "$workflow" || true
-                        else
-                            error "Failed to create test PR for $workflow"
-                            FAILED_TESTS+=("$workflow")
-                        fi
-                        ;;
-                    *)
-                        # For other command workflows (like regular commands), create a test issue
-                        local issue_num=$(create_test_issue "Test Issue for $ai_display_name Commands" "This issue is for testing $workflow")
-                        
-                        if [[ -n "$issue_num" ]]; then
-                            success "Created test issue #$issue_num for $workflow: https://github.com/$REPO_OWNER/$REPO_NAME/issues/$issue_num"
-                            
-                            # Run the appropriate test based on workflow type
-                            case "$workflow" in
-                                *"command")
-                                    progress "Testing $ai_display_name command workflow"
-                                    post_issue_command "$issue_num" "/test-${ai_type}-command What is 102+103?"
-                                    wait_for_command_comment "$issue_num" "205" "$workflow" || true
-                                    ;;
-                            esac
-                        else
-                            error "Failed to create test issue for $workflow"
-                            FAILED_TESTS+=("$workflow")
-                        fi
-                        ;;
-                esac
-            else
-                error "Failed to enable workflow '$workflow'"
-                FAILED_TESTS+=("$workflow")
-            fi
-        fi
-    done
-    
-    # Disable workflows after testing - handle failures gracefully  
-    for workflow in "${workflows_to_disable[@]}"; do
-        disable_workflow "$workflow" || warning "Failed to disable workflow '$workflow', continuing..."
-    done
-    
-    if [[ ${#workflows_to_disable[@]} -eq 0 ]]; then
-        info "No command tests selected to run"
-    fi
 }
 
 print_final_report() {
@@ -1374,10 +1254,7 @@ main() {
     echo -e "${CYAN}=================================================${NC}"
     echo
     
-        # Parse command line arguments
-    local run_workflow_dispatch=true
-    local run_issue_triggered=true
-    local run_command_triggered=true
+    # Parse command line arguments
     local dry_run=false
     local specific_tests=()
     
@@ -1387,32 +1264,11 @@ main() {
                 dry_run=true
                 shift
                 ;;
-            --workflow-dispatch-only)
-                run_workflow_dispatch=true
-                run_issue_triggered=false
-                run_command_triggered=false
-                shift
-                ;;
-            --issue-triggered-only)
-                run_workflow_dispatch=false
-                run_issue_triggered=true
-                run_command_triggered=false
-                shift
-                ;;
-            --command-triggered-only)
-                run_workflow_dispatch=false
-                run_issue_triggered=false
-                run_command_triggered=true
-                shift
-                ;;
             --help|-h)
                 echo "Usage: $0 [OPTIONS] [TEST_PATTERNS...]"
                 echo ""
                 echo "Options:"
                 echo "  --dry-run, -n              Show what would be tested without running"
-                echo "  --workflow-dispatch-only   Run only workflow dispatch tests"
-                echo "  --issue-triggered-only     Run only issue-triggered tests"
-                echo "  --command-triggered-only   Run only command-triggered tests"
                 echo "  --help, -h                 Show this help message"
                 echo ""
                 echo "TEST_PATTERNS:"
@@ -1421,7 +1277,7 @@ main() {
                 echo "    ./e2e.sh test-claude-* test-codex-* test-copilot-*"
                 echo "    ./e2e.sh test-*-create-issue"
                 echo ""
-                echo "By default, all test suites are run."
+                echo "By default, all tests are run."
                 exit 0
                 ;;
             -*)
@@ -1446,47 +1302,17 @@ main() {
             echo
         fi
         
-        if [[ "$run_workflow_dispatch" == true ]]; then
-            info "🚀 Workflow Dispatch Tests:"
-            local workflows
-            readarray -t workflows < <(filter_tests_by_patterns "workflow-dispatch" "${specific_tests[@]}")
-            if [[ ${#workflows[@]} -gt 0 ]]; then
-                for workflow in "${workflows[@]}"; do
-                    echo "   - $workflow"
-                done
-            else
-                echo "   (no tests match the specified patterns)"
-            fi
-            echo
+        info "Tests:"
+        local workflows
+        readarray -t workflows < <(filter_tests "${specific_tests[@]}")
+        if [[ ${#workflows[@]} -gt 0 ]]; then
+            for workflow in "${workflows[@]}"; do
+                echo "   - $workflow"
+            done
+        else
+            echo "   (no tests match the specified patterns)"
         fi
-        
-        if [[ "$run_issue_triggered" == true ]]; then
-            info "📝 Issue-Triggered Tests:"
-            local workflows
-            readarray -t workflows < <(filter_tests_by_patterns "issue-triggered" "${specific_tests[@]}")
-            if [[ ${#workflows[@]} -gt 0 ]]; then
-                for workflow in "${workflows[@]}"; do
-                    echo "   - $workflow"
-                done
-            else
-                echo "   (no tests match the specified patterns)"
-            fi
-            echo
-        fi
-        
-        if [[ "$run_command_triggered" == true ]]; then
-            info "� Command-Triggered Tests:"
-            local workflows
-            readarray -t workflows < <(filter_tests_by_patterns "command-triggered" "${specific_tests[@]}")
-            if [[ ${#workflows[@]} -gt 0 ]]; then
-                for workflow in "${workflows[@]}"; do
-                    echo "   - $workflow"
-                done
-            else
-                echo "   (no tests match the specified patterns)"
-            fi
-            echo
-        fi
+        echo
         
         exit 0
     fi
@@ -1495,45 +1321,11 @@ main() {
     
     check_prerequisites
 
-    # If specific tests are provided, determine which test suites need to run
     if [[ ${#specific_tests[@]} -gt 0 ]]; then
         info "🎯 Running specific tests: ${specific_tests[*]}"
-        
-        # Check if any workflow dispatch tests match
-        local wd_tests
-        readarray -t wd_tests < <(filter_tests_by_patterns "workflow-dispatch" "${specific_tests[@]}")
-        if [[ ${#wd_tests[@]} -eq 0 ]]; then
-            run_workflow_dispatch=false
-        fi
-        
-        # Check if any issue triggered tests match
-        local it_tests
-        readarray -t it_tests < <(filter_tests_by_patterns "issue-triggered" "${specific_tests[@]}")
-        if [[ ${#it_tests[@]} -eq 0 ]]; then
-            run_issue_triggered=false
-        fi
-        
-        # Check if any command triggered tests match
-        local ct_tests
-        readarray -t ct_tests < <(filter_tests_by_patterns "command-triggered" "${specific_tests[@]}")
-        if [[ ${#ct_tests[@]} -eq 0 ]]; then
-            run_command_triggered=false
-        fi
-        
     fi
     
-    # Run test suites based on options
-    if [[ "$run_workflow_dispatch" == true ]]; then
-        run_workflow_dispatch_tests "${specific_tests[@]}"
-    fi
-    
-    if [[ "$run_issue_triggered" == true ]]; then
-        run_issue_triggered_tests "${specific_tests[@]}"
-    fi
-    
-    if [[ "$run_command_triggered" == true ]]; then
-        run_command_tests "${specific_tests[@]}"
-    fi
+    run_tests "${specific_tests[@]}"
     
     print_final_report
     
