@@ -3,7 +3,10 @@
 # Cleanup script for GitHub Agentic Workflows test resources
 # This script cleans up test resources (issues, PRs, branches) created during e2e testing
 #
-# Usage: ./clean.sh
+# Usage: ./clean.sh [--dry-run]
+#
+# Options:
+#   --dry-run    Preview what would be deleted without making changes
 #
 # This script will:
 # 1. Close all open issues with cleanup comment
@@ -23,6 +26,7 @@ NC='\033[0m' # No Color
 
 # Configuration
 LOG_FILE="cleanup-$(date +%Y%m%d-%H%M%S).log"
+DRY_RUN=false
 
 # Utility functions
 log() {
@@ -47,6 +51,9 @@ error() {
 
 cleanup_test_resources() {
     info "Cleaning up test resources..."
+    if [[ "$DRY_RUN" == "true" ]]; then
+        warning "DRY RUN MODE - No changes will be made"
+    fi
     local issues_closed=0
     local prs_closed=0
     local discussions_closed=0
@@ -56,11 +63,16 @@ cleanup_test_resources() {
     info "Checking for open issues to close..."
     while read -r issue_num; do
         if [[ -n "$issue_num" ]]; then
-            if gh issue close "$issue_num" --comment "Closed by e2e test cleanup" &>/dev/null; then
-                info "Closed issue #$issue_num"
+            if [[ "$DRY_RUN" == "true" ]]; then
+                info "[DRY RUN] Would close issue #$issue_num"
                 ((issues_closed++))
             else
-                warning "Failed to close issue #$issue_num"
+                if gh issue close "$issue_num" --comment "Closed by e2e test cleanup" &>/dev/null; then
+                    info "Closed issue #$issue_num"
+                    ((issues_closed++))
+                else
+                    warning "Failed to close issue #$issue_num"
+                fi
             fi
         fi
     done < <(gh issue list --limit 20 --json number --jq '.[].number' 2>/dev/null || true)
@@ -69,55 +81,130 @@ cleanup_test_resources() {
     info "Checking for open pull requests to close..."
     while read -r pr_num; do
         if [[ -n "$pr_num" ]]; then
-            if gh pr close "$pr_num" --comment "Closed by e2e test cleanup" &>/dev/null; then
-                info "Closed pull request #$pr_num"
+            if [[ "$DRY_RUN" == "true" ]]; then
+                info "[DRY RUN] Would close pull request #$pr_num"
                 ((prs_closed++))
             else
-                warning "Failed to close pull request #$pr_num"
+                if gh pr close "$pr_num" --comment "Closed by e2e test cleanup" &>/dev/null; then
+                    info "Closed pull request #$pr_num"
+                    ((prs_closed++))
+                else
+                    warning "Failed to close pull request #$pr_num"
+                fi
             fi
         fi
     done < <(gh pr list --limit 20 --json number --jq '.[].number' 2>/dev/null || true)
 
     # Close all discussions
     info "Checking for open discussions to close..."
-    while read -r discussion_id; do
-        if [[ -n "$discussion_id" ]]; then
-            # Close discussion using GraphQL mutation
-            local mutation="mutation {
-              closeDiscussion(input: {discussionId: \"$discussion_id\"}) {
-                discussion {
-                  number
-                }
-              }
-            }"
-            if gh api graphql -f query="$mutation" &>/dev/null; then
-                info "Closed discussion with ID $discussion_id"
-                ((discussions_closed++))
-            else
-                warning "Failed to close discussion with ID $discussion_id"
+    local discussion_count=0
+    
+    # Debug: First check if discussions endpoint works
+    info "Fetching discussions from API..."
+    local api_response=$(gh api repos/:owner/:repo/discussions --paginate 2>&1)
+    local api_exit_code=$?
+    
+    if [[ $api_exit_code -ne 0 ]]; then
+        warning "API call failed with exit code $api_exit_code"
+        echo "API response: $api_response" >> "$LOG_FILE"
+    else
+        info "API call succeeded, processing discussions..."
+        echo "API response: $api_response" >> "$LOG_FILE"
+    fi
+    
+    # Process each discussion JSON object directly from the API
+    # Note: GitHub API uses "state" field with values "open" or "closed", not a boolean "closed" field
+    # Note: GraphQL mutations require node_id (global ID), not the numeric id
+    while IFS= read -r discussion_line; do
+        if [[ -n "$discussion_line" && "$discussion_line" != "null" ]]; then
+            local discussion_node_id=$(echo "$discussion_line" | jq -r '.node_id // empty' 2>/dev/null)
+            local discussion_num=$(echo "$discussion_line" | jq -r '.number // empty' 2>/dev/null)
+            local discussion_title=$(echo "$discussion_line" | jq -r '.title // empty' 2>/dev/null)
+            local discussion_state=$(echo "$discussion_line" | jq -r '.state // empty' 2>/dev/null)
+            
+            info "Processing discussion: NODE_ID=$discussion_node_id, NUM=$discussion_num, STATE=$discussion_state, TITLE=$discussion_title"
+            
+            if [[ -n "$discussion_node_id" && "$discussion_node_id" != "null" && "$discussion_state" == "open" ]]; then
+                ((discussion_count++))
+                info "Found open discussion #$discussion_num: $discussion_title (NODE_ID: $discussion_node_id)"
+                
+                if [[ "$DRY_RUN" == "true" ]]; then
+                    info "[DRY RUN] Would close discussion #$discussion_num (NODE_ID: $discussion_node_id)"
+                    ((discussions_closed++))
+                else
+                    # Close discussion using GraphQL mutation (requires node_id, not numeric id)
+                    local mutation='mutation {
+                      closeDiscussion(input: {discussionId: "'$discussion_node_id'"}) {
+                        discussion {
+                          number
+                        }
+                      }
+                    }'
+                    local result=$(gh api graphql -f query="$mutation" 2>&1)
+                    echo "$result" >> "$LOG_FILE"
+                    
+                    if echo "$result" | grep -q '"number"'; then
+                        success "Closed discussion #$discussion_num (NODE_ID: $discussion_node_id)"
+                        ((discussions_closed++))
+                    else
+                        warning "Failed to close discussion #$discussion_num (NODE_ID: $discussion_node_id)"
+                        echo "$result" | tee -a "$LOG_FILE"
+                    fi
+                fi
             fi
         fi
-    done < <(gh api repos/:owner/:repo/discussions --paginate --jq '.[] | select(.closed == false) | .id' 2>/dev/null || true)
+    done < <(echo "$api_response" | jq -c '.[] | {node_id, number, title, state}' 2>/dev/null || true)
+    
+    if [[ $discussion_count -eq 0 ]]; then
+        info "No open discussions found to close"
+    fi
 
     # Delete test branches
     info "Checking for test branches to delete..."
     while read -r branch; do
         if [[ -n "$branch" ]]; then
-            if git push origin --delete "$branch" &>/dev/null; then
-                info "Deleted branch: $branch"
+            if [[ "$DRY_RUN" == "true" ]]; then
+                info "[DRY RUN] Would delete branch: $branch"
                 ((branches_deleted++))
             else
-                warning "Failed to delete branch: $branch"
+                if git push origin --delete "$branch" &>/dev/null; then
+                    info "Deleted branch: $branch"
+                    ((branches_deleted++))
+                else
+                    warning "Failed to delete branch: $branch"
+                fi
             fi
         fi
     done < <(git branch -r 2>/dev/null | grep 'origin/test-pr-\|origin/claude-test-branch\|origin/codex-test-branch' | sed 's/origin\///' || true)
     
-    success "Cleanup completed: $issues_closed issues closed, $prs_closed PRs closed, $discussions_closed discussions closed, $branches_deleted branches deleted"
+    if [[ "$DRY_RUN" == "true" ]]; then
+        success "[DRY RUN] Would cleanup: $issues_closed issues, $prs_closed PRs, $discussions_closed discussions, $branches_deleted branches"
+    else
+        success "Cleanup completed: $issues_closed issues closed, $prs_closed PRs closed, $discussions_closed discussions closed, $branches_deleted branches deleted"
+    fi
 }
 
 main() {
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --dry-run)
+                DRY_RUN=true
+                shift
+                ;;
+            *)
+                error "Unknown option: $1"
+                echo "Usage: $0 [--dry-run]"
+                exit 1
+                ;;
+        esac
+    done
+    
     echo -e "${CYAN}🧹 GitHub Agentic Workflows Test Resource Cleanup${NC}"
     echo -e "${CYAN}==================================================${NC}"
+    if [[ "$DRY_RUN" == "true" ]]; then
+        echo -e "${YELLOW}🔍 DRY RUN MODE - No changes will be made${NC}"
+    fi
     echo
     
     log "Starting cleanup at $(date)"
