@@ -1004,14 +1004,15 @@ jobs:
           echo "GH_AW_AGENT_OUTPUT=/opt/gh-aw/safe-jobs/agent-output" >> "$GITHUB_ENV"
       - name: print message
         run: |
-          MESSAGE=$(cat "$GITHUB_AW_AGENT_OUTPUT" | jq -r '.items[] | select(.type == "print") | .message')
           if [ -z "$MESSAGE" ]; then
             echo "Error: message is empty"
             exit 1
           fi
           echo "print: $MESSAGE"
           echo "### Print Step Summary" >> "$GITHUB_STEP_SUMMARY"
-          echo "$MESSAGE" >> "$GITHUB_STEP_SUMMARY"
+          echo "$MESSAGE" >> "$GITHUB_STEP_SUMMARY"  
+        env:
+          MESSAGE: ${{ inputs.message }}
 
   safe_outputs:
     needs:
