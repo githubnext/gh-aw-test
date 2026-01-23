@@ -21,7 +21,7 @@ safe-outputs:
           run: cd /tmp/gh-aw/safe-jobs && ls -lR
         - name: print message
           run: |
-              MESSAGE=$(cat "$GITHUB_AW_AGENT_OUTPUT" | jq -r '.items[] | select(.type == "print") | .message')
+              MESSAGE=$(cat "$GH_AW_AGENT_OUTPUT" | jq -r '.items[] | select(.type == "print") | .message')
               if [ -z "$MESSAGE" ]; then
                 echo "Error: message is empty"
                 exit 1

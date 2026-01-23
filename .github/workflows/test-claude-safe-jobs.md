@@ -17,10 +17,11 @@ safe-outputs:
           required: true
           type: string
       steps:
+        - name: See artifacts
+          run: cd /tmp/gh-aw/safe-jobs && ls -lR
         - name: print message
-          env:
-            MESSAGE: "${{ inputs.message }}"
           run: |
+              MESSAGE=$(cat "$GH_AW_AGENT_OUTPUT" | jq -r '.items[] | select(.type == "print") | .message')
               if [ -z "$MESSAGE" ]; then
                 echo "Error: message is empty"
                 exit 1
