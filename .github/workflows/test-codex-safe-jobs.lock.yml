@@ -1002,8 +1002,6 @@ jobs:
         run: |
           find "/opt/gh-aw/safe-jobs/" -type f -print
           echo "GH_AW_AGENT_OUTPUT=/opt/gh-aw/safe-jobs/agent-output" >> "$GITHUB_ENV"
-      - name: See artifacts
-        run: cd /tmp/gh-aw/safe-jobs && ls -lR
       - name: print message
         run: |
           MESSAGE=$(cat "$GH_AW_AGENT_OUTPUT" | jq -r '.items[] | select(.type == "print") | .message')
