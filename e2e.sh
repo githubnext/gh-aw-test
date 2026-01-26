@@ -169,9 +169,9 @@ get_all_tests() {
     echo "test-claude-mcp"
     echo "test-codex-mcp"
     echo "test-copilot-mcp"
-    echo "test-claude-safe-jobs"
-    echo "test-codex-safe-jobs"
-    echo "test-copilot-safe-jobs"
+    echo "test-claude-custom-safe-outputs"
+    echo "test-codex-custom-safe-outputs"
+    echo "test-copilot-custom-safe-outputs"
     # Issue-triggered tests
     echo "test-claude-add-comment"
     echo "test-claude-add-labels"
