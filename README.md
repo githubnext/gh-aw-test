@@ -45,5 +45,5 @@ Nightly GitHub Actions run at 3:00 AM UTC. Manually trigger via Actions → "Nig
 ## Troubleshooting
 
 **Authentication issues**: Run `gh auth login` and `gh auth status`
-**Missing gh-aw**: Script auto-builds it, or manually: `git clone https://github.com/githubnext/gh-aw.git && cd gh-aw && make build`
+**Missing gh-aw**: Script auto-builds it, or manually: `git clone https://github.com/github/gh-aw.git && cd gh-aw && make build`
 **Timeouts**: Check log file `e2e-test-*.log` for details

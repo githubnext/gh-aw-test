@@ -235,16 +235,16 @@ check_prerequisites() {
     info "Checking gh-aw extension..."
     
     # Check if the extension is already installed
-    if gh extension list | grep -q "githubnext/gh-aw"; then
+    if gh extension list | grep -q "github/gh-aw"; then
         info "gh-aw extension already installed, upgrading to latest version..."
-        if gh extension upgrade githubnext/gh-aw &>> "$LOG_FILE"; then
+        if gh extension upgrade github/gh-aw &>> "$LOG_FILE"; then
             success "gh-aw extension upgraded successfully"
         else
             warning "Failed to upgrade gh-aw extension, continuing with existing version"
         fi
     else
         info "Installing gh-aw extension..."
-        if gh extension install githubnext/gh-aw &>> "$LOG_FILE"; then
+        if gh extension install github/gh-aw &>> "$LOG_FILE"; then
             success "gh-aw extension installed successfully"
         else
             error "Failed to install gh-aw extension. Check $LOG_FILE for details"
