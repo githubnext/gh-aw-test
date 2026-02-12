@@ -351,6 +351,7 @@ disable_all_workflows_before_testing() {
     
     # Get list of all workflows with their state
     # Format: workflow_id state
+    progress "Running: gh workflow list --all --json name,state"
     local workflows_output
     workflows_output=$(gh workflow list --all --json name,state --jq '.[] | "\(.name)\t\(.state)"' 2>/dev/null)
     
@@ -365,18 +366,22 @@ disable_all_workflows_before_testing() {
     while IFS=$'\t' read -r workflow_name workflow_state; do
         # Skip if already disabled
         if [[ "$workflow_state" == "disabled_manually" ]] || [[ "$workflow_state" == "disabled_inactivity" ]]; then
+            info "  ⏭️  Skipping '$workflow_name' (already $workflow_state)"
             already_disabled_count=$((already_disabled_count + 1))
             continue
         fi
         
         # Disable the workflow
+        progress "  Disabling '$workflow_name' (currently $workflow_state)..."
         if gh workflow disable "$workflow_name" &>> "$LOG_FILE"; then
+            success "  ✓ Disabled '$workflow_name'"
             disabled_count=$((disabled_count + 1))
         else
             warning "Failed to disable workflow '$workflow_name'"
         fi
     done <<< "$workflows_output"
     
+    echo
     if [[ $disabled_count -gt 0 ]]; then
         success "Disabled $disabled_count workflow(s) ($already_disabled_count were already disabled)"
     else
