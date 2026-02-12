@@ -346,6 +346,44 @@ check_prerequisites() {
     success "Prerequisites check passed"
 }
 
+disable_all_workflows_before_testing() {
+    info "Disabling all workflows that aren't already disabled..."
+    
+    # Get list of all workflows with their state
+    # Format: workflow_id state
+    local workflows_output
+    workflows_output=$(gh workflow list --all --json name,state --jq '.[] | "\(.name)\t\(.state)"' 2>/dev/null)
+    
+    if [[ -z "$workflows_output" ]]; then
+        warning "No workflows found or failed to list workflows"
+        return 0
+    fi
+    
+    local disabled_count=0
+    local already_disabled_count=0
+    
+    while IFS=$'\t' read -r workflow_name workflow_state; do
+        # Skip if already disabled
+        if [[ "$workflow_state" == "disabled_manually" ]] || [[ "$workflow_state" == "disabled_inactivity" ]]; then
+            already_disabled_count=$((already_disabled_count + 1))
+            continue
+        fi
+        
+        # Disable the workflow
+        if gh workflow disable "$workflow_name" &>> "$LOG_FILE"; then
+            disabled_count=$((disabled_count + 1))
+        else
+            warning "Failed to disable workflow '$workflow_name'"
+        fi
+    done <<< "$workflows_output"
+    
+    if [[ $disabled_count -gt 0 ]]; then
+        success "Disabled $disabled_count workflow(s) ($already_disabled_count were already disabled)"
+    else
+        info "All workflows were already disabled ($already_disabled_count total)"
+    fi
+}
+
 wait_for_workflow() {
     local workflow_name="$1"
     local run_id="$2"
@@ -1379,6 +1417,8 @@ main() {
     log "Starting e2e tests at $(date)"
     
     check_prerequisites
+    
+    disable_all_workflows_before_testing
 
     if [[ ${#specific_tests[@]} -gt 0 ]]; then
         info "🎯 Running specific tests: ${specific_tests[*]}"
