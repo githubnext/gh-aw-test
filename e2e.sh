@@ -122,7 +122,15 @@ matches_pattern() {
 extract_ai_type() {
     local workflow_name="$1"
     
-    if [[ "$workflow_name" == *"claude"* ]]; then
+    # Check for nosandbox variants first (more specific)
+    if [[ "$workflow_name" == *"claude-nosandbox"* ]]; then
+        echo "claude-nosandbox"
+    elif [[ "$workflow_name" == *"codex-nosandbox"* ]]; then
+        echo "codex-nosandbox"
+    elif [[ "$workflow_name" == *"copilot-nosandbox"* ]]; then
+        echo "copilot-nosandbox"
+    # Then check for regular variants
+    elif [[ "$workflow_name" == *"claude"* ]]; then
         echo "claude"
     elif [[ "$workflow_name" == *"codex"* ]]; then
         echo "codex"
@@ -131,6 +139,35 @@ extract_ai_type() {
     else
         echo ""
     fi
+}
+
+# Get display name for AI type
+get_ai_display_name() {
+    local ai_type="$1"
+    
+    case "$ai_type" in
+        claude-nosandbox)
+            echo "Claude (No Sandbox)"
+            ;;
+        codex-nosandbox)
+            echo "Codex (No Sandbox)"
+            ;;
+        copilot-nosandbox)
+            echo "Copilot (No Sandbox)"
+            ;;
+        claude)
+            echo "Claude"
+            ;;
+        codex)
+            echo "Codex"
+            ;;
+        copilot)
+            echo "Copilot"
+            ;;
+        *)
+            echo "${ai_type^}"
+            ;;
+    esac
 }
 
 should_run_test() {
@@ -195,6 +232,22 @@ get_all_tests() {
     echo "test-claude-create-pull-request-review-comment"
     echo "test-codex-create-pull-request-review-comment"
     echo "test-copilot-create-pull-request-review-comment"
+    # Nosandbox tests - limited set for claude/codex, full matrix for copilot
+    echo "test-claude-nosandbox-create-issue"
+    echo "test-codex-nosandbox-create-issue"
+    echo "test-copilot-nosandbox-create-issue"
+    echo "test-copilot-nosandbox-create-discussion"
+    echo "test-copilot-nosandbox-create-pull-request"
+    echo "test-copilot-nosandbox-create-repository-code-scanning-alert"
+    echo "test-copilot-nosandbox-mcp"
+    echo "test-copilot-nosandbox-custom-safe-outputs"
+    echo "test-copilot-nosandbox-add-comment"
+    echo "test-copilot-nosandbox-add-labels"
+    echo "test-copilot-nosandbox-add-discussion-comment"
+    echo "test-copilot-nosandbox-update-issue"
+    echo "test-copilot-nosandbox-command"
+    echo "test-copilot-nosandbox-push-to-pull-request-branch"
+    echo "test-copilot-nosandbox-create-pull-request-review-comment"
 }
 
 filter_tests() {
@@ -749,7 +802,13 @@ validate_code_scanning_alert() {
     
     # Determine expected title based on workflow name
     local expected_message
-    if [[ "$workflow_name" == *"claude"* ]]; then
+    if [[ "$workflow_name" == *"claude-nosandbox"* ]]; then
+        expected_message="Claude (No Sandbox) wants security review."
+    elif [[ "$workflow_name" == *"codex-nosandbox"* ]]; then
+        expected_message="Codex (No Sandbox) wants security review."
+    elif [[ "$workflow_name" == *"copilot-nosandbox"* ]]; then
+        expected_message="Copilot (No Sandbox) wants security review."
+    elif [[ "$workflow_name" == *"claude"* ]]; then
         expected_message="Claude wants security review."
     elif [[ "$workflow_name" == *"codex"* ]]; then
         expected_message="Codex wants security review."
@@ -1014,7 +1073,7 @@ run_tests() {
         progress "Testing workflow: $workflow"
         
         local ai_type=$(extract_ai_type "$workflow")
-        local ai_display_name="${ai_type^}"
+        local ai_display_name=$(get_ai_display_name "$ai_type")
         
         # Determine test execution strategy based on workflow name pattern
         case "$workflow" in
