@@ -4,7 +4,8 @@ on:
 
 roles: ["admin", "maintainer", "write"]
 
-permissions: read-all
+permissions:
+  issues: read
 
 engine: 
   id: claude
