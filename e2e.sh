@@ -170,6 +170,28 @@ get_ai_display_name() {
     esac
 }
 
+# Get expected labels for AI type
+# Nosandbox variants use separate labels: base-type, nosandbox, automation
+# Regular variants use: base-type, automation
+get_expected_labels() {
+    local ai_type="$1"
+    
+    case "$ai_type" in
+        claude-nosandbox)
+            echo "claude,nosandbox,automation"
+            ;;
+        codex-nosandbox)
+            echo "codex,nosandbox,automation"
+            ;;
+        copilot-nosandbox)
+            echo "copilot,nosandbox,automation"
+            ;;
+        *)
+            echo "${ai_type},automation"
+            ;;
+    esac
+}
+
 should_run_test() {
     local test_name="$1"
     local patterns=("${@:2}")
@@ -1132,7 +1154,7 @@ run_tests() {
                     case "$workflow" in
                         *"multi")
                             local title_prefix="[${ai_type}-test]"
-                            local expected_labels="${ai_type},automation"
+                            local expected_labels=$(get_expected_labels "$ai_type")
                             if validate_issue_created "$title_prefix" "$expected_labels"; then
                                 validation_success=true
                             fi
@@ -1142,14 +1164,14 @@ run_tests() {
                             ;;
                         *"create-issue")
                             local title_prefix="[${ai_type}-test]"
-                            local expected_labels="${ai_type},automation"
+                            local expected_labels=$(get_expected_labels "$ai_type")
                             if validate_issue_created "$title_prefix" "$expected_labels"; then
                                 validation_success=true
                             fi
                             ;;
                         *"create-discussion")
                             local title_prefix="[${ai_type}-test]"
-                            local expected_labels="${ai_type},automation"
+                            local expected_labels=$(get_expected_labels "$ai_type")
                             if validate_discussion_created "$title_prefix" "$expected_labels"; then
                                 validation_success=true
                             fi
