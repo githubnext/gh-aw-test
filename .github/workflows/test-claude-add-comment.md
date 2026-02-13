@@ -9,6 +9,11 @@ permissions: read-all
 engine: 
   id: claude
 
+tools:
+  github:
+    toolsets: [all]
+    lockdown: false # to see the comment already added
+
 safe-outputs:
   add-comment:
     # min: 1
