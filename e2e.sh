@@ -222,6 +222,9 @@ get_all_tests() {
     echo "test-claude-create-pull-request"
     echo "test-codex-create-pull-request"
     echo "test-copilot-create-pull-request"
+    echo "test-claude-create-two-pull-requests"
+    echo "test-codex-create-two-pull-requests"
+    echo "test-copilot-create-two-pull-requests"
     echo "test-claude-create-code-scanning-alert"
     echo "test-codex-create-repository-code-scanning-alert"
     echo "test-copilot-create-repository-code-scanning-alert"
@@ -260,6 +263,7 @@ get_all_tests() {
     echo "test-copilot-nosandbox-create-issue"
     echo "test-copilot-nosandbox-create-discussion"
     echo "test-copilot-nosandbox-create-pull-request"
+    echo "test-copilot-nosandbox-create-two-pull-requests"
     echo "test-copilot-nosandbox-create-repository-code-scanning-alert"
     echo "test-copilot-nosandbox-mcp"
     echo "test-copilot-nosandbox-custom-safe-outputs"
@@ -844,6 +848,32 @@ validate_pr_created() {
     fi
 }
 
+validate_two_prs_created() {
+    local title_prefix="$1"
+    
+    # Look for recently created PRs with the title prefix
+    local pr_numbers=$(gh pr list --limit 20 --json number,title --jq ".[] | select(.title | startswith(\"$title_prefix\")) | .number")
+    local pr_count=$(echo "$pr_numbers" | grep -c '^')
+    
+    if [[ $pr_count -ge 2 ]]; then
+        local pr_list=$(echo "$pr_numbers" | head -2 | tr '\n' ', ' | sed 's/,$//')
+        success "Two PRs created successfully: #$pr_list"
+        echo "$pr_numbers" | head -2 | while read -r pr_num; do
+            success "  - PR #$pr_num: https://github.com/$REPO_OWNER/$REPO_NAME/pull/$pr_num"
+        done
+        return 0
+    else
+        error "Expected 2 PRs with title prefix '$title_prefix', but found $pr_count"
+        if [[ $pr_count -gt 0 ]]; then
+            echo "$pr_numbers" | while read -r pr_num; do
+                warning "  - Found PR #$pr_num: https://github.com/$REPO_OWNER/$REPO_NAME/pull/$pr_num"
+            done
+        fi
+        return 1
+    fi
+}
+
+
 validate_discussion_created() {
     local title_prefix="$1"
     local expected_labels="$2"
@@ -1173,6 +1203,12 @@ run_tests() {
                             local title_prefix="[${ai_type}-test]"
                             local expected_labels=$(get_expected_labels "$ai_type")
                             if validate_discussion_created "$title_prefix" "$expected_labels"; then
+                                validation_success=true
+                            fi
+                            ;;
+                        *"create-two-pull-requests")
+                            local title_prefix="[${ai_type}-test]"
+                            if validate_two_prs_created "$title_prefix"; then
                                 validation_success=true
                             fi
                             ;;
