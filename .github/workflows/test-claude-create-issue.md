@@ -2,7 +2,7 @@
 on:
   workflow_dispatch:
 
-roles: ["admin", "maintainer", "write"]
+  roles: ["admin", "maintainer", "write"]
 
 permissions:
   issues: read

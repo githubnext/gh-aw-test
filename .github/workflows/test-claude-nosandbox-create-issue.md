@@ -1,10 +1,10 @@
 ---
 on:
   workflow_dispatch:
+  roles: ["admin", "maintainer", "write"]
 
 strict: false
 
-roles: ["admin", "maintainer", "write"]
 
 permissions: read-all
 

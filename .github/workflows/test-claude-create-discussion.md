@@ -1,7 +1,8 @@
 ---
 on:
   workflow_dispatch:
-roles: ["write"]
+  roles: ["write"]
+
 permissions: read-all
 
 engine: 
