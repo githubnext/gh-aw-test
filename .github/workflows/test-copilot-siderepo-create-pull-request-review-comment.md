@@ -1,8 +1,11 @@
 ---
 on:
-  slash_command:
-    name: test-copilot-siderepo-create-pull-request-review-comment
-  reaction: eyes
+  workflow_dispatch:
+    inputs:
+      pull_request_number:
+        description: 'Pull request number'
+        required: true
+        type: number
 
 permissions: read-all
 
@@ -18,6 +21,6 @@ safe-outputs:
     # min: 1
 ---
 
-Analyze the pull request #${{ github.event.pull_request.number }} in repository githubnext/gh-aw-side-repo.
+Analyze the pull request #${{ inputs.pull_request_number }} in repository githubnext/gh-aw-side-repo.
 
 Create 1 review comment on the second line of the first hunk of the first file in the PR, praising the code and suggesting it looks great.

@@ -634,6 +634,60 @@ trigger_workflow_dispatch_and_await_completion() {
     fi
 }
 
+trigger_workflow_with_inputs() {
+    local workflow_name="$1"
+    shift
+    local inputs=("$@")
+    local workflow_file="${workflow_name}.lock.yml"
+    
+    info "Triggering workflow_dispatch for '$workflow_name' with inputs..."
+    
+    # Enable the workflow first
+    if ! enable_workflow "$workflow_name"; then
+        return 1
+    fi
+    
+    # Get the run ID before triggering
+    local before_run_id=$(get_latest_run_id "$workflow_file")
+    
+    # Build the gh workflow run command with inputs
+    local cmd="gh workflow run \"$workflow_file\""
+    for input in "${inputs[@]}"; do
+        cmd+=" -f $input"
+    done
+    cmd+=" &>> \"$LOG_FILE\""
+    
+    # Trigger the workflow using gh workflow run with inputs
+    if eval "$cmd"; then
+        success "Successfully triggered '$workflow_name' with inputs"
+        
+        # Wait a bit for the new run to appear
+        sleep 5
+        
+        # Get the new run ID
+        local after_run_id=$(get_latest_run_id "$workflow_file")
+        
+        if [[ "$after_run_id" != "$before_run_id" && -n "$after_run_id" ]]; then
+            local result=0
+            wait_for_workflow "$workflow_name" "$after_run_id" || result=1
+            
+            # Disable the workflow after running
+            disable_workflow "$workflow_name"
+            
+            return $result
+        else
+            error "Could not find new workflow run for '$workflow_name'"
+            disable_workflow "$workflow_name"
+            return 1
+        fi
+    else
+        error "Failed to trigger '$workflow_name'"
+        disable_workflow "$workflow_name"
+        return 1
+    fi
+}
+
+
 create_test_issue() {
     local title="$1"
     local body="$2"
@@ -1394,6 +1448,93 @@ run_tests() {
         
         # Determine test execution strategy based on workflow name pattern
         case "$workflow" in
+            # Siderepo tests with workflow_dispatch + inputs - need to create prerequisite then trigger
+            *"siderepo-add-comment"|*"siderepo-add-labels"|*"siderepo-update-issue"|*"siderepo-command")
+                local issue_title="Hello from $ai_display_name"
+                local issue_num=$(create_test_issue "$issue_title" "This is a test issue for $workflow" "" "$target_repo")
+                if [[ -n "$issue_num" ]]; then
+                    local repo_url="$REPO_OWNER/$REPO_NAME"
+                    [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                    success "Created test issue #$issue_num for $workflow: https://github.com/$repo_url/issues/$issue_num"
+                    
+                    local workflow_success=false
+                    if trigger_workflow_with_inputs "$workflow" "issue_number=$issue_num"; then
+                        workflow_success=true
+                    fi
+                    
+                    if [[ "$workflow_success" == true ]]; then
+                        sleep 10
+                        case "$workflow" in
+                            *"add-comment"|*"command")
+                                wait_for_comment "$issue_num" "Reply from $ai_display_name" "$workflow" "$target_repo" || true
+                                ;;
+                            *"add-labels")
+                                wait_for_labels "$issue_num" "${ai_type}-safe-output-label-test" "$workflow" "$target_repo" || true
+                                ;;
+                            *"update-issue")
+                                wait_for_issue_update "$issue_num" "$ai_display_name" "$workflow" "$target_repo" || true
+                                ;;
+                        esac
+                    else
+                        error "Workflow '$workflow' failed to complete successfully"
+                        FAILED_TESTS+=("$workflow")
+                    fi
+                else
+                    error "Failed to create test issue for $workflow"
+                    FAILED_TESTS+=("$workflow")
+                fi
+                ;;
+            *"siderepo-add-discussion-comment")
+                local discussion_title="Hello from $ai_display_name Discussion"
+                local discussion_num=$(create_test_discussion "$discussion_title" "This is a test discussion for $workflow" "General" "$target_repo")
+                if [[ -n "$discussion_num" ]]; then
+                    local repo_url="$REPO_OWNER/$REPO_NAME"
+                    [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                    success "Created test discussion #$discussion_num for $workflow: https://github.com/$repo_url/discussions/$discussion_num"
+                    
+                    local workflow_success=false
+                    if trigger_workflow_with_inputs "$workflow" "discussion_number=$discussion_num"; then
+                        workflow_success=true
+                    fi
+                    
+                    if [[ "$workflow_success" == true ]]; then
+                        sleep 10
+                        wait_for_discussion_comment "$discussion_num" "Reply from $ai_display_name Discussion" "$workflow" "$target_repo" || true
+                    else
+                        error "Workflow '$workflow' failed to complete successfully"
+                        FAILED_TESTS+=("$workflow")
+                    fi
+                else
+                    warning "Could not create test discussion for $workflow - discussions may not be enabled on this repository"
+                    PASSED_TESTS+=("$workflow")
+                fi
+                ;;
+            *"siderepo-create-pull-request-review-comment")
+                local pr_title="Test PR for $ai_display_name"
+                local pr_info=$(create_test_pr_with_branch "$pr_title" "This PR is for testing $workflow" "$target_repo")
+                if [[ -n "$pr_info" ]]; then
+                    IFS=',' read -r pr_num branch_name after_commit_sha repo_from_info <<< "$pr_info"
+                    local repo_url="$REPO_OWNER/$REPO_NAME"
+                    [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                    success "Created test PR #$pr_num for $workflow: https://github.com/$repo_url/pull/$pr_num"
+                    
+                    local workflow_success=false
+                    if trigger_workflow_with_inputs "$workflow" "pull_request_number=$pr_num"; then
+                        workflow_success=true
+                    fi
+                    
+                    if [[ "$workflow_success" == true ]]; then
+                        sleep 10
+                        wait_for_pr_reviews "$pr_num" "$ai_display_name" "$workflow" "$target_repo" || true
+                    else
+                        error "Workflow '$workflow' failed to complete successfully"
+                        FAILED_TESTS+=("$workflow")
+                    fi
+                else
+                    error "Failed to create test PR for $workflow"
+                    FAILED_TESTS+=("$workflow")
+                fi
+                ;;
             # Workflow dispatch tests - triggered with gh aw run
             *"create-issue"|*"create-discussion"|*"create-pull-request"|*"code-scanning-alert"|*"mcp"|*"safe-jobs")
                 local workflow_success=false

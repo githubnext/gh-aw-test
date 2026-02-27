@@ -1,8 +1,11 @@
 ---
 on:
-  issues:
-    types: [opened, reopened]
-  reaction: eyes
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'Issue number'
+        required: true
+        type: number
 
 permissions: read-all
 
@@ -17,4 +20,4 @@ safe-outputs:
     # min: 1
 ---
 
-If the title of the issue #${{ github.event.issue.number }} in repository githubnext/gh-aw-side-repo is "Hello from Copilot" then add the label "copilot-safe-output-label-test" to the issue.
+If the title of the issue #${{ inputs.issue_number }} in repository githubnext/gh-aw-side-repo is "Hello from Copilot" then add the label "copilot-safe-output-label-test" to the issue.

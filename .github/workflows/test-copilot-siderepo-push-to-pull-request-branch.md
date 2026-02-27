@@ -1,8 +1,11 @@
 ---
 on:
-  slash_command:
-    name: test-copilot-siderepo-push-to-pull-request-branch
-  reaction: eyes
+  workflow_dispatch:
+    inputs:
+      pull_request_number:
+        description: 'Pull request number'
+        required: true
+        type: number
 
 permissions: read-all
 
@@ -16,7 +19,7 @@ safe-outputs:
     # allowed-repos: ['githubnext/gh-aw-side-repo']
 ---
 
-1. Checkout the pull request branch for PR #${{ github.event.pull_request.number }} in repository githubnext/gh-aw-side-repo
+1. Checkout the pull request branch for PR #${{ inputs.pull_request_number }} in repository githubnext/gh-aw-side-repo
 2. Create a file "README-copilot-test.md" with content:
    ```markdown
    # Copilot Push Test
@@ -28,4 +31,4 @@ safe-outputs:
    print("Hello from Copilot push test")
    ```
 4. Commit both files in separate commits
-5. Push the commits to the pull request branch for PR #${{ github.event.pull_request.number }}
+5. Push the commits to the pull request branch for PR #${{ inputs.pull_request_number }}

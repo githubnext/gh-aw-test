@@ -22,7 +22,7 @@
 # For more information: https://github.github.com/gh-aw/introduction/overview/
 #
 #
-# gh-aw-metadata: {"schema_version":"v1","frontmatter_hash":"aa72b8f105d4408a989cbebd766bee34e0a8491cb6f6875ffec0444a5745c92c","compiler_version":"v0.50.7"}
+# gh-aw-metadata: {"schema_version":"v1","frontmatter_hash":"ae26709629392e56f0c6cf61bc07d698769e1a0b6b7abaa81cdb18985cd0edaa","compiler_version":"v0.50.7"}
 
 name: "Test Copilot Siderepo Create Issue"
 "on":
