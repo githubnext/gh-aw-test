@@ -12,6 +12,11 @@ permissions: read-all
 engine: 
   id: copilot
 
+tools:
+  github:
+    # The GitHub tools must be authorized to read across-repo 
+    github-token: ${{ secrets.TEMP_USER_PAT }}
+
 safe-outputs:
   github-token: ${{ secrets.TEMP_USER_PAT }}
   push-to-pull-request-branch:

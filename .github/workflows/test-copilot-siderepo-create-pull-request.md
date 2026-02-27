@@ -8,6 +8,11 @@ permissions:
 engine: 
   id: copilot
 
+tools:
+  github:
+    # The GitHub tools must be authorized to read across-repo 
+    github-token: ${{ secrets.TEMP_USER_PAT }}
+
 safe-outputs:
   create-pull-request:
     title-prefix: "[copilot-test] "
