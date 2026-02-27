@@ -342,7 +342,6 @@ get_all_tests() {
     echo "test-copilot-siderepo-add-labels"
     echo "test-copilot-siderepo-add-discussion-comment"
     echo "test-copilot-siderepo-update-issue"
-    echo "test-copilot-siderepo-command"
     # echo "test-copilot-siderepo-push-to-pull-request-branch"  # Disabled: doesn't support target-repo
     echo "test-copilot-siderepo-create-pull-request-review-comment"
 }
@@ -1449,13 +1448,15 @@ run_tests() {
         # Determine test execution strategy based on workflow name pattern
         case "$workflow" in
             # Siderepo tests with workflow_dispatch + inputs - need to create prerequisite then trigger
-            *"siderepo-add-comment"|*"siderepo-add-labels"|*"siderepo-update-issue"|*"siderepo-command")
+            *"siderepo-add-comment"|*"siderepo-add-labels"|*"siderepo-update-issue")
+                info "Creating test issue in target repository for $workflow..."
                 local issue_title="Hello from $ai_display_name"
                 local issue_num=$(create_test_issue "$issue_title" "This is a test issue for $workflow" "" "$target_repo")
                 if [[ -n "$issue_num" ]]; then
                     local repo_url="$REPO_OWNER/$REPO_NAME"
                     [[ -n "$target_repo" ]] && repo_url="$target_repo"
                     success "Created test issue #$issue_num for $workflow: https://github.com/$repo_url/issues/$issue_num"
+                    echo ""
                     
                     local workflow_success=false
                     if trigger_workflow_with_inputs "$workflow" "issue_number=$issue_num"; then
@@ -1465,7 +1466,7 @@ run_tests() {
                     if [[ "$workflow_success" == true ]]; then
                         sleep 10
                         case "$workflow" in
-                            *"add-comment"|*"command")
+                            *"add-comment")
                                 wait_for_comment "$issue_num" "Reply from $ai_display_name" "$workflow" "$target_repo" || true
                                 ;;
                             *"add-labels")
@@ -1485,12 +1486,14 @@ run_tests() {
                 fi
                 ;;
             *"siderepo-add-discussion-comment")
+                info "Creating test discussion in target repository for $workflow..."
                 local discussion_title="Hello from $ai_display_name Discussion"
                 local discussion_num=$(create_test_discussion "$discussion_title" "This is a test discussion for $workflow" "General" "$target_repo")
                 if [[ -n "$discussion_num" ]]; then
                     local repo_url="$REPO_OWNER/$REPO_NAME"
                     [[ -n "$target_repo" ]] && repo_url="$target_repo"
                     success "Created test discussion #$discussion_num for $workflow: https://github.com/$repo_url/discussions/$discussion_num"
+                    echo ""
                     
                     local workflow_success=false
                     if trigger_workflow_with_inputs "$workflow" "discussion_number=$discussion_num"; then
@@ -1510,6 +1513,7 @@ run_tests() {
                 fi
                 ;;
             *"siderepo-create-pull-request-review-comment")
+                info "Creating test pull request in target repository for $workflow..."
                 local pr_title="Test PR for $ai_display_name"
                 local pr_info=$(create_test_pr_with_branch "$pr_title" "This PR is for testing $workflow" "$target_repo")
                 if [[ -n "$pr_info" ]]; then
@@ -1517,6 +1521,7 @@ run_tests() {
                     local repo_url="$REPO_OWNER/$REPO_NAME"
                     [[ -n "$target_repo" ]] && repo_url="$target_repo"
                     success "Created test PR #$pr_num for $workflow: https://github.com/$repo_url/pull/$pr_num"
+                    echo ""
                     
                     local workflow_success=false
                     if trigger_workflow_with_inputs "$workflow" "pull_request_number=$pr_num"; then
@@ -1626,6 +1631,7 @@ run_tests() {
                 if [[ "$enable_success" == true ]]; then
                     case "$workflow" in
                         *"add-discussion-comment")
+                            info "Creating test discussion to trigger $workflow..."
                             local discussion_title="Hello from $ai_display_name Discussion"
                             local discussion_num=$(create_test_discussion "$discussion_title" "This is a test discussion to trigger $workflow" "General" "$target_repo")
                             if [[ -n "$discussion_num" ]]; then
@@ -1640,6 +1646,7 @@ run_tests() {
                             fi
                             ;;
                         *"add-comment")
+                            info "Creating test issue to trigger $workflow..."
                             local issue_title="Hello from $ai_display_name"
                             local issue_num=$(create_test_issue "$issue_title" "This is a test issue to trigger $workflow" "" "$target_repo")
                             if [[ -n "$issue_num" ]]; then
@@ -1654,6 +1661,7 @@ run_tests() {
                             fi
                             ;;
                         *"add-labels")
+                            info "Creating test issue to trigger $workflow..."
                             local issue_title="Hello from $ai_display_name"
                             local issue_num=$(create_test_issue "$issue_title" "This is a test issue to trigger $workflow" "" "$target_repo")
                             if [[ -n "$issue_num" ]]; then
@@ -1668,6 +1676,7 @@ run_tests() {
                             fi
                             ;;
                         *"update-issue")
+                            info "Creating test issue to trigger $workflow..."
                             local issue_title="Hello from $ai_display_name"
                             local issue_num=$(create_test_issue "$issue_title" "This is a test issue to trigger $workflow" "" "$target_repo")
                             if [[ -n "$issue_num" ]]; then
@@ -1682,6 +1691,7 @@ run_tests() {
                             fi
                             ;;
                         *"push-to-pull-request-branch")
+                            info "Creating test pull request to trigger $workflow..."
                             local pr_info=$(create_test_pr_with_branch "Test PR for $ai_display_name Push-to-Branch" "This PR is for testing $workflow" "$target_repo")
                             if [[ -n "$pr_info" ]]; then
                                 IFS=',' read -r pr_num branch_name after_commit_sha repo_from_info <<< "$pr_info"
@@ -1696,6 +1706,7 @@ run_tests() {
                             fi
                             ;;
                         *"pull-request-review-comment")
+                            info "Creating test pull request to trigger $workflow..."
                             local pr_num=$(create_test_pr "Test PR for $ai_display_name Review Comments" "This PR is for testing $workflow. Please add review comments." "$target_repo")
                             if [[ -n "$pr_num" ]]; then
                                 local repo_url="$REPO_OWNER/$REPO_NAME"
@@ -1709,6 +1720,7 @@ run_tests() {
                             fi
                             ;;
                         *"command")
+                            info "Creating test issue to trigger $workflow..."
                             local issue_num=$(create_test_issue "Test Issue for $ai_display_name Commands" "This issue is for testing $workflow" "" "$target_repo")
                             if [[ -n "$issue_num" ]]; then
                                 local repo_url="$REPO_OWNER/$REPO_NAME"
