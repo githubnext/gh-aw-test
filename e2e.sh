@@ -77,6 +77,7 @@ REPO_NAME="gh-aw-test"
 TIMEOUT_MINUTES=10
 POLL_INTERVAL=5
 LOG_FILE="e2e-test-$(date +%Y%m%d-%H%M%S).log"
+TEMP_USER_PAT_SET=false
 
 # Utility functions
 log() {
@@ -103,6 +104,50 @@ progress() {
     echo -e "${PURPLE}🔨 $*${NC}" | tee -a "$LOG_FILE"
 }
 
+# Secret management functions
+set_temp_user_pat() {
+    info "Setting TEMP_USER_PAT secret for cross-repo testing..."
+    
+    # Get the current user's PAT
+    local user_pat=$(gh auth token 2>/dev/null)
+    
+    if [[ -z "$user_pat" ]]; then
+        error "Failed to get GitHub auth token. Run 'gh auth login'"
+        return 1
+    fi
+    
+    # Set the secret in the repository
+    if echo "$user_pat" | gh secret set TEMP_USER_PAT --repo "$REPO_OWNER/$REPO_NAME" &>> "$LOG_FILE"; then
+        TEMP_USER_PAT_SET=true
+        success "TEMP_USER_PAT secret set successfully"
+        return 0
+    else
+        error "Failed to set TEMP_USER_PAT secret"
+        return 1
+    fi
+}
+
+delete_temp_user_pat() {
+    if [[ "$TEMP_USER_PAT_SET" == true ]]; then
+        info "Cleaning up TEMP_USER_PAT secret..."
+        if gh secret delete TEMP_USER_PAT --repo "$REPO_OWNER/$REPO_NAME" &>> "$LOG_FILE"; then
+            TEMP_USER_PAT_SET=false
+            success "TEMP_USER_PAT secret deleted successfully"
+            return 0
+        else
+            warning "Failed to delete TEMP_USER_PAT secret (it may not exist)"
+            return 1
+        fi
+    fi
+}
+
+cleanup_on_exit() {
+    echo
+    info "Performing cleanup..."
+    delete_temp_user_pat
+}
+
+
 # Test pattern matching functions
 matches_pattern() {
     local test_name="$1"
@@ -115,6 +160,17 @@ matches_pattern() {
         return 0
     else
         return 1
+    fi
+}
+
+# Get target repo from workflow name (defaults to current repo)
+get_target_repo() {
+    local workflow_name="$1"
+    
+    if [[ "$workflow_name" == *"siderepo"* ]]; then
+        echo "githubnext/gh-aw-side-repo"
+    else
+        echo ""
     fi
 }
 
@@ -274,6 +330,21 @@ get_all_tests() {
     echo "test-copilot-nosandbox-command"
     echo "test-copilot-nosandbox-push-to-pull-request-branch"
     echo "test-copilot-nosandbox-create-pull-request-review-comment"
+    # Siderepo tests - cross-repo private repository tests
+    echo "test-copilot-siderepo-create-issue"
+    echo "test-copilot-siderepo-create-discussion"
+    echo "test-copilot-siderepo-create-pull-request"
+    echo "test-copilot-siderepo-create-two-pull-requests"
+    # echo "test-copilot-siderepo-create-repository-code-scanning-alert"  # Disabled: doesn't support target-repo
+    echo "test-copilot-siderepo-mcp"
+    # echo "test-copilot-siderepo-custom-safe-outputs"  # Disabled: doesn't support target-repo
+    echo "test-copilot-siderepo-add-comment"
+    echo "test-copilot-siderepo-add-labels"
+    echo "test-copilot-siderepo-add-discussion-comment"
+    echo "test-copilot-siderepo-update-issue"
+    echo "test-copilot-siderepo-command"
+    # echo "test-copilot-siderepo-push-to-pull-request-branch"  # Disabled: doesn't support target-repo
+    echo "test-copilot-siderepo-create-pull-request-review-comment"
 }
 
 filter_tests() {
@@ -367,6 +438,12 @@ check_prerequisites() {
         fi
     else
         info "No changes detected after 'gh-aw compile'"
+    fi
+
+    # Set TEMP_USER_PAT secret for cross-repo testing
+    if ! set_temp_user_pat; then
+        error "Failed to set TEMP_USER_PAT secret. Cross-repo tests will fail."
+        exit 1
     fi
 
     success "Prerequisites check passed"
@@ -561,12 +638,18 @@ create_test_issue() {
     local title="$1"
     local body="$2"
     local labels="${3:-}"
+    local repo="${4:-}"
+    
+    local repo_flag=""
+    if [[ -n "$repo" ]]; then
+        repo_flag="--repo $repo"
+    fi
     
     local issue_url
     if [[ -n "$labels" ]]; then
-        issue_url=$(gh issue create --title "$title" --body "$body" --label "$labels" 2>/dev/null)
+        issue_url=$(gh issue create $repo_flag --title "$title" --body "$body" --label "$labels" 2>/dev/null)
     else
-        issue_url=$(gh issue create --title "$title" --body "$body" 2>/dev/null)
+        issue_url=$(gh issue create $repo_flag --title "$title" --body "$body" 2>/dev/null)
     fi
     
     if [[ -n "$issue_url" ]]; then
@@ -581,10 +664,18 @@ create_test_discussion() {
     local title="$1"
     local body="$2"
     local category="${3:-General}"
+    local repo="${4:-}"
+    
+    local owner="$REPO_OWNER"
+    local name="$REPO_NAME"
+    if [[ -n "$repo" ]]; then
+        owner=$(echo "$repo" | cut -d/ -f1)
+        name=$(echo "$repo" | cut -d/ -f2)
+    fi
     
     # Get repository ID using GraphQL
     local repo_query="{
-      repository(owner: \"$REPO_OWNER\", name: \"$REPO_NAME\") {
+      repository(owner: \"$owner\", name: \"$name\") {
         id
       }
     }"
@@ -592,7 +683,7 @@ create_test_discussion() {
     
     # Get category ID using GraphQL  
     local category_query="{
-      repository(owner: \"$REPO_OWNER\", name: \"$REPO_NAME\") {
+      repository(owner: \"$owner\", name: \"$name\") {
         discussionCategories(first: 10) {
           nodes {
             id
@@ -633,10 +724,22 @@ create_test_discussion() {
 create_test_pr() {
     local title="$1"
     local body="$2"
+    local repo="${3:-}"
     local branch="test-pr-$(date +%s)"
     
+    local repo_flag=""
+    local api_repo=":owner/:repo"
+    if [[ -n "$repo" ]]; then
+        repo_flag="--repo $repo"
+        api_repo="$repo"
+    fi
+    
     # Create a remote branch from main without changing local git state
-    git push origin "main:$branch" &>/dev/null
+    if [[ -n "$repo" ]]; then
+        git push "https://github.com/$repo.git" "main:$branch" &>/dev/null
+    else
+        git push origin "main:$branch" &>/dev/null
+    fi
     
     # Create a commit on the remote branch using GitHub API to make it different from main
     local commit_message="Test commit for PR"
@@ -644,18 +747,22 @@ create_test_pr() {
     local file_path="test-file-$(date +%s).md"
     
     # Get the current SHA of the branch
-    local current_sha=$(git ls-remote --heads origin "$branch" 2>/dev/null | cut -f1)
+    local remote_url="origin"
+    if [[ -n "$repo" ]]; then
+        remote_url="https://github.com/$repo.git"
+    fi
+    local current_sha=$(git ls-remote --heads "$remote_url" "$branch" 2>/dev/null | cut -f1)
     
     if [[ -n "$current_sha" ]]; then
         # Create a new file on the branch using GitHub API
-        gh api repos/:owner/:repo/contents/"$file_path" \
+        gh api repos/"$api_repo"/contents/"$file_path" \
             --method PUT \
             --field message="$commit_message" \
             --field content="$(echo -e "$file_content" | base64 -w 0)" \
             --field branch="$branch" &>/dev/null
         
         # Create a PR using the GitHub CLI
-        local pr_url=$(gh pr create --title "$title" --body "$body" --head "$branch" --base main 2>/dev/null)
+        local pr_url=$(gh pr create $repo_flag --title "$title" --body "$body" --head "$branch" --base main 2>/dev/null)
         
         if [[ -n "$pr_url" ]]; then
             local pr_number=$(echo "$pr_url" | grep -o '[0-9]\+$')
@@ -671,10 +778,20 @@ create_test_pr() {
 create_test_pr_with_branch() {
     local title="$1"
     local body="$2"
+    local repo="${3:-}"
     local branch="test-pr-$(date +%s)"
     
+    local repo_flag=""
+    local api_repo=":owner/:repo"
+    local remote_url="origin"
+    if [[ -n "$repo" ]]; then
+        repo_flag="--repo $repo"
+        api_repo="$repo"
+        remote_url="https://github.com/$repo.git"
+    fi
+    
     # Create a remote branch from main without changing local git state
-    git push origin "main:$branch" &>/dev/null
+    git push "$remote_url" "main:$branch" &>/dev/null
     
     # Create a commit on the remote branch using GitHub API to make it different from main
     local commit_message="Test commit for PR"
@@ -682,25 +799,25 @@ create_test_pr_with_branch() {
     local file_path="test-file-$(date +%s).md"
     
     # Get the initial SHA of the branch (before our test commit)
-    local initial_sha=$(git ls-remote --heads origin "$branch" 2>/dev/null | cut -f1)
+    local initial_sha=$(git ls-remote --heads "$remote_url" "$branch" 2>/dev/null | cut -f1)
     
     if [[ -n "$initial_sha" ]]; then
         # Create a new file on the branch using GitHub API
-        gh api repos/:owner/:repo/contents/"$file_path" \
+        gh api repos/"$api_repo"/contents/"$file_path" \
             --method PUT \
             --field message="$commit_message" \
             --field content="$(echo -e "$file_content" | base64 -w 0)" \
             --field branch="$branch" &>/dev/null
         
         # Get the SHA after creating the test commit
-        local after_commit_sha=$(git ls-remote --heads origin "$branch" 2>/dev/null | cut -f1)
+        local after_commit_sha=$(git ls-remote --heads "$remote_url" "$branch" 2>/dev/null | cut -f1)
         
         # Create a PR using the GitHub CLI
-        local pr_url=$(gh pr create --title "$title" --body "$body" --head "$branch" --base main 2>/dev/null)
+        local pr_url=$(gh pr create $repo_flag --title "$title" --body "$body" --head "$branch" --base main 2>/dev/null)
         
         if [[ -n "$pr_url" ]]; then
             local pr_number=$(echo "$pr_url" | grep -o '[0-9]\+$')
-            echo "$pr_number,$branch,$after_commit_sha"
+            echo "$pr_number,$branch,$after_commit_sha,$repo"
         else
             echo ""
         fi
@@ -712,27 +829,47 @@ create_test_pr_with_branch() {
 post_issue_command() {
     local issue_number="$1"
     local command="$2"
+    local repo="${3:-}"
     
-    gh issue comment "$issue_number" --body "$command" &>/dev/null
+    local repo_flag=""
+    if [[ -n "$repo" ]]; then
+        repo_flag="--repo $repo"
+    fi
+    
+    gh issue comment $repo_flag "$issue_number" --body "$command" &>/dev/null
 }
 
 post_pr_command() {
     local pr_number="$1"
     local command="$2"
+    local repo="${3:-}"
     
-    gh pr comment "$pr_number" --body "$command" &>/dev/null
+    local repo_flag=""
+    if [[ -n "$repo" ]]; then
+        repo_flag="--repo $repo"
+    fi
+    
+    gh pr comment $repo_flag "$pr_number" --body "$command" &>/dev/null
 }
 
 validate_issue_created() {
     local title_prefix="$1"
     local expected_labels="$2"
+    local repo="${3:-}"
+    
+    local repo_flag=""
+    local repo_url="$REPO_OWNER/$REPO_NAME"
+    if [[ -n "$repo" ]]; then
+        repo_flag="--repo $repo"
+        repo_url="$repo"
+    fi
     
     # Look for recently created issues with the title prefix
-    local issue_number=$(gh issue list --limit 10 --json number,title,labels --jq ".[] | select(.title | startswith(\"$title_prefix\")) | .number" | head -1)
+    local issue_number=$(gh issue list $repo_flag --limit 10 --json number,title,labels --jq ".[] | select(.title | startswith(\"$title_prefix\")) | .number" | head -1)
     
     if [[ -n "$issue_number" ]]; then
         if [[ -n "$expected_labels" ]]; then
-            local labels=$(gh issue view "$issue_number" --json labels --jq '.labels[].name' | tr '\n' ',' | sed 's/,$//')
+            local labels=$(gh issue view $repo_flag "$issue_number" --json labels --jq '.labels[].name' | tr '\n' ',' | sed 's/,$//')
             for label in ${expected_labels//,/ }; do
                 if [[ "$labels" != *"$label"* ]]; then
                     error "Issue #$issue_number missing expected label: '$label'. Actual labels: '$labels'"
@@ -740,7 +877,7 @@ validate_issue_created() {
                 fi
             done
         fi
-        success "Issue #$issue_number created successfully with expected properties, URL: https://github.com/$REPO_OWNER/$REPO_NAME/issues/$issue_number"
+        success "Issue #$issue_number created successfully with expected properties, URL: https://github.com/$repo_url/issues/$issue_number"
         return 0
     else
         error "No issue found with title prefix: $title_prefix"
@@ -751,8 +888,14 @@ validate_issue_created() {
 validate_comment() {
     local issue_number="$1"
     local expected_comment_text="$2"
+    local repo="${3:-}"
     
-    local comments=$(gh issue view "$issue_number" --json comments --jq '.comments[].body')
+    local repo_flag=""
+    if [[ -n "$repo" ]]; then
+        repo_flag="--repo $repo"
+    fi
+    
+    local comments=$(gh issue view $repo_flag "$issue_number" --json comments --jq '.comments[].body')
     
     if echo "$comments" | grep -q "$expected_comment_text"; then
         success "Issue #$issue_number has expected comment containing: $expected_comment_text"
@@ -766,8 +909,14 @@ validate_comment() {
 validate_labels() {
     local issue_number="$1"
     local expected_label="$2"
+    local repo="${3:-}"
     
-    local labels=$(gh issue view "$issue_number" --json labels --jq '.labels[].name' | tr '\n' ',')
+    local repo_flag=""
+    if [[ -n "$repo" ]]; then
+        repo_flag="--repo $repo"
+    fi
+    
+    local labels=$(gh issue view $repo_flag "$issue_number" --json labels --jq '.labels[].name' | tr '\n' ',')
     
     if [[ "$labels" == *"$expected_label"* ]]; then
         success "Issue #$issue_number has expected label: $expected_label"
@@ -781,9 +930,15 @@ validate_labels() {
 validate_issue_updated() {
     local issue_number="$1"
     local ai_type="$2"  # "Claude", "Codex", or "Copilot"
+    local repo="${3:-}"
+    
+    local repo_flag=""
+    if [[ -n "$repo" ]]; then
+        repo_flag="--repo $repo"
+    fi
     
     # Check for various signs that the issue was updated by the AI
-    local issue_data=$(gh issue view "$issue_number" --json title,body,comments,labels,state 2>/dev/null)
+    local issue_data=$(gh issue view $repo_flag "$issue_number" --json title,body,comments,labels,state 2>/dev/null)
     
     if [[ -z "$issue_data" ]]; then
         error "Could not retrieve issue #$issue_number data"
@@ -835,12 +990,20 @@ validate_issue_updated() {
 
 validate_pr_created() {
     local title_prefix="$1"
+    local repo="${2:-}"
+    
+    local repo_flag=""
+    local repo_url="$REPO_OWNER/$REPO_NAME"
+    if [[ -n "$repo" ]]; then
+        repo_flag="--repo $repo"
+        repo_url="$repo"
+    fi
     
     # Look for recently created PRs with the title prefix
-    local pr_number=$(gh pr list --limit 10 --json number,title --jq ".[] | select(.title | startswith(\"$title_prefix\")) | .number" | head -1)
+    local pr_number=$(gh pr list $repo_flag --limit 10 --json number,title --jq ".[] | select(.title | startswith(\"$title_prefix\")) | .number" | head -1)
     
     if [[ -n "$pr_number" ]]; then
-        success "PR #$pr_number created successfully, https://github.com/$REPO_OWNER/$REPO_NAME/pull/$pr_number"
+        success "PR #$pr_number created successfully, https://github.com/$repo_url/pull/$pr_number"
         return 0
     else
         error "No PR found with title prefix: $title_prefix"
@@ -850,23 +1013,31 @@ validate_pr_created() {
 
 validate_two_prs_created() {
     local title_prefix="$1"
+    local repo="${2:-}"
+    
+    local repo_flag=""
+    local repo_url="$REPO_OWNER/$REPO_NAME"
+    if [[ -n "$repo" ]]; then
+        repo_flag="--repo $repo"
+        repo_url="$repo"
+    fi
     
     # Look for recently created PRs with the title prefix
-    local pr_numbers=$(gh pr list --limit 20 --json number,title --jq ".[] | select(.title | startswith(\"$title_prefix\")) | .number")
+    local pr_numbers=$(gh pr list $repo_flag --limit 20 --json number,title --jq ".[] | select(.title | startswith(\"$title_prefix\")) | .number")
     local pr_count=$(echo "$pr_numbers" | grep -c '^')
     
     if [[ $pr_count -ge 2 ]]; then
         local pr_list=$(echo "$pr_numbers" | head -2 | tr '\n' ', ' | sed 's/,$//')
         success "Two PRs created successfully: #$pr_list"
         echo "$pr_numbers" | head -2 | while read -r pr_num; do
-            success "  - PR #$pr_num: https://github.com/$REPO_OWNER/$REPO_NAME/pull/$pr_num"
+            success "  - PR #$pr_num: https://github.com/$repo_url/pull/$pr_num"
         done
         return 0
     else
         error "Expected 2 PRs with title prefix '$title_prefix', but found $pr_count"
         if [[ $pr_count -gt 0 ]]; then
             echo "$pr_numbers" | while read -r pr_num; do
-                warning "  - Found PR #$pr_num: https://github.com/$REPO_OWNER/$REPO_NAME/pull/$pr_num"
+                warning "  - Found PR #$pr_num: https://github.com/$repo_url/pull/$pr_num"
             done
         fi
         return 1
@@ -877,14 +1048,22 @@ validate_two_prs_created() {
 validate_discussion_created() {
     local title_prefix="$1"
     local expected_labels="$2"
+    local repo="${3:-}"
+    
+    local api_repo=":owner/:repo"
+    local repo_url="$REPO_OWNER/$REPO_NAME"
+    if [[ -n "$repo" ]]; then
+        api_repo="$repo"
+        repo_url="$repo"
+    fi
     
     # Look for recently created discussions with the title prefix
     # Note: GitHub CLI discussions support may be limited, so we use API
-    local discussions=$(gh api repos/:owner/:repo/discussions --paginate --jq ".[] | select(.title | startswith(\"$title_prefix\")) | .number" 2>/dev/null | head -1)
+    local discussions=$(gh api repos/"$api_repo"/discussions --paginate --jq ".[] | select(.title | startswith(\"$title_prefix\")) | .number" 2>/dev/null | head -1)
     
     if [[ -n "$discussions" ]]; then
         local discussion_number="$discussions"
-        success "Discussion #$discussion_number created successfully with title prefix '$title_prefix', URL: https://github.com/$REPO_OWNER/$REPO_NAME/discussions/$discussion_number"
+        success "Discussion #$discussion_number created successfully with title prefix '$title_prefix', URL: https://github.com/$repo_url/discussions/$discussion_number"
         return 0
     else
         error "No discussion found with title prefix: $title_prefix"
@@ -894,6 +1073,12 @@ validate_discussion_created() {
 
 validate_code_scanning_alert() {
     local workflow_name="$1"
+    local repo="${2:-}"
+    
+    local api_repo=":owner/:repo"
+    if [[ -n "$repo" ]]; then
+        api_repo="$repo"
+    fi
     
     # Determine expected title based on workflow name
     local expected_message
@@ -914,7 +1099,7 @@ validate_code_scanning_alert() {
     fi
     
     # Check for code scanning alerts with the specific title
-    local code_scanning_alerts=$(gh api repos/:owner/:repo/code-scanning/alerts?state=open --jq ".[] | select(.most_recent_instance.message.text | contains(\"$expected_message\")) | .most_recent_instance.message.text" 2>/dev/null || echo "")
+    local code_scanning_alerts=$(gh api repos/"$api_repo"/code-scanning/alerts?state=open --jq ".[] | select(.most_recent_instance.message.text | contains(\"$expected_message\")) | .most_recent_instance.message.text" 2>/dev/null || echo "")
     
     if [[ -n "$code_scanning_alerts" ]]; then
         success "Security report workflow '$workflow_name' created security advisory with expected message: '$expected_message'"
@@ -927,10 +1112,16 @@ validate_code_scanning_alert() {
 
 validate_mcp_workflow() {
     local workflow_name="$1"
+    local repo="${2:-}"
+    
+    local repo_flag=""
+    if [[ -n "$repo" ]]; then
+        repo_flag="--repo $repo"
+    fi
     
     # MCP workflows typically create issues with specific patterns indicating MCP tool usage
     # Look for issues with MCP-specific content patterns
-    local recent_issues=$(gh issue list --limit 5 --json title,body --jq '.[] | select(.body | contains("MCP time tool") or contains("current time is") or contains("UTC")) | .title' | head -1)
+    local recent_issues=$(gh issue list $repo_flag --limit 5 --json title,body --jq '.[] | select(.body | contains("MCP time tool") or contains("current time is") or contains("UTC")) | .title' | head -1)
 
     echo "$recent_issues"  # For debugging purposes
     
@@ -939,7 +1130,7 @@ validate_mcp_workflow() {
         return 0
     else
         # Fallback to original time-based check for broader compatibility
-        local time_issues=$(gh issue list --limit 5 --json title,body --jq '.[] | select(.title or .body | contains("time") or contains("Time") or contains("timestamp") or contains("Timestamp")) | .title' | head -1)
+        local time_issues=$(gh issue list $repo_flag --limit 5 --json title,body --jq '.[] | select(.title or .body | contains("time") or contains("Time") or contains("timestamp") or contains("Timestamp")) | .title' | head -1)
         
         if [[ -n "$time_issues" ]]; then
             success "MCP workflow '$workflow_name' appears to have used MCP tools successfully (time-based detection)"
@@ -954,8 +1145,14 @@ validate_mcp_workflow() {
 validate_branch_updated() {
     local branch_name="$1"
     local initial_sha="$2"
+    local repo="${3:-}"
     
-    local current_sha=$(git ls-remote --heads origin "$branch_name" 2>/dev/null | cut -f1)
+    local remote_url="origin"
+    if [[ -n "$repo" ]]; then
+        remote_url="https://github.com/$repo.git"
+    fi
+    
+    local current_sha=$(git ls-remote --heads "$remote_url" "$branch_name" 2>/dev/null | cut -f1)
     
     if [[ -z "$current_sha" ]]; then
         warning "(polling) Branch '$branch_name' not found"
@@ -972,9 +1169,15 @@ validate_branch_updated() {
 validate_pr_reviews() {
     local pr_number="$1"
     local ai_type="$2"  # "Claude", "Codex", or "Copilot"
+    local repo="${3:-}"
+    
+    local api_repo=":owner/:repo"
+    if [[ -n "$repo" ]]; then
+        api_repo="$repo"
+    fi
     
     # Get PR reviews (once a comment is made it shows up as a review)
-    local reviews=$(gh api repos/:owner/:repo/pulls/"$pr_number"/reviews 2>/dev/null | jq -r '.[].state // empty' 2>/dev/null || echo "")
+    local reviews=$(gh api repos/"$api_repo"/pulls/"$pr_number"/reviews 2>/dev/null | jq -r '.[].state // empty' 2>/dev/null || echo "")
     
     if [[ -n "$reviews" ]]; then
         # Check if any comment contains AI-specific content or expected patterns
@@ -991,11 +1194,12 @@ wait_for_comment() {
     local issue_number="$1"
     local expected_text="$2"
     local test_name="$3"
+    local repo="${4:-}"
     local max_wait=240 # Max wait time in seconds (4 minutes)
     local waited=0
     
     while [[ $waited -lt $max_wait ]]; do
-        if validate_comment "$issue_number" "$expected_text"; then
+        if validate_comment "$issue_number" "$expected_text" "$repo"; then
             PASSED_TESTS+=("$test_name")
             return 0
         fi
@@ -1012,11 +1216,12 @@ wait_for_labels() {
     local issue_number="$1"
     local expected_label="$2"
     local test_name="$3"
+    local repo="${4:-}"
     local max_wait=240 # Max wait time in seconds (4 minutes)
     local waited=0
     
     while [[ $waited -lt $max_wait ]]; do
-        if validate_labels "$issue_number" "$expected_label"; then
+        if validate_labels "$issue_number" "$expected_label" "$repo"; then
             PASSED_TESTS+=("$test_name")
             return 0
         fi
@@ -1033,11 +1238,12 @@ wait_for_issue_update() {
     local issue_number="$1"
     local ai_type="$2"
     local test_name="$3"
+    local repo="${4:-}"
     local max_wait=240 # Max wait time in seconds (4 minutes)
     local waited=0
     
     while [[ $waited -lt $max_wait ]]; do
-        if validate_issue_updated "$issue_number" "$ai_type"; then
+        if validate_issue_updated "$issue_number" "$ai_type" "$repo"; then
             PASSED_TESTS+=("$test_name")
             return 0
         fi
@@ -1054,11 +1260,12 @@ wait_for_command_comment() {
     local issue_number="$1"
     local expected_text="$2"
     local test_name="$3"
+    local repo="${4:-}"
     local max_wait=240 # Max wait time in seconds (4 minutes)
     local waited=0
     
     while [[ $waited -lt $max_wait ]]; do
-        if validate_comment "$issue_number" "$expected_text"; then
+        if validate_comment "$issue_number" "$expected_text" "$repo"; then
             PASSED_TESTS+=("$test_name")
             return 0
         fi
@@ -1075,11 +1282,12 @@ wait_for_branch_update() {
     local branch_name="$1"
     local initial_sha="$2"
     local test_name="$3"
+    local repo="${4:-}"
     local max_wait=240 # Max wait time in seconds (4 minutes)
     local waited=0
     
     while [[ $waited -lt $max_wait ]]; do
-        if validate_branch_updated "$branch_name" "$initial_sha"; then
+        if validate_branch_updated "$branch_name" "$initial_sha" "$repo"; then
             PASSED_TESTS+=("$test_name")
             return 0
         fi
@@ -1096,11 +1304,12 @@ wait_for_pr_reviews() {
     local pr_number="$1"
     local ai_type="$2"
     local test_name="$3"
+    local repo="${4:-}"
     local max_wait=240 # Max wait time in seconds (4 minutes)
     local waited=0
     
     while [[ $waited -lt $max_wait ]]; do
-        if validate_pr_reviews "$pr_number" "$ai_type"; then
+        if validate_pr_reviews "$pr_number" "$ai_type" "$repo"; then
             PASSED_TESTS+=("$test_name")
             return 0
         fi
@@ -1116,9 +1325,15 @@ wait_for_pr_reviews() {
 validate_discussion_comment() {
     local discussion_number="$1"
     local expected_comment_text="$2"
+    local repo="${3:-}"
+    
+    local api_repo=":owner/:repo"
+    if [[ -n "$repo" ]]; then
+        api_repo="$repo"
+    fi
     
     # Get discussion comments using GitHub API
-    local comments=$(gh api repos/:owner/:repo/discussions/"$discussion_number"/comments --jq '.[].body' 2>/dev/null || echo "")
+    local comments=$(gh api repos/"$api_repo"/discussions/"$discussion_number"/comments --jq '.[].body' 2>/dev/null || echo "")
     
     if echo "$comments" | grep -q "$expected_comment_text"; then
         success "Discussion #$discussion_number has expected comment containing: $expected_comment_text"
@@ -1133,11 +1348,12 @@ wait_for_discussion_comment() {
     local discussion_number="$1"
     local expected_text="$2"
     local test_name="$3"
+    local repo="${4:-}"
     local max_wait=240 # Max wait time in seconds (4 minutes)
     local waited=0
     
     while [[ $waited -lt $max_wait ]]; do
-        if validate_discussion_comment "$discussion_number" "$expected_text"; then
+        if validate_discussion_comment "$discussion_number" "$expected_text" "$repo"; then
             PASSED_TESTS+=("$test_name")
             return 0
         fi
@@ -1169,6 +1385,12 @@ run_tests() {
         
         local ai_type=$(extract_ai_type "$workflow")
         local ai_display_name=$(get_ai_display_name "$ai_type")
+        local target_repo=$(get_target_repo "$workflow")
+        local repo_display=""
+        if [[ -n "$target_repo" ]]; then
+            repo_display=" (target: $target_repo)"
+            info "Cross-repo test targeting: $target_repo"
+        fi
         
         # Determine test execution strategy based on workflow name pattern
         case "$workflow" in
@@ -1185,46 +1407,46 @@ run_tests() {
                         *"multi")
                             local title_prefix="[${ai_type}-test]"
                             local expected_labels=$(get_expected_labels "$ai_type")
-                            if validate_issue_created "$title_prefix" "$expected_labels"; then
+                            if validate_issue_created "$title_prefix" "$expected_labels" "$target_repo"; then
                                 validation_success=true
                             fi
-                            if validate_pr_created "$title_prefix"; then
+                            if validate_pr_created "$title_prefix" "$target_repo"; then
                                 validation_success=true
                             fi
                             ;;
                         *"create-issue")
                             local title_prefix="[${ai_type}-test]"
                             local expected_labels=$(get_expected_labels "$ai_type")
-                            if validate_issue_created "$title_prefix" "$expected_labels"; then
+                            if validate_issue_created "$title_prefix" "$expected_labels" "$target_repo"; then
                                 validation_success=true
                             fi
                             ;;
                         *"create-discussion")
                             local title_prefix="[${ai_type}-test]"
                             local expected_labels=$(get_expected_labels "$ai_type")
-                            if validate_discussion_created "$title_prefix" "$expected_labels"; then
+                            if validate_discussion_created "$title_prefix" "$expected_labels" "$target_repo"; then
                                 validation_success=true
                             fi
                             ;;
                         *"create-two-pull-requests")
                             local title_prefix="[${ai_type}-test]"
-                            if validate_two_prs_created "$title_prefix"; then
+                            if validate_two_prs_created "$title_prefix" "$target_repo"; then
                                 validation_success=true
                             fi
                             ;;
                         *"create-pull-request")
                             local title_prefix="[${ai_type}-test]"
-                            if validate_pr_created "$title_prefix"; then
+                            if validate_pr_created "$title_prefix" "$target_repo"; then
                                 validation_success=true
                             fi
                             ;;
                         *"code-scanning-alert")
-                            if validate_code_scanning_alert "$workflow"; then
+                            if validate_code_scanning_alert "$workflow" "$target_repo"; then
                                 validation_success=true
                             fi
                             ;;
                         *"mcp")
-                            if validate_mcp_workflow "$workflow"; then
+                            if validate_mcp_workflow "$workflow" "$target_repo"; then
                                 validation_success=true
                             fi
                             ;;
@@ -1264,11 +1486,13 @@ run_tests() {
                     case "$workflow" in
                         *"add-discussion-comment")
                             local discussion_title="Hello from $ai_display_name Discussion"
-                            local discussion_num=$(create_test_discussion "$discussion_title" "This is a test discussion to trigger $workflow")
+                            local discussion_num=$(create_test_discussion "$discussion_title" "This is a test discussion to trigger $workflow" "General" "$target_repo")
                             if [[ -n "$discussion_num" ]]; then
-                                success "Created test discussion #$discussion_num to trigger $workflow: https://github.com/$REPO_OWNER/$REPO_NAME/discussions/$discussion_num"
+                                local repo_url="$REPO_OWNER/$REPO_NAME"
+                                [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                success "Created test discussion #$discussion_num to trigger $workflow: https://github.com/$repo_url/discussions/$discussion_num"
                                 sleep 10
-                                wait_for_discussion_comment "$discussion_num" "Reply from $ai_display_name Discussion" "$workflow" || true
+                                wait_for_discussion_comment "$discussion_num" "Reply from $ai_display_name Discussion" "$workflow" "$target_repo" || true
                             else
                                 warning "Could not create test discussion for $workflow - discussions may not be enabled on this repository"
                                 PASSED_TESTS+=("$workflow")
@@ -1276,11 +1500,13 @@ run_tests() {
                             ;;
                         *"add-comment")
                             local issue_title="Hello from $ai_display_name"
-                            local issue_num=$(create_test_issue "$issue_title" "This is a test issue to trigger $workflow")
+                            local issue_num=$(create_test_issue "$issue_title" "This is a test issue to trigger $workflow" "" "$target_repo")
                             if [[ -n "$issue_num" ]]; then
-                                success "Created test issue #$issue_num for $workflow: https://github.com/$REPO_OWNER/$REPO_NAME/issues/$issue_num"
+                                local repo_url="$REPO_OWNER/$REPO_NAME"
+                                [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                success "Created test issue #$issue_num for $workflow: https://github.com/$repo_url/issues/$issue_num"
                                 sleep 10
-                                wait_for_comment "$issue_num" "Reply from $ai_display_name" "$workflow" || true
+                                wait_for_comment "$issue_num" "Reply from $ai_display_name" "$workflow" "$target_repo" || true
                             else
                                 error "Failed to create test issue for $workflow"
                                 FAILED_TESTS+=("$workflow")
@@ -1288,11 +1514,13 @@ run_tests() {
                             ;;
                         *"add-labels")
                             local issue_title="Hello from $ai_display_name"
-                            local issue_num=$(create_test_issue "$issue_title" "This is a test issue to trigger $workflow")
+                            local issue_num=$(create_test_issue "$issue_title" "This is a test issue to trigger $workflow" "" "$target_repo")
                             if [[ -n "$issue_num" ]]; then
-                                success "Created test issue #$issue_num for $workflow: https://github.com/$REPO_OWNER/$REPO_NAME/issues/$issue_num"
+                                local repo_url="$REPO_OWNER/$REPO_NAME"
+                                [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                success "Created test issue #$issue_num for $workflow: https://github.com/$repo_url/issues/$issue_num"
                                 sleep 10
-                                wait_for_labels "$issue_num" "${ai_type}-safe-output-label-test" "$workflow" || true
+                                wait_for_labels "$issue_num" "${ai_type}-safe-output-label-test" "$workflow" "$target_repo" || true
                             else
                                 error "Failed to create test issue for $workflow"
                                 FAILED_TESTS+=("$workflow")
@@ -1300,45 +1528,53 @@ run_tests() {
                             ;;
                         *"update-issue")
                             local issue_title="Hello from $ai_display_name"
-                            local issue_num=$(create_test_issue "$issue_title" "This is a test issue to trigger $workflow")
+                            local issue_num=$(create_test_issue "$issue_title" "This is a test issue to trigger $workflow" "" "$target_repo")
                             if [[ -n "$issue_num" ]]; then
-                                success "Created test issue #$issue_num for $workflow: https://github.com/$REPO_OWNER/$REPO_NAME/issues/$issue_num"
+                                local repo_url="$REPO_OWNER/$REPO_NAME"
+                                [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                success "Created test issue #$issue_num for $workflow: https://github.com/$repo_url/issues/$issue_num"
                                 sleep 10
-                                wait_for_issue_update "$issue_num" "$ai_display_name" "$workflow" || true
+                                wait_for_issue_update "$issue_num" "$ai_display_name" "$workflow" "$target_repo" || true
                             else
                                 error "Failed to create test issue for $workflow"
                                 FAILED_TESTS+=("$workflow")
                             fi
                             ;;
                         *"push-to-pull-request-branch")
-                            local pr_info=$(create_test_pr_with_branch "Test PR for $ai_display_name Push-to-Branch" "This PR is for testing $workflow")
+                            local pr_info=$(create_test_pr_with_branch "Test PR for $ai_display_name Push-to-Branch" "This PR is for testing $workflow" "$target_repo")
                             if [[ -n "$pr_info" ]]; then
-                                IFS=',' read -r pr_num branch_name after_commit_sha <<< "$pr_info"
-                                success "Created test PR #$pr_num for $workflow with branch '$branch_name': https://github.com/$REPO_OWNER/$REPO_NAME/pull/$pr_num"
-                                post_pr_command "$pr_num" "/test-${ai_type}-push-to-pull-request-branch"
-                                wait_for_branch_update "$branch_name" "$after_commit_sha" "$workflow" || true
+                                IFS=',' read -r pr_num branch_name after_commit_sha repo_from_info <<< "$pr_info"
+                                local repo_url="$REPO_OWNER/$REPO_NAME"
+                                [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                success "Created test PR #$pr_num for $workflow with branch '$branch_name': https://github.com/$repo_url/pull/$pr_num"
+                                post_pr_command "$pr_num" "/test-${ai_type}-push-to-pull-request-branch" "$target_repo"
+                                wait_for_branch_update "$branch_name" "$after_commit_sha" "$workflow" "$target_repo" || true
                             else
                                 error "Failed to create test PR for $workflow"
                                 FAILED_TESTS+=("$workflow")
                             fi
                             ;;
                         *"pull-request-review-comment")
-                            local pr_num=$(create_test_pr "Test PR for $ai_display_name Review Comments" "This PR is for testing $workflow. Please add review comments.")
+                            local pr_num=$(create_test_pr "Test PR for $ai_display_name Review Comments" "This PR is for testing $workflow. Please add review comments." "$target_repo")
                             if [[ -n "$pr_num" ]]; then
-                                success "Created test PR #$pr_num for $workflow: https://github.com/$REPO_OWNER/$REPO_NAME/pull/$pr_num"
-                                post_pr_command "$pr_num" "/test-${ai_type}-create-pull-request-review-comment"
-                                wait_for_pr_reviews "$pr_num" "$ai_display_name" "$workflow" || true
+                                local repo_url="$REPO_OWNER/$REPO_NAME"
+                                [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                success "Created test PR #$pr_num for $workflow: https://github.com/$repo_url/pull/$pr_num"
+                                post_pr_command "$pr_num" "/test-${ai_type}-create-pull-request-review-comment" "$target_repo"
+                                wait_for_pr_reviews "$pr_num" "$ai_display_name" "$workflow" "$target_repo" || true
                             else
                                 error "Failed to create test PR for $workflow"
                                 FAILED_TESTS+=("$workflow")
                             fi
                             ;;
                         *"command")
-                            local issue_num=$(create_test_issue "Test Issue for $ai_display_name Commands" "This issue is for testing $workflow")
+                            local issue_num=$(create_test_issue "Test Issue for $ai_display_name Commands" "This issue is for testing $workflow" "" "$target_repo")
                             if [[ -n "$issue_num" ]]; then
-                                success "Created test issue #$issue_num for $workflow: https://github.com/$REPO_OWNER/$REPO_NAME/issues/$issue_num"
-                                post_issue_command "$issue_num" "/test-${ai_type}-command What is 102+103?"
-                                wait_for_command_comment "$issue_num" "205" "$workflow" || true
+                                local repo_url="$REPO_OWNER/$REPO_NAME"
+                                [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                success "Created test issue #$issue_num for $workflow: https://github.com/$repo_url/issues/$issue_num"
+                                post_issue_command "$issue_num" "/test-${ai_type}-command What is 102+103?" "$target_repo"
+                                wait_for_command_comment "$issue_num" "205" "$workflow" "$target_repo" || true
                             else
                                 error "Failed to create test issue for $workflow"
                                 FAILED_TESTS+=("$workflow")
@@ -1491,10 +1727,13 @@ main() {
     
     print_final_report
     
+    # Cleanup TEMP_USER_PAT secret
+    cleanup_on_exit
+    
     log "E2E tests completed at $(date)"
 }
 
 # Handle script interruption
-trap 'error "Script interrupted"; exit 130' INT TERM
+trap 'error "Script interrupted"; cleanup_on_exit; exit 130' INT TERM
 
 main "$@"
