@@ -9,10 +9,10 @@ engine:
   id: copilot
 
 safe-outputs:
+  github-token: ${{ secrets.TEMP_USER_PAT }}
   create-issue:
     target-repo: 'githubnext/gh-aw-side-repo'
     allowed-repos: ['githubnext/gh-aw-side-repo']
-    # github-token: ${{ secrets.TEMP_USER_PAT }}
     # min: 1
 ---
 

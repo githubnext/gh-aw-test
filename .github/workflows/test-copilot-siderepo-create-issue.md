@@ -14,7 +14,6 @@ safe-outputs:
     labels: [copilot, automation, haiku]
     target-repo: 'githubnext/gh-aw-side-repo'
     allowed-repos: ['githubnext/gh-aw-side-repo']
-    # github-token: ${{ secrets.TEMP_USER_PAT }}
     # min: 1
 ---
 

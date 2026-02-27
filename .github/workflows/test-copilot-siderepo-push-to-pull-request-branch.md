@@ -10,10 +10,10 @@ engine:
   id: copilot
 
 safe-outputs:
+  github-token: ${{ secrets.TEMP_USER_PAT }}
   push-to-pull-request-branch:
     # target-repo: 'githubnext/gh-aw-side-repo'
     # allowed-repos: ['githubnext/gh-aw-side-repo']
-    # github-token: ${{ secrets.TEMP_USER_PAT }}
 ---
 
 1. Checkout the pull request branch for PR #${{ github.event.pull_request.number }} in repository githubnext/gh-aw-side-repo

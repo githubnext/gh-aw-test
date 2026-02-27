@@ -8,11 +8,11 @@ engine:
   id: copilot
 
 safe-outputs:
+  github-token: ${{ secrets.TEMP_USER_PAT }}
   create-discussion:
     title-prefix: "[copilot-test] "
     target-repo: 'githubnext/gh-aw-side-repo'
     allowed-repos: ['githubnext/gh-aw-side-repo']
-    # github-token: ${{ secrets.TEMP_USER_PAT }}
     # categories:
     # min: 1
 ---
