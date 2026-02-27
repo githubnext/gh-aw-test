@@ -560,8 +560,8 @@ enable_workflow() {
     local workflow_name="$1"
     
     info "Enabling workflow '$workflow_name'..."
-    # Pipe output through tee but ensure the function sees gh-aw's exit code
-    gh aw enable "$workflow_name"
+    # Redirect gh aw enable output to log file to prevent terminal control codes from clearing previous output
+    gh aw enable "$workflow_name" &>> "$LOG_FILE"
     local rc=$?
     if [[ $rc -eq 0 ]]; then
         success "Successfully enabled '$workflow_name'"
@@ -1449,13 +1449,16 @@ run_tests() {
         case "$workflow" in
             # Siderepo tests with workflow_dispatch + inputs - need to create prerequisite then trigger
             *"siderepo-add-comment"|*"siderepo-add-labels"|*"siderepo-update-issue")
+                echo ""
+                echo -e "${CYAN}━━━ Preparing test prerequisites ━━━${NC}"
                 info "Creating test issue in target repository for $workflow..."
                 local issue_title="Hello from $ai_display_name"
                 local issue_num=$(create_test_issue "$issue_title" "This is a test issue for $workflow" "" "$target_repo")
                 if [[ -n "$issue_num" ]]; then
                     local repo_url="$REPO_OWNER/$REPO_NAME"
                     [[ -n "$target_repo" ]] && repo_url="$target_repo"
-                    success "Created test issue #$issue_num for $workflow: https://github.com/$repo_url/issues/$issue_num"
+                    success "Created test issue #$issue_num: https://github.com/$repo_url/issues/$issue_num"
+                    echo -e "${CYAN}━━━ Running workflow test ━━━${NC}"
                     echo ""
                     
                     local workflow_success=false
@@ -1486,13 +1489,16 @@ run_tests() {
                 fi
                 ;;
             *"siderepo-add-discussion-comment")
+                echo ""
+                echo -e "${CYAN}━━━ Preparing test prerequisites ━━━${NC}"
                 info "Creating test discussion in target repository for $workflow..."
                 local discussion_title="Hello from $ai_display_name Discussion"
                 local discussion_num=$(create_test_discussion "$discussion_title" "This is a test discussion for $workflow" "General" "$target_repo")
                 if [[ -n "$discussion_num" ]]; then
                     local repo_url="$REPO_OWNER/$REPO_NAME"
                     [[ -n "$target_repo" ]] && repo_url="$target_repo"
-                    success "Created test discussion #$discussion_num for $workflow: https://github.com/$repo_url/discussions/$discussion_num"
+                    success "Created test discussion #$discussion_num: https://github.com/$repo_url/discussions/$discussion_num"
+                    echo -e "${CYAN}━━━ Running workflow test ━━━${NC}"
                     echo ""
                     
                     local workflow_success=false
@@ -1513,6 +1519,8 @@ run_tests() {
                 fi
                 ;;
             *"siderepo-create-pull-request-review-comment")
+                echo ""
+                echo -e "${CYAN}━━━ Preparing test prerequisites ━━━${NC}"
                 info "Creating test pull request in target repository for $workflow..."
                 local pr_title="Test PR for $ai_display_name"
                 local pr_info=$(create_test_pr_with_branch "$pr_title" "This PR is for testing $workflow" "$target_repo")
@@ -1520,7 +1528,8 @@ run_tests() {
                     IFS=',' read -r pr_num branch_name after_commit_sha repo_from_info <<< "$pr_info"
                     local repo_url="$REPO_OWNER/$REPO_NAME"
                     [[ -n "$target_repo" ]] && repo_url="$target_repo"
-                    success "Created test PR #$pr_num for $workflow: https://github.com/$repo_url/pull/$pr_num"
+                    success "Created test PR #$pr_num: https://github.com/$repo_url/pull/$pr_num"
+                    echo -e "${CYAN}━━━ Running workflow test ━━━${NC}"
                     echo ""
                     
                     local workflow_success=false
