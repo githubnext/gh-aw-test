@@ -8,6 +8,7 @@ engine:
   id: copilot
 
 safe-outputs:
+  github-token: ${{ secrets.TEMP_USER_PAT }}
   create-issue:
     title-prefix: "[copilot-test] "
     labels: [copilot, automation, haiku]
