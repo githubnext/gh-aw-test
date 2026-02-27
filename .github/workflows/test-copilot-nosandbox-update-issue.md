@@ -15,6 +15,7 @@ sandbox:
   agent: false
 
 safe-outputs:
+  threat-detection: false  # Disable threat detection
   update-issue:
     status:
     title:

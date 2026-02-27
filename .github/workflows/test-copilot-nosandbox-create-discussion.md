@@ -17,6 +17,7 @@ safe-outputs:
     title-prefix: "[copilot-nosandbox-test] "
     # categories: [General]
     # min: 1
+  threat-detection: false  # Disable threat detection
 ---
 
 Create a discussion in repository ${{ github.repository }} with title "Hello from Copilot Discussion (No Sandbox)" and body "World Discussion"

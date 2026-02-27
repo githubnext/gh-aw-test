@@ -18,6 +18,7 @@ safe-outputs:
   create-code-scanning-alert:
     max: 10
     # min: 1
+  threat-detection: false  # Disable threat detection
 ---
 
 # Test Copilot Create Code Scanning Alert (No Sandbox)

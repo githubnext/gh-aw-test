@@ -17,6 +17,7 @@ safe-outputs:
     title-prefix: "[codex-nosandbox-test] "
     labels: [codex, automation, haiku, nosandbox]
     # min: 1
+  threat-detection: false  # Disable threat detection
 ---
 
 Create an issue in repository ${{ github.repository }} with title "Hello from Codex (No Sandbox)" and body "World"

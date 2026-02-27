@@ -12,6 +12,7 @@ sandbox:
   agent: false
 
 safe-outputs:
+  threat-detection: false  # Disable threat detection
   jobs:
     print:
         #name: "print the message"

@@ -19,6 +19,7 @@ safe-outputs:
     title-prefix: "[claude-nosandbox-test] "
     labels: [claude, automation, haiku, nosandbox]
     # min: 1
+  threat-detection: false  # Disable threat detection
 ---
 
 Create an issue in repository ${{ github.repository }} with title "Hello from Claude (No Sandbox)" and body "World"

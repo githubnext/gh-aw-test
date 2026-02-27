@@ -16,6 +16,7 @@ sandbox:
 
 safe-outputs:
   push-to-pull-request-branch:
+  threat-detection: false  # Disable threat detection
 ---
 
 # Test Copilot Push to Branch (No Sandbox)

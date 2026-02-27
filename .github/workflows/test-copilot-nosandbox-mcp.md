@@ -21,6 +21,7 @@ sandbox:
 safe-outputs:
   create-issue:
     # min: 1
+  threat-detection: false  # Disable threat detection
 
 mcp-servers:
   time:

@@ -17,6 +17,7 @@ safe-outputs:
     title-prefix: "[copilot-nosandbox-test] "
     labels: [copilot, automation, bot, nosandbox]
     #max: 2
+  threat-detection: false  # Disable threat detection
 ---
 
 # Test Copilot Create Two Pull Requests (No Sandbox)

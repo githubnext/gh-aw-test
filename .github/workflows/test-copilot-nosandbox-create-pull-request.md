@@ -16,6 +16,7 @@ safe-outputs:
   create-pull-request:
     title-prefix: "[copilot-nosandbox-test] "
     labels: [copilot, automation, bot, nosandbox]
+  threat-detection: false  # Disable threat detection
 ---
 
 # Test Copilot Create Pull Request (No Sandbox)

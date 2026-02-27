@@ -18,6 +18,7 @@ safe-outputs:
   add-comment:
     discussion: true
     # min: 1
+  threat-detection: false  # Disable threat detection
 tools:
   github:
     toolsets: [all]
