@@ -116,15 +116,27 @@ set_temp_user_pat() {
         return 1
     fi
     
-    # Set the secret in the repository
-    if echo "$user_pat" | gh secret set TEMP_USER_PAT --repo "$REPO_OWNER/$REPO_NAME" &>> "$LOG_FILE"; then
-        TEMP_USER_PAT_SET=true
-        success "TEMP_USER_PAT secret set successfully"
-        return 0
-    else
-        error "Failed to set TEMP_USER_PAT secret"
-        return 1
-    fi
+    # Set the secret in the repository (gh secret set is idempotent - overwrites if already present)
+    local secret_err
+    local max_attempts=3
+    local attempt=1
+    while [[ $attempt -le $max_attempts ]]; do
+        secret_err=$(echo "$user_pat" | gh secret set TEMP_USER_PAT --repo "$REPO_OWNER/$REPO_NAME" 2>&1)
+        local rc=$?
+        echo "$secret_err" >> "$LOG_FILE"
+        if [[ $rc -eq 0 ]]; then
+            TEMP_USER_PAT_SET=true
+            success "TEMP_USER_PAT secret set successfully"
+            return 0
+        fi
+        if [[ $attempt -lt $max_attempts ]]; then
+            warning "Failed to set TEMP_USER_PAT secret (attempt $attempt/$max_attempts): $secret_err"
+            sleep 5
+        fi
+        attempt=$((attempt + 1))
+    done
+    error "Failed to set TEMP_USER_PAT secret after $max_attempts attempts: $secret_err"
+    return 1
 }
 
 delete_temp_user_pat() {
