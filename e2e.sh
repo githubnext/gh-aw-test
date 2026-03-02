@@ -496,6 +496,8 @@ wait_for_workflow() {
     local run_id="$2"
     local timeout_seconds=$((TIMEOUT_MINUTES * 60))
     local start_time=$(date +%s)
+    local max_consecutive_failures=10
+    local consecutive_failures=0
     
     progress "Waiting for workflow '$workflow_name' (run #$run_id) to complete..."
     progress "View run details: https://github.com/$REPO_OWNER/$REPO_NAME/actions/runs/$run_id"
@@ -512,6 +514,7 @@ wait_for_workflow() {
         
         local status conclusion
         if status=$(gh run view "$run_id" --json status,conclusion -q '.status + "," + (.conclusion // "")' 2>/dev/null); then
+            consecutive_failures=0
             IFS=',' read -r run_status run_conclusion <<< "$status"
             
             case "$run_status" in
@@ -544,9 +547,14 @@ wait_for_workflow() {
                     ;;
             esac
         else
-            error "Failed to get status for workflow run $run_id"
-            error "View run details: https://github.com/$REPO_OWNER/$REPO_NAME/actions/runs/$run_id"
-            return 1
+            consecutive_failures=$((consecutive_failures + 1))
+            if [[ $consecutive_failures -ge $max_consecutive_failures ]]; then
+                error "Failed to get status for workflow run $run_id after $max_consecutive_failures consecutive attempts"
+                error "View run details: https://github.com/$REPO_OWNER/$REPO_NAME/actions/runs/$run_id"
+                return 1
+            fi
+            warning "Failed to get status for workflow run $run_id (attempt $consecutive_failures/$max_consecutive_failures, retrying...)"
+            sleep $POLL_INTERVAL
         fi
     done
 }
