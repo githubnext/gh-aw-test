@@ -16,16 +16,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout this repository
         uses: actions/checkout@v4
+
+      - name: Clone github-mcp-server
+        run: git clone --depth 1 https://github.com/github/github-mcp-server.git mcp-server
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: go.mod
+          go-version-file: mcp-server/go.mod
 
       - name: Build MCP server
-        run: go build -v -o github-mcp-server ./cmd/github-mcp-server
+        working-directory: mcp-server
+        run: go build -v -o ../github-mcp-server ./cmd/github-mcp-server
 
       - name: Print server version
         run: ./github-mcp-server --version
