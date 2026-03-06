@@ -127,14 +127,14 @@ jobs:
               "params": {
                 "name": "get_issue",
                 "arguments": {
-                  "owner": "github",
-                  "repo": "github-mcp-server",
-                  "issue_number": 1
+                  "owner": "githubnext",
+                  "repo": "gh-aw-test",
+                  "issue_number": 44
                 }
               }
             }')
 
-          echo "get_issue response:"
+          echo "issue_read response:"
           echo "$TOOL_RESPONSE" | head -c 5000
           echo ""
 
@@ -157,12 +157,12 @@ jobs:
             echo "Unexpectedly succeeded — lockdown did not block. Check response above."
           fi
 
-      - name: "Test 3: Call get_issue_comments on a public repo (expect filtered to zero)"
+      - name: "Test 3: Call issue_read get_comments on a public repo (expect filtered to zero)"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "=== Calling get_issue_comments on a public repo ==="
-          echo "Even if get_issue passes, comment filtering should drop ALL"
+          echo "=== Calling issue_read (method: get_comments) on a public repo ==="
+          echo "Even if issue_read get passes, comment filtering should drop ALL"
           echo "comments because no author appears to have push access."
           echo ""
 
@@ -177,8 +177,9 @@ jobs:
               "id": 3,
               "method": "tools/call",
               "params": {
-                "name": "get_issue_comments",
+                "name": "issue_read",
                 "arguments": {
+                  "method": "get_comments",
                   "owner": "github",
                   "repo": "github-mcp-server",
                   "issue_number": 1
@@ -186,7 +187,7 @@ jobs:
               }
             }')
 
-          echo "get_issue_comments response:"
+          echo "issue_read get_comments response:"
           echo "$COMMENTS_RESPONSE" | head -c 5000
           echo ""
 
@@ -204,7 +205,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "=== Calling get_issue WITHOUT lockdown header (control test) ==="
+          echo "=== Calling issue_read WITHOUT lockdown header (control test) ==="
           echo "This confirms the token itself works fine for reading issues."
           echo ""
 
@@ -218,8 +219,9 @@ jobs:
               "id": 4,
               "method": "tools/call",
               "params": {
-                "name": "get_issue",
+                "name": "issue_read",
                 "arguments": {
+                  "method": "get",
                   "owner": "github",
                   "repo": "github-mcp-server",
                   "issue_number": 1
@@ -227,7 +229,7 @@ jobs:
               }
             }')
 
-          echo "get_issue (no lockdown) response:"
+          echo "issue_read (no lockdown) response:"
           echo "$CONTROL_RESPONSE" | head -c 5000
           echo ""
 
