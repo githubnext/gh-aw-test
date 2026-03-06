@@ -104,11 +104,11 @@ jobs:
           echo "Session ID: $SESSION_ID"
           echo "SESSION_ID=$SESSION_ID" >> "$GITHUB_ENV"
 
-      - name: "Test 2: Call get_issue on a public repo (expect lockdown to block)"
+      - name: "Test 2: Call issue_read on a public repo (expect lockdown to block)"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "=== Calling get_issue on a public repo issue ==="
+          echo "=== Calling issue_read (method: get) on a public repo issue ==="
           echo "This targets github/github-mcp-server#1 (a public repo)."
           echo "With GITHUB_TOKEN read-all, the collaborators GraphQL query returns"
           echo "empty results, so lockdown will treat ALL authors as unsafe."
@@ -125,11 +125,12 @@ jobs:
               "id": 2,
               "method": "tools/call",
               "params": {
-                "name": "get_issue",
+                "name": "issue_read",
                 "arguments": {
-                  "owner": "githubnext",
-                  "repo": "gh-aw-test",
-                  "issue_number": 44
+                  "method": "get",
+                  "owner": "github",
+                  "repo": "github-mcp-server",
+                  "issue_number": 1
                 }
               }
             }')
