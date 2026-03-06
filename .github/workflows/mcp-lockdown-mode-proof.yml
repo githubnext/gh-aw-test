@@ -1,0 +1,250 @@
+name: MCP Lockdown Mode Bug Proof
+
+# This workflow demonstrates that lockdown mode is broken when using
+# GITHUB_TOKEN with read-all permissions on public repositories.
+# See bug.md for full details.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lockdown-bug-proof:
+    name: Prove lockdown blocks all content with GITHUB_TOKEN
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Build MCP server
+        run: go build -v -o github-mcp-server ./cmd/github-mcp-server
+
+      - name: Print server version
+        run: ./github-mcp-server --version
+
+      - name: Start MCP server in HTTP mode with lockdown enabled
+        env:
+          GITHUB_PERSONAL_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ./github-mcp-server http \
+            --port 8082 \
+            --lockdown-mode \
+            --log-file server.log &
+          SERVER_PID=$!
+          echo "SERVER_PID=$SERVER_PID" >> "$GITHUB_ENV"
+
+          # Wait for the server to be ready
+          echo "Waiting for server to start..."
+          for i in $(seq 1 30); do
+            if curl -s -o /dev/null -w "%{http_code}" http://localhost:8082/ | grep -qE '2[0-9]{2}|405'; then
+              echo "Server is ready after ${i}s"
+              break
+            fi
+            sleep 1
+          done
+
+      - name: "Test 1: Initialize MCP session"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "=== Sending MCP initialize request ==="
+          INIT_RESPONSE=$(curl -s -X POST http://localhost:8082/ \
+            -H "Content-Type: application/json" \
+            -H "Accept: application/json, text/event-stream" \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -d '{
+              "jsonrpc": "2.0",
+              "id": 1,
+              "method": "initialize",
+              "params": {
+                "protocolVersion": "2025-03-26",
+                "capabilities": {},
+                "clientInfo": {
+                  "name": "lockdown-bug-proof",
+                  "version": "1.0.0"
+                }
+              }
+            }')
+
+          echo "Initialize response:"
+          echo "$INIT_RESPONSE" | head -c 2000
+          echo ""
+
+          # Extract session ID from Mcp-Session header if present
+          SESSION_ID=$(curl -s -D - -o /dev/null -X POST http://localhost:8082/ \
+            -H "Content-Type: application/json" \
+            -H "Accept: application/json, text/event-stream" \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -d '{
+              "jsonrpc": "2.0",
+              "id": 1,
+              "method": "initialize",
+              "params": {
+                "protocolVersion": "2025-03-26",
+                "capabilities": {},
+                "clientInfo": {
+                  "name": "lockdown-bug-proof",
+                  "version": "1.0.0"
+                }
+              }
+            }' | grep -i 'mcp-session' | tr -d '\r' | awk '{print $2}')
+
+          echo "Session ID: $SESSION_ID"
+          echo "SESSION_ID=$SESSION_ID" >> "$GITHUB_ENV"
+
+      - name: "Test 2: Call get_issue on a public repo (expect lockdown to block)"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "=== Calling get_issue on a public repo issue ==="
+          echo "This targets github/github-mcp-server#1 (a public repo)."
+          echo "With GITHUB_TOKEN read-all, the collaborators GraphQL query returns"
+          echo "empty results, so lockdown will treat ALL authors as unsafe."
+          echo ""
+
+          TOOL_RESPONSE=$(curl -s -X POST http://localhost:8082/ \
+            -H "Content-Type: application/json" \
+            -H "Accept: application/json, text/event-stream" \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "X-MCP-Lockdown: true" \
+            ${SESSION_ID:+-H "Mcp-Session: $SESSION_ID"} \
+            -d '{
+              "jsonrpc": "2.0",
+              "id": 2,
+              "method": "tools/call",
+              "params": {
+                "name": "get_issue",
+                "arguments": {
+                  "owner": "github",
+                  "repo": "github-mcp-server",
+                  "issue_number": 1
+                }
+              }
+            }')
+
+          echo "get_issue response:"
+          echo "$TOOL_RESPONSE" | head -c 5000
+          echo ""
+
+          # Check if the response contains the lockdown error message
+          if echo "$TOOL_RESPONSE" | grep -qi "restricted by lockdown"; then
+            echo ""
+            echo "********************************************"
+            echo "* BUG CONFIRMED: Lockdown mode blocked     *"
+            echo "* access even though the issue author may   *"
+            echo "* be a legitimate collaborator. The         *"
+            echo "* GITHUB_TOKEN cannot enumerate             *"
+            echo "* collaborators via the GraphQL API.        *"
+            echo "********************************************"
+          elif echo "$TOOL_RESPONSE" | grep -qi "error"; then
+            echo ""
+            echo "Got an error (may be auth/API related):"
+            echo "$TOOL_RESPONSE" | head -c 2000
+          else
+            echo ""
+            echo "Unexpectedly succeeded — lockdown did not block. Check response above."
+          fi
+
+      - name: "Test 3: Call get_issue_comments on a public repo (expect filtered to zero)"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "=== Calling get_issue_comments on a public repo ==="
+          echo "Even if get_issue passes, comment filtering should drop ALL"
+          echo "comments because no author appears to have push access."
+          echo ""
+
+          COMMENTS_RESPONSE=$(curl -s -X POST http://localhost:8082/ \
+            -H "Content-Type: application/json" \
+            -H "Accept: application/json, text/event-stream" \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "X-MCP-Lockdown: true" \
+            ${SESSION_ID:+-H "Mcp-Session: $SESSION_ID"} \
+            -d '{
+              "jsonrpc": "2.0",
+              "id": 3,
+              "method": "tools/call",
+              "params": {
+                "name": "get_issue_comments",
+                "arguments": {
+                  "owner": "github",
+                  "repo": "github-mcp-server",
+                  "issue_number": 1
+                }
+              }
+            }')
+
+          echo "get_issue_comments response:"
+          echo "$COMMENTS_RESPONSE" | head -c 5000
+          echo ""
+
+          if echo "$COMMENTS_RESPONSE" | grep -qi "restricted by lockdown"; then
+            echo ""
+            echo "BUG CONFIRMED: Comments blocked by lockdown."
+          elif echo "$COMMENTS_RESPONSE" | grep -q '\[\]'; then
+            echo ""
+            echo "BUG CONFIRMED: Comments returned empty array — all filtered out."
+          else
+            echo "Check the response above manually."
+          fi
+
+      - name: "Test 4: Same request WITHOUT lockdown (should succeed)"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "=== Calling get_issue WITHOUT lockdown header (control test) ==="
+          echo "This confirms the token itself works fine for reading issues."
+          echo ""
+
+          CONTROL_RESPONSE=$(curl -s -X POST http://localhost:8082/ \
+            -H "Content-Type: application/json" \
+            -H "Accept: application/json, text/event-stream" \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            ${SESSION_ID:+-H "Mcp-Session: $SESSION_ID"} \
+            -d '{
+              "jsonrpc": "2.0",
+              "id": 4,
+              "method": "tools/call",
+              "params": {
+                "name": "get_issue",
+                "arguments": {
+                  "owner": "github",
+                  "repo": "github-mcp-server",
+                  "issue_number": 1
+                }
+              }
+            }')
+
+          echo "get_issue (no lockdown) response:"
+          echo "$CONTROL_RESPONSE" | head -c 5000
+          echo ""
+
+          if echo "$CONTROL_RESPONSE" | grep -qi "restricted by lockdown"; then
+            echo "UNEXPECTED: Lockdown blocked even without the header."
+          elif echo "$CONTROL_RESPONSE" | grep -qi "error"; then
+            echo "Got an error (may be auth/API):"
+            echo "$CONTROL_RESPONSE" | head -c 2000
+          else
+            echo "SUCCESS: Issue retrieved without lockdown — token works fine."
+          fi
+
+      - name: Print server logs
+        if: always()
+        run: |
+          echo "=== Server log output ==="
+          cat server.log 2>/dev/null || echo "No server log file found."
+
+      - name: Stop server
+        if: always()
+        run: |
+          if [ -n "$SERVER_PID" ]; then
+            kill "$SERVER_PID" 2>/dev/null || true
+          fi
