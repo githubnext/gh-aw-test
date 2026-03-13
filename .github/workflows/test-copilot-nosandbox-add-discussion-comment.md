@@ -24,4 +24,4 @@ tools:
     toolsets: [all]
 ---
 
-If the title of the discussion #${{ github.event.discussion.number }} is "Hello from Copilot Discussion (No Sandbox)" then add a comment on the discussion "Reply from Copilot Discussion (No Sandbox)".
+If the title of the discussion #${{ github.event.discussion.number }} is "Hello from Copilot (No Sandbox) Discussion" then add a comment on the discussion "Reply from Copilot (No Sandbox) Discussion".
