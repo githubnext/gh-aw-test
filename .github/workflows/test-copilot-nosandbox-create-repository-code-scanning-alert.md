@@ -23,4 +23,4 @@ safe-outputs:
 
 # Test Copilot Create Code Scanning Alert (No Sandbox)
 
-Create a new Code Scanning Alert for the repository with title "Copilot (No Sandbox) wants security review." and adding a couple of sentences about why security is important even without sandbox protection.
+Create a new Code Scanning Alert for the repository. The alert message must begin with "Copilot (No Sandbox) wants security review." and include a couple of sentences about why security is important even without sandbox protection.
