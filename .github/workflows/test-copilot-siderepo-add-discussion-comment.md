@@ -16,6 +16,7 @@ tools:
   github:
     # The GitHub tools must be authorized to read across-repo 
     github-token: ${{ secrets.TEMP_USER_PAT }}
+    toolsets: [all]
 
 safe-outputs:
   github-token: ${{ secrets.TEMP_USER_PAT }}
