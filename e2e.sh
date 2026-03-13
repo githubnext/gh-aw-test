@@ -22,11 +22,14 @@
 #
 # Options:
 #   --dry-run                  Show what would be tested without running
+#   --workflow-dispatch-only   Only run tests that use workflow_dispatch trigger
+#                              (skip issue/comment/PR-triggered tests)
 #   --help, -h                 Show help message
 #
 # Examples:
 #   ./e2e.sh                               # Run all tests
 #   ./e2e.sh --dry-run                     # See what would be tested
+#   ./e2e.sh test-copilot-* --workflow-dispatch-only  # Only workflow_dispatch tests
 #
 # Prerequisites:
 #   - GitHub CLI (gh) installed and authenticated
@@ -78,6 +81,7 @@ TIMEOUT_MINUTES=10
 POLL_INTERVAL=5
 LOG_FILE="e2e-test-$(date +%Y%m%d-%H%M%S).log"
 TEMP_USER_PAT_SET=false
+WORKFLOW_DISPATCH_ONLY=false
 
 # Utility functions
 log() {
@@ -1644,6 +1648,12 @@ run_tests() {
             
             # Issue-triggered and command-triggered tests - need to enable, create trigger, wait
             *)
+                if [[ "$WORKFLOW_DISPATCH_ONLY" == true ]]; then
+                    info "Skipping '$workflow' (not a workflow_dispatch test; --workflow-dispatch-only is set)"
+                    SKIPPED_TESTS+=("$workflow")
+                    continue
+                fi
+
                 local workflow_file_path=".github/workflows/${workflow}.lock.yml"
                 if [[ ! -f "$workflow_file_path" ]]; then
                     error "Workflow file not found for '$workflow' at $workflow_file_path; marking as failed"
@@ -1842,11 +1852,17 @@ main() {
                 dry_run=true
                 shift
                 ;;
+            --workflow-dispatch-only)
+                WORKFLOW_DISPATCH_ONLY=true
+                shift
+                ;;
             --help|-h)
                 echo "Usage: $0 [OPTIONS] [TEST_PATTERNS...]"
                 echo ""
                 echo "Options:"
                 echo "  --dry-run, -n              Show what would be tested without running"
+                echo "  --workflow-dispatch-only   Only run tests that use workflow_dispatch trigger"
+                echo "                             (skip issue/comment/PR-triggered tests)"
                 echo "  --help, -h                 Show this help message"
                 echo ""
                 echo "TEST_PATTERNS:"
