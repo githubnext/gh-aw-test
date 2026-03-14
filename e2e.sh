@@ -55,6 +55,7 @@ NC='\033[0m' # No Color
 declare -a PASSED_TESTS=()
 declare -a FAILED_TESTS=()
 declare -a SKIPPED_TESTS=()
+declare -A TEST_RUN_URLS=()  # maps test name -> actions run URL (when available)
 
 # Helper function to safely execute commands that might fail
 # Usage: safe_run "operation description" command arg1 arg2...
@@ -635,6 +636,7 @@ trigger_workflow_dispatch_and_await_completion() {
         
         if [[ "$after_run_id" != "$before_run_id" && -n "$after_run_id" ]]; then
             local result=0
+            TEST_RUN_URLS["$workflow_name"]="https://github.com/$REPO_OWNER/$REPO_NAME/actions/runs/$after_run_id"
             wait_for_workflow "$workflow_name" "$after_run_id" || result=1
             
             # Disable the workflow after running
@@ -688,6 +690,7 @@ trigger_workflow_with_inputs() {
         
         if [[ "$after_run_id" != "$before_run_id" && -n "$after_run_id" ]]; then
             local result=0
+            TEST_RUN_URLS["$workflow_name"]="https://github.com/$REPO_OWNER/$REPO_NAME/actions/runs/$after_run_id"
             wait_for_workflow "$workflow_name" "$after_run_id" || result=1
             
             # Disable the workflow after running
@@ -1823,11 +1826,133 @@ print_final_report() {
     echo "============================================"
     
     if [[ ${#FAILED_TESTS[@]} -gt 0 ]]; then
+        {
+            for _t in "${FAILED_TESTS[@]}"; do
+                local _url="${TEST_RUN_URLS[$_t]:-}"
+                if [[ -n "$_url" ]]; then
+                    echo "$_t $_url"
+                else
+                    echo "$_t"
+                fi
+            done
+        } > fails.txt
+        info "Failures written to fails.txt (run './e2e.sh report' to file issues)"
+        exit 1
+    fi
+}
+
+run_report() {
+    if [[ ! -f "fails.txt" ]]; then
+        error "fails.txt not found. Run e2e tests first to generate failure records."
+        exit 1
+    fi
+
+    local repo_full="$REPO_OWNER/$REPO_NAME"
+    local created_count=0
+    local failed_count=0
+
+    info "Creating GitHub issues for failures listed in fails.txt..."
+
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        [[ -z "$line" ]] && continue
+
+        local test_name run_url
+        read -r test_name run_url <<< "$line"
+
+        progress "Processing failure: $test_name"
+
+        # Use the run URL recorded in fails.txt; fall back to gh run list lookup
+        if [[ -z "$run_url" ]]; then
+            local workflow_file="${test_name}.lock.yml"
+            local run_id
+            run_id=$(gh run list \
+                --repo "$repo_full" \
+                --workflow="$workflow_file" \
+                --limit=10 \
+                --json databaseId,conclusion \
+                --jq '.[] | select(.conclusion == "failure" or .conclusion == "cancelled" or .conclusion == "timed_out") | .databaseId' 2>/dev/null | head -1 || echo "")
+
+            # Fall back to most recent run if no conclusively-failed run found
+            if [[ -z "$run_id" ]]; then
+                run_id=$(gh run list \
+                    --repo "$repo_full" \
+                    --workflow="$workflow_file" \
+                    --limit=1 \
+                    --json databaseId \
+                    --jq '.[0].databaseId' 2>/dev/null || echo "")
+            fi
+
+            if [[ -n "$run_id" ]]; then
+                run_url="https://github.com/$repo_full/actions/runs/$run_id"
+            fi
+        fi
+
+        local run_ref="${run_url:-"(run URL not found for $test_name)"}"
+
+        local issue_body
+        issue_body=$(cat <<ISSUEBODY
+Workflow failure run: $run_ref
+
+Debug this workflow failure using your favorite Agent CLI and the agentic-workflows prompt.
+
+## Action Required
+
+### Option 1: Assign this issue to Copilot
+
+Assign this issue to Copilot using the agentic-workflows sub-agent to automatically debug and fix the workflow failure.
+
+### Option 2: Manually invoke the agent
+
+Debug this workflow failure using your favorite Agent CLI and the agentic-workflows prompt.
+
+* Start your agent
+* Load the agentic-workflows prompt from \`.github/agents/agentic-workflows.agent.md\` or https://github.com/github/gh-aw/blob/main/.github/agents/agentic-workflows.agent.md
+* Type \`debug the agentic workflow repo-assist failure in $run_ref\`
+ISSUEBODY
+        )
+
+        local issue_url
+        # Try with Copilot CCA assignment first
+        if issue_url=$(gh issue create \
+            --repo "$repo_full" \
+            --title "Debug agentic-workflow failure: $test_name" \
+            --body "$issue_body" \
+            --assignee "copilot" 2>/dev/null); then
+            success "Created issue (assigned to Copilot) for '$test_name': $issue_url"
+            created_count=$((created_count + 1))
+        else
+            # Fall back without assignee if copilot assignment is not available
+            if issue_url=$(gh issue create \
+                --repo "$repo_full" \
+                --title "Debug agentic-workflow failure: $test_name" \
+                --body "$issue_body" 2>/dev/null); then
+                success "Created issue for '$test_name': $issue_url"
+                warning "Could not assign to Copilot CCA automatically. Assign manually via the issue UI if desired."
+                created_count=$((created_count + 1))
+            else
+                error "Failed to create issue for '$test_name'"
+                failed_count=$((failed_count + 1))
+            fi
+        fi
+    done < "fails.txt"
+
+    echo
+    if [[ $created_count -gt 0 ]]; then
+        success "Created $created_count issue(s) for failed tests"
+    fi
+    if [[ $failed_count -gt 0 ]]; then
+        error "Failed to create $failed_count issue(s)"
         exit 1
     fi
 }
 
 main() {
+    # Handle 'report' subcommand before any other processing
+    if [[ "${1:-}" == "report" ]]; then
+        run_report
+        return 0
+    fi
+
     echo -e "${CYAN}🧪 GitHub Agentic Workflows End-to-End Testing${NC}"
     echo -e "${CYAN}=================================================${NC}"
     echo
@@ -1844,6 +1969,10 @@ main() {
                 ;;
             --help|-h)
                 echo "Usage: $0 [OPTIONS] [TEST_PATTERNS...]"
+                echo "       $0 report"
+                echo ""
+                echo "Subcommands:"
+                echo "  report                     Create GitHub issues for failures in fails.txt"
                 echo ""
                 echo "Options:"
                 echo "  --dry-run, -n              Show what would be tested without running"
