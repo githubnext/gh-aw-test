@@ -23,6 +23,7 @@ safe-outputs:
     status:
     title:
     body:
+    target: '*'
     target-repo: 'githubnext/gh-aw-side-repo'
     # allowed-repos: ['githubnext/gh-aw-side-repo']
     # min: 1
