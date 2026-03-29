@@ -307,6 +307,7 @@ get_all_tests() {
     echo "test-claude-custom-safe-outputs"
     echo "test-codex-custom-safe-outputs"
     echo "test-copilot-custom-safe-outputs"
+    echo "test-copilot-gh-steps"
     # Issue-triggered tests
     echo "test-claude-add-comment"
     echo "test-claude-add-labels"
@@ -1577,7 +1578,7 @@ run_tests() {
                 fi
                 ;;
             # Workflow dispatch tests - triggered with gh aw run
-            *"create-issue"|*"create-discussion"|*"create-pull-request"|*"code-scanning-alert"|*"mcp"|*"safe-jobs")
+            *"create-issue"|*"create-discussion"|*"create-pull-request"|*"code-scanning-alert"|*"mcp"|*"safe-jobs"|*"gh-steps")
                 local workflow_success=false
                 if trigger_workflow_dispatch_and_await_completion "$workflow"; then
                     workflow_success=true
@@ -1630,6 +1631,27 @@ run_tests() {
                         *"mcp")
                             if validate_mcp_workflow "$workflow" "$target_repo"; then
                                 validation_success=true
+                            fi
+                            ;;
+                        *"gh-steps")
+                            local title_prefix="[${ai_type}-test]"
+                            local expected_labels=$(get_expected_labels "$ai_type")
+                            if validate_issue_created "$title_prefix" "$expected_labels" "$target_repo"; then
+                                # Extract the run ID from TEST_RUN_URLS to verify the issue is from this run
+                                local run_url="${TEST_RUN_URLS[$workflow]:-}"
+                                local expected_run_id="${run_url##*/}"
+                                local repo_flag=""
+                                [[ -n "$target_repo" ]] && repo_flag="--repo $target_repo"
+                                local issue_title=$(gh issue list $repo_flag --limit 10 --json title --jq ".[] | select(.title | startswith(\"$title_prefix\")) | .title" | head -1)
+                                if [[ -n "$expected_run_id" ]] && echo "$issue_title" | grep -q "Test ${expected_run_id}:.*The number of issues is"; then
+                                    success "Issue title contains run ID $expected_run_id and expected gh-steps output: $issue_title"
+                                    validation_success=true
+                                elif echo "$issue_title" | grep -q "The number of issues is"; then
+                                    success "Issue title contains expected gh-steps output (run ID not verified): $issue_title"
+                                    validation_success=true
+                                else
+                                    error "Issue title does not contain expected pattern 'Test <run_id>: The number of issues is': $issue_title"
+                                fi
                             fi
                             ;;
                         *)
