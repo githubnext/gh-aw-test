@@ -1,1 +1,9 @@
-test-copilot-gh-steps https://github.com/githubnext/gh-aw-test/actions/runs/23714937411
+test-copilot-add-comment
+test-copilot-add-labels
+test-copilot-update-issue
+test-copilot-command
+test-copilot-nosandbox-add-comment
+test-copilot-nosandbox-add-labels
+test-copilot-nosandbox-update-issue
+test-copilot-nosandbox-command
+test-copilot-siderepo-create-pull-request-review-comment
