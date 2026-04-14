@@ -16,7 +16,7 @@ sandbox:
 
 safe-outputs:
   add-comment:
-    discussion: true
+    discussions: true
     # min: 1
   threat-detection: false  # Disable threat detection
 tools:

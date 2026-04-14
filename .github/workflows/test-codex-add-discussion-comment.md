@@ -11,7 +11,7 @@ engine:
 
 safe-outputs:
   add-comment:
-    discussion: true
+    discussions: true
 tools:
   github:
     toolsets: [all]
