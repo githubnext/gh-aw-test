@@ -60,6 +60,59 @@ declare -a FAILED_TESTS=()
 declare -a SKIPPED_TESTS=()
 declare -A TEST_RUN_URLS=()  # maps test name -> actions run URL (when available)
 
+# Record a test pass: update arrays and remove from fails.txt
+record_test_pass() {
+    local test_name="$1"
+    PASSED_TESTS+=("$test_name")
+    # Remove the test from fails.txt if present
+    if [[ -f "fails.txt" ]]; then
+        local _tmp
+        _tmp=$(grep -v "^${test_name} \|^${test_name}$" "fails.txt" 2>/dev/null || true)
+        if [[ -n "$_tmp" ]]; then
+            echo "$_tmp" > "fails.txt"
+        else
+            rm -f "fails.txt"
+        fi
+    fi
+}
+
+# Record a test failure: update arrays and add/append to fails.txt
+record_test_fail() {
+    local test_name="$1"
+    FAILED_TESTS+=("$test_name")
+    # Look up the run ID
+    local _url="${TEST_RUN_URLS[$test_name]:-}"
+    local _run_id=""
+    if [[ -n "$_url" ]]; then
+        _run_id="${_url##*/}"
+    fi
+    if [[ -z "$_run_id" ]]; then
+        local _wf="${test_name}.lock.yml"
+        _run_id=$(gh run list \
+            --repo "$REPO_OWNER/$REPO_NAME" \
+            --workflow="$_wf" \
+            --limit=1 \
+            --json databaseId \
+            --jq '.[0].databaseId' 2>/dev/null || echo "")
+    fi
+    # Update fails.txt: append run ID to existing line or add new entry
+    if [[ -f "fails.txt" ]] && grep -q "^${test_name} \|^${test_name}$" "fails.txt" 2>/dev/null; then
+        if [[ -n "$_run_id" ]]; then
+            local _existing_line
+            _existing_line=$(grep "^${test_name} \|^${test_name}$" "fails.txt")
+            if [[ "$_existing_line" != *"$_run_id"* ]]; then
+                sed -i "s|^${test_name}\( .*\)\?$|${test_name}\1 ${_run_id}|" "fails.txt"
+            fi
+        fi
+    else
+        if [[ -n "$_run_id" ]]; then
+            echo "$test_name $_run_id" >> "fails.txt"
+        else
+            echo "$test_name" >> "fails.txt"
+        fi
+    fi
+}
+
 # Helper function to safely execute commands that might fail
 # Usage: safe_run "operation description" command arg1 arg2...
 safe_run() {
@@ -321,6 +374,10 @@ get_all_tests() {
     echo "test-claude-update-issue"
     echo "test-codex-update-issue"
     echo "test-copilot-update-issue"
+    # PR-triggered tests
+    echo "test-claude-update-pull-request"
+    echo "test-codex-update-pull-request"
+    echo "test-copilot-update-pull-request"
     # Command-triggered tests
     echo "test-claude-command"
     echo "test-codex-command"
@@ -1270,6 +1327,51 @@ validate_pr_reviews() {
     fi
 }
 
+validate_pr_updated() {
+    local pr_number="$1"
+    local ai_type="$2"  # "Claude", "Codex", or "Copilot"
+    local repo="${3:-}"
+
+    local repo_flag=""
+    if [[ -n "$repo" ]]; then
+        repo_flag="--repo $repo"
+    fi
+
+    local pr_data=$(gh pr view $repo_flag "$pr_number" --json title,body 2>/dev/null)
+
+    if [[ -z "$pr_data" ]]; then
+        warning "(polling) Could not retrieve PR #$pr_number data"
+        return 1
+    fi
+
+    local title_success=false
+    local body_success=false
+
+    local title=$(echo "$pr_data" | jq -r '.title')
+    if [[ "$title" == *"Processed by $ai_type"* ]]; then
+        success "PR #$pr_number title was updated by $ai_type"
+        title_success=true
+    else
+        warning "(polling) PR #$pr_number title not yet updated by $ai_type. Actual: '$title'"
+    fi
+
+    local body=$(echo "$pr_data" | jq -r '.body')
+    if [[ "$body" == *"automatically updated by"* ]]; then
+        success "PR #$pr_number body was updated by $ai_type"
+        body_success=true
+    else
+        warning "(polling) PR #$pr_number body not yet updated by $ai_type. Actual: ${body:0:200}..."
+    fi
+
+    if [[ "$title_success" == true ]] && [[ "$body_success" == true ]]; then
+        success "PR #$pr_number validation passed: title and body updated"
+        return 0
+    else
+        warning "(polling) PR #$pr_number validation incomplete: title=$title_success, body=$body_success"
+        return 1
+    fi
+}
+
 # Polling functions for workflow validation
 wait_for_comment() {
     local issue_number="$1"
@@ -1281,7 +1383,7 @@ wait_for_comment() {
     
     while [[ $waited -lt $max_wait ]]; do
         if validate_comment "$issue_number" "$expected_text" "$repo"; then
-            PASSED_TESTS+=("$test_name")
+            record_test_pass "$test_name"
             return 0
         fi
         info "..."
@@ -1289,7 +1391,7 @@ wait_for_comment() {
         waited=$((waited + 5))
     done
     
-    FAILED_TESTS+=("$test_name")
+    record_test_fail "$test_name"
     return 1
 }
 
@@ -1303,7 +1405,7 @@ wait_for_labels() {
     
     while [[ $waited -lt $max_wait ]]; do
         if validate_labels "$issue_number" "$expected_label" "$repo"; then
-            PASSED_TESTS+=("$test_name")
+            record_test_pass "$test_name"
             return 0
         fi
         info "..."
@@ -1311,7 +1413,7 @@ wait_for_labels() {
         waited=$((waited + 5))
     done
     
-    FAILED_TESTS+=("$test_name")
+    record_test_fail "$test_name"
     return 1
 }
 
@@ -1325,7 +1427,7 @@ wait_for_issue_update() {
     
     while [[ $waited -lt $max_wait ]]; do
         if validate_issue_updated "$issue_number" "$ai_type" "$repo"; then
-            PASSED_TESTS+=("$test_name")
+            record_test_pass "$test_name"
             return 0
         fi
         info "..."
@@ -1333,7 +1435,7 @@ wait_for_issue_update() {
         waited=$((waited + 5))
     done
     
-    FAILED_TESTS+=("$test_name")
+    record_test_fail "$test_name"
     return 1
 }
 
@@ -1347,7 +1449,7 @@ wait_for_command_comment() {
     
     while [[ $waited -lt $max_wait ]]; do
         if validate_comment "$issue_number" "$expected_text" "$repo"; then
-            PASSED_TESTS+=("$test_name")
+            record_test_pass "$test_name"
             return 0
         fi
         info "..."
@@ -1355,7 +1457,7 @@ wait_for_command_comment() {
         waited=$((waited + 5))
     done
     
-    FAILED_TESTS+=("$test_name")
+    record_test_fail "$test_name"
     return 1
 }
 
@@ -1369,7 +1471,7 @@ wait_for_branch_update() {
     
     while [[ $waited -lt $max_wait ]]; do
         if validate_branch_updated "$branch_name" "$initial_sha" "$repo"; then
-            PASSED_TESTS+=("$test_name")
+            record_test_pass "$test_name"
             return 0
         fi
         info "..."
@@ -1377,7 +1479,7 @@ wait_for_branch_update() {
         waited=$((waited + 5))
     done
     
-    FAILED_TESTS+=("$test_name")
+    record_test_fail "$test_name"
     return 1
 }
 
@@ -1391,7 +1493,7 @@ wait_for_pr_reviews() {
     
     while [[ $waited -lt $max_wait ]]; do
         if validate_pr_reviews "$pr_number" "$ai_type" "$repo"; then
-            PASSED_TESTS+=("$test_name")
+            record_test_pass "$test_name"
             return 0
         fi
         info "..."
@@ -1399,7 +1501,29 @@ wait_for_pr_reviews() {
         waited=$((waited + 5))
     done
     
-    FAILED_TESTS+=("$test_name")
+    record_test_fail "$test_name"
+    return 1
+}
+
+wait_for_pr_update() {
+    local pr_number="$1"
+    local ai_type="$2"
+    local test_name="$3"
+    local repo="${4:-}"
+    local max_wait=240 # Max wait time in seconds (4 minutes)
+    local waited=0
+
+    while [[ $waited -lt $max_wait ]]; do
+        if validate_pr_updated "$pr_number" "$ai_type" "$repo"; then
+            record_test_pass "$test_name"
+            return 0
+        fi
+        info "..."
+        sleep 5
+        waited=$((waited + 5))
+    done
+
+    record_test_fail "$test_name"
     return 1
 }
 
@@ -1435,7 +1559,7 @@ wait_for_discussion_comment() {
     
     while [[ $waited -lt $max_wait ]]; do
         if validate_discussion_comment "$discussion_number" "$expected_text" "$repo"; then
-            PASSED_TESTS+=("$test_name")
+            record_test_pass "$test_name"
             return 0
         fi
         info "..."
@@ -1443,7 +1567,7 @@ wait_for_discussion_comment() {
         waited=$((waited + 5))
     done
     
-    FAILED_TESTS+=("$test_name")
+    record_test_fail "$test_name"
     return 1
 }
 
@@ -1509,11 +1633,11 @@ run_tests() {
                         esac
                     else
                         error "Workflow '$workflow' failed to complete successfully"
-                        FAILED_TESTS+=("$workflow")
+                        record_test_fail "$workflow"
                     fi
                 else
                     error "Failed to create test issue for $workflow"
-                    FAILED_TESTS+=("$workflow")
+                    record_test_fail "$workflow"
                 fi
                 ;;
             *"siderepo-add-discussion-comment")
@@ -1539,11 +1663,11 @@ run_tests() {
                         wait_for_discussion_comment "$discussion_num" "Reply from $ai_display_name Discussion" "$workflow" "$target_repo" || true
                     else
                         error "Workflow '$workflow' failed to complete successfully"
-                        FAILED_TESTS+=("$workflow")
+                        record_test_fail "$workflow"
                     fi
                 else
                     warning "Could not create test discussion for $workflow - discussions may not be enabled on this repository"
-                    PASSED_TESTS+=("$workflow")
+                    record_test_pass "$workflow"
                 fi
                 ;;
             *"siderepo-create-pull-request-review-comment")
@@ -1570,11 +1694,11 @@ run_tests() {
                         wait_for_pr_reviews "$pr_num" "$ai_display_name" "$workflow" "$target_repo" || true
                     else
                         error "Workflow '$workflow' failed to complete successfully"
-                        FAILED_TESTS+=("$workflow")
+                        record_test_fail "$workflow"
                     fi
                 else
                     error "Failed to create test PR for $workflow"
-                    FAILED_TESTS+=("$workflow")
+                    record_test_fail "$workflow"
                 fi
                 ;;
             # Workflow dispatch tests - triggered with gh aw run
@@ -1661,13 +1785,13 @@ run_tests() {
                     esac
                     
                     if [[ "$validation_success" == true ]]; then
-                        PASSED_TESTS+=("$workflow")
+                        record_test_pass "$workflow"
                     else
-                        FAILED_TESTS+=("$workflow")
+                        record_test_fail "$workflow"
                     fi
                 else
                     error "Workflow '$workflow' failed to complete successfully"
-                    FAILED_TESTS+=("$workflow")
+                    record_test_fail "$workflow"
                 fi
                 ;;
             
@@ -1682,7 +1806,7 @@ run_tests() {
                 local workflow_file_path=".github/workflows/${workflow}.lock.yml"
                 if [[ ! -f "$workflow_file_path" ]]; then
                     error "Workflow file not found for '$workflow' at $workflow_file_path; marking as failed"
-                    FAILED_TESTS+=("$workflow")
+                    record_test_fail "$workflow"
                     continue
                 fi
 
@@ -1706,7 +1830,7 @@ run_tests() {
                                 wait_for_discussion_comment "$discussion_num" "Reply from $ai_display_name Discussion" "$workflow" "$target_repo" || true
                             else
                                 warning "Could not create test discussion for $workflow - discussions may not be enabled on this repository"
-                                PASSED_TESTS+=("$workflow")
+                                record_test_pass "$workflow"
                             fi
                             ;;
                         *"add-comment")
@@ -1721,7 +1845,7 @@ run_tests() {
                                 wait_for_comment "$issue_num" "Reply from $ai_display_name" "$workflow" "$target_repo" || true
                             else
                                 error "Failed to create test issue for $workflow"
-                                FAILED_TESTS+=("$workflow")
+                                record_test_fail "$workflow"
                             fi
                             ;;
                         *"add-labels")
@@ -1736,7 +1860,7 @@ run_tests() {
                                 wait_for_labels "$issue_num" "${ai_type}-safe-output-label-test" "$workflow" "$target_repo" || true
                             else
                                 error "Failed to create test issue for $workflow"
-                                FAILED_TESTS+=("$workflow")
+                                record_test_fail "$workflow"
                             fi
                             ;;
                         *"update-issue")
@@ -1751,7 +1875,21 @@ run_tests() {
                                 wait_for_issue_update "$issue_num" "$ai_display_name" "$workflow" "$target_repo" || true
                             else
                                 error "Failed to create test issue for $workflow"
-                                FAILED_TESTS+=("$workflow")
+                                record_test_fail "$workflow"
+                            fi
+                            ;;
+                        *"update-pull-request")
+                            info "Creating test pull request to trigger $workflow..."
+                            local pr_num=$(create_test_pr "Test PR for $ai_display_name Update PR" "This PR is for testing $workflow" "$target_repo")
+                            if [[ -n "$pr_num" ]]; then
+                                local repo_url="$REPO_OWNER/$REPO_NAME"
+                                [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                success "Created test PR #$pr_num for $workflow: https://github.com/$repo_url/pull/$pr_num"
+                                sleep 10
+                                wait_for_pr_update "$pr_num" "$ai_display_name" "$workflow" "$target_repo" || true
+                            else
+                                error "Failed to create test PR for $workflow"
+                                record_test_fail "$workflow"
                             fi
                             ;;
                         *"push-to-pull-request-branch")
@@ -1766,7 +1904,7 @@ run_tests() {
                                 wait_for_branch_update "$branch_name" "$after_commit_sha" "$workflow" "$target_repo" || true
                             else
                                 error "Failed to create test PR for $workflow"
-                                FAILED_TESTS+=("$workflow")
+                                record_test_fail "$workflow"
                             fi
                             ;;
                         *"pull-request-review-comment")
@@ -1780,7 +1918,7 @@ run_tests() {
                                 wait_for_pr_reviews "$pr_num" "$ai_display_name" "$workflow" "$target_repo" || true
                             else
                                 error "Failed to create test PR for $workflow"
-                                FAILED_TESTS+=("$workflow")
+                                record_test_fail "$workflow"
                             fi
                             ;;
                         *"command")
@@ -1794,13 +1932,13 @@ run_tests() {
                                 wait_for_command_comment "$issue_num" "205" "$workflow" "$target_repo" || true
                             else
                                 error "Failed to create test issue for $workflow"
-                                FAILED_TESTS+=("$workflow")
+                                record_test_fail "$workflow"
                             fi
                             ;;
                     esac
                 else
                     error "Failed to enable workflow '$workflow'"
-                    FAILED_TESTS+=("$workflow")
+                    record_test_fail "$workflow"
                 fi
                 ;;
         esac
@@ -1857,23 +1995,18 @@ print_final_report() {
     echo -e "${CYAN}📄 Log file: $LOG_FILE${NC}"
     echo "============================================"
     
-    if [[ ${#FAILED_TESTS[@]} -gt 0 ]]; then
-        {
-            for _t in "${FAILED_TESTS[@]}"; do
-                local _url="${TEST_RUN_URLS[$_t]:-}"
-                if [[ -n "$_url" ]]; then
-                    echo "$_t $_url"
-                else
-                    echo "$_t"
-                fi
-            done
-        } > fails.txt
-        info "Failures written to fails.txt (run './e2e.sh report' to file issues)"
+    if [[ -f "fails.txt" ]]; then
+        info "Remaining failures in fails.txt (run './e2e.sh report' to file issues, './e2e.sh rerun' to retry)"
+        exit 1
+    elif [[ ${#FAILED_TESTS[@]} -gt 0 ]]; then
+        info "Failures recorded in fails.txt (run './e2e.sh report' to file issues, './e2e.sh rerun' to retry)"
         exit 1
     fi
 }
 
 run_report() {
+    local filter_test="${1:-}"
+
     if [[ ! -f "fails.txt" ]]; then
         error "fails.txt not found. Run e2e tests first to generate failure records."
         exit 1
@@ -1883,18 +2016,36 @@ run_report() {
     local created_count=0
     local failed_count=0
 
-    info "Creating GitHub issues for failures listed in fails.txt..."
+    if [[ -n "$filter_test" ]]; then
+        info "Creating GitHub issue for '$filter_test' from fails.txt..."
+    else
+        info "Creating GitHub issues for failures listed in fails.txt..."
+    fi
 
     while IFS= read -r line || [[ -n "$line" ]]; do
         [[ -z "$line" ]] && continue
 
-        local test_name run_url
-        read -r test_name run_url <<< "$line"
+        local test_name run_ids_str
+        test_name="${line%% *}"
+        if [[ "$line" == *" "* ]]; then
+            run_ids_str="${line#* }"
+        else
+            run_ids_str=""
+        fi
+
+        # Skip tests that don't match the filter
+        if [[ -n "$filter_test" && "$test_name" != "$filter_test" ]]; then
+            continue
+        fi
 
         progress "Processing failure: $test_name"
 
-        # Use the run URL recorded in fails.txt; fall back to gh run list lookup
-        if [[ -z "$run_url" ]]; then
+        # Build run URL from the last run ID on the line; fall back to gh run list lookup
+        local run_url=""
+        if [[ -n "$run_ids_str" ]]; then
+            local last_run_id="${run_ids_str##* }"
+            run_url="https://github.com/$repo_full/actions/runs/$last_run_id"
+        else
             local workflow_file="${test_name}.lock.yml"
             local run_id
             run_id=$(gh run list \
@@ -1978,10 +2129,51 @@ ISSUEBODY
     fi
 }
 
+run_rerun() {
+    local filter_test="${1:-}"
+
+    if [[ ! -f "fails.txt" ]]; then
+        error "fails.txt not found. Run e2e tests first to generate failure records."
+        exit 1
+    fi
+
+    # Read test names from fails.txt
+    local rerun_tests=()
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        [[ -z "$line" ]] && continue
+        local test_name="${line%% *}"
+        if [[ -n "$filter_test" && "$test_name" != "$filter_test" ]]; then
+            continue
+        fi
+        rerun_tests+=("$test_name")
+    done < "fails.txt"
+
+    if [[ ${#rerun_tests[@]} -eq 0 ]]; then
+        success "No failures to rerun"
+        return 0
+    fi
+
+    info "Re-running ${#rerun_tests[@]} failed test(s) from fails.txt..."
+    for t in "${rerun_tests[@]}"; do
+        echo "   - $t"
+    done
+    echo
+
+    check_prerequisites
+    disable_all_workflows_before_testing
+    run_tests "${rerun_tests[@]}"
+    print_final_report
+    cleanup_on_exit
+}
+
 main() {
-    # Handle 'report' subcommand before any other processing
+    # Handle subcommands before any other processing
     if [[ "${1:-}" == "report" ]]; then
-        run_report
+        run_report "${2:-}"
+        return 0
+    fi
+    if [[ "${1:-}" == "rerun" ]]; then
+        run_rerun "${2:-}"
         return 0
     fi
 
@@ -2006,9 +2198,13 @@ main() {
             --help|-h)
                 echo "Usage: $0 [OPTIONS] [TEST_PATTERNS...]"
                 echo "       $0 report"
+                echo "       $0 rerun"
                 echo ""
                 echo "Subcommands:"
-                echo "  report                     Create GitHub issues for failures in fails.txt"
+                echo "  report [TEST_NAME]         Create GitHub issues for failures in fails.txt"
+                echo "                             If TEST_NAME given, only file an issue for that test"
+                echo "  rerun [TEST_NAME]          Re-run failed tests from fails.txt"
+                echo "                             If TEST_NAME given, only re-run that test"
                 echo ""
                 echo "Options:"
                 echo "  --dry-run, -n              Show what would be tested without running"

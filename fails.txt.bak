@@ -8,6 +8,7 @@ test-claude-update-issue 24437266921
 test-codex-update-issue 24437266899
 test-claude-command 24435478462
 test-codex-command 24435608643
+test-copilot-command 24435747149
 test-copilot-nosandbox-add-comment 24437266962
 test-copilot-nosandbox-add-labels 24437266887
 test-copilot-nosandbox-update-issue 24437266942
