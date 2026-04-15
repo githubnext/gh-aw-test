@@ -7,7 +7,7 @@ on:
 permissions: read-all
 
 engine: 
-  id: claude
+  id: copilot
 
 safe-outputs:
   add-comment:
