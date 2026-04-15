@@ -1904,16 +1904,6 @@ run_report() {
                 --json databaseId,conclusion \
                 --jq '.[] | select(.conclusion == "failure" or .conclusion == "cancelled" or .conclusion == "timed_out") | .databaseId' 2>/dev/null | head -1 || echo "")
 
-            # Fall back to most recent run if no conclusively-failed run found
-            if [[ -z "$run_id" ]]; then
-                run_id=$(gh run list \
-                    --repo "$repo_full" \
-                    --workflow="$workflow_file" \
-                    --limit=1 \
-                    --json databaseId \
-                    --jq '.[0].databaseId' 2>/dev/null || echo "")
-            fi
-
             if [[ -n "$run_id" ]]; then
                 run_url="https://github.com/$repo_full/actions/runs/$run_id"
             fi
@@ -1939,7 +1929,7 @@ Debug this workflow failure using your favorite Agent CLI and the agentic-workfl
 
 * Start your agent
 * Load the agentic-workflows prompt from \`.github/agents/agentic-workflows.agent.md\` or https://github.com/github/gh-aw/blob/main/.github/agents/agentic-workflows.agent.md
-* Type \`debug the agentic workflow repo-assist failure in $run_ref\`
+* Type \`debug the agentic workflow $test_name failure in $run_ref\`
 ISSUEBODY
         )
 
