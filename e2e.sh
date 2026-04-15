@@ -1939,7 +1939,7 @@ Debug this workflow failure using your favorite Agent CLI and the agentic-workfl
 
 * Start your agent
 * Load the agentic-workflows prompt from \`.github/agents/agentic-workflows.agent.md\` or https://github.com/github/gh-aw/blob/main/.github/agents/agentic-workflows.agent.md
-* Type \`debug the agentic workflow repo-assist failure in $run_ref\`
+* Type \`debug the agentic workflow $test_name failure in $run_ref\`
 ISSUEBODY
         )
 
