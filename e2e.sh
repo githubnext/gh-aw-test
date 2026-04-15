@@ -1857,23 +1857,98 @@ print_final_report() {
     echo -e "${CYAN}📄 Log file: $LOG_FILE${NC}"
     echo "============================================"
     
-    if [[ ${#FAILED_TESTS[@]} -gt 0 ]]; then
+    # Build a map of run IDs for failed tests
+    declare -A _new_run_ids
+    for _t in "${FAILED_TESTS[@]}"; do
+        local _url="${TEST_RUN_URLS[$_t]:-}"
+        local _run_id=""
+        if [[ -n "$_url" ]]; then
+            _run_id="${_url##*/}"
+        fi
+        # If no run ID was captured during the test, look it up now
+        if [[ -z "$_run_id" ]]; then
+            local _workflow_file="${_t}.lock.yml"
+            _run_id=$(gh run list \
+                --repo "$REPO_OWNER/$REPO_NAME" \
+                --workflow="$_workflow_file" \
+                --limit=1 \
+                --json databaseId \
+                --jq '.[0].databaseId' 2>/dev/null || echo "")
+        fi
+        _new_run_ids["$_t"]="${_run_id:-}"
+    done
+
+    if [[ ${#FAILED_TESTS[@]} -gt 0 || -f "fails.txt" ]]; then
+        # Load existing fails.txt entries (for rerun merging)
+        declare -A _existing_runs
+        declare -a _existing_order=()
+        if [[ -f "fails.txt" ]]; then
+            while IFS= read -r _line || [[ -n "$_line" ]]; do
+                [[ -z "$_line" ]] && continue
+                local _ename _eruns
+                _ename="${_line%% *}"
+                if [[ "$_line" == *" "* ]]; then
+                    _eruns="${_line#* }"
+                else
+                    _eruns=""
+                fi
+                _existing_runs["$_ename"]="$_eruns"
+                _existing_order+=("$_ename")
+            done < "fails.txt"
+        fi
+
+        # Remove tests that passed this run
+        for _t in "${PASSED_TESTS[@]}"; do
+            unset '_existing_runs[$_t]'
+        done
+
+        # Merge new failures: append run ID to existing line or create new entry
+        for _t in "${FAILED_TESTS[@]}"; do
+            local _rid="${_new_run_ids[$_t]:-}"
+            if [[ -n "${_existing_runs[$_t]+set}" ]]; then
+                # Existing entry — append new run ID if present and not duplicate
+                if [[ -n "$_rid" && "${_existing_runs[$_t]}" != *"$_rid"* ]]; then
+                    if [[ -n "${_existing_runs[$_t]}" ]]; then
+                        _existing_runs["$_t"]="${_existing_runs[$_t]} $_rid"
+                    else
+                        _existing_runs["$_t"]="$_rid"
+                    fi
+                fi
+            else
+                # New failure
+                _existing_runs["$_t"]="${_rid:-}"
+                _existing_order+=("$_t")
+            fi
+        done
+
+        # Write out fails.txt preserving order, skipping removed entries
+        local _has_failures=false
         {
-            for _t in "${FAILED_TESTS[@]}"; do
-                local _url="${TEST_RUN_URLS[$_t]:-}"
-                if [[ -n "$_url" ]]; then
-                    echo "$_t $_url"
+            for _t in $(printf '%s\n' "${_existing_order[@]}" | awk '!seen[$0]++'); do
+                [[ -z "${_existing_runs[$_t]+set}" ]] && continue
+                _has_failures=true
+                local _ids="${_existing_runs[$_t]}"
+                if [[ -n "$_ids" ]]; then
+                    echo "$_t $_ids"
                 else
                     echo "$_t"
                 fi
             done
         } > fails.txt
-        info "Failures written to fails.txt (run './e2e.sh report' to file issues)"
-        exit 1
+
+        if [[ "$_has_failures" == true ]]; then
+            info "Failures written to fails.txt (run './e2e.sh report' to file issues, './e2e.sh rerun' to retry)"
+            exit 1
+        else
+            rm -f fails.txt
+            success "All previously-failed tests now pass"
+        fi
     fi
 }
 
 run_report() {
+    local filter_test="${1:-}"
+
     if [[ ! -f "fails.txt" ]]; then
         error "fails.txt not found. Run e2e tests first to generate failure records."
         exit 1
@@ -1883,18 +1958,36 @@ run_report() {
     local created_count=0
     local failed_count=0
 
-    info "Creating GitHub issues for failures listed in fails.txt..."
+    if [[ -n "$filter_test" ]]; then
+        info "Creating GitHub issue for '$filter_test' from fails.txt..."
+    else
+        info "Creating GitHub issues for failures listed in fails.txt..."
+    fi
 
     while IFS= read -r line || [[ -n "$line" ]]; do
         [[ -z "$line" ]] && continue
 
-        local test_name run_url
-        read -r test_name run_url <<< "$line"
+        local test_name run_ids_str
+        test_name="${line%% *}"
+        if [[ "$line" == *" "* ]]; then
+            run_ids_str="${line#* }"
+        else
+            run_ids_str=""
+        fi
+
+        # Skip tests that don't match the filter
+        if [[ -n "$filter_test" && "$test_name" != "$filter_test" ]]; then
+            continue
+        fi
 
         progress "Processing failure: $test_name"
 
-        # Use the run URL recorded in fails.txt; fall back to gh run list lookup
-        if [[ -z "$run_url" ]]; then
+        # Build run URL from the last run ID on the line; fall back to gh run list lookup
+        local run_url=""
+        if [[ -n "$run_ids_str" ]]; then
+            local last_run_id="${run_ids_str##* }"
+            run_url="https://github.com/$repo_full/actions/runs/$last_run_id"
+        else
             local workflow_file="${test_name}.lock.yml"
             local run_id
             run_id=$(gh run list \
@@ -1978,10 +2071,46 @@ ISSUEBODY
     fi
 }
 
+run_rerun() {
+    if [[ ! -f "fails.txt" ]]; then
+        error "fails.txt not found. Run e2e tests first to generate failure records."
+        exit 1
+    fi
+
+    # Read test names from fails.txt
+    local rerun_tests=()
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        [[ -z "$line" ]] && continue
+        local test_name="${line%% *}"
+        rerun_tests+=("$test_name")
+    done < "fails.txt"
+
+    if [[ ${#rerun_tests[@]} -eq 0 ]]; then
+        success "No failures to rerun"
+        return 0
+    fi
+
+    info "Re-running ${#rerun_tests[@]} failed test(s) from fails.txt..."
+    for t in "${rerun_tests[@]}"; do
+        echo "   - $t"
+    done
+    echo
+
+    check_prerequisites
+    disable_all_workflows_before_testing
+    run_tests "${rerun_tests[@]}"
+    print_final_report
+    cleanup_on_exit
+}
+
 main() {
-    # Handle 'report' subcommand before any other processing
+    # Handle subcommands before any other processing
     if [[ "${1:-}" == "report" ]]; then
-        run_report
+        run_report "${2:-}"
+        return 0
+    fi
+    if [[ "${1:-}" == "rerun" ]]; then
+        run_rerun
         return 0
     fi
 
@@ -2006,9 +2135,12 @@ main() {
             --help|-h)
                 echo "Usage: $0 [OPTIONS] [TEST_PATTERNS...]"
                 echo "       $0 report"
+                echo "       $0 rerun"
                 echo ""
                 echo "Subcommands:"
-                echo "  report                     Create GitHub issues for failures in fails.txt"
+                echo "  report [TEST_NAME]         Create GitHub issues for failures in fails.txt"
+                echo "                             If TEST_NAME given, only file an issue for that test"
+                echo "  rerun                      Re-run only the tests listed in fails.txt"
                 echo ""
                 echo "Options:"
                 echo "  --dry-run, -n              Show what would be tested without running"
