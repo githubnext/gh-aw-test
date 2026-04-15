@@ -1,7 +1,6 @@
 test-copilot-add-comment
 test-copilot-add-labels
 test-copilot-update-issue
-test-copilot-command
 test-copilot-nosandbox-add-comment
 test-copilot-nosandbox-add-labels
 test-copilot-nosandbox-update-issue
