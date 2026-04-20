@@ -374,10 +374,14 @@ get_all_tests() {
     echo "test-claude-update-issue"
     echo "test-codex-update-issue"
     echo "test-copilot-update-issue"
+    echo "test-copilot-close-issue"
+    echo "test-copilot-remove-labels"
+    echo "test-copilot-close-discussion"
     # PR-triggered tests
     echo "test-claude-update-pull-request"
     echo "test-codex-update-pull-request"
     echo "test-copilot-update-pull-request"
+    echo "test-copilot-close-pull-request"
     # Command-triggered tests
     echo "test-claude-command"
     echo "test-codex-command"
@@ -1439,6 +1443,203 @@ wait_for_issue_update() {
     return 1
 }
 
+validate_issue_closed() {
+    local issue_number="$1"
+    local expected_comment="$2"
+    local repo="${3:-}"
+    
+    local repo_flag=""
+    if [[ -n "$repo" ]]; then
+        repo_flag="--repo $repo"
+    fi
+    
+    local issue_data=$(gh issue view $repo_flag "$issue_number" --json state,comments 2>/dev/null)
+    
+    if [[ -z "$issue_data" ]]; then
+        warning "(polling) Could not retrieve issue #$issue_number data"
+        return 1
+    fi
+    
+    local state=$(echo "$issue_data" | jq -r '.state')
+    local state_lc="${state,,}"
+    
+    if [[ "$state_lc" != "closed" ]]; then
+        warning "(polling) Issue #$issue_number is still open (state $state). Expected closed."
+        return 1
+    fi
+    
+    success "Issue #$issue_number was closed successfully"
+    
+    if [[ -n "$expected_comment" ]]; then
+        local comments=$(echo "$issue_data" | jq -r '.comments[].body')
+        if echo "$comments" | grep -q "$expected_comment"; then
+            success "Issue #$issue_number has expected closing comment containing: $expected_comment"
+        else
+            warning "Issue #$issue_number closed but missing expected comment containing: '$expected_comment'"
+        fi
+    fi
+    
+    return 0
+}
+
+wait_for_issue_closed() {
+    local issue_number="$1"
+    local expected_comment="$2"
+    local test_name="$3"
+    local repo="${4:-}"
+    local max_wait=240 # Max wait time in seconds (4 minutes)
+    local waited=0
+    
+    while [[ $waited -lt $max_wait ]]; do
+        if validate_issue_closed "$issue_number" "$expected_comment" "$repo"; then
+            record_test_pass "$test_name"
+            return 0
+        fi
+        info "..."
+        sleep 5
+        waited=$((waited + 5))
+    done
+    
+    record_test_fail "$test_name"
+    return 1
+}
+
+validate_label_removed() {
+    local issue_number="$1"
+    local label_name="$2"
+    local repo="${3:-}"
+    
+    local repo_flag=""
+    if [[ -n "$repo" ]]; then
+        repo_flag="--repo $repo"
+    fi
+    
+    local labels=$(gh issue view $repo_flag "$issue_number" --json labels --jq '.labels[].name' | tr '\n' ',')
+    
+    if [[ "$labels" != *"$label_name"* ]]; then
+        success "Issue #$issue_number no longer has label: $label_name"
+        return 0
+    else
+        warning "(polling) Issue #$issue_number still has label: '$label_name'. Current labels: '$labels'"
+        return 1
+    fi
+}
+
+wait_for_label_removed() {
+    local issue_number="$1"
+    local label_name="$2"
+    local test_name="$3"
+    local repo="${4:-}"
+    local max_wait=240 # Max wait time in seconds (4 minutes)
+    local waited=0
+    
+    while [[ $waited -lt $max_wait ]]; do
+        if validate_label_removed "$issue_number" "$label_name" "$repo"; then
+            record_test_pass "$test_name"
+            return 0
+        fi
+        info "..."
+        sleep 5
+        waited=$((waited + 5))
+    done
+    
+    record_test_fail "$test_name"
+    return 1
+}
+
+validate_discussion_closed() {
+    local discussion_number="$1"
+    local repo="${2:-}"
+    
+    local owner="$REPO_OWNER"
+    local name="$REPO_NAME"
+    if [[ -n "$repo" ]]; then
+        owner=$(echo "$repo" | cut -d/ -f1)
+        name=$(echo "$repo" | cut -d/ -f2)
+    fi
+    
+    # Check discussion state using GraphQL
+    local query="{
+      repository(owner: \"$owner\", name: \"$name\") {
+        discussion(number: $discussion_number) {
+          closed
+        }
+      }
+    }"
+    local closed=$(gh api graphql -f query="$query" --jq '.data.repository.discussion.closed' 2>/dev/null)
+    
+    if [[ "$closed" == "true" ]]; then
+        success "Discussion #$discussion_number was closed successfully"
+        return 0
+    else
+        warning "(polling) Discussion #$discussion_number is still open (closed=$closed)"
+        return 1
+    fi
+}
+
+wait_for_discussion_closed() {
+    local discussion_number="$1"
+    local test_name="$2"
+    local repo="${3:-}"
+    local max_wait=240 # Max wait time in seconds (4 minutes)
+    local waited=0
+    
+    while [[ $waited -lt $max_wait ]]; do
+        if validate_discussion_closed "$discussion_number" "$repo"; then
+            record_test_pass "$test_name"
+            return 0
+        fi
+        info "..."
+        sleep 5
+        waited=$((waited + 5))
+    done
+    
+    record_test_fail "$test_name"
+    return 1
+}
+
+validate_pr_closed() {
+    local pr_number="$1"
+    local repo="${2:-}"
+    
+    local repo_flag=""
+    if [[ -n "$repo" ]]; then
+        repo_flag="--repo $repo"
+    fi
+    
+    local state=$(gh pr view $repo_flag "$pr_number" --json state --jq '.state' 2>/dev/null)
+    local state_lc="${state,,}"
+    
+    if [[ "$state_lc" == "closed" || "$state_lc" == "merged" ]]; then
+        success "PR #$pr_number was closed successfully (state: $state)"
+        return 0
+    else
+        warning "(polling) PR #$pr_number is still open (state: $state)"
+        return 1
+    fi
+}
+
+wait_for_pr_closed() {
+    local pr_number="$1"
+    local test_name="$2"
+    local repo="${3:-}"
+    local max_wait=240 # Max wait time in seconds (4 minutes)
+    local waited=0
+    
+    while [[ $waited -lt $max_wait ]]; do
+        if validate_pr_closed "$pr_number" "$repo"; then
+            record_test_pass "$test_name"
+            return 0
+        fi
+        info "..."
+        sleep 5
+        waited=$((waited + 5))
+    done
+    
+    record_test_fail "$test_name"
+    return 1
+}
+
 wait_for_command_comment() {
     local issue_number="$1"
     local expected_text="$2"
@@ -1833,6 +2034,21 @@ run_tests() {
                                 record_test_pass "$workflow"
                             fi
                             ;;
+                        *"close-discussion")
+                            info "Creating test discussion to trigger $workflow..."
+                            local discussion_title="Test close discussion from $ai_display_name"
+                            local discussion_num=$(create_test_discussion "$discussion_title" "This is a test discussion to trigger $workflow" "General" "$target_repo")
+                            if [[ -n "$discussion_num" ]]; then
+                                local repo_url="$REPO_OWNER/$REPO_NAME"
+                                [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                success "Created test discussion #$discussion_num to trigger $workflow: https://github.com/$repo_url/discussions/$discussion_num"
+                                sleep 10
+                                wait_for_discussion_closed "$discussion_num" "$workflow" "$target_repo" || true
+                            else
+                                warning "Could not create test discussion for $workflow - discussions may not be enabled on this repository"
+                                record_test_pass "$workflow"
+                            fi
+                            ;;
                         *"add-comment")
                             info "Creating test issue to trigger $workflow..."
                             local issue_title="Hello from $ai_display_name"
@@ -1878,6 +2094,36 @@ run_tests() {
                                 record_test_fail "$workflow"
                             fi
                             ;;
+                        *"close-issue")
+                            info "Creating test issue to trigger $workflow..."
+                            local issue_title="Test close issue from $ai_display_name"
+                            local issue_num=$(create_test_issue "$issue_title" "This is a test issue to trigger $workflow" "" "$target_repo")
+                            if [[ -n "$issue_num" ]]; then
+                                local repo_url="$REPO_OWNER/$REPO_NAME"
+                                [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                success "Created test issue #$issue_num for $workflow: https://github.com/$repo_url/issues/$issue_num"
+                                sleep 10
+                                wait_for_issue_closed "$issue_num" "Closed by $ai_display_name safe output" "$workflow" "$target_repo" || true
+                            else
+                                error "Failed to create test issue for $workflow"
+                                record_test_fail "$workflow"
+                            fi
+                            ;;
+                        *"remove-labels")
+                            info "Creating test issue with label to trigger $workflow..."
+                            local issue_title="Test remove label from $ai_display_name"
+                            local issue_num=$(create_test_issue "$issue_title" "This is a test issue to trigger $workflow" "copilot-remove-label-test" "$target_repo")
+                            if [[ -n "$issue_num" ]]; then
+                                local repo_url="$REPO_OWNER/$REPO_NAME"
+                                [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                success "Created test issue #$issue_num with label for $workflow: https://github.com/$repo_url/issues/$issue_num"
+                                sleep 10
+                                wait_for_label_removed "$issue_num" "copilot-remove-label-test" "$workflow" "$target_repo" || true
+                            else
+                                error "Failed to create test issue for $workflow"
+                                record_test_fail "$workflow"
+                            fi
+                            ;;
                         *"update-pull-request")
                             info "Creating test pull request to trigger $workflow..."
                             local pr_num=$(create_test_pr "Test PR for $ai_display_name Update PR" "This PR is for testing $workflow" "$target_repo")
@@ -1887,6 +2133,20 @@ run_tests() {
                                 success "Created test PR #$pr_num for $workflow: https://github.com/$repo_url/pull/$pr_num"
                                 sleep 10
                                 wait_for_pr_update "$pr_num" "$ai_display_name" "$workflow" "$target_repo" || true
+                            else
+                                error "Failed to create test PR for $workflow"
+                                record_test_fail "$workflow"
+                            fi
+                            ;;
+                        *"close-pull-request")
+                            info "Creating test pull request to trigger $workflow..."
+                            local pr_num=$(create_test_pr "Test PR for $ai_display_name Close" "This PR is for testing $workflow" "$target_repo")
+                            if [[ -n "$pr_num" ]]; then
+                                local repo_url="$REPO_OWNER/$REPO_NAME"
+                                [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                success "Created test PR #$pr_num for $workflow: https://github.com/$repo_url/pull/$pr_num"
+                                sleep 10
+                                wait_for_pr_closed "$pr_num" "$workflow" "$target_repo" || true
                             else
                                 error "Failed to create test PR for $workflow"
                                 record_test_fail "$workflow"
