@@ -1,15 +1,11 @@
-test-claude-add-comment 24437266969 24440750675
-test-claude-add-labels 24437266880 24440938426
-test-codex-add-comment 24437266936 24441119121
-test-codex-add-labels 24437266918
-test-copilot-add-comment 24437266897
-test-copilot-add-labels 24437266915
-test-claude-update-issue 24437266921
-test-codex-update-issue 24437266899
-test-claude-command 24435478462
-test-codex-command 24435608643
-test-copilot-nosandbox-add-comment 24437266962
-test-copilot-nosandbox-add-labels 24437266887
-test-copilot-nosandbox-update-issue 24437266942
-test-copilot-nosandbox-command 24437267964
+test-copilot-nosandbox-command 24437267964 25012767306
 test-copilot-siderepo-create-pull-request-review-comment
+test-codex-create-pull-request 25005388813
+test-copilot-create-pull-request 25005480041
+test-copilot-close-issue 25008676594
+test-copilot-close-discussion 25009055891
+test-copilot-close-pull-request 25009698689
+test-copilot-command 25010274366
+test-copilot-create-pull-request-review-comment 25011322407
+test-copilot-siderepo-create-discussion 25013391316
+test-copilot-siderepo-create-pull-request 25013621233
