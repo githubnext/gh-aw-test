@@ -3087,34 +3087,76 @@ run_tests_parallel() {
         
         # Launch tests in this batch
         local pids=()
+        local -A pid_to_test=()
+        local -A pid_to_start=()
+        local batch_launch_time=$(date +%s)
         for test in "${batch_tests[@]}"; do
             progress "  🚀 Starting: $test"
             run_single_test "$test" &
-            pids+=($!)
+            local _pid=$!
+            pids+=("$_pid")
+            pid_to_test[$_pid]="$test"
+            pid_to_start[$_pid]=$batch_launch_time
         done
-        
+
         # Wait for batch to complete with live status
         local completed=0
         local total_in_batch=${#batch_tests[@]}
+        # Hard ceiling per test — these tests should normally finish in ~1-2 min
+        local per_test_kill_seconds=300
         echo
-        info "  ⏳ Waiting for $total_in_batch tests to complete..."
-        
+        info "  ⏳ Waiting for $total_in_batch tests to complete (per-test kill after ${per_test_kill_seconds}s)..."
+
+        local last_status_line_len=0
         while [[ $completed -lt $total_in_batch ]]; do
             completed=0
+            local running_summary=()
+            local now=$(date +%s)
             for pid in "${pids[@]}"; do
                 if ! kill -0 "$pid" 2>/dev/null; then
                     completed=$((completed + 1))
+                    continue
                 fi
+                local elapsed=$(( now - ${pid_to_start[$pid]} ))
+                # Kill tests that exceed the hard ceiling
+                if [[ $elapsed -gt $per_test_kill_seconds ]]; then
+                    local stuck_test="${pid_to_test[$pid]}"
+                    echo
+                    warning "  ⏰ Killing '$stuck_test' (pid $pid) — exceeded ${per_test_kill_seconds}s"
+                    kill -TERM "$pid" 2>/dev/null
+                    sleep 1
+                    kill -KILL "$pid" 2>/dev/null
+                    # Record as FAIL so the results reader sees it
+                    (
+                        flock -x 200
+                        echo "$stuck_test|FAIL" >> "$RESULTS_FILE"
+                    ) 200>"$RESULTS_LOCK"
+                    completed=$((completed + 1))
+                    continue
+                fi
+                running_summary+=("${pid_to_test[$pid]}(${elapsed}s)")
             done
-            
-            # Show progress bar
+
+            # Show progress bar + running test names
             if [[ $total_in_batch -gt 0 ]]; then
                 local progress_pct=$(( completed * 100 / total_in_batch ))
                 local filled=$(( completed * 40 / total_in_batch ))
                 local empty=$(( 40 - filled ))
-                printf "\r  ${BLUE}[${GREEN}%${filled}s${NC}%${empty}s${BLUE}]${NC} ${completed}/${total_in_batch} (${progress_pct}%%)" "$(printf '#%.0s' $(seq 1 $filled 2>/dev/null))" "$(printf ' %.0s' $(seq 1 $empty 2>/dev/null))"
+                local running_text=""
+                if [[ ${#running_summary[@]} -gt 0 ]]; then
+                    running_text=" — running: $(IFS=', '; echo "${running_summary[*]}")"
+                fi
+                local line
+                line=$(printf "\r  ${BLUE}[${GREEN}%${filled}s${NC}%${empty}s${BLUE}]${NC} ${completed}/${total_in_batch} (${progress_pct}%%)%s" "$(printf '#%.0s' $(seq 1 $filled 2>/dev/null))" "$(printf ' %.0s' $(seq 1 $empty 2>/dev/null))" "$running_text")
+                # Pad with spaces to overwrite previous longer line, then carriage return
+                local pad=""
+                if (( ${#line} < last_status_line_len )); then
+                    pad=$(printf '%*s' $(( last_status_line_len - ${#line} )) "")
+                fi
+                printf "%s%s" "$line" "$pad"
+                last_status_line_len=${#line}
             fi
-            
+
             sleep 1
         done
         echo
