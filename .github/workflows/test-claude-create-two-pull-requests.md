@@ -12,6 +12,31 @@ safe-outputs:
     title-prefix: "[claude-test] "
     labels: [claude, automation, bot]
     #max: 2
+    samples:
+      - title: "Feature A from Claude"
+        body: "Adds Feature A as part of the two-PR test."
+        branch: "gh-aw-sample-claude-feature-a"
+        patch: |
+          diff --git a/feature-a/README.md b/feature-a/README.md
+          new file mode 100644
+          --- /dev/null
+          +++ b/feature-a/README.md
+          @@ -0,0 +1,3 @@
+          +# Feature A
+          +
+          +Created by Claude under the samples replay driver.
+      - title: "Feature B from Claude"
+        body: "Adds Feature B as part of the two-PR test."
+        branch: "gh-aw-sample-claude-feature-b"
+        patch: |
+          diff --git a/feature-b/README.md b/feature-b/README.md
+          new file mode 100644
+          --- /dev/null
+          +++ b/feature-b/README.md
+          @@ -0,0 +1,3 @@
+          +# Feature B
+          +
+          +Created by Claude under the samples replay driver.
 ---
 
 # Test Claude Create Two Pull Requests

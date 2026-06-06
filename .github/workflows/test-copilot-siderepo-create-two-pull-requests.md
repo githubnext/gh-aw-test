@@ -20,6 +20,7 @@ safe-outputs:
     allowed-repos: ['githubnext/gh-aw-side-repo']
     github-token: ${{ secrets.TEMP_USER_PAT }}
     # max: 2
+
 ---
 
 # Test Copilot Create Two Pull Requests (Side Repo)

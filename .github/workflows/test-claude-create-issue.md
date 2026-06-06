@@ -14,6 +14,15 @@ safe-outputs:
     title-prefix: "[claude-test] "
     labels: [claude, automation, haiku]
     # min: 1
+    samples:
+      - title: "Hello from Claude"
+        body: |
+          World
+
+          A haiku for the test:
+            silent agent runs
+            replay drives every output
+            green ticks bloom in CI
 ---
 
 Create an issue in repository ${{ github.repository }} with title "Hello from Claude" and body "World"

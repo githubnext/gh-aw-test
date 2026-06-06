@@ -149,7 +149,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
   e2e:
-    name: "E2E: ${{ matrix.entry.label }} (gh-aw@${{ matrix.entry.ref }}, ${{ matrix.entry.mode }})"
+    name: "E2E: ${{ matrix.entry.label }} (gh-aw@${{ matrix.entry.ref }}, ${{ matrix.entry.mode }}, samples=${{ matrix.samples }})"
     needs: resolve-refs
     runs-on: ubuntu-latest
     timeout-minutes: 90
@@ -157,6 +157,7 @@ jobs:
       fail-fast: false
       matrix:
         entry: ${{ fromJSON(needs.resolve-refs.outputs.matrix) }}
+        samples: [false, true]
     steps:
       - name: Checkout gh-aw-test
         uses: actions/checkout@v4
@@ -217,6 +218,7 @@ jobs:
           CI_GITHUB_PAT: ${{ secrets.CI_GITHUB_PAT }}
           E2E_REF: ${{ matrix.entry.ref }}
           E2E_MODE: ${{ matrix.entry.mode }}
+          E2E_USE_SAMPLES: ${{ matrix.samples }}
         run: |
           set +e
           chmod +x ./e2e.sh
@@ -224,18 +226,25 @@ jobs:
             echo "::error::CI_GITHUB_PAT secret is not set on this repository. The matrix runs e2e.sh in --no-push mode, which does not mutate repo secrets and therefore requires CI_GITHUB_PAT to be supplied via secrets.CI_GITHUB_PAT."
             exit 1
           fi
+          
+          # Build flags
+          SAMPLES_FLAG=""
+          if [[ "$E2E_USE_SAMPLES" == "true" ]]; then
+            SAMPLES_FLAG="--use-samples"
+          fi
+          
           if [[ "$E2E_MODE" == "source" ]]; then
             # source mode: locally-built binary + --gh-aw-ref so lockfiles
             # reference github/gh-aw/actions/setup@<ref>.
             # ($CI=true is set automatically by GitHub Actions, so e2e.sh runs
             # in CI mode: no push, no secret mutation.)
-            ./e2e.sh --gh-aw-ref "$E2E_REF" --workflow-dispatch-only 2>&1 | tee e2e-output.log
+            ./e2e.sh --gh-aw-ref "$E2E_REF" --workflow-dispatch-only $SAMPLES_FLAG 2>&1 | tee e2e-output.log
           else
             # extension mode: rely on the installed `gh aw` (pinned to $E2E_REF),
             # no --gh-aw-ref override — lockfiles will reference the published
             # gh-aw-actions release that ships with that gh-aw version, which is
             # exactly what end users get.
-            ./e2e.sh --workflow-dispatch-only 2>&1 | tee e2e-output.log
+            ./e2e.sh --workflow-dispatch-only $SAMPLES_FLAG 2>&1 | tee e2e-output.log
           fi
           rc=${PIPESTATUS[0]}
           echo "exit_code=$rc" >> "$GITHUB_OUTPUT"

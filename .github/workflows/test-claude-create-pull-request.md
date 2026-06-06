@@ -11,6 +11,19 @@ safe-outputs:
   create-pull-request:
     title-prefix: "[claude-test] "
     labels: [claude, automation, bot]
+    samples:
+      - title: "Multi-commit test from Claude"
+        body: "This pull request was created by Claude to test multi-commit functionality in agentic workflows."
+        branch: "gh-aw-sample-claude-multi-commit"
+        patch: |
+          diff --git a/README-test.md b/README-test.md
+          new file mode 100644
+          --- /dev/null
+          +++ b/README-test.md
+          @@ -0,0 +1,3 @@
+          +# Test Project
+          +
+          +This is a test project created by Claude to test multi-commit pull requests.
 ---
 
 # Test Claude Create Pull Request

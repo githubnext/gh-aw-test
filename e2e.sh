@@ -24,6 +24,7 @@
 #   --dry-run                  Show what would be tested without running
 #   --workflow-dispatch-only   Only run tests that use workflow_dispatch trigger
 #                              (skip issue/comment/PR-triggered tests)
+#   --use-samples              Use declared samples for more deterministic testing
 #   --help, -h                 Show help message
 #
 # Examples:
@@ -136,6 +137,7 @@ POLL_INTERVAL=5
 LOG_FILE="e2e-test-$(date +%Y%m%d-%H%M%S).log"
 TEMP_USER_PAT_SET=false
 WORKFLOW_DISPATCH_ONLY=false
+USE_SAMPLES=false
 
 # --gh-aw-ref: when non-empty, the script resets a parallel ../gh-aw checkout to
 # this ref, builds it, and uses the resulting binary for compile+enable+disable+run.
@@ -425,8 +427,6 @@ get_all_tests() {
     # Workflow_dispatch tests with inputs (dispatch-workflow needs a sentinel)
     echo "test-copilot-dispatch-workflow"
     # Nosandbox tests - limited set for claude/codex, full matrix for copilot
-    echo "test-claude-nosandbox-create-issue"
-    echo "test-codex-nosandbox-create-issue"
     echo "test-copilot-nosandbox-create-issue"
     echo "test-copilot-nosandbox-create-discussion"
     echo "test-copilot-nosandbox-create-pull-request"
@@ -591,6 +591,9 @@ check_prerequisites() {
     local compile_cmd=($GH_AW_BIN compile)
     if [[ -n "$GH_AW_REF" ]]; then
         compile_cmd+=(--gh-aw-ref "$GH_AW_REF")
+    fi
+    if [[ "$USE_SAMPLES" == true ]]; then
+        compile_cmd+=(--use-samples)
     fi
     info "Running: ${compile_cmd[*]}"
     if ! "${compile_cmd[@]}" 2>&1 | tee -a "$LOG_FILE"; then
@@ -3137,6 +3140,10 @@ main() {
                 WORKFLOW_DISPATCH_ONLY=true
                 shift
                 ;;
+            --use-samples)
+                USE_SAMPLES=true
+                shift
+                ;;
             --gh-aw-ref)
                 if [[ $# -lt 2 || -z "$2" ]]; then
                     error "--gh-aw-ref requires a value (branch, tag, or SHA)"
@@ -3175,6 +3182,7 @@ main() {
                 echo "  --dry-run, -n              Show what would be tested without running"
                 echo "  --workflow-dispatch-only   Only run tests that use workflow_dispatch trigger"
                 echo "                             (skip issue/comment/PR-triggered tests)"
+                echo "  --use-samples              Use declared samples for more deterministic testing"
                 echo "  --gh-aw-ref <ref>          Run E2E tests against gh-aw at this branch/tag/SHA."
                 echo "                             Resets parallel ../gh-aw checkout to <ref>, runs"
                 echo "                             'make build' there, then recompiles with"

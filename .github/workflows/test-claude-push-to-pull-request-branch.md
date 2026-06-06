@@ -11,6 +11,18 @@ engine:
 
 safe-outputs:
   push-to-pull-request-branch:
+    samples:
+      - branch: "gh-aw-sample-claude-push-branch"
+        message: "Multi-commit test push from Claude"
+        patch: |
+          diff --git a/README-claude-test.md b/README-claude-test.md
+          new file mode 100644
+          --- /dev/null
+          +++ b/README-claude-test.md
+          @@ -0,0 +1,3 @@
+          +# Claude Push-to-Branch Multi-Commit Test
+          +
+          +This file was created by the Claude agentic workflow under the samples replay driver.
 ---
 
 # Test Claude Push to Branch
