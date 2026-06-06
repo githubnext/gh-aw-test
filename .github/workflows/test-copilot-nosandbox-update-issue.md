@@ -4,6 +4,8 @@ on:
     types: [opened, reopened]
   reaction: eyes
 
+if: contains(github.event.issue.body, 'e2e-marker:test-copilot-nosandbox-update-issue')
+
 strict: false
 
 permissions: read-all
@@ -21,6 +23,11 @@ safe-outputs:
     title:
     body:
     # min: 1
+    samples:
+      - issue_number: 1
+        title: "[UPDATED] Update Issue Test - Processed by Copilot (No Sandbox)"
+        body: "Original body\n\nThis issue was automatically updated by the Copilot agentic workflow without sandbox protection."
+        status: "closed"
 ---
 
 If the title of the issue #${{ github.event.issue.number }} is exactly "Hello from Copilot (No Sandbox)" then:

@@ -4,6 +4,8 @@ on:
     types: [opened, reopened]
   reaction: eyes
 
+if: contains(github.event.issue.body, 'e2e-marker:test-copilot-close-issue')
+
 permissions: read-all
 
 engine: 

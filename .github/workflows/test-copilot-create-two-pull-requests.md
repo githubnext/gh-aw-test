@@ -12,6 +12,31 @@ safe-outputs:
     title-prefix: "[copilot-test-two-prs] "
     labels: [copilot, automation, bot]
     #max: 2
+    samples:
+      - title: "Feature A from Copilot"
+        body: "Adds Feature A as part of the two-PR test."
+        branch: "gh-aw-sample-copilot-feature-a"
+        patch: |
+          diff --git a/feature-a/README.md b/feature-a/README.md
+          new file mode 100644
+          --- /dev/null
+          +++ b/feature-a/README.md
+          @@ -0,0 +1,3 @@
+          +# Feature A
+          +
+          +This is Feature A created by Copilot to test multi-PR functionality.
+      - title: "Feature B from Copilot"
+        body: "Adds Feature B as part of the two-PR test."
+        branch: "gh-aw-sample-copilot-feature-b"
+        patch: |
+          diff --git a/feature-b/README.md b/feature-b/README.md
+          new file mode 100644
+          --- /dev/null
+          +++ b/feature-b/README.md
+          @@ -0,0 +1,3 @@
+          +# Feature B
+          +
+          +This is Feature B created by Copilot to test multi-PR functionality.
 ---
 
 # Test Copilot Create Two Pull Requests

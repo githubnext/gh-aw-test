@@ -18,6 +18,10 @@ safe-outputs:
   create-pull-request-review-comment:
     max: 3
     # min: 1
+    samples:
+      - path: "README.md"
+        line: 2
+        body: "This code is magnificent! Outstanding work on the implementation."
   threat-detection: false  # Disable threat detection
 ---
 

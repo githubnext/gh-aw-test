@@ -4,6 +4,8 @@ on:
     types: [opened, reopened]
   reaction: eyes
 
+if: contains(github.event.issue.body, 'e2e-marker:test-codex-add-comment')
+
 permissions: read-all
 
 engine: 

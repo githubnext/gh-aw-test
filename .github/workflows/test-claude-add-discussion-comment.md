@@ -4,6 +4,8 @@ on:
     types: [created]
   reaction: eyes
 
+if: contains(github.event.discussion.body, 'e2e-marker:test-claude-add-discussion-comment')
+
 permissions: read-all
 
 engine: 

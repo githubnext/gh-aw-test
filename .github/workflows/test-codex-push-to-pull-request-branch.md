@@ -11,6 +11,18 @@ engine:
 
 safe-outputs:
   push-to-pull-request-branch:
+    samples:
+      - branch: "gh-aw-sample-codex-push-branch"
+        message: "Multi-commit test push from Codex"
+        patch: |
+          diff --git a/README-codex-test.md b/README-codex-test.md
+          new file mode 100644
+          --- /dev/null
+          +++ b/README-codex-test.md
+          @@ -0,0 +1,3 @@
+          +# Codex Push-to-Branch Multi-Commit Test
+          +
+          +This file was created by the Codex agentic workflow under the samples replay driver.
 ---
 
 # Test Codex Push to Branch

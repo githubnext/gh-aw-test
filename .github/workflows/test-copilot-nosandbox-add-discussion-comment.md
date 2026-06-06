@@ -4,6 +4,8 @@ on:
     types: [created]
   reaction: eyes
 
+if: contains(github.event.discussion.body, 'e2e-marker:test-copilot-nosandbox-add-discussion-comment')
+
 strict: false
 
 permissions: read-all

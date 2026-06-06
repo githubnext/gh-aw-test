@@ -998,7 +998,12 @@ create_test_issue() {
     if [[ -n "$repo" ]]; then
         repo_flag="--repo $repo"
     fi
-    
+
+    # Parallel-safety marker: lets each workflow's `if:` filter accept only its own trigger
+    if [[ -n "${E2E_TRIGGER_MARKER:-}" ]]; then
+        body+=$'\n\n'"$E2E_TRIGGER_MARKER"
+    fi
+
     local issue_url
     if [[ -n "$labels" ]]; then
         issue_url=$(gh issue create $repo_flag --title "$title" --body "$body" --label "$labels" 2>/dev/null)
@@ -1053,13 +1058,23 @@ create_test_discussion() {
         return
     fi
     
+    # Parallel-safety marker (see create_test_issue)
+    if [[ -n "${E2E_TRIGGER_MARKER:-}" ]]; then
+        body+=$'\n\n'"$E2E_TRIGGER_MARKER"
+    fi
+
+    # Escape body for embedding in GraphQL string literal
+    local body_escaped=${body//\\/\\\\}
+    body_escaped=${body_escaped//\"/\\\"}
+    body_escaped=${body_escaped//$'\n'/\\n}
+
     # Create discussion using GraphQL mutation
     local mutation="mutation {
       createDiscussion(input: {
         repositoryId: \"$repo_id\"
         categoryId: \"$category_id\"
         title: \"$title\"
-        body: \"$body\"
+        body: \"$body_escaped\"
       }) {
         discussion {
           number
@@ -1080,7 +1095,12 @@ create_test_pr() {
     local body="$2"
     local repo="${3:-}"
     local branch="test-pr-$(date +%s)"
-    
+
+    # Parallel-safety marker (see create_test_issue)
+    if [[ -n "${E2E_TRIGGER_MARKER:-}" ]]; then
+        body+=$'\n\n'"$E2E_TRIGGER_MARKER"
+    fi
+
     local repo_flag=""
     local api_repo=":owner/:repo"
     if [[ -n "$repo" ]]; then
@@ -1134,7 +1154,12 @@ create_test_pr_with_branch() {
     local body="$2"
     local repo="${3:-}"
     local branch="test-pr-$(date +%s)"
-    
+
+    # Parallel-safety marker (see create_test_issue)
+    if [[ -n "${E2E_TRIGGER_MARKER:-}" ]]; then
+        body+=$'\n\n'"$E2E_TRIGGER_MARKER"
+    fi
+
     local repo_flag=""
     local api_repo=":owner/:repo"
     local remote_url="origin"
@@ -2383,7 +2408,13 @@ run_single_test() {
     
     # Redirect all output to test-specific log
     exec 1>"$test_log" 2>&1
-    
+
+    # Marker injected into any issue/discussion/PR body this test creates so each
+    # workflow's `if: contains(github.event.<event>.body, 'e2e-marker:<workflow>')`
+    # filter only fires for its own trigger. Without this, parallel-batched tests
+    # sharing the same event (e.g. `issues: opened`) fan out across the whole batch.
+    export E2E_TRIGGER_MARKER="<!-- e2e-marker:${workflow} -->"
+
     local ai_type=$(extract_ai_type "$workflow")
     local ai_display_name=$(get_ai_display_name "$ai_type")
     local target_repo=$(get_target_repo "$workflow")

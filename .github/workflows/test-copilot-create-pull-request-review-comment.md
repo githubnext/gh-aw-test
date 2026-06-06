@@ -13,6 +13,10 @@ safe-outputs:
   create-pull-request-review-comment:
     max: 3
     # min: 1
+    samples:
+      - path: "README.md"
+        line: 2
+        body: "This code is magnificent! The implementation demonstrates excellent software engineering practices."
 ---
 
 Analyze the pull request #${{ github.event.issue.number }} and create one code review comment on the code changes. 

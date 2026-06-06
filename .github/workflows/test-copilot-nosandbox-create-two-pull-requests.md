@@ -17,6 +17,31 @@ safe-outputs:
     title-prefix: "[copilot-nosandbox-test-two-prs] "
     labels: [copilot, automation, bot, nosandbox]
     #max: 2
+    samples:
+      - title: "Feature A from Copilot (No Sandbox)"
+        body: "Adds Feature A without sandbox protection."
+        branch: "gh-aw-sample-copilot-nosandbox-feature-a"
+        patch: |
+          diff --git a/feature-a/README.md b/feature-a/README.md
+          new file mode 100644
+          --- /dev/null
+          +++ b/feature-a/README.md
+          @@ -0,0 +1,3 @@
+          +# Feature A (No Sandbox)
+          +
+          +This is Feature A created by Copilot without sandbox.
+      - title: "Feature B from Copilot (No Sandbox)"
+        body: "Adds Feature B without sandbox protection."
+        branch: "gh-aw-sample-copilot-nosandbox-feature-b"
+        patch: |
+          diff --git a/feature-b/README.md b/feature-b/README.md
+          new file mode 100644
+          --- /dev/null
+          +++ b/feature-b/README.md
+          @@ -0,0 +1,3 @@
+          +# Feature B (No Sandbox)
+          +
+          +This is Feature B created by Copilot without sandbox.
   threat-detection: false  # Disable threat detection
 ---
 

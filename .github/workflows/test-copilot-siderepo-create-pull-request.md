@@ -25,6 +25,19 @@ safe-outputs:
     target-repo: 'githubnext/gh-aw-side-repo'
     allowed-repos: ['githubnext/gh-aw-side-repo']
     github-token: ${{ secrets.TEMP_USER_PAT }}
+    samples:
+      - title: "Multi-commit test from Copilot"
+        body: "This pull request was created by Copilot in the side repository to test multi-commit functionality."
+        branch: "gh-aw-sample-copilot-siderepo-multi-commit"
+        patch: |
+          diff --git a/README-test.md b/README-test.md
+          new file mode 100644
+          --- /dev/null
+          +++ b/README-test.md
+          @@ -0,0 +1,3 @@
+          +# Test Project (Side Repo)
+          +
+          +This is a test project created by Copilot in the side repository.
 ---
 
 # Test Copilot Create Pull Request (Side Repo)

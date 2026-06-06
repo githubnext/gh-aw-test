@@ -4,6 +4,8 @@ on:
     types: [opened, reopened]
   reaction: eyes
 
+if: contains(github.event.issue.body, 'e2e-marker:test-copilot-hide-comment')
+
 permissions:
   contents: read
   issues: read
@@ -14,9 +16,14 @@ engine:
 safe-outputs:
   add-comment:
     max: 1
+    samples:
+      - body: "Hidden by Copilot hide-comment safe output"
   hide-comment:
     max: 1
     # min: 1
+    samples:
+      - comment_id: "IC_kwDOABCDEF123456"
+        reason: "OUTDATED"
 ---
 
 If the title of the issue #${{ github.event.issue.number }} is exactly "Test hide comment from Copilot" then:

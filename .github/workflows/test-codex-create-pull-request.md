@@ -11,6 +11,19 @@ safe-outputs:
   create-pull-request:
     title-prefix: "[codex-test-single-pr] "
     labels: [codex, automation, bot]
+    samples:
+      - title: "Multi-commit test from Codex"
+        body: "This pull request was created by Codex to test multi-commit functionality in agentic workflows."
+        branch: "gh-aw-sample-codex-multi-commit"
+        patch: |
+          diff --git a/README-test.md b/README-test.md
+          new file mode 100644
+          --- /dev/null
+          +++ b/README-test.md
+          @@ -0,0 +1,3 @@
+          +# Test Project
+          +
+          +This is a test project created by Codex to test multi-commit pull requests.
 ---
 
 # Test Codex Create Pull Request

@@ -4,6 +4,8 @@ on:
     types: [opened, reopened]
   reaction: eyes
 
+if: contains(github.event.pull_request.body, 'e2e-marker:test-claude-update-pull-request')
+
 permissions: read-all
 
 engine: 
@@ -15,6 +17,9 @@ safe-outputs:
     body: true
     footer: false
     # min: 1
+    samples:
+      - title: "[UPDATED] Update PR Test - Processed by Claude"
+        body: "This pull request was automatically updated by the Claude agentic workflow."
 ---
 
 If the title of the pull request #${{ github.event.pull_request.number }} starts with "Test PR for Claude" then:

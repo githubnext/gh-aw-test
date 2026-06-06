@@ -16,6 +16,18 @@ sandbox:
 
 safe-outputs:
   push-to-pull-request-branch:
+    samples:
+      - branch: "gh-aw-sample-copilot-nosandbox-push-branch"
+        message: "Multi-commit test push from Copilot (No Sandbox)"
+        patch: |
+          diff --git a/README-copilot-nosandbox-test.md b/README-copilot-nosandbox-test.md
+          new file mode 100644
+          --- /dev/null
+          +++ b/README-copilot-nosandbox-test.md
+          @@ -0,0 +1,3 @@
+          +# Copilot (No Sandbox) Push-to-Branch Multi-Commit Test
+          +
+          +This file was created by the Copilot agentic workflow without sandbox.
   threat-detection: false  # Disable threat detection
 ---
 

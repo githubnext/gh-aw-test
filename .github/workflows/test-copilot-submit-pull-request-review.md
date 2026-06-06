@@ -16,6 +16,9 @@ safe-outputs:
     max: 1
     allowed-events: [COMMENT]
     # min: 1
+    samples:
+      - body: "Reviewed by Copilot submit-pull-request-review safe output"
+        event: "COMMENT"
 ---
 
 Analyze the pull request #${{ github.event.issue.number }} and submit a pull request review.

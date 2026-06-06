@@ -11,6 +11,18 @@ engine:
 
 safe-outputs:
   push-to-pull-request-branch:
+    samples:
+      - branch: "gh-aw-sample-copilot-push-branch"
+        message: "Multi-commit test push from Copilot"
+        patch: |
+          diff --git a/README-copilot-test.md b/README-copilot-test.md
+          new file mode 100644
+          --- /dev/null
+          +++ b/README-copilot-test.md
+          @@ -0,0 +1,3 @@
+          +# Copilot Push-to-Branch Multi-Commit Test
+          +
+          +This file was created by the Copilot agentic workflow under the samples replay driver.
 ---
 
 # Test Copilot Push to Branch

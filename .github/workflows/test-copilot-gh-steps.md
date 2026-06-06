@@ -27,6 +27,9 @@ safe-outputs:
   create-issue:
     title-prefix: "[copilot-test] "
     labels: [copilot, automation]
+    samples:
+      - title: "Issue count report"
+        body: "Found 42 open issues in the repository."
 ---
 
 Read the file /tmp/gh-aw/issue_count.txt which contains the number of open issues counted by a previous step.

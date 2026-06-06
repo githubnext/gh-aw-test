@@ -12,6 +12,31 @@ safe-outputs:
     title-prefix: "[codex-test-two-prs] "
     labels: [codex, automation, bot]
     #max: 2
+    samples:
+      - title: "Feature A from Codex"
+        body: "Adds Feature A as part of the two-PR test."
+        branch: "gh-aw-sample-codex-feature-a"
+        patch: |
+          diff --git a/feature-a/README.md b/feature-a/README.md
+          new file mode 100644
+          --- /dev/null
+          +++ b/feature-a/README.md
+          @@ -0,0 +1,3 @@
+          +# Feature A
+          +
+          +This is Feature A created by Codex to test multi-PR functionality.
+      - title: "Feature B from Codex"
+        body: "Adds Feature B as part of the two-PR test."
+        branch: "gh-aw-sample-codex-feature-b"
+        patch: |
+          diff --git a/feature-b/README.md b/feature-b/README.md
+          new file mode 100644
+          --- /dev/null
+          +++ b/feature-b/README.md
+          @@ -0,0 +1,3 @@
+          +# Feature B
+          +
+          +This is Feature B created by Codex to test multi-PR functionality.
 ---
 
 # Test Codex Create Two Pull Requests

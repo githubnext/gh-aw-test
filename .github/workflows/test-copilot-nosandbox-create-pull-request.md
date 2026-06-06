@@ -16,6 +16,19 @@ safe-outputs:
   create-pull-request:
     title-prefix: "[copilot-nosandbox-test-single-pr] "
     labels: [copilot, automation, bot, nosandbox]
+    samples:
+      - title: "Multi-commit test from Copilot (No Sandbox)"
+        body: "This pull request was created by Copilot without sandbox protection to test multi-commit functionality."
+        branch: "gh-aw-sample-copilot-nosandbox-multi-commit"
+        patch: |
+          diff --git a/README-nosandbox-test.md b/README-nosandbox-test.md
+          new file mode 100644
+          --- /dev/null
+          +++ b/README-nosandbox-test.md
+          @@ -0,0 +1,3 @@
+          +# Test Project (No Sandbox)
+          +
+          +This is a test project created by Copilot without sandbox to test multi-commit pull requests.
   threat-detection: false  # Disable threat detection
 ---
 

@@ -24,6 +24,10 @@ safe-outputs:
     allowed-repos: ['githubnext/gh-aw-side-repo']
     github-token: ${{ secrets.TEMP_USER_PAT }}
     # min: 1
+    samples:
+      - path: "README.md"
+        line: 2
+        body: "This code is magnificent! Great work on this cross-repo contribution."
 ---
 
 Analyze the pull request #${{ inputs.pull_request_number }} in repository githubnext/gh-aw-side-repo.

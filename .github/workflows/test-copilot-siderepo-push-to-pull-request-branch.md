@@ -28,6 +28,18 @@ safe-outputs:
   push-to-pull-request-branch:
     # target-repo: 'githubnext/gh-aw-side-repo'
     # allowed-repos: ['githubnext/gh-aw-side-repo']
+    samples:
+      - branch: "gh-aw-sample-copilot-siderepo-push-branch"
+        message: "Multi-commit test push from Copilot in side repo"
+        patch: |
+          diff --git a/README-copilot-siderepo-test.md b/README-copilot-siderepo-test.md
+          new file mode 100644
+          --- /dev/null
+          +++ b/README-copilot-siderepo-test.md
+          @@ -0,0 +1,3 @@
+          +# Copilot Push-to-Branch Test (Side Repo)
+          +
+          +This file was created by Copilot in the side repository.
 ---
 
 1. Checkout the pull request branch for PR #${{ inputs.pull_request_number }} in repository githubnext/gh-aw-side-repo

@@ -20,6 +20,31 @@ safe-outputs:
     allowed-repos: ['githubnext/gh-aw-side-repo']
     github-token: ${{ secrets.TEMP_USER_PAT }}
     # max: 2
+    samples:
+      - title: "Feature A from Copilot"
+        body: "Adds Feature A in side repository."
+        branch: "gh-aw-sample-copilot-siderepo-feature-a"
+        patch: |
+          diff --git a/DOC-A.md b/DOC-A.md
+          new file mode 100644
+          --- /dev/null
+          +++ b/DOC-A.md
+          @@ -0,0 +1,3 @@
+          +# Feature A Documentation
+          +
+          +Documentation for Feature A in side repository.
+      - title: "Feature B from Copilot"
+        body: "Adds Feature B in side repository."
+        branch: "gh-aw-sample-copilot-siderepo-feature-b"
+        patch: |
+          diff --git a/DOC-B.md b/DOC-B.md
+          new file mode 100644
+          --- /dev/null
+          +++ b/DOC-B.md
+          @@ -0,0 +1,3 @@
+          +# Feature B Documentation
+          +
+          +Documentation for Feature B in side repository.
 
 ---
 

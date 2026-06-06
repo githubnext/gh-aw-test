@@ -11,6 +11,19 @@ safe-outputs:
   create-pull-request:
     title-prefix: "[copilot-test-single-pr] "
     labels: [copilot, automation, bot]
+    samples:
+      - title: "Multi-commit test from Copilot"
+        body: "This pull request was created by Copilot to test multi-commit functionality in agentic workflows."
+        branch: "gh-aw-sample-copilot-multi-commit"
+        patch: |
+          diff --git a/README-test.md b/README-test.md
+          new file mode 100644
+          --- /dev/null
+          +++ b/README-test.md
+          @@ -0,0 +1,3 @@
+          +# Test Project
+          +
+          +This is a test project created by Copilot to test multi-commit pull requests.
 ---
 
 # Test Copilot Create Pull Request

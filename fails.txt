@@ -1,14 +1,33 @@
-test-copilot-nosandbox-command 24437267964 25012767306
+test-copilot-nosandbox-command 24437267964 25012767306 27070540862
 test-copilot-siderepo-create-pull-request-review-comment
 test-codex-create-pull-request 25005388813 27045778526
-test-copilot-close-issue 25008676594
-test-copilot-close-discussion 25009055891
-test-copilot-command 25010274366
-test-copilot-siderepo-create-discussion 25013391316
+test-copilot-command 25010274366 27070313998
 test-claude-create-pull-request 27045633657
-test-copilot-update-pull-request 27046372810
+test-copilot-update-pull-request 27046372810 27070313646
 test-claude-push-to-pull-request-branch 27046642272
 test-codex-push-to-pull-request-branch 27046769995
-test-copilot-push-to-pull-request-branch 27046897136
-test-copilot-nosandbox-create-pull-request 27047336153
-test-copilot-nosandbox-push-to-pull-request-branch 27047427923
+test-copilot-push-to-pull-request-branch 27046897136 27070314001
+test-copilot-nosandbox-create-pull-request 27047336153 27070426946
+test-copilot-nosandbox-push-to-pull-request-branch 27047427923 27070540847
+test-copilot-create-two-pull-requests
+test-copilot-custom-safe-outputs
+test-copilot-create-pull-request 27070132508
+test-copilot-gh-steps 27070132439
+test-copilot-assign-to-user 27070206393
+test-copilot-assign-milestone 27070206399
+test-copilot-link-sub-issue 27070206394
+test-copilot-unassign-from-user 27070206395
+test-copilot-create-pull-request-review-comment 27070314005
+test-copilot-hide-comment 27070312951
+test-copilot-submit-pull-request-review 27070314034
+test-copilot-close-pull-request 27070313653
+test-copilot-add-reviewer 27070313645
+test-copilot-dispatch-workflow 27070312204
+test-copilot-nosandbox-update-issue 27070427598
+test-copilot-nosandbox-custom-safe-outputs
+test-copilot-nosandbox-create-two-pull-requests
+test-copilot-nosandbox-create-pull-request-review-comment 27070540845
+test-copilot-siderepo-add-comment 27070539074
+test-copilot-siderepo-create-two-pull-requests
+test-copilot-siderepo-create-pull-request 27070538551
+test-copilot-siderepo-add-labels 27070539040
