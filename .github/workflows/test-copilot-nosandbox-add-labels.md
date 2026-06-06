@@ -17,6 +17,8 @@ sandbox:
 safe-outputs:
   add-labels:
     # min: 1
+    samples:
+      - labels: ["copilot-nosandbox-safe-output-label-test"]
   threat-detection: false  # Disable threat detection
 ---
 

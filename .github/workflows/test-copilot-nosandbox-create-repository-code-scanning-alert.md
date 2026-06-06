@@ -18,6 +18,11 @@ safe-outputs:
   create-code-scanning-alert:
     max: 10
     # min: 1
+    samples:
+      - file: "ERROR_HANDLING_ASSESSMENT.md"
+        line: 30
+        severity: "warning"
+        message: "Copilot (No Sandbox) wants security review. Security remains critical even without sandbox protection. Comprehensive security reviews help maintain code integrity and protect against threats, ensuring our systems remain trustworthy and resilient."
   threat-detection: false  # Disable threat detection
 ---
 

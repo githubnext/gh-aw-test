@@ -12,6 +12,15 @@ safe-outputs:
     title-prefix: "[copilot-test] "
     # categories: [General]
     # min: 1
+    samples:
+      - title: "Hello from Copilot Discussion"
+        body: |
+          World Discussion
+
+          A haiku for the test:
+            voices converge here
+            AI and humans unite
+            knowledge shared freely
 ---
 
 Create a discussion in repository ${{ github.repository }} with title "Hello from Copilot Discussion" and body "World Discussion"

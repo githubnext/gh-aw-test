@@ -12,6 +12,15 @@ safe-outputs:
     title-prefix: "[codex-test] "
     # categories: [General]
     # min: 1
+    samples:
+      - title: "Hello from Codex Discussion"
+        body: |
+          World Discussion
+
+          A haiku for the test:
+            threads weave through the code
+            discussions shape the future
+            wisdom emerges
 ---
 
 Create a discussion in repository ${{ github.repository }} with title "Hello from Codex Discussion" and body "World Discussion"

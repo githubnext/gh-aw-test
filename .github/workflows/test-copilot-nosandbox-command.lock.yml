@@ -1,4 +1,4 @@
-# gh-aw-metadata: {"schema_version":"v4","frontmatter_hash":"fe8f33e5ce04b8a5152af896313862aee666ba7b648b7a40d38d3b38b9499a02","body_hash":"99ed222cf8a05c51ec0cea17839c3bbece61a4a1c19cf6934ba9508b39874f72","agent_id":"copilot","engine_versions":{"copilot":"1.0.59"}}
+# gh-aw-metadata: {"schema_version":"v4","frontmatter_hash":"cd42b5d60e6a7461e2e975fa764d0214afc070d84661893b43b18a8c9a93067f","body_hash":"99ed222cf8a05c51ec0cea17839c3bbece61a4a1c19cf6934ba9508b39874f72","agent_id":"copilot","engine_versions":{"copilot":"1.0.59"}}
 # gh-aw-manifest: {"version":1,"secrets":["COPILOT_GITHUB_TOKEN","GH_AW_GITHUB_MCP_SERVER_TOKEN","GH_AW_GITHUB_TOKEN","GITHUB_TOKEN"],"actions":[{"repo":"actions/checkout","sha":"de0fac2e4500dabe0009e67214ff5f5447ce83dd","version":"v6.0.2"},{"repo":"actions/download-artifact","sha":"3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c","version":"v8.0.1"},{"repo":"actions/github-script","sha":"373c709c69115d41ff229c7e5df9f8788daa9553","version":"v9"},{"repo":"actions/github-script","sha":"3a2844b7e9c422d3c10d287c895573f7108da1b3","version":"v9.0.0"},{"repo":"actions/upload-artifact","sha":"043fb46d1a93c77aae656e7c1c64a875d1fc6a0a","version":"v7.0.1"},{"repo":"github/gh-aw/actions/setup","sha":"feat/use-samples-hidden-flag","version":"feat/use-samples-hidden-flag"}],"containers":[{"image":"ghcr.io/github/github-mcp-server:v1.1.2","digest":"sha256:30197479d8036c7811892bc07e06f9a05c9ef3cdd79bc59f256d50647f95788c","pinned_image":"ghcr.io/github/github-mcp-server:v1.1.2@sha256:30197479d8036c7811892bc07e06f9a05c9ef3cdd79bc59f256d50647f95788c"},{"image":"node:lts-alpine","digest":"sha256:2bdb65ed1dab192432bc31c95f94155ca5ad7fc1392fb7eb7526ab682fa5bf14","pinned_image":"node:lts-alpine@sha256:2bdb65ed1dab192432bc31c95f94155ca5ad7fc1392fb7eb7526ab682fa5bf14"}]}
 #    ___                   _   _      
 #   / _ \                 | | (_)     
@@ -791,7 +791,7 @@ jobs:
         id: agentic_execution
         env:
           GH_AW_SAMPLES: |
-            null
+            [{"tool":"add_comment","arguments":{"body":"I'm Copilot (No Sandbox). Here's a haiku about this repo:\n  freedom to explore\n  unrestricted code pathways\n  innovation blooms\n"}}]
           GH_AW_AGENT_STDIO_LOG: /tmp/gh-aw/agent-stdio.log
           GH_AW_SAFE_OUTPUTS_CONFIG_PATH: ${{ runner.temp }}/gh-aw/safeoutputs/config.json
           GH_AW_SAFE_OUTPUTS: ${{ runner.temp }}/gh-aw/safeoutputs/outputs.jsonl

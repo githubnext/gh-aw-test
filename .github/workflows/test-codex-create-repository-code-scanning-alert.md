@@ -13,6 +13,11 @@ safe-outputs:
   create-code-scanning-alert:
     max: 10
     # min: 1
+    samples:
+      - file: "clean.sh"
+        line: 50
+        severity: "warning"
+        message: "Codex wants security review. Security is paramount in maintaining robust software systems. Proactive security reviews help identify and mitigate potential vulnerabilities, protecting both the codebase and its users from malicious threats."
 ---
 
 # Test Codex Create Code Scanning Alert

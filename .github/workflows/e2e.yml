@@ -30,15 +30,7 @@ name: E2E Against gh-aw Matrix
 # extension to `e2e.sh`. That is intentionally not done here so the workflow
 # never touches main.
 # Required secrets:
-#   * CI_GITHUB_PAT       (default) — issue creation, dispatch, status reporting.
-#   * CI_GITHUB_PAT      (required) — PAT used by the dispatched workflows for
-#                        cross-repo operations. e2e.sh does NOT call `gh secret
-#                        set` when `$CI=true` (matrix runs would race), so the
-#                        repo's `TEMP_USER_PAT` secret must already be
-#                        pre-configured (typically to the same value as
-#                        CI_GITHUB_PAT). The PAT is also passed into the e2e.sh
-#                        process as the `CI_GITHUB_PAT` environment variable,
-#                        sourced from `secrets.CI_GITHUB_PAT`.
+#   * GH_AW_TEST_PAT      (required) — PAT used for all operations except copilot requests
 
 on:
   schedule:
@@ -73,7 +65,7 @@ jobs:
       - name: Resolve refs
         id: resolve
         env:
-          GH_TOKEN: ${{ secrets.CI_GITHUB_PAT }}
+          GH_TOKEN: ${{ secrets.GH_AW_TEST_PAT }}
           OVERRIDE: ${{ inputs.refs }}
         run: |
           set -euo pipefail
@@ -191,7 +183,7 @@ jobs:
       - name: Install published gh-aw extension at ${{ matrix.entry.ref }} (extension mode)
         if: matrix.entry.mode == 'extension'
         env:
-          GH_TOKEN: ${{ secrets.CI_GITHUB_PAT }}
+          GH_TOKEN: ${{ secrets.GH_AW_TEST_PAT }}
         run: |
           set -euo pipefail
           # Remove any pre-existing install so --pin actually wins
@@ -205,7 +197,7 @@ jobs:
 
       - name: gh auth status
         env:
-          GH_TOKEN: ${{ secrets.CI_GITHUB_PAT }}
+          GH_TOKEN: ${{ secrets.GH_AW_TEST_PAT }}
         run: gh auth status
 
       - name: Run E2E against gh-aw@${{ matrix.entry.ref }} (${{ matrix.entry.mode }} mode)
@@ -213,17 +205,17 @@ jobs:
         working-directory: gh-aw-test
         timeout-minutes: 80
         env:
-          GH_TOKEN: ${{ secrets.CI_GITHUB_PAT }}
-          GITHUB_TOKEN: ${{ secrets.CI_GITHUB_PAT }}
-          CI_GITHUB_PAT: ${{ secrets.CI_GITHUB_PAT }}
+          GH_TOKEN: ${{ secrets.GH_AW_TEST_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GH_AW_TEST_PAT }}
+          GH_AW_TEST_PAT: ${{ secrets.GH_AW_TEST_PAT }}
           E2E_REF: ${{ matrix.entry.ref }}
           E2E_MODE: ${{ matrix.entry.mode }}
           E2E_USE_SAMPLES: ${{ matrix.samples }}
         run: |
           set +e
           chmod +x ./e2e.sh
-          if [[ -z "${CI_GITHUB_PAT:-}" ]]; then
-            echo "::error::CI_GITHUB_PAT secret is not set on this repository. The matrix runs e2e.sh in --no-push mode, which does not mutate repo secrets and therefore requires CI_GITHUB_PAT to be supplied via secrets.CI_GITHUB_PAT."
+          if [[ -z "${GH_AW_TEST_PAT:-}" ]]; then
+            echo "::error::GH_AW_TEST_PAT secret is not set on this repository. The matrix runs e2e.sh in --no-push mode, which does not mutate repo secrets and therefore requires GH_AW_TEST_PAT to be supplied via secrets.GH_AW_TEST_PAT."
             exit 1
           fi
           
@@ -396,7 +388,7 @@ jobs:
 
       - name: Ensure status-report label exists
         env:
-          GH_TOKEN: ${{ secrets.CI_GITHUB_PAT }}
+          GH_TOKEN: ${{ secrets.GH_AW_TEST_PAT }}
         run: |
           gh label create e2e-status-report \
             --color BFD4F2 \
@@ -406,7 +398,7 @@ jobs:
       - name: Find prior open status reports
         id: prior
         env:
-          GH_TOKEN: ${{ secrets.CI_GITHUB_PAT }}
+          GH_TOKEN: ${{ secrets.GH_AW_TEST_PAT }}
         run: |
           set -euo pipefail
           numbers=$(gh issue list \
@@ -438,7 +430,7 @@ jobs:
       - name: Create new status report issue
         id: create
         env:
-          GH_TOKEN: ${{ secrets.CI_GITHUB_PAT }}
+          GH_TOKEN: ${{ secrets.GH_AW_TEST_PAT }}
         run: |
           set -euo pipefail
           title="E2E status report — $(date -u +%F) (gh-aw matrix)"
@@ -455,7 +447,7 @@ jobs:
       - name: Close previous status report issues
         if: steps.prior.outputs.numbers != ''
         env:
-          GH_TOKEN: ${{ secrets.CI_GITHUB_PAT }}
+          GH_TOKEN: ${{ secrets.GH_AW_TEST_PAT }}
           PRIOR: ${{ steps.prior.outputs.numbers }}
           NEW_NUMBER: ${{ steps.create.outputs.number }}
           NEW_URL: ${{ steps.create.outputs.url }}

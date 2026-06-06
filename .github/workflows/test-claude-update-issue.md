@@ -15,6 +15,10 @@ safe-outputs:
     title:
     body:
     # min: 1
+    samples:
+      - status: "closed"
+        title: "[UPDATED] Update Issue Test - Processed by Claude"
+        body: "This issue was automatically updated by the Claude agentic workflow."
 ---
 
 If the title of the issue #${{ github.event.issue.number }} is exactly "Hello from Claude" then:

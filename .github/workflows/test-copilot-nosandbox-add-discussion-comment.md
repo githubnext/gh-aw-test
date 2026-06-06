@@ -18,6 +18,8 @@ safe-outputs:
   add-comment:
     discussions: true
     # min: 1
+    samples:
+      - body: "Reply from Copilot (No Sandbox) Discussion"
   threat-detection: false  # Disable threat detection
 tools:
   github:

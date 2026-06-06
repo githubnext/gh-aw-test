@@ -150,16 +150,8 @@ GH_AW_BIN="gh aw"
 # CI mode: when the standard `$CI` environment variable is set to `true`
 # (which GitHub Actions and most other CI providers do automatically), e2e.sh
 # recompiles workflows locally but does NOT commit or push the resulting
-# lockfiles, and does NOT mutate repository secrets. Useful for matrix runs
-# where parallel jobs would otherwise race each other. Note: any subsequent
-# `gh aw run` calls will still trigger whatever workflows are currently on the
-# repository's main branch — they will NOT see the local recompile. Combine
-# with --workflow-dispatch-only and treat the run as a compile validation when
-# using this in CI against multiple refs.
-NO_PUSH=false
-if [[ "${CI:-}" == "true" ]]; then
-    NO_PUSH=true
-fi
+# lockfiles, and does NOT mutate repository secrets. Default to false if unset.
+CI="${CI:-false}"
 
 # Utility functions
 log() {
@@ -609,7 +601,7 @@ check_prerequisites() {
     local git_status
     git_status=$(git status --porcelain)
     if [[ -n "$git_status" ]]; then
-        if [[ "$NO_PUSH" == true ]]; then
+        if [[ "$CI" == true ]]; then
             info "Detected changes after compile; CI=true detected, leaving them in the working tree (NOT committing or pushing)"
         else
             local commit_msg="chore: update compiled workflows via e2e.sh"
@@ -640,15 +632,15 @@ check_prerequisites() {
     #   * CI mode (CI=true): the script MUST NOT mutate repo secrets (parallel
     #     matrix runs would clobber each other and we don't want CI write-scope
     #     tokens leaking through `gh secret set`). Instead, the PAT is supplied
-    #     as the CI_GITHUB_PAT environment variable, sourced from the actions
+    #     as the GH_AW_TEST_PAT environment variable, sourced from the actions
     #     secret of the same name. The repo's TEMP_USER_PAT secret is expected
     #     to be pre-configured (typically to the same value).
-    if [[ "$NO_PUSH" == true ]]; then
-        if [[ -z "${CI_GITHUB_PAT:-}" ]]; then
-            error "CI mode (CI=true) requires the CI_GITHUB_PAT environment variable to be set (sourced from the actions secret of the same name). e2e.sh will not set repo secrets in this mode."
+    if [[ "$CI" == true ]]; then
+        if [[ -z "${GH_AW_TEST_PAT:-}" ]]; then
+            error "CI mode (CI=true) requires the GH_AW_TEST_PAT environment variable to be set (sourced from the actions secret of the same name). e2e.sh will not set repo secrets in this mode."
             exit 1
         fi
-        info "CI mode: skipping TEMP_USER_PAT secret management; using pre-configured repo secret + CI_GITHUB_PAT env"
+        info "CI mode: skipping TEMP_USER_PAT secret management; using pre-configured repo secret + GH_AW_TEST_PAT env"
     else
         # Set TEMP_USER_PAT secret for cross-repo testing
         if ! set_temp_user_pat; then
@@ -3158,13 +3150,6 @@ main() {
                     error "--gh-aw-ref requires a value (branch, tag, or SHA)"
                     exit 1
                 fi
-                shift
-                ;;
-            --no-push)
-                # Deprecated alias — push behaviour is now auto-disabled when the
-                # standard `$CI` env var is set to "true". Kept for backwards
-                # compatibility with existing invocations.
-                NO_PUSH=true
                 shift
                 ;;
             --help|-h)

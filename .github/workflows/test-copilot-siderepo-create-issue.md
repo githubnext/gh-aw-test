@@ -20,6 +20,15 @@ safe-outputs:
     target-repo: 'githubnext/gh-aw-side-repo'
     allowed-repos: ['githubnext/gh-aw-side-repo']
     # min: 1
+    samples:
+      - title: "Hello from Copilot"
+        body: |
+          World
+
+          A haiku for the test:
+            across repos flow
+            workflows bridge the boundaries
+            connections hold strong
 ---
 
 Create an issue in repository githubnext/gh-aw-side-repo with title "Hello from Copilot" and body "World"

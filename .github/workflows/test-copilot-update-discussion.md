@@ -14,6 +14,9 @@ safe-outputs:
     title:
     body:
     # min: 1
+    samples:
+      - title: "[UPDATED] Update Discussion Test - Processed by Copilot"
+        body: "This discussion was automatically updated by the Copilot agentic workflow."
 ---
 
 If the title of the discussion #${{ github.event.discussion.number }} is exactly "Test update discussion from Copilot" then:

@@ -12,6 +12,8 @@ engine:
 safe-outputs:
   add-labels:
     # min: 1
+    samples:
+      - labels: ["codex-safe-output-label-test"]
 ---
 
 If the title of the issue #${{ github.event.issue.number }} is "Hello from Codex" then add the issue label "codex-safe-output-label-test" to the issue.

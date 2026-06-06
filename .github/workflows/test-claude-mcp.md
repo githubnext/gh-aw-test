@@ -11,6 +11,12 @@ engine:
 safe-outputs:
   create-issue:
     # min: 1
+    samples:
+      - title: "Hello from Claude"
+        body: |
+          The current time is 2024-01-15T10:30:00Z (successfully retrieved using MCP tool)
+
+          > AI-generated content by [test-claude-mcp](https://github.com/githubnext/gh-aw-test/actions/runs/123456789) may contain mistakes.
 
 network:
   allowed:

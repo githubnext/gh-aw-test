@@ -23,6 +23,8 @@ safe-outputs:
     allowed-repos: ['githubnext/gh-aw-side-repo']
     github-token: ${{ secrets.TEMP_USER_PAT }}
     # min: 1
+    samples:
+      - labels: ["copilot-safe-output-label-test"]
 ---
 
 If the title of the issue #${{ inputs.issue_number }} in repository githubnext/gh-aw-side-repo is "Hello from Copilot" then add the label "copilot-safe-output-label-test" to the issue.

@@ -17,6 +17,8 @@ sandbox:
 safe-outputs:
   add-comment:
     # min: 1
+    samples:
+      - body: "Reply from Copilot (No Sandbox)"
   threat-detection: false  # Disable threat detection
 ---
 

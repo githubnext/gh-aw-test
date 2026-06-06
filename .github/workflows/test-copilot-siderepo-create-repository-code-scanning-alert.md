@@ -20,6 +20,11 @@ safe-outputs:
     # target-repo: 'githubnext/gh-aw-side-repo'
     # allowed-repos: ['githubnext/gh-aw-side-repo']
     # min: 1
+    samples:
+      - file: "e2e.sh"
+        line: 500
+        severity: "warning"
+        message: "Copilot wants security review. Security is fundamental to software quality. Cross-repository security reviews help maintain consistent security standards across our organization, ensuring all codebases receive proper security scrutiny."
 ---
 
 Create a Code Scanning Alert in repository githubnext/gh-aw-side-repo with the title "Copilot wants security review."

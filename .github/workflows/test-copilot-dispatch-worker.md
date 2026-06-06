@@ -17,6 +17,9 @@ safe-outputs:
     title-prefix: "[dispatch-worker] "
     labels: [dispatch-worker]
     # min: 1
+    samples:
+      - title: "[dispatch-worker] sentinel=test-value-123"
+        body: "Issue created by Copilot dispatch-workflow safe output test worker."
 ---
 
 Create a single GitHub issue with the title "[dispatch-worker] sentinel=${{ github.event.inputs.sentinel }}" and body "Issue created by Copilot dispatch-workflow safe output test worker.".

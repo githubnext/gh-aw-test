@@ -17,6 +17,12 @@ sandbox:
 safe-outputs:
   add-comment:
     # min: 1
+    samples:
+      - body: |
+          I'm Copilot (No Sandbox). Here's a haiku about this repo:
+            freedom to explore
+            unrestricted code pathways
+            innovation blooms
   missing-tool:
   threat-detection: false  # Disable threat detection
 ---

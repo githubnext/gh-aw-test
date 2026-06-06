@@ -19,6 +19,13 @@ safe-outputs:
     target-repo: 'githubnext/gh-aw-side-repo'
     allowed-repos: ['githubnext/gh-aw-side-repo']
     # min: 1
+    samples:
+      - title: "Hello from Copilot"
+        body: |
+          The current time is 2024-01-15T10:30:00Z (retrieved from MCP time tool)
+          Successfully used the MCP time tool
+          
+          This issue was created by an AI agent (Copilot).
 ---
 
 Get the current time using the MCP time tool.

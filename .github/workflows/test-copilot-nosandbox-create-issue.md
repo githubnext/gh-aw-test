@@ -17,6 +17,15 @@ safe-outputs:
     title-prefix: "[copilot-nosandbox-test] "
     labels: [copilot, automation, haiku, nosandbox]
     # min: 1
+    samples:
+      - title: "Hello from Copilot (No Sandbox)"
+        body: |
+          World
+
+          A haiku for the test:
+            no sandbox constrains
+            free flowing code and data
+            trust in the process
   threat-detection: false  # Disable threat detection
 ---
 

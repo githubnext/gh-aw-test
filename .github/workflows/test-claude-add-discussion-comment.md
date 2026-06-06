@@ -13,6 +13,8 @@ safe-outputs:
   add-comment:
     discussions: true
     # min: 1
+    samples:
+      - body: "Reply from Claude Discussion"
 
 tools:
   github:

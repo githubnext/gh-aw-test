@@ -20,6 +20,15 @@ safe-outputs:
     allowed-repos: ['githubnext/gh-aw-side-repo']
     # categories:
     # min: 1
+    samples:
+      - title: "Hello from Copilot Discussion"
+        body: |
+          World Discussion
+
+          A haiku for the test:
+            beyond repo walls
+            discussions span the spaces
+            connections expand
 ---
 
 Create a discussion in repository githubnext/gh-aw-side-repo with title "Hello from Copilot Discussion" and body "World Discussion"

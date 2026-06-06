@@ -12,6 +12,8 @@ engine:
 safe-outputs:
   add-comment:
     discussions: true
+    samples:
+      - body: "Reply from Codex Discussion"
 tools:
   github:
     toolsets: [all]

@@ -12,6 +12,12 @@ engine:
 safe-outputs:
   add-comment:
     # min: 1
+    samples:
+      - body: |
+          I'm Codex. Here's a haiku about this repo:
+            lines of code align
+            testing flows like poetry
+            bugs fade into night
   missing-tool:
 ---
 

@@ -11,6 +11,15 @@ engine:
 safe-outputs:
   create-issue:
     # min: 1
+    samples:
+      - title: "Hello from Copilot"
+        body: |
+          Environment variables dump:
+          PATH=/usr/local/bin:/usr/bin:/bin
+          HOME=/home/runner
+          GITHUB_REPOSITORY=githubnext/gh-aw-test
+          
+          > AI-generated content by [test-copilot-mcp-printEnv](https://github.com/githubnext/gh-aw-test/actions/runs/123456789) may contain mistakes.
 
 network:
   allowed:

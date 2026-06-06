@@ -17,6 +17,15 @@ safe-outputs:
     title-prefix: "[copilot-nosandbox-test] "
     # categories: [General]
     # min: 1
+    samples:
+      - title: "Hello from Copilot Discussion (No Sandbox)"
+        body: |
+          World Discussion
+
+          A haiku for the test:
+            no walls to contain
+            free flowing conversation
+            open and unbound
   threat-detection: false  # Disable threat detection
 ---
 

@@ -12,6 +12,9 @@ engine:
 safe-outputs:
   unassign-from-user:
     # min: 1
+    samples:
+      - issue_number: 123
+        assignees: ["dsyme"]
 ---
 
 If the title of the issue #${{ github.event.issue.number }} is exactly "Test unassign from user from Copilot" then unassign the user "dsyme" from the issue.
