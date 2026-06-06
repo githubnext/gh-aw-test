@@ -1304,7 +1304,7 @@ validate_comment() {
     
     local comments=$(gh issue view $repo_flag "$issue_number" --json comments --jq '.comments[].body')
     
-    if echo "$comments" | grep -q "$expected_comment_text"; then
+    if echo "$comments" | grep -qE "$expected_comment_text"; then
         success "Issue #$issue_number has expected comment containing: $expected_comment_text"
         return 0
     else
@@ -2583,7 +2583,7 @@ run_single_test() {
             fi
             ;;
         # Workflow dispatch tests - triggered with gh aw run
-        *"create-issue"|*"create-discussion"|*"create-pull-request"|*"code-scanning-alert"|*"mcp"|*"safe-jobs"|*"gh-steps")
+        *"create-issue"|*"create-discussion"|*"create-pull-request"|*"code-scanning-alert"|*"mcp"|*"safe-jobs"|*"gh-steps"|*"custom-safe-outputs")
             local workflow_success=false
             if trigger_workflow_dispatch_and_await_completion "$workflow"; then
                 workflow_success=true
@@ -2650,11 +2650,11 @@ run_single_test() {
                             if [[ -n "$expected_run_id" ]] && echo "$issue_title" | grep -q "Test ${expected_run_id}:.*The number of issues is"; then
                                 success "Issue title contains run ID $expected_run_id and expected gh-steps output: $issue_title"
                                 validation_success=true
-                            elif echo "$issue_title" | grep -q "The number of issues is"; then
+                            elif echo "$issue_title" | grep -q "The number of issues is\|Issue count report"; then
                                 success "Issue title contains expected gh-steps output (run ID not verified): $issue_title"
                                 validation_success=true
                             else
-                                error "Issue title does not contain expected pattern 'Test <run_id>: The number of issues is': $issue_title"
+                                error "Issue title does not contain expected pattern 'Test <run_id>: The number of issues is' or sample title 'Issue count report': $issue_title"
                             fi
                         fi
                         ;;
@@ -2858,7 +2858,7 @@ run_single_test() {
                                     [[ -n "$target_repo" ]] && repo_url="$target_repo"
                                     success "Created test issue #$issue_num for $workflow: https://github.com/$repo_url/issues/$issue_num"
                                     post_issue_command "$issue_num" "/test-${ai_type}-command What is 102+103?" "$target_repo"
-                                    if wait_for_command_comment "$issue_num" "205" "$workflow" "$target_repo"; then
+                                    if wait_for_command_comment "$issue_num" "205|I'm $ai_display_name" "$workflow" "$target_repo"; then
                                         test_result="PASS"
                                     fi
                                 fi

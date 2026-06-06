@@ -16,7 +16,7 @@ safe-outputs:
     allowed: ["Copilot Safe Output Test Milestone"]
     # min: 1
     samples:
-      - issue_number: 123
+      - issue_number: ${{ github.event.issue.number }}
         milestone_title: "Copilot Safe Output Test Milestone"
 ---
 

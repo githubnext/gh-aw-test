@@ -14,9 +14,6 @@ engine:
 safe-outputs:
   link-sub-issue:
     # min: 1
-    samples:
-      - parent_issue_number: 100
-        sub_issue_number: 101
 ---
 
 If the title of the issue #${{ github.event.issue.number }} starts with "[link-sub-issue request]" then:

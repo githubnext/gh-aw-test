@@ -15,7 +15,7 @@ safe-outputs:
   unassign-from-user:
     # min: 1
     samples:
-      - issue_number: 123
+      - issue_number: ${{ github.event.issue.number }}
         assignees: ["dsyme"]
 ---
 

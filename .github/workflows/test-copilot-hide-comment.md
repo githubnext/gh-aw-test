@@ -21,9 +21,6 @@ safe-outputs:
   hide-comment:
     max: 1
     # min: 1
-    samples:
-      - comment_id: "IC_kwDOABCDEF123456"
-        reason: "OUTDATED"
 ---
 
 If the title of the issue #${{ github.event.issue.number }} is exactly "Test hide comment from Copilot" then:
