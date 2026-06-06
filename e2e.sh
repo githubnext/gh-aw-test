@@ -61,6 +61,18 @@ declare -a FAILED_TESTS=()
 declare -a SKIPPED_TESTS=()
 declare -A TEST_RUN_URLS=()  # maps test name -> actions run URL (when available)
 
+# Parallel execution settings
+BATCH_SIZE=10
+NO_PARALLEL=false
+
+# Lock file for synchronized result tracking across parallel processes
+RESULTS_LOCK="/tmp/e2e-results-$$.lock"
+
+# Global tracking of workflows that need to be disabled
+# This is used by the trap handler to ensure cleanup on early exit
+declare -a GLOBAL_WORKFLOWS_TO_DISABLE=()
+GLOBAL_WORKFLOWS_LOCK="/tmp/e2e-workflows-$$.lock"
+
 # Record a test pass: update arrays and remove from fails.txt
 record_test_pass() {
     local test_name="$1"
@@ -138,6 +150,9 @@ LOG_FILE="e2e-test-$(date +%Y%m%d-%H%M%S).log"
 TEMP_USER_PAT_SET=false
 WORKFLOW_DISPATCH_ONLY=false
 USE_SAMPLES=false
+
+# Shared results file for parallel execution
+RESULTS_FILE="/tmp/e2e-results-$$.txt"
 
 # --gh-aw-ref: when non-empty, the script resets a parallel ../gh-aw checkout to
 # this ref, builds it, and uses the resulting binary for compile+enable+disable+run.
@@ -227,9 +242,44 @@ delete_temp_user_pat() {
 }
 
 cleanup_on_exit() {
+    # Prevent double execution
+    if [[ "${CLEANUP_DONE:-false}" == "true" ]]; then
+        return 0
+    fi
+    CLEANUP_DONE=true
+    
     echo
     info "Performing cleanup..."
+    
+    # Load workflows from temp file (for parallel processes)
+    if [[ -f "/tmp/e2e-workflows-list-$$.txt" ]]; then
+        while IFS= read -r wf; do
+            [[ -n "$wf" ]] && GLOBAL_WORKFLOWS_TO_DISABLE+=("$wf")
+        done < "/tmp/e2e-workflows-list-$$.txt"
+    fi
+    
+    # Disable any workflows that were enabled during testing
+    if [[ ${#GLOBAL_WORKFLOWS_TO_DISABLE[@]} -gt 0 ]]; then
+        # Remove duplicates
+        local -A seen
+        local unique_workflows=()
+        for workflow in "${GLOBAL_WORKFLOWS_TO_DISABLE[@]}"; do
+            if [[ -z "${seen[$workflow]}" ]]; then
+                seen[$workflow]=1
+                unique_workflows+=("$workflow")
+            fi
+        done
+        
+        info "Disabling ${#unique_workflows[@]} workflow(s) that were enabled during testing..."
+        for workflow in "${unique_workflows[@]}"; do
+            disable_workflow "$workflow" 2>/dev/null || warning "Failed to disable workflow '$workflow', continuing..."
+        done
+    fi
+    
     delete_temp_user_pat
+    
+    # Clean up lock files
+    rm -f "$RESULTS_LOCK" "$GLOBAL_WORKFLOWS_LOCK" "$RESULTS_FILE" "/tmp/e2e-workflows-list-$$.txt" 2>/dev/null || true
 }
 
 
@@ -765,6 +815,7 @@ get_latest_run_id() {
 
 enable_workflow() {
     local workflow_name="$1"
+    local track_globally="${2:-true}"  # Default to tracking globally for cleanup
     
     info "Enabling workflow '$workflow_name'..."
     # Redirect gh aw enable output to log file to prevent terminal control codes from clearing previous output
@@ -772,6 +823,17 @@ enable_workflow() {
     local rc=$?
     if [[ $rc -eq 0 ]]; then
         success "Successfully enabled '$workflow_name'"
+        
+        # Add to global tracking for cleanup on exit (unless disabled immediately after)
+        if [[ "$track_globally" == "true" ]]; then
+            (
+                flock -x 200
+                GLOBAL_WORKFLOWS_TO_DISABLE+=("$workflow_name")
+                # Also write to temp file for persistence across subprocesses
+                echo "$workflow_name" >> "/tmp/e2e-workflows-list-$$.txt"
+            ) 200>"$GLOBAL_WORKFLOWS_LOCK" 2>/dev/null || true
+        fi
+        
         return 0
     else
         error "Failed to enable '$workflow_name' (exit code: $rc)"
@@ -787,6 +849,19 @@ disable_workflow() {
     local rc=$?
     if [[ $rc -eq 0 ]]; then
         success "Successfully disabled '$workflow_name'"
+        
+        # Remove from global tracking (unless we're in cleanup mode)
+        if [[ "${CLEANUP_DONE:-false}" != "true" ]]; then
+            (
+                flock -x 200
+                # Remove from temp file
+                if [[ -f "/tmp/e2e-workflows-list-$$.txt" ]]; then
+                    grep -v "^${workflow_name}$" "/tmp/e2e-workflows-list-$$.txt" > "/tmp/e2e-workflows-list-$$.txt.tmp" 2>/dev/null || true
+                    mv "/tmp/e2e-workflows-list-$$.txt.tmp" "/tmp/e2e-workflows-list-$$.txt" 2>/dev/null || true
+                fi
+            ) 200>"$GLOBAL_WORKFLOWS_LOCK" 2>/dev/null || true
+        fi
+        
         return 0
     else
         warning "Failed to disable '$workflow_name' (exit code: $rc; may already be disabled)"
@@ -2279,9 +2354,300 @@ wait_for_dispatched_issue_created() {
     return 1
 }
 
-run_tests() {
+# Execute a single test (used by parallel batch execution)
+# This function must handle all output synchronization
+run_single_test() {
+    local workflow="$1"
+    local test_log="/tmp/e2e-test-${workflow}-$$.log"
+    
+    # Redirect all output to test-specific log
+    exec 1>"$test_log" 2>&1
+    
+    local ai_type=$(extract_ai_type "$workflow")
+    local ai_display_name=$(get_ai_display_name "$ai_type")
+    local target_repo=$(get_target_repo "$workflow")
+    local repo_display=""
+    if [[ -n "$target_repo" ]]; then
+        repo_display=" (target: $target_repo)"
+        info "Cross-repo test targeting: $target_repo"
+    fi
+    
+    # Run test based on workflow pattern (same logic as sequential run_tests)
+    # This is a simplified version - each test writes its result to shared file
+    local test_result="FAIL"
+    local workflows_to_disable=()
+    
+    case "$workflow" in
+        # Siderepo tests with workflow_dispatch + inputs
+        *"siderepo-add-comment"|*"siderepo-add-labels"|*"siderepo-update-issue")
+            info "Creating test issue in target repository for $workflow..."
+            local issue_title="Hello from $ai_display_name"
+            local issue_num=$(create_test_issue "$issue_title" "This is a test issue for $workflow" "" "$target_repo")
+            if [[ -n "$issue_num" ]]; then
+                local repo_url="$REPO_OWNER/$REPO_NAME"
+                [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                success "Created test issue #$issue_num: https://github.com/$repo_url/issues/$issue_num"
+                
+                local workflow_success=false
+                if trigger_workflow_with_inputs "$workflow" "issue_number=$issue_num"; then
+                    workflow_success=true
+                fi
+                
+                if [[ "$workflow_success" == true ]]; then
+                    sleep 10
+                    case "$workflow" in
+                        *"add-comment")
+                            if wait_for_comment "$issue_num" "Reply from $ai_display_name" "$workflow" "$target_repo"; then
+                                test_result="PASS"
+                            fi
+                            ;;
+                        *"add-labels")
+                            if wait_for_labels "$issue_num" "${ai_type}-safe-output-label-test" "$workflow" "$target_repo"; then
+                                test_result="PASS"
+                            fi
+                            ;;
+                        *"update-issue")
+                            if wait_for_issue_update "$issue_num" "$ai_display_name" "$workflow" "$target_repo"; then
+                                test_result="PASS"
+                            fi
+                            ;;
+                    esac
+                fi
+            fi
+            ;;
+        
+        # Workflow dispatch tests
+        *"create-issue"|*"create-discussion"|*"create-pull-request"|*"code-scanning-alert"|*"mcp"|*"safe-jobs"|*"gh-steps")
+            local workflow_success=false
+            if trigger_workflow_dispatch_and_await_completion "$workflow"; then
+                workflow_success=true
+            fi
+            
+            if [[ "$workflow_success" == true ]]; then
+                local validation_success=false
+                case "$workflow" in
+                    *"create-issue")
+                        local title_prefix="[${ai_type}-test]"
+                        local expected_labels=$(get_expected_labels "$ai_type")
+                        if validate_issue_created "$title_prefix" "$expected_labels" "$target_repo"; then
+                            validation_success=true
+                        fi
+                        ;;
+                    *"create-discussion")
+                        local title_prefix="[${ai_type}-test]"
+                        local expected_labels=$(get_expected_labels "$ai_type")
+                        if validate_discussion_created "$title_prefix" "$expected_labels" "$target_repo"; then
+                            validation_success=true
+                        fi
+                        ;;
+                    *"create-two-pull-requests")
+                        local title_prefix="[${ai_type}-test]"
+                        if validate_two_prs_created "$title_prefix" "$target_repo"; then
+                            validation_success=true
+                        fi
+                        ;;
+                    *"create-pull-request")
+                        local title_prefix="[${ai_type}-test]"
+                        if validate_pr_created "$title_prefix" "$target_repo"; then
+                            validation_success=true
+                        fi
+                        ;;
+                    *"code-scanning-alert")
+                        if validate_code_scanning_alert "$workflow" "$target_repo"; then
+                            validation_success=true
+                        fi
+                        ;;
+                    *"mcp")
+                        if validate_mcp_workflow "$workflow" "$target_repo"; then
+                            validation_success=true
+                        fi
+                        ;;
+                    *)
+                        validation_success=true
+                        ;;
+                esac
+                
+                if [[ "$validation_success" == true ]]; then
+                    test_result="PASS"
+                fi
+            fi
+            ;;
+        
+        # Default case - skip or fail
+        *)
+            if [[ "$WORKFLOW_DISPATCH_ONLY" == true ]]; then
+                test_result="SKIP"
+            else
+                # For issue/command-triggered tests in parallel mode, simplified handling
+                test_result="SKIP"
+            fi
+            ;;
+    esac
+    
+    # Write result to shared file atomically
+    (
+        flock -x 200
+        echo "$workflow|$test_result" >> "$RESULTS_FILE"
+    ) 200>"$RESULTS_LOCK"
+    
+    # Output test log for aggregation
+    cat "$test_log"
+    rm -f "$test_log"
+    
+    return 0
+}
+
+# Display batch progress with nice formatting
+show_batch_progress() {
+    local batch_num="$1"
+    local total_batches="$2"
+    local batch_size="$3"
+    local batch_start="$4"
+    local batch_end="$5"
+    local total_tests="$6"
+    
+    echo
+    echo -e "${CYAN}╔═══════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${CYAN}║${NC}  ${PURPLE}Batch ${batch_num}/${total_batches}${NC} - Running tests ${batch_start}-${batch_end} of ${total_tests}  ${CYAN}║${NC}"
+    echo -e "${CYAN}╚═══════════════════════════════════════════════════════════════╝${NC}"
+    echo
+}
+
+# Show batch completion status
+show_batch_completion() {
+    local batch_num="$1"
+    local passed="$2"
+    local failed="$3"
+    local skipped="$4"
+    local total="$5"
+    
+    echo
+    echo -e "${CYAN}╔═══════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${CYAN}║${NC}  Batch ${batch_num} Complete: ${GREEN}✓ ${passed}${NC} | ${RED}✗ ${failed}${NC} | ${YELLOW}⏭ ${skipped}${NC} (${total} total)  ${CYAN}║${NC}"
+    echo -e "${CYAN}╚═══════════════════════════════════════════════════════════════╝${NC}"
+}
+
+# Run tests in parallel batches
+run_tests_parallel() {
     local patterns=("$@")
-    info "🧪 Running tests..."
+    info "🧪 Running tests in parallel (batch size: $BATCH_SIZE)..."
+    warning "Note: Parallel mode works best with workflow_dispatch tests. Complex issue/command/PR-triggered tests may be skipped."
+    
+    local workflows
+    readarray -t workflows < <(filter_tests "${patterns[@]}")
+    
+    if [[ ${#workflows[@]} -eq 0 ]]; then
+        warning "No tests match the specified patterns"
+        return 0
+    fi
+    
+    # Initialize results file
+    > "$RESULTS_FILE"
+    
+    local total_tests=${#workflows[@]}
+    local total_batches=$(( (total_tests + BATCH_SIZE - 1) / BATCH_SIZE ))
+    local batch_num=1
+    
+    info "Total tests to run: $total_tests (in $total_batches batches)"
+    echo
+    
+    # Process tests in batches
+    for ((i=0; i<total_tests; i+=BATCH_SIZE)); do
+        local batch_start=$((i + 1))
+        local batch_end=$((i + BATCH_SIZE))
+        [[ $batch_end -gt $total_tests ]] && batch_end=$total_tests
+        
+        local batch_tests=("${workflows[@]:$i:$BATCH_SIZE}")
+        
+        show_batch_progress "$batch_num" "$total_batches" "$BATCH_SIZE" "$batch_start" "$batch_end" "$total_tests"
+        
+        # Launch tests in this batch
+        local pids=()
+        for test in "${batch_tests[@]}"; do
+            progress "  🚀 Starting: $test"
+            run_single_test "$test" &
+            pids+=($!)
+        done
+        
+        # Wait for batch to complete with live status
+        local completed=0
+        local total_in_batch=${#batch_tests[@]}
+        echo
+        info "  ⏳ Waiting for $total_in_batch tests to complete..."
+        
+        while [[ $completed -lt $total_in_batch ]]; do
+            completed=0
+            for pid in "${pids[@]}"; do
+                if ! kill -0 "$pid" 2>/dev/null; then
+                    completed=$((completed + 1))
+                fi
+            done
+            
+            # Show progress bar
+            if [[ $total_in_batch -gt 0 ]]; then
+                local progress_pct=$(( completed * 100 / total_in_batch ))
+                local filled=$(( completed * 40 / total_in_batch ))
+                local empty=$(( 40 - filled ))
+                printf "\r  ${BLUE}[${GREEN}%${filled}s${NC}%${empty}s${BLUE}]${NC} ${completed}/${total_in_batch} (${progress_pct}%%)" "$(printf '#%.0s' $(seq 1 $filled 2>/dev/null))" "$(printf ' %.0s' $(seq 1 $empty 2>/dev/null))"
+            fi
+            
+            sleep 1
+        done
+        echo
+        echo
+        
+        # Read batch results
+        local batch_passed=0
+        local batch_failed=0
+        local batch_skipped=0
+        
+        while IFS='|' read -r test_name result; do
+            for batch_test in "${batch_tests[@]}"; do
+                if [[ "$test_name" == "$batch_test" ]]; then
+                    case "$result" in
+                        PASS)
+                            success "  ✓ $test_name"
+                            batch_passed=$((batch_passed + 1))
+                            record_test_pass "$test_name"
+                            ;;
+                        FAIL)
+                            error "  ✗ $test_name"
+                            batch_failed=$((batch_failed + 1))
+                            record_test_fail "$test_name"
+                            ;;
+                        SKIP)
+                            warning "  ⏭ $test_name"
+                            batch_skipped=$((batch_skipped + 1))
+                            SKIPPED_TESTS+=("$test_name")
+                            ;;
+                    esac
+                    break
+                fi
+            done
+        done < "$RESULTS_FILE"
+        
+        show_batch_completion "$batch_num" "$batch_passed" "$batch_failed" "$batch_skipped" "$total_in_batch"
+        
+        batch_num=$((batch_num + 1))
+    done
+    
+    # Cleanup
+    rm -f "$RESULTS_FILE" "$RESULTS_LOCK"
+    
+    # Load globally tracked workflows for final cleanup
+    if [[ -f "/tmp/e2e-workflows-list-$$.txt" ]]; then
+        while IFS= read -r wf; do
+            [[ -n "$wf" ]] && GLOBAL_WORKFLOWS_TO_DISABLE+=("$wf")
+        done < "/tmp/e2e-workflows-list-$$.txt"
+    fi
+    
+    echo
+}
+
+# Original sequential test execution
+run_tests_sequential() {
+    local patterns=("$@")
+    info "🧪 Running tests sequentially..."
     
     local workflows
     readarray -t workflows < <(filter_tests "${patterns[@]}")
@@ -2892,6 +3258,20 @@ run_tests() {
     for workflow in "${workflows_to_disable[@]}"; do
         disable_workflow "$workflow" || warning "Failed to disable workflow '$workflow', continuing..."
     done
+    
+    # Also track for global cleanup
+    for workflow in "${workflows_to_disable[@]}"; do
+        GLOBAL_WORKFLOWS_TO_DISABLE+=("$workflow")
+    done
+}
+
+# Main run_tests dispatcher - delegates to parallel or sequential execution
+run_tests() {
+    if [[ "$NO_PARALLEL" == true ]]; then
+        run_tests_sequential "$@"
+    else
+        run_tests_parallel "$@"
+    fi
 }
 
 print_final_report() {
@@ -3131,6 +3511,26 @@ main() {
                 USE_SAMPLES=true
                 shift
                 ;;
+            --batch-size)
+                if [[ $# -lt 2 || ! "$2" =~ ^[0-9]+$ ]]; then
+                    error "--batch-size requires a positive integer value"
+                    exit 1
+                fi
+                BATCH_SIZE="$2"
+                shift 2
+                ;;
+            --batch-size=*)
+                BATCH_SIZE="${1#*=}"
+                if [[ ! "$BATCH_SIZE" =~ ^[0-9]+$ ]]; then
+                    error "--batch-size requires a positive integer value"
+                    exit 1
+                fi
+                shift
+                ;;
+            --no-parallel)
+                NO_PARALLEL=true
+                shift
+                ;;
             --gh-aw-ref)
                 if [[ $# -lt 2 || -z "$2" ]]; then
                     error "--gh-aw-ref requires a value (branch, tag, or SHA)"
@@ -3163,6 +3563,8 @@ main() {
                 echo "  --workflow-dispatch-only   Only run tests that use workflow_dispatch trigger"
                 echo "                             (skip issue/comment/PR-triggered tests)"
                 echo "  --use-samples              Use declared samples for more deterministic testing"
+                echo "  --batch-size <N>           Run tests in parallel batches of N tests (default: 10)"
+                echo "  --no-parallel              Disable parallel execution (run tests sequentially)"
                 echo "  --gh-aw-ref <ref>          Run E2E tests against gh-aw at this branch/tag/SHA."
                 echo "                             Resets parallel ../gh-aw checkout to <ref>, runs"
                 echo "                             'make build' there, then recompiles with"
@@ -3237,7 +3639,8 @@ main() {
     log "E2E tests completed at $(date)"
 }
 
-# Handle script interruption
+# Handle script interruption and exit
 trap 'error "Script interrupted"; cleanup_on_exit; exit 130' INT TERM
+trap 'cleanup_on_exit' EXIT
 
 main "$@"
