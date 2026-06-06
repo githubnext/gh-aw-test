@@ -270,10 +270,11 @@ cleanup_on_exit() {
             fi
         done
         
-        info "Disabling ${#unique_workflows[@]} workflow(s) that were enabled during testing..."
+        info "Disabling ${#unique_workflows[@]} workflow(s) in parallel that were enabled during testing..."
         for workflow in "${unique_workflows[@]}"; do
-            disable_workflow "$workflow" 2>/dev/null || warning "Failed to disable workflow '$workflow', continuing..."
+            (disable_workflow "$workflow" 2>/dev/null || warning "Failed to disable workflow '$workflow', continuing...") &
         done
+        wait
     fi
     
     delete_temp_user_pat
@@ -728,9 +729,9 @@ disable_all_workflows_before_testing() {
         return 0
     fi
     
-    local disabled_count=0
+    local -a to_disable=()
     local already_disabled_count=0
-    
+
     while IFS=$'\t' read -r workflow_name workflow_state; do
         # Skip if already disabled
         if [[ "$workflow_state" == "disabled_manually" ]] || [[ "$workflow_state" == "disabled_inactivity" ]]; then
@@ -738,16 +739,43 @@ disable_all_workflows_before_testing() {
             already_disabled_count=$((already_disabled_count + 1))
             continue
         fi
-        
-        # Disable the workflow
-        progress "  Disabling '$workflow_name' (currently $workflow_state)..."
-        if gh workflow disable "$workflow_name" &>> "$LOG_FILE"; then
-            success "  ✓ Disabled '$workflow_name'"
-            disabled_count=$((disabled_count + 1))
-        else
-            warning "Failed to disable workflow '$workflow_name'"
-        fi
+        to_disable+=("$workflow_name")
     done <<< "$workflows_output"
+
+    local disabled_count=0
+    if [[ ${#to_disable[@]} -gt 0 ]]; then
+        local parallelism=$BATCH_SIZE
+        [[ $parallelism -lt 1 ]] && parallelism=1
+        info "Disabling ${#to_disable[@]} workflow(s) in parallel (up to $parallelism at a time)..."
+        local results_file
+        results_file=$(mktemp)
+        local running=0
+        for workflow_name in "${to_disable[@]}"; do
+            (
+                if gh workflow disable "$workflow_name" &>> "$LOG_FILE"; then
+                    printf 'ok\t%s\n' "$workflow_name" >> "$results_file"
+                else
+                    printf 'fail\t%s\n' "$workflow_name" >> "$results_file"
+                fi
+            ) &
+            running=$((running + 1))
+            if [[ $running -ge $parallelism ]]; then
+                wait -n 2>/dev/null || wait
+                running=$((running - 1))
+            fi
+        done
+        wait
+
+        while IFS=$'\t' read -r status name; do
+            if [[ "$status" == "ok" ]]; then
+                success "  ✓ Disabled '$name'"
+                disabled_count=$((disabled_count + 1))
+            else
+                warning "Failed to disable workflow '$name'"
+            fi
+        done < "$results_file"
+        rm -f "$results_file"
+    fi
     
     echo
     if [[ $disabled_count -gt 0 ]]; then
