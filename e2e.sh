@@ -149,8 +149,7 @@ GH_AW_BIN="gh aw"
 
 # CI mode: when the standard `$CI` environment variable is set to `true`
 # (which GitHub Actions and most other CI providers do automatically), e2e.sh
-# recompiles workflows locally but does NOT commit or push the resulting
-# lockfiles, and does NOT mutate repository secrets. Default to false if unset.
+# does NOT mutate repository secrets. Default to false if unset.
 CI="${CI:-false}"
 
 # Utility functions
@@ -601,22 +600,18 @@ check_prerequisites() {
     local git_status
     git_status=$(git status --porcelain)
     if [[ -n "$git_status" ]]; then
-        if [[ "$CI" == true ]]; then
-            info "Detected changes after compile; CI=true detected, leaving them in the working tree (NOT committing or pushing)"
+        local commit_msg="chore: update compiled workflows via e2e.sh"
+        if [[ -n "$GH_AW_REF" ]]; then
+            commit_msg="chore: e2e.sh recompile against gh-aw ref ${GH_AW_REF}"
+        fi
+        info "Detected changes after compile; committing and pushing to main branch"
+        git add . &>> "$LOG_FILE"
+        git commit -m "$commit_msg" &>> "$LOG_FILE"
+        if git push origin main &>> "$LOG_FILE"; then
+            success "Changes pushed to main branch"
         else
-            local commit_msg="chore: update compiled workflows via e2e.sh"
-            if [[ -n "$GH_AW_REF" ]]; then
-                commit_msg="chore: e2e.sh recompile against gh-aw ref ${GH_AW_REF}"
-            fi
-            info "Detected changes after compile; committing and pushing to main branch"
-            git add . &>> "$LOG_FILE"
-            git commit -m "$commit_msg" &>> "$LOG_FILE"
-            if git push origin main &>> "$LOG_FILE"; then
-                success "Changes pushed to main branch"
-            else
-                error "Failed to push changes to main branch. Check $LOG_FILE for details"
-                exit 1
-            fi
+            error "Failed to push changes to main branch. Check $LOG_FILE for details"
+            exit 1
         fi
     else
         info "No changes detected after compile"
@@ -3174,13 +3169,6 @@ main() {
                 echo "                             '../gh-aw/gh-aw compile --gh-aw-ref <ref>' so the"
                 echo "                             generated lock.yml files reference"
                 echo "                             github/gh-aw/actions/setup@<ref> at runtime."
-                echo "  --no-push                  (Deprecated alias.) Push behaviour is now auto-disabled when the"
-                echo "                             standard CI=true environment variable is set, so this flag is"
-                echo "                             rarely needed. Forces no commit/push of recompiled lock.yml"
-                echo "                             files. Note: any 'gh aw run' invocations will still target"
-                echo "                             whatever workflows are currently on the repo's main branch,"
-                echo "                             so this is best used as a compile-validation mode (often with"
-                echo "                             --workflow-dispatch-only)."
                 echo "  --help, -h                 Show this help message"
                 echo ""
                 echo "TEST_PATTERNS:"

@@ -215,7 +215,7 @@ jobs:
           set +e
           chmod +x ./e2e.sh
           if [[ -z "${GH_AW_TEST_PAT:-}" ]]; then
-            echo "::error::GH_AW_TEST_PAT secret is not set on this repository. The matrix runs e2e.sh in --no-push mode, which does not mutate repo secrets and therefore requires GH_AW_TEST_PAT to be supplied via secrets.GH_AW_TEST_PAT."
+            echo "::error::GH_AW_TEST_PAT secret is not set on this repository. The matrix runs e2e.sh in mode, which does not mutate repo secrets and therefore requires GH_AW_TEST_PAT to be supplied via secrets.GH_AW_TEST_PAT."
             exit 1
           fi
           
