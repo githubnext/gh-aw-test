@@ -1,7 +1,6 @@
 test-copilot-nosandbox-command 24437267964 25012767306
 test-copilot-siderepo-create-pull-request-review-comment
 test-codex-create-pull-request 25005388813 27045778526
-test-copilot-create-pull-request 25005480041 27045945076
 test-copilot-close-issue 25008676594
 test-copilot-close-discussion 25009055891
 test-copilot-command 25010274366

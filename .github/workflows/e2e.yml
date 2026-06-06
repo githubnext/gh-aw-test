@@ -1,102 +1,470 @@
-name: Nightly E2E Tests
+name: E2E Against gh-aw Matrix
+
+# Compile-compatibility matrix that runs the E2E suite against three gh-aw refs
+# in parallel:
+#   1. github/gh-aw `main`
+#   2. the latest gh-aw pre-release tag
+#   3. the latest gh-aw stable release tag
+#
+# What runs and what doesn't
+# --------------------------
+# Each matrix entry checks out github/gh-aw at the given ref, runs `make build`,
+# and then calls `e2e.sh --gh-aw-ref <ref> --workflow-dispatch-only`.
+#
+# Because `$CI` is set to `true` by GitHub Actions, `e2e.sh` automatically
+# switches into CI mode: it does NOT commit/push the recompiled lockfiles and
+# does NOT mutate the repository's `TEMP_USER_PAT` secret. That makes this
+# workflow safe to run on any cadence without racing concurrent CI runs. The
+# trade-off is that the runtime workflow_dispatch tests triggered by `e2e.sh`
+# execute whatever workflows are currently committed to main (not the
+# locally-recompiled ones referencing `github/gh-aw/actions/setup@<ref>`).
+# In practice this means this workflow:
+#   * VALIDATES that `gh-aw compile --gh-aw-ref <ref>` succeeds for every
+#     workflow source file in this repository (the most common failure mode
+#     when the compiler changes shape on gh-aw main).
+#   * EXECUTES the standard dispatch tests against whatever is on main, giving
+#     the same level of runtime confidence as the previous nightly job.
+#
+# If you ever want each matrix entry to actually run the recompiled workflows
+# end-to-end, you would need a per-ref push branch and a `gh workflow run --ref`
+# extension to `e2e.sh`. That is intentionally not done here so the workflow
+# never touches main.
+# Required secrets:
+#   * CI_GITHUB_PAT       (default) — issue creation, dispatch, status reporting.
+#   * CI_GITHUB_PAT      (required) — PAT used by the dispatched workflows for
+#                        cross-repo operations. e2e.sh does NOT call `gh secret
+#                        set` when `$CI=true` (matrix runs would race), so the
+#                        repo's `TEMP_USER_PAT` secret must already be
+#                        pre-configured (typically to the same value as
+#                        CI_GITHUB_PAT). The PAT is also passed into the e2e.sh
+#                        process as the `CI_GITHUB_PAT` environment variable,
+#                        sourced from `secrets.CI_GITHUB_PAT`.
 
 on:
   schedule:
-    - cron: '0 3 * * *'  # Run nightly at 03:00 UTC
-  workflow_dispatch: {}
+    - cron: '0 3 * * *'   # Nightly at 03:00 UTC
+  workflow_dispatch:
+    inputs:
+      refs:
+        description: 'Optional comma-separated list of gh-aw refs to test (overrides main / latest pre-release / latest release auto-detection)'
+        required: false
+        default: ''
 
 concurrency:
   group: ${{ github.workflow }}
   cancel-in-progress: true
 
 permissions:
-  contents: write
+  contents: read
   issues: write
-  pull-requests: write
-  actions: write
+  pull-requests: read
+  actions: read
 
 jobs:
-  clean:
+  resolve-refs:
+    name: Resolve gh-aw refs to test
     runs-on: ubuntu-latest
-    name: "Clean test resources"
     outputs:
-      testsuites: ${{ steps.plan.outputs.testsuites }}
+      matrix: ${{ steps.resolve.outputs.matrix }}
+      main_sha: ${{ steps.resolve.outputs.main_sha }}
+      latest_release: ${{ steps.resolve.outputs.latest_release }}
+      latest_prerelease: ${{ steps.resolve.outputs.latest_prerelease }}
     steps:
-      - name: Checkout
+      - name: Resolve refs
+        id: resolve
+        env:
+          GH_TOKEN: ${{ secrets.CI_GITHUB_PAT }}
+          OVERRIDE: ${{ inputs.refs }}
+        run: |
+          set -euo pipefail
+
+          main_sha=$(gh api repos/github/gh-aw/commits/main --jq '.sha' | cut -c1-12)
+          latest_release=$(gh release list --repo github/gh-aw --limit 50 \
+              --json tagName,isPrerelease,isDraft \
+              --jq '[.[] | select(.isPrerelease==false and .isDraft==false)][0].tagName' || echo "")
+          latest_prerelease=$(gh release list --repo github/gh-aw --limit 50 \
+              --json tagName,isPrerelease,isDraft \
+              --jq '[.[] | select(.isPrerelease==true and .isDraft==false)][0].tagName' || echo "")
+
+          if [[ -z "$latest_release" ]]; then
+            echo "::error::Could not resolve latest gh-aw release"
+            exit 1
+          fi
+          if [[ -z "$latest_prerelease" ]]; then
+            latest_prerelease="$latest_release"
+          fi
+
+          # Build the matrix. Each entry has:
+          #   label : short human-readable name used in job titles / report
+          #   ref   : git ref / tag passed to the build or install step
+          #   mode  : 'source'    => check out github/gh-aw at <ref>, `make build`,
+          #                         then run e2e.sh --gh-aw-ref <ref>. Used for
+          #                         non-release refs (main, branches, SHAs) that
+          #                         have no published gh extension release.
+          #           'extension' => `gh extension install github/gh-aw --pin <ref>`,
+          #                         then run e2e.sh with NO --gh-aw-ref. Used for
+          #                         release / pre-release tags so we exercise the
+          #                         exact published artifact users see.
+          #
+          # Override format (workflow_dispatch input `refs`): comma-separated tokens.
+          # Each token may be either a bare ref (defaults to mode=source) or
+          # "<ref>:source" / "<ref>:extension" to force a mode.
+          if [[ -n "$OVERRIDE" ]]; then
+            matrix=$(echo "$OVERRIDE" | jq -Rsc '
+              split(",")
+              | map(gsub("^\\s+|\\s+$";""))
+              | map(select(length>0))
+              | map(
+                  if test(":") then
+                    (split(":") | { label: .[0], ref: .[0], mode: (.[1] // "source") })
+                  else
+                    { label: ., ref: ., mode: "source" }
+                  end
+                )
+            ')
+          else
+            matrix=$(jq -nc \
+              --arg pre "$latest_prerelease" \
+              --arg rel "$latest_release" \
+              '[
+                { label: "main",           ref: "main", mode: "source" },
+                { label: "pre-release",    ref: $pre,  mode: "extension" },
+                { label: "release",        ref: $rel,  mode: "extension" }
+              ]
+              # de-dupe by ref so pre-release==release doesn't run twice
+              | unique_by(.ref)')
+          fi
+
+          echo "Resolved:"
+          echo "  main:               main ($main_sha)"
+          echo "  latest pre-release: $latest_prerelease"
+          echo "  latest release:     $latest_release"
+          echo "  matrix:             $matrix"
+
+          {
+            echo "main_sha=$main_sha"
+            echo "latest_release=$latest_release"
+            echo "latest_prerelease=$latest_prerelease"
+            echo "matrix=$matrix"
+          } >> "$GITHUB_OUTPUT"
+
+  e2e:
+    name: "E2E: ${{ matrix.entry.label }} (gh-aw@${{ matrix.entry.ref }}, ${{ matrix.entry.mode }})"
+    needs: resolve-refs
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        entry: ${{ fromJSON(needs.resolve-refs.outputs.matrix) }}
+    steps:
+      - name: Checkout gh-aw-test
         uses: actions/checkout@v4
-      - name: GitHub CLI - show auth status
+        with:
+          path: gh-aw-test
+          fetch-depth: 1
+
+      # --- source mode: build gh-aw from a checkout ---------------------------
+      - name: Checkout github/gh-aw at ${{ matrix.entry.ref }} (source mode)
+        if: matrix.entry.mode == 'source'
+        uses: actions/checkout@v4
+        with:
+          repository: github/gh-aw
+          ref: ${{ matrix.entry.ref }}
+          path: gh-aw
+          fetch-depth: 1
+
+      - name: Set up Go (source mode)
+        if: matrix.entry.mode == 'source'
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: gh-aw/go.mod
+          cache-dependency-path: gh-aw/go.sum
+
+      - name: Build gh-aw binary from source (source mode)
+        if: matrix.entry.mode == 'source'
+        working-directory: gh-aw
+        run: make build
+
+      # --- extension mode: install published gh extension at the pinned tag ---
+      - name: Install published gh-aw extension at ${{ matrix.entry.ref }} (extension mode)
+        if: matrix.entry.mode == 'extension'
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.CI_GITHUB_PAT }}
         run: |
-          gh auth status
-      - name: Run cleanup script
+          set -euo pipefail
+          # Remove any pre-existing install so --pin actually wins
+          gh extension remove github/gh-aw 2>/dev/null || true
+          gh extension install github/gh-aw --pin "${{ matrix.entry.ref }}"
+          gh aw --version
+
+      # --- shared steps -------------------------------------------------------
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+
+      - name: gh auth status
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.CI_GITHUB_PAT }}
+        run: gh auth status
+
+      - name: Run E2E against gh-aw@${{ matrix.entry.ref }} (${{ matrix.entry.mode }} mode)
+        id: run
+        working-directory: gh-aw-test
+        timeout-minutes: 80
+        env:
+          GH_TOKEN: ${{ secrets.CI_GITHUB_PAT }}
+          GITHUB_TOKEN: ${{ secrets.CI_GITHUB_PAT }}
+          CI_GITHUB_PAT: ${{ secrets.CI_GITHUB_PAT }}
+          E2E_REF: ${{ matrix.entry.ref }}
+          E2E_MODE: ${{ matrix.entry.mode }}
         run: |
-          chmod +x ./clean.sh
-          ./clean.sh
-      - name: Upload cleanup log artifact
+          set +e
+          chmod +x ./e2e.sh
+          if [[ -z "${CI_GITHUB_PAT:-}" ]]; then
+            echo "::error::CI_GITHUB_PAT secret is not set on this repository. The matrix runs e2e.sh in --no-push mode, which does not mutate repo secrets and therefore requires CI_GITHUB_PAT to be supplied via secrets.CI_GITHUB_PAT."
+            exit 1
+          fi
+          if [[ "$E2E_MODE" == "source" ]]; then
+            # source mode: locally-built binary + --gh-aw-ref so lockfiles
+            # reference github/gh-aw/actions/setup@<ref>.
+            # ($CI=true is set automatically by GitHub Actions, so e2e.sh runs
+            # in CI mode: no push, no secret mutation.)
+            ./e2e.sh --gh-aw-ref "$E2E_REF" --workflow-dispatch-only 2>&1 | tee e2e-output.log
+          else
+            # extension mode: rely on the installed `gh aw` (pinned to $E2E_REF),
+            # no --gh-aw-ref override — lockfiles will reference the published
+            # gh-aw-actions release that ships with that gh-aw version, which is
+            # exactly what end users get.
+            ./e2e.sh --workflow-dispatch-only 2>&1 | tee e2e-output.log
+          fi
+          rc=${PIPESTATUS[0]}
+          echo "exit_code=$rc" >> "$GITHUB_OUTPUT"
+
+          slug=$(echo "$E2E_REF" | tr '/' '_' | tr -cd 'A-Za-z0-9._-')
+          mkdir -p ../report
+          if [[ -s fails.txt ]]; then
+            cp fails.txt "../report/fails-${slug}.txt"
+          else
+            : > "../report/fails-${slug}.txt"
+          fi
+          printf '%s' "$E2E_REF"  > "../report/ref-${slug}.txt"
+          printf '%s' "$E2E_MODE" > "../report/mode-${slug}.txt"
+          printf '%s' "$rc"               > "../report/rc-${slug}.txt"
+
+          # Don't fail the step here — let the report job decide overall pass/fail
+          # so the aggregator always runs and the artifact upload happens.
+          exit 0
+
+      - name: Append job summary
+        if: always()
+        working-directory: gh-aw-test
+        run: |
+          {
+            echo "## E2E: ${{ matrix.entry.label }} — gh-aw@${{ matrix.entry.ref }} (${{ matrix.entry.mode }} mode)"
+            echo
+            echo "Exit code: \`${{ steps.run.outputs.exit_code }}\`"
+            echo
+            if [[ -s fails.txt ]]; then
+              echo "### Failed tests"
+              echo '```'
+              cat fails.txt
+              echo '```'
+            else
+              echo "_No failed tests recorded._"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload artifacts for ${{ matrix.entry.label }}
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: cleanup-log
-          path: cleanup-*.log
-      - name: Plan
-        id: plan
-        run: |
-          # trigered test suites do not work since issues/comments created from actions
-          # do not trigger actions
-          echo 'testsuites=["test-claude-* --workflow-dispatch-only", "test-codex-* --workflow-dispatch-only", "test-copilot-* --workflow-dispatch-only", "test-custom-* --workflow-dispatch-only"]' >> "$GITHUB_OUTPUT"
-  e2e:
+          name: e2e-${{ matrix.entry.label }}
+          path: |
+            gh-aw-test/e2e-test-*.log
+            gh-aw-test/e2e-output.log
+            gh-aw-test/fails.txt
+            report/
+
+  report:
+    name: Publish status report issue
+    needs: [resolve-refs, e2e]
+    if: always()
     runs-on: ubuntu-latest
-    needs: clean
-    strategy:
-      matrix:
-        testsuite:  ${{ fromJSON(needs.clean.outputs.testsuites) }}
-      fail-fast: false
-    name: "E2E Tests: ${{ matrix.testsuite }}"
+    permissions:
+      issues: write
+      contents: read
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Download all matrix artifacts
+        uses: actions/download-artifact@v4
         with:
-          submodules: 'recursive'
-          fetch-depth: 0
-      - name: Set up Node.js
-        uses: actions/setup-node@v5
-      - name: Set up Go
-        uses: actions/setup-go@v5
-      - name: GitHub CLI - show auth status
+          path: artifacts
+
+      - name: Build status report body
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MATRIX_JSON: ${{ needs.resolve-refs.outputs.matrix }}
+          MAIN_SHA: ${{ needs.resolve-refs.outputs.main_sha }}
+          LATEST_RELEASE: ${{ needs.resolve-refs.outputs.latest_release }}
+          LATEST_PRERELEASE: ${{ needs.resolve-refs.outputs.latest_prerelease }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          E2E_RESULT: ${{ needs.e2e.result }}
         run: |
-          gh auth status
-      - name: List files for debugging
-        run: |
-          ls -la
-          pwd
-      - name: Run e2e tests and publish output to job summary
+          set -euo pipefail
+
+          {
+            echo "# E2E status report (gh-aw matrix)"
+            echo
+            echo "* Run: $RUN_URL"
+            echo "* Trigger: \`${{ github.event_name }}\`"
+            echo "* Generated: \`$(date -u +%FT%TZ)\`"
+            echo "* Matrix outcome: \`$E2E_RESULT\`"
+            echo
+            echo "## Resolved gh-aw refs"
+            echo
+            echo "| label              | ref                       | mode      |"
+            echo "|--------------------|---------------------------|-----------|"
+            echo "| main               | \`main\` (\`$MAIN_SHA\`)    | source    |"
+            echo "| latest release     | \`$LATEST_RELEASE\`        | extension |"
+            echo "| latest pre-release | \`$LATEST_PRERELEASE\`     | extension |"
+            echo
+            echo "## Per-entry results"
+            echo
+            echo "| label | gh-aw ref | mode | exit code | failed tests |"
+            echo "|---|---|---|---|---|"
+
+            overall_failed=0
+            # Iterate the matrix output (array of {label, ref, mode} objects).
+            while IFS=$'\t' read -r label ref mode; do
+              [[ -z "$label" ]] && continue
+              slug=$(echo "$ref" | tr '/' '_' | tr -cd 'A-Za-z0-9._-')
+              rc_file="artifacts/e2e-${label}/report/rc-${slug}.txt"
+              fails_file="artifacts/e2e-${label}/report/fails-${slug}.txt"
+              if [[ -f "$rc_file" ]]; then
+                rc=$(cat "$rc_file")
+              else
+                rc="?"
+              fi
+              if [[ -s "$fails_file" ]]; then
+                count=$(grep -c . "$fails_file" || true)
+              else
+                count=0
+              fi
+              if [[ "$rc" != "0" || "$count" -gt 0 ]]; then
+                overall_failed=1
+              fi
+              echo "| $label | \`$ref\` | $mode | \`$rc\` | $count |"
+            done < <(echo "$MATRIX_JSON" | jq -r '.[] | [.label, .ref, .mode] | @tsv')
+
+            echo
+            while IFS=$'\t' read -r label ref mode; do
+              [[ -z "$label" ]] && continue
+              slug=$(echo "$ref" | tr '/' '_' | tr -cd 'A-Za-z0-9._-')
+              fails_file="artifacts/e2e-${label}/report/fails-${slug}.txt"
+              if [[ -s "$fails_file" ]]; then
+                echo "### Failures: $label (\`$ref\`, $mode)"
+                echo
+                echo '```'
+                cat "$fails_file"
+                echo '```'
+                echo
+              fi
+            done < <(echo "$MATRIX_JSON" | jq -r '.[] | [.label, .ref, .mode] | @tsv')
+
+            echo
+            echo "---"
+            echo
+            echo "_The \`main\` entry runs \`e2e.sh --gh-aw-ref main --workflow-dispatch-only\` against a"
+            echo "locally-built \`gh-aw\` from the github/gh-aw checkout. The release / pre-release entries"
+            echo "install the published \`gh aw\` extension at the pinned tag (\`gh extension install\`"
+            echo "--pin <tag>\`) and run \`e2e.sh --workflow-dispatch-only\` against that, so they"
+            echo "exercise exactly the artifact users see. GitHub Actions sets \`CI=true\`, which puts"
+            echo "\`e2e.sh\` into no-push / no-secret-mutation mode automatically so parallel matrix"
+            echo "jobs don't race each other. See \`.github/workflows/e2e.yml\` for the design rationale._"
+
+            echo "$overall_failed" > /tmp/overall_failed
+          } > report.md
+
+          cat report.md
+
+      - name: Ensure status-report label exists
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        timeout-minutes: 60
+          GH_TOKEN: ${{ secrets.CI_GITHUB_PAT }}
         run: |
-          set -o pipefail
-          chmod +x ./e2e.sh
+          gh label create e2e-status-report \
+            --color BFD4F2 \
+            --description "Automated cross-ref E2E status report" \
+            --repo "$GITHUB_REPOSITORY" 2>/dev/null || true
 
-          # Run the e2e script, tee output to both stdout and log, capture exit code
-          set +e
-          ./e2e.sh ${{ matrix.testsuite }} 2>&1 | tee e2e-output.log
-          rc=${PIPESTATUS[0]}
-          set -e
+      - name: Find prior open status reports
+        id: prior
+        env:
+          GH_TOKEN: ${{ secrets.CI_GITHUB_PAT }}
+        run: |
+          set -euo pipefail
+          numbers=$(gh issue list \
+            --repo "$GITHUB_REPOSITORY" \
+            --label e2e-status-report \
+            --state open \
+            --limit 50 \
+            --json number \
+            --jq '[.[].number] | join(",")')
+          echo "numbers=$numbers" >> "$GITHUB_OUTPUT"
+          echo "Prior open status reports: ${numbers:-none}"
 
-          echo "\n## E2E test run output (${{ matrix.testsuite }})" >> "$GITHUB_STEP_SUMMARY"
-          echo '``````bash' >> "$GITHUB_STEP_SUMMARY"
-          sed -n '1,50000p' e2e-output.log >> "$GITHUB_STEP_SUMMARY" || true
-          echo '``````' >> "$GITHUB_STEP_SUMMARY"
+      - name: Compose final issue body (with links to previous reports)
+        env:
+          PRIOR: ${{ steps.prior.outputs.numbers }}
+        run: |
+          {
+            cat report.md
+            if [[ -n "$PRIOR" ]]; then
+              echo
+              echo "## Previous status reports (closed by this run)"
+              IFS=',' read -ra arr <<< "$PRIOR"
+              for n in "${arr[@]}"; do
+                echo "* #$n"
+              done
+            fi
+          } > issue-body.md
 
-          echo "Detailed log attached as artifact: e2e-output-${{ matrix.testsuite }}.log"
+      - name: Create new status report issue
+        id: create
+        env:
+          GH_TOKEN: ${{ secrets.CI_GITHUB_PAT }}
+        run: |
+          set -euo pipefail
+          title="E2E status report — $(date -u +%F) (gh-aw matrix)"
+          url=$(gh issue create \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "$title" \
+            --label e2e-status-report \
+            --body-file issue-body.md)
+          number="${url##*/}"
+          echo "Created: $url"
+          echo "number=$number" >> "$GITHUB_OUTPUT"
+          echo "url=$url"       >> "$GITHUB_OUTPUT"
 
-          # Fail the job if the script exited non-zero so GH shows failure status
-          if [[ $rc -ne 0 ]]; then
-            echo "E2E script failed with exit code $rc"
-            exit $rc
+      - name: Close previous status report issues
+        if: steps.prior.outputs.numbers != ''
+        env:
+          GH_TOKEN: ${{ secrets.CI_GITHUB_PAT }}
+          PRIOR: ${{ steps.prior.outputs.numbers }}
+          NEW_NUMBER: ${{ steps.create.outputs.number }}
+          NEW_URL: ${{ steps.create.outputs.url }}
+        run: |
+          IFS=',' read -ra arr <<< "$PRIOR"
+          for n in "${arr[@]}"; do
+            gh issue comment "$n" \
+              --repo "$GITHUB_REPOSITORY" \
+              --body "Superseded by #${NEW_NUMBER} — ${NEW_URL}"
+            gh issue close "$n" \
+              --repo "$GITHUB_REPOSITORY" \
+              --reason "not planned"
+          done
+
+      - name: Fail the workflow if any matrix entry reported failures
+        run: |
+          overall=$(cat /tmp/overall_failed 2>/dev/null || echo 1)
+          if [[ "$overall" != "0" ]]; then
+            echo "::error::At least one gh-aw matrix entry reported failures (see status report issue)"
+            exit 1
           fi
