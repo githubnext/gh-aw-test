@@ -137,6 +137,14 @@ LOG_FILE="e2e-test-$(date +%Y%m%d-%H%M%S).log"
 TEMP_USER_PAT_SET=false
 WORKFLOW_DISPATCH_ONLY=false
 
+# --gh-aw-ref: when non-empty, the script resets a parallel ../gh-aw checkout to
+# this ref, builds it, and uses the resulting binary for compile+enable+disable+run.
+# Compiled workflows will then reference github/gh-aw/actions/setup@<GH_AW_REF>
+# instead of the published github/gh-aw-actions/setup@<version>.
+GH_AW_REF=""
+GH_AW_SRC_DIR="../gh-aw"
+GH_AW_BIN="gh aw"
+
 # Utility functions
 log() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') $*" | tee -a "$LOG_FILE"
@@ -454,6 +462,64 @@ filter_tests() {
     fi
 }
 
+# Reset a parallel gh-aw checkout to $GH_AW_REF, build it, and set GH_AW_BIN.
+# Used when the user passes --gh-aw-ref <ref> to test compiled workflows against
+# a specific gh-aw branch, tag, or SHA. The compiled lock.yml files will then
+# pin github/gh-aw/actions/setup@<ref> at runtime instead of the published
+# github/gh-aw-actions/setup@<version>.
+setup_local_gh_aw_binary() {
+    info "Setting up local gh-aw build for ref '$GH_AW_REF'..."
+
+    if [[ ! -d "$GH_AW_SRC_DIR/.git" ]]; then
+        error "--gh-aw-ref requires a parallel gh-aw checkout at $GH_AW_SRC_DIR (not found)"
+        exit 1
+    fi
+
+    progress "Fetching latest refs from origin in $GH_AW_SRC_DIR..."
+    # --force + --prune-tags tolerates moved/deleted upstream tags
+    if ! git -C "$GH_AW_SRC_DIR" fetch origin --prune --prune-tags --tags --force &>> "$LOG_FILE"; then
+        error "Failed to fetch from origin in $GH_AW_SRC_DIR"
+        exit 1
+    fi
+
+    progress "Resetting $GH_AW_SRC_DIR to '$GH_AW_REF'..."
+    # Try branch (origin/<ref>) first, then fall back to tag/SHA.
+    if git -C "$GH_AW_SRC_DIR" rev-parse --verify "origin/$GH_AW_REF" &>/dev/null; then
+        if ! git -C "$GH_AW_SRC_DIR" checkout -B "$GH_AW_REF" "origin/$GH_AW_REF" &>> "$LOG_FILE"; then
+            error "Failed to checkout branch '$GH_AW_REF' in $GH_AW_SRC_DIR"
+            exit 1
+        fi
+    else
+        if ! git -C "$GH_AW_SRC_DIR" checkout --detach "$GH_AW_REF" &>> "$LOG_FILE"; then
+            error "Failed to checkout ref '$GH_AW_REF' in $GH_AW_SRC_DIR (not a branch, tag, or SHA)"
+            exit 1
+        fi
+    fi
+
+    progress "Building gh-aw binary at $GH_AW_SRC_DIR (make build)..."
+    if ! (cd "$GH_AW_SRC_DIR" && make build) &>> "$LOG_FILE"; then
+        error "Failed to build gh-aw binary in $GH_AW_SRC_DIR. Check $LOG_FILE for details"
+        exit 1
+    fi
+
+    local bin_path="$GH_AW_SRC_DIR/gh-aw"
+    if [[ ! -x "$bin_path" ]]; then
+        error "Built binary not found at $bin_path"
+        exit 1
+    fi
+
+    GH_AW_BIN="$bin_path"
+    local built_version
+    built_version=$($GH_AW_BIN --version 2>/dev/null || echo "unknown")
+    success "Built gh-aw binary: $bin_path ($built_version)"
+
+    # Verify the binary supports --gh-aw-ref.
+    if ! $GH_AW_BIN compile --help 2>&1 | grep -q -- "--gh-aw-ref"; then
+        error "The built gh-aw binary does not support --gh-aw-ref. The ref '$GH_AW_REF' is likely older than the flag's introduction."
+        exit 1
+    fi
+}
+
 check_prerequisites() {
     info "Checking prerequisites..."
 
@@ -469,30 +535,33 @@ check_prerequisites() {
         exit 1
     fi
 
-    # Install or upgrade the gh-aw extension
-    info "Checking gh-aw extension..."
-    
-    # Check if the extension is already installed
-    if gh extension list | grep -q "github/gh-aw"; then
-        info "gh-aw extension already installed, upgrading to latest version..."
-        if gh extension upgrade github/gh-aw &>> "$LOG_FILE"; then
-            success "gh-aw extension upgraded successfully"
-        else
-            warning "Failed to upgrade gh-aw extension, continuing with existing version"
-        fi
+    # Either install/upgrade the released gh-aw extension OR build the requested
+    # ref from a parallel ../gh-aw checkout.
+    if [[ -n "$GH_AW_REF" ]]; then
+        setup_local_gh_aw_binary
     else
-        info "Installing gh-aw extension..."
-        if gh extension install github/gh-aw &>> "$LOG_FILE"; then
-            success "gh-aw extension installed successfully"
+        info "Checking gh-aw extension..."
+        if gh extension list | grep -q "github/gh-aw"; then
+            info "gh-aw extension already installed, upgrading to latest version..."
+            if gh extension upgrade github/gh-aw &>> "$LOG_FILE"; then
+                success "gh-aw extension upgraded successfully"
+            else
+                warning "Failed to upgrade gh-aw extension, continuing with existing version"
+            fi
         else
-            error "Failed to install gh-aw extension. Check $LOG_FILE for details"
-            exit 1
+            info "Installing gh-aw extension..."
+            if gh extension install github/gh-aw &>> "$LOG_FILE"; then
+                success "gh-aw extension installed successfully"
+            else
+                error "Failed to install gh-aw extension. Check $LOG_FILE for details"
+                exit 1
+            fi
         fi
     fi
-    
-    # Verify the extension is available
-    if ! gh aw --version &>> "$LOG_FILE"; then
-        error "gh-aw extension is not available after installation"
+
+    # Verify the chosen gh-aw binary is available
+    if ! $GH_AW_BIN --version &>> "$LOG_FILE"; then
+        error "gh-aw binary ($GH_AW_BIN) is not available"
         exit 1
     fi
 
@@ -503,21 +572,33 @@ check_prerequisites() {
         exit 1
     fi
 
-    # Run "gh aw compile"
-    if ! gh aw compile 2>&1 | tee -a "$LOG_FILE"; then
-        error "'gh aw compile' failed. Check $LOG_FILE for details"
+    # Compile workflows. When --gh-aw-ref is set, pass it through so compiled
+    # workflows reference github/gh-aw/actions/setup@<ref> at runtime.
+    local compile_cmd=($GH_AW_BIN compile)
+    if [[ -n "$GH_AW_REF" ]]; then
+        compile_cmd+=(--gh-aw-ref "$GH_AW_REF")
+    fi
+    info "Running: ${compile_cmd[*]}"
+    if ! "${compile_cmd[@]}" 2>&1 | tee -a "$LOG_FILE"; then
+        error "'${compile_cmd[*]}' failed. Check $LOG_FILE for details"
         exit 1
     fi
 
     # If there are any updates from the compile, commit them and push them to main to make
-    # sure the workflows are up to date for testing
+    # sure the workflows are up to date for testing.
+    # NOTE: when running against --gh-aw-ref the lock.yml diff is expected; we still
+    # push so the test runs see the ref-specific workflows.
 
     local git_status
     git_status=$(git status --porcelain)
     if [[ -n "$git_status" ]]; then
-        info "Detected changes after 'gh aw compile'; committing and pushing to main branch"
+        local commit_msg="chore: update compiled workflows via e2e.sh"
+        if [[ -n "$GH_AW_REF" ]]; then
+            commit_msg="chore: e2e.sh recompile against gh-aw ref ${GH_AW_REF}"
+        fi
+        info "Detected changes after compile; committing and pushing to main branch"
         git add . &>> "$LOG_FILE"
-        git commit -m "chore: update compiled workflows via e2e.sh" &>> "$LOG_FILE"
+        git commit -m "$commit_msg" &>> "$LOG_FILE"
         if git push origin main &>> "$LOG_FILE"; then
             success "Changes pushed to main branch"
         else
@@ -525,7 +606,7 @@ check_prerequisites() {
             exit 1
         fi
     else
-        info "No changes detected after 'gh-aw compile'"
+        info "No changes detected after compile"
     fi
 
     # Set TEMP_USER_PAT secret for cross-repo testing
@@ -658,7 +739,7 @@ enable_workflow() {
     
     info "Enabling workflow '$workflow_name'..."
     # Redirect gh aw enable output to log file to prevent terminal control codes from clearing previous output
-    gh aw enable "$workflow_name" &>> "$LOG_FILE"
+    $GH_AW_BIN enable "$workflow_name" &>> "$LOG_FILE"
     local rc=$?
     if [[ $rc -eq 0 ]]; then
         success "Successfully enabled '$workflow_name'"
@@ -673,7 +754,7 @@ disable_workflow() {
     local workflow_name="$1"
     
     info "Disabling workflow '$workflow_name'..."
-    gh aw disable "$workflow_name" &>> "$LOG_FILE"
+    $GH_AW_BIN disable "$workflow_name" &>> "$LOG_FILE"
     local rc=$?
     if [[ $rc -eq 0 ]]; then
         success "Successfully disabled '$workflow_name'"
@@ -701,7 +782,7 @@ trigger_workflow_dispatch_and_await_completion() {
     local before_run_id=$(get_latest_run_id "$workflow_file")
     
     # Trigger the workflow using gh aw run
-    if gh aw run "$workflow_name" &>> "$LOG_FILE"; then
+    if $GH_AW_BIN run "$workflow_name" &>> "$LOG_FILE"; then
         success "Successfully triggered '$workflow_name'"
         
         # Wait a bit for the new run to appear
@@ -3017,6 +3098,22 @@ main() {
                 WORKFLOW_DISPATCH_ONLY=true
                 shift
                 ;;
+            --gh-aw-ref)
+                if [[ $# -lt 2 || -z "$2" ]]; then
+                    error "--gh-aw-ref requires a value (branch, tag, or SHA)"
+                    exit 1
+                fi
+                GH_AW_REF="$2"
+                shift 2
+                ;;
+            --gh-aw-ref=*)
+                GH_AW_REF="${1#*=}"
+                if [[ -z "$GH_AW_REF" ]]; then
+                    error "--gh-aw-ref requires a value (branch, tag, or SHA)"
+                    exit 1
+                fi
+                shift
+                ;;
             --help|-h)
                 echo "Usage: $0 [OPTIONS] [TEST_PATTERNS...]"
                 echo "       $0 report"
@@ -3032,6 +3129,12 @@ main() {
                 echo "  --dry-run, -n              Show what would be tested without running"
                 echo "  --workflow-dispatch-only   Only run tests that use workflow_dispatch trigger"
                 echo "                             (skip issue/comment/PR-triggered tests)"
+                echo "  --gh-aw-ref <ref>          Run E2E tests against gh-aw at this branch/tag/SHA."
+                echo "                             Resets parallel ../gh-aw checkout to <ref>, runs"
+                echo "                             'make build' there, then recompiles with"
+                echo "                             '../gh-aw/gh-aw compile --gh-aw-ref <ref>' so the"
+                echo "                             generated lock.yml files reference"
+                echo "                             github/gh-aw/actions/setup@<ref> at runtime."
                 echo "  --help, -h                 Show this help message"
                 echo ""
                 echo "TEST_PATTERNS:"
