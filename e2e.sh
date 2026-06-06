@@ -3107,7 +3107,21 @@ run_tests_parallel() {
         echo
         info "  ⏳ Waiting for $total_in_batch tests to complete (per-test kill after ${per_test_kill_seconds}s)..."
 
+        # Decide on output style: interactive TTY redraws in place; non-TTY (CI,
+        # piped logs) prints a single status line at a coarse interval.
+        local is_tty=false
+        if [[ -t 1 ]]; then is_tty=true; fi
+        local term_cols=${COLUMNS:-0}
+        if [[ "$is_tty" == true && $term_cols -eq 0 ]]; then
+            term_cols=$(tput cols 2>/dev/null || echo 100)
+        fi
+        [[ $term_cols -le 20 ]] && term_cols=100
         local last_status_line_len=0
+        local loop_iter=0
+        # Print non-TTY status every NONTTY_STATUS_EVERY seconds
+        local nontty_status_every=30
+        local nontty_last_print=0
+
         while [[ $completed -lt $total_in_batch ]]; do
             completed=0
             local running_summary=()
@@ -3121,12 +3135,11 @@ run_tests_parallel() {
                 # Kill tests that exceed the hard ceiling
                 if [[ $elapsed -gt $per_test_kill_seconds ]]; then
                     local stuck_test="${pid_to_test[$pid]}"
-                    echo
+                    [[ "$is_tty" == true ]] && echo
                     warning "  ⏰ Killing '$stuck_test' (pid $pid) — exceeded ${per_test_kill_seconds}s"
                     kill -TERM "$pid" 2>/dev/null
                     sleep 1
                     kill -KILL "$pid" 2>/dev/null
-                    # Record as FAIL so the results reader sees it
                     (
                         flock -x 200
                         echo "$stuck_test|FAIL" >> "$RESULTS_FILE"
@@ -3137,29 +3150,57 @@ run_tests_parallel() {
                 running_summary+=("${pid_to_test[$pid]}(${elapsed}s)")
             done
 
-            # Show progress bar + running test names
             if [[ $total_in_batch -gt 0 ]]; then
                 local progress_pct=$(( completed * 100 / total_in_batch ))
                 local filled=$(( completed * 40 / total_in_batch ))
                 local empty=$(( 40 - filled ))
+                local running_count=${#running_summary[@]}
+                # Build a compact running-text that fits in the terminal
                 local running_text=""
-                if [[ ${#running_summary[@]} -gt 0 ]]; then
-                    running_text=" — running: $(IFS=', '; echo "${running_summary[*]}")"
+                if [[ $running_count -gt 0 ]]; then
+                    # bar + counters take ~60 visible chars; reserve that
+                    local budget=$(( term_cols - 60 ))
+                    [[ $budget -lt 20 ]] && budget=20
+                    local joined
+                    joined=$(IFS=','; echo "${running_summary[*]}")
+                    if (( ${#joined} > budget )); then
+                        # Truncate and append "…(+N more)"
+                        local more=$(( running_count - 1 ))
+                        local first="${running_summary[0]}"
+                        if [[ $more -gt 0 ]]; then
+                            running_text=" — running: ${first}, …(+${more} more)"
+                        else
+                            running_text=" — running: ${first}"
+                        fi
+                    else
+                        running_text=" — running: ${joined}"
+                    fi
                 fi
-                local line
-                line=$(printf "\r  ${BLUE}[${GREEN}%${filled}s${NC}%${empty}s${BLUE}]${NC} ${completed}/${total_in_batch} (${progress_pct}%%)%s" "$(printf '#%.0s' $(seq 1 $filled 2>/dev/null))" "$(printf ' %.0s' $(seq 1 $empty 2>/dev/null))" "$running_text")
-                # Pad with spaces to overwrite previous longer line, then carriage return
-                local pad=""
-                if (( ${#line} < last_status_line_len )); then
-                    pad=$(printf '%*s' $(( last_status_line_len - ${#line} )) "")
+
+                if [[ "$is_tty" == true ]]; then
+                    local line
+                    line=$(printf "\r  ${BLUE}[${GREEN}%${filled}s${NC}%${empty}s${BLUE}]${NC} ${completed}/${total_in_batch} (${progress_pct}%%)%s" "$(printf '#%.0s' $(seq 1 $filled 2>/dev/null))" "$(printf ' %.0s' $(seq 1 $empty 2>/dev/null))" "$running_text")
+                    local pad=""
+                    if (( ${#line} < last_status_line_len )); then
+                        pad=$(printf '%*s' $(( last_status_line_len - ${#line} )) "")
+                    fi
+                    printf "%s%s" "$line" "$pad"
+                    last_status_line_len=${#line}
+                else
+                    # Non-TTY: print a single line every nontty_status_every seconds
+                    if (( now - nontty_last_print >= nontty_status_every )) || (( loop_iter == 0 )); then
+                        printf "  [%d/%d] %d%% running=%d%s\n" \
+                            "$completed" "$total_in_batch" "$progress_pct" "$running_count" "$running_text" \
+                            | tee -a "$LOG_FILE"
+                        nontty_last_print=$now
+                    fi
                 fi
-                printf "%s%s" "$line" "$pad"
-                last_status_line_len=${#line}
             fi
 
+            loop_iter=$((loop_iter + 1))
             sleep 1
         done
-        echo
+        [[ "$is_tty" == true ]] && echo
         echo
         
         # Read batch results

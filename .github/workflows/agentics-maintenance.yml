@@ -93,7 +93,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@feat/use-samples-hidden-flag
+        uses: github/gh-aw/actions/setup@main
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
 
@@ -131,7 +131,7 @@ jobs:
       actions: write
     steps:
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@feat/use-samples-hidden-flag
+        uses: github/gh-aw/actions/setup@main
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
 
@@ -160,7 +160,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@feat/use-samples-hidden-flag
+        uses: github/gh-aw/actions/setup@main
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
 
@@ -175,9 +175,9 @@ jobs:
             await main();
 
       - name: Install gh-aw
-        uses: github/gh-aw/actions/setup-cli@feat/use-samples-hidden-flag
+        uses: github/gh-aw/actions/setup-cli@main
         with:
-          version: feat/use-samples-hidden-flag
+          version: main
 
       - name: Run operation
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
@@ -205,7 +205,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@feat/use-samples-hidden-flag
+        uses: github/gh-aw/actions/setup@main
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
 
@@ -251,7 +251,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@feat/use-samples-hidden-flag
+        uses: github/gh-aw/actions/setup@main
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
 
@@ -295,7 +295,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@feat/use-samples-hidden-flag
+        uses: github/gh-aw/actions/setup@main
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
 
@@ -310,9 +310,9 @@ jobs:
             await main();
 
       - name: Install gh-aw
-        uses: github/gh-aw/actions/setup-cli@feat/use-samples-hidden-flag
+        uses: github/gh-aw/actions/setup-cli@main
         with:
-          version: feat/use-samples-hidden-flag
+          version: main
 
       - name: Create missing labels
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
@@ -341,7 +341,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@feat/use-samples-hidden-flag
+        uses: github/gh-aw/actions/setup@main
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
 
@@ -356,9 +356,9 @@ jobs:
             await main();
 
       - name: Install gh-aw
-        uses: github/gh-aw/actions/setup-cli@feat/use-samples-hidden-flag
+        uses: github/gh-aw/actions/setup-cli@main
         with:
-          version: feat/use-samples-hidden-flag
+          version: main
 
       - name: Restore activity report logs cache
         id: activity_report_logs_cache
@@ -446,7 +446,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@feat/use-samples-hidden-flag
+        uses: github/gh-aw/actions/setup@main
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
 
@@ -461,9 +461,19 @@ jobs:
             await main();
 
       - name: Install gh-aw
-        uses: github/gh-aw/actions/setup-cli@feat/use-samples-hidden-flag
+        uses: github/gh-aw/actions/setup-cli@main
         with:
-          version: feat/use-samples-hidden-flag
+          version: main
+
+      - name: Restore forecast report logs cache
+        id: forecast_report_logs_cache
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: ./.github/aw/logs
+          key: ${{ runner.os }}-forecast-report-logs-${{ github.repository }}-${{ github.ref_name }}-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-forecast-report-logs-${{ github.repository }}-
+            ${{ runner.os }}-forecast-report-logs-
 
       - name: Generate forecast report
         id: generate_forecast_report
@@ -488,6 +498,13 @@ jobs:
             exit 1
           fi
 
+      - name: Save forecast report logs cache
+        if: ${{ always() }}
+        uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: ./.github/aw/logs
+          key: ${{ runner.os }}-forecast-report-logs-${{ github.repository }}-${{ github.ref_name }}-${{ github.run_id }}
+
       - name: Generate forecast issue
         if: ${{ always() }}
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
@@ -508,7 +525,7 @@ jobs:
       issues: write
     steps:
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@feat/use-samples-hidden-flag
+        uses: github/gh-aw/actions/setup@main
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
 
@@ -545,7 +562,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@feat/use-samples-hidden-flag
+        uses: github/gh-aw/actions/setup@main
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
 
@@ -560,9 +577,9 @@ jobs:
             await main();
 
       - name: Install gh-aw
-        uses: github/gh-aw/actions/setup-cli@feat/use-samples-hidden-flag
+        uses: github/gh-aw/actions/setup-cli@main
         with:
-          version: feat/use-samples-hidden-flag
+          version: main
 
       - name: Validate workflows and file issue on findings
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0

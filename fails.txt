@@ -10,9 +10,7 @@ test-copilot-push-to-pull-request-branch 27046897136 27070314001 27072776622
 test-copilot-nosandbox-create-pull-request 27047336153 27070426946 27073004847
 test-copilot-nosandbox-push-to-pull-request-branch 27047427923 27070540847 27075508718
 test-copilot-create-two-pull-requests
-test-copilot-custom-safe-outputs
-test-copilot-create-pull-request 27070132508 27070943911
-test-copilot-gh-steps 27070132439 27070943915
+test-copilot-create-pull-request 27070132508 27070943911 27076419708
 test-copilot-assign-to-user 27070206393 27071036996
 test-copilot-assign-milestone 27070206399 27071036986
 test-copilot-link-sub-issue 27070206394 27071036987
