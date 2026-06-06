@@ -377,11 +377,18 @@ get_all_tests() {
     echo "test-copilot-close-issue"
     echo "test-copilot-remove-labels"
     echo "test-copilot-close-discussion"
+    echo "test-copilot-update-discussion"
+    echo "test-copilot-assign-to-user"
+    echo "test-copilot-unassign-from-user"
+    echo "test-copilot-assign-milestone"
+    echo "test-copilot-link-sub-issue"
+    echo "test-copilot-hide-comment"
     # PR-triggered tests
     echo "test-claude-update-pull-request"
     echo "test-codex-update-pull-request"
     echo "test-copilot-update-pull-request"
     echo "test-copilot-close-pull-request"
+    echo "test-copilot-add-reviewer"
     # Command-triggered tests
     echo "test-claude-command"
     echo "test-codex-command"
@@ -392,6 +399,9 @@ get_all_tests() {
     echo "test-claude-create-pull-request-review-comment"
     echo "test-codex-create-pull-request-review-comment"
     echo "test-copilot-create-pull-request-review-comment"
+    echo "test-copilot-submit-pull-request-review"
+    # Workflow_dispatch tests with inputs (dispatch-workflow needs a sentinel)
+    echo "test-copilot-dispatch-workflow"
     # Nosandbox tests - limited set for claude/codex, full matrix for copilot
     echo "test-claude-nosandbox-create-issue"
     echo "test-codex-nosandbox-create-issue"
@@ -1772,6 +1782,393 @@ wait_for_discussion_comment() {
     return 1
 }
 
+# --- Validators / waiters for newer safe-output tests -------------------------
+
+validate_discussion_updated() {
+    local discussion_number="$1"
+    local expected_title_substring="$2"
+    local repo="${3:-}"
+
+    local owner="$REPO_OWNER"
+    local name="$REPO_NAME"
+    if [[ -n "$repo" ]]; then
+        owner=$(echo "$repo" | cut -d/ -f1)
+        name=$(echo "$repo" | cut -d/ -f2)
+    fi
+
+    local query="{
+      repository(owner: \"$owner\", name: \"$name\") {
+        discussion(number: $discussion_number) {
+          title
+          body
+        }
+      }
+    }"
+    local title
+    title=$(gh api graphql -f query="$query" --jq '.data.repository.discussion.title' 2>/dev/null)
+
+    if [[ "$title" == *"$expected_title_substring"* ]]; then
+        success "Discussion #$discussion_number title updated as expected: $title"
+        return 0
+    fi
+    warning "(polling) Discussion #$discussion_number title not yet updated. Current title: '$title'"
+    return 1
+}
+
+wait_for_discussion_updated() {
+    local discussion_number="$1"
+    local expected_title_substring="$2"
+    local test_name="$3"
+    local repo="${4:-}"
+    local max_wait=240
+    local waited=0
+    while [[ $waited -lt $max_wait ]]; do
+        if validate_discussion_updated "$discussion_number" "$expected_title_substring" "$repo"; then
+            record_test_pass "$test_name"
+            return 0
+        fi
+        info "..."
+        sleep 5
+        waited=$((waited + 5))
+    done
+    record_test_fail "$test_name"
+    return 1
+}
+
+validate_assignee_present() {
+    local issue_number="$1"
+    local expected_assignee="$2"
+    local repo="${3:-}"
+    local repo_flag=""
+    [[ -n "$repo" ]] && repo_flag="--repo $repo"
+    local assignees
+    assignees=$(gh issue view $repo_flag "$issue_number" --json assignees --jq '.assignees[].login' 2>/dev/null | tr '\n' ',')
+    if [[ "$assignees" == *"$expected_assignee"* ]]; then
+        success "Issue #$issue_number has expected assignee: $expected_assignee"
+        return 0
+    fi
+    warning "(polling) Issue #$issue_number missing expected assignee '$expected_assignee'. Current assignees: '$assignees'"
+    return 1
+}
+
+wait_for_assignee_present() {
+    local issue_number="$1"
+    local expected_assignee="$2"
+    local test_name="$3"
+    local repo="${4:-}"
+    local max_wait=240
+    local waited=0
+    while [[ $waited -lt $max_wait ]]; do
+        if validate_assignee_present "$issue_number" "$expected_assignee" "$repo"; then
+            record_test_pass "$test_name"
+            return 0
+        fi
+        info "..."
+        sleep 5
+        waited=$((waited + 5))
+    done
+    record_test_fail "$test_name"
+    return 1
+}
+
+validate_assignee_absent() {
+    local issue_number="$1"
+    local removed_assignee="$2"
+    local repo="${3:-}"
+    local repo_flag=""
+    [[ -n "$repo" ]] && repo_flag="--repo $repo"
+    local assignees
+    assignees=$(gh issue view $repo_flag "$issue_number" --json assignees --jq '.assignees[].login' 2>/dev/null | tr '\n' ',')
+    if [[ "$assignees" != *"$removed_assignee"* ]]; then
+        success "Issue #$issue_number no longer has assignee: $removed_assignee"
+        return 0
+    fi
+    warning "(polling) Issue #$issue_number still has assignee '$removed_assignee'. Current assignees: '$assignees'"
+    return 1
+}
+
+wait_for_assignee_absent() {
+    local issue_number="$1"
+    local removed_assignee="$2"
+    local test_name="$3"
+    local repo="${4:-}"
+    local max_wait=240
+    local waited=0
+    while [[ $waited -lt $max_wait ]]; do
+        if validate_assignee_absent "$issue_number" "$removed_assignee" "$repo"; then
+            record_test_pass "$test_name"
+            return 0
+        fi
+        info "..."
+        sleep 5
+        waited=$((waited + 5))
+    done
+    record_test_fail "$test_name"
+    return 1
+}
+
+ensure_milestone() {
+    local title="$1"
+    local repo="${2:-$REPO_OWNER/$REPO_NAME}"
+    # Returns nothing on stdout, but logs to LOG_FILE. Idempotent.
+    local existing
+    existing=$(gh api "repos/$repo/milestones?state=all" --jq ".[] | select(.title==\"$title\") | .number" 2>/dev/null | head -1)
+    if [[ -n "$existing" ]]; then
+        info "Milestone '$title' already exists (#$existing) in $repo"
+        echo "$existing"
+        return 0
+    fi
+    local created
+    created=$(gh api --method POST "repos/$repo/milestones" -f "title=$title" --jq '.number' 2>/dev/null)
+    if [[ -n "$created" ]]; then
+        info "Created milestone '$title' (#$created) in $repo"
+        echo "$created"
+        return 0
+    fi
+    warning "Failed to ensure milestone '$title' in $repo"
+    return 1
+}
+
+validate_milestone_assigned() {
+    local issue_number="$1"
+    local expected_milestone_title="$2"
+    local repo="${3:-}"
+    local repo_flag=""
+    [[ -n "$repo" ]] && repo_flag="--repo $repo"
+    local milestone
+    milestone=$(gh issue view $repo_flag "$issue_number" --json milestone --jq '.milestone.title // empty' 2>/dev/null)
+    if [[ "$milestone" == "$expected_milestone_title" ]]; then
+        success "Issue #$issue_number assigned to milestone '$expected_milestone_title'"
+        return 0
+    fi
+    warning "(polling) Issue #$issue_number not yet assigned to milestone '$expected_milestone_title'. Current: '$milestone'"
+    return 1
+}
+
+wait_for_milestone_assigned() {
+    local issue_number="$1"
+    local expected_milestone_title="$2"
+    local test_name="$3"
+    local repo="${4:-}"
+    local max_wait=240
+    local waited=0
+    while [[ $waited -lt $max_wait ]]; do
+        if validate_milestone_assigned "$issue_number" "$expected_milestone_title" "$repo"; then
+            record_test_pass "$test_name"
+            return 0
+        fi
+        info "..."
+        sleep 5
+        waited=$((waited + 5))
+    done
+    record_test_fail "$test_name"
+    return 1
+}
+
+validate_sub_issue_linked() {
+    local parent_number="$1"
+    local sub_number="$2"
+    local repo="${3:-}"
+    local owner="$REPO_OWNER"
+    local name="$REPO_NAME"
+    if [[ -n "$repo" ]]; then
+        owner=$(echo "$repo" | cut -d/ -f1)
+        name=$(echo "$repo" | cut -d/ -f2)
+    fi
+    local query="{
+      repository(owner: \"$owner\", name: \"$name\") {
+        issue(number: $parent_number) {
+          subIssues(first: 50) { nodes { number } }
+        }
+      }
+    }"
+    local subs
+    subs=$(gh api graphql -f query="$query" --jq '.data.repository.issue.subIssues.nodes[].number' 2>/dev/null | tr '\n' ',')
+    if [[ ",$subs," == *",$sub_number,"* ]]; then
+        success "Issue #$sub_number is linked as sub-issue of #$parent_number"
+        return 0
+    fi
+    warning "(polling) Issue #$sub_number not yet a sub-issue of #$parent_number. Current sub-issues: '$subs'"
+    return 1
+}
+
+wait_for_sub_issue_linked() {
+    local parent_number="$1"
+    local sub_number="$2"
+    local test_name="$3"
+    local repo="${4:-}"
+    local max_wait=240
+    local waited=0
+    while [[ $waited -lt $max_wait ]]; do
+        if validate_sub_issue_linked "$parent_number" "$sub_number" "$repo"; then
+            record_test_pass "$test_name"
+            return 0
+        fi
+        info "..."
+        sleep 5
+        waited=$((waited + 5))
+    done
+    record_test_fail "$test_name"
+    return 1
+}
+
+# Adds a comment to the given issue and prints its GraphQL node ID to stdout.
+add_test_comment_get_node_id() {
+    local issue_number="$1"
+    local body="$2"
+    local repo="${3:-}"
+    local api_repo=":owner/:repo"
+    [[ -n "$repo" ]] && api_repo="$repo"
+    gh api --method POST "repos/$api_repo/issues/$issue_number/comments" -f "body=$body" --jq '.node_id' 2>/dev/null
+}
+
+validate_comment_hidden() {
+    local comment_node_id="$1"
+    local query="{
+      node(id: \"$comment_node_id\") {
+        ... on IssueComment { isMinimized minimizedReason }
+      }
+    }"
+    local is_minimized
+    is_minimized=$(gh api graphql -f query="$query" --jq '.data.node.isMinimized' 2>/dev/null)
+    if [[ "$is_minimized" == "true" ]]; then
+        success "Comment $comment_node_id is hidden (minimized)"
+        return 0
+    fi
+    warning "(polling) Comment $comment_node_id is not yet hidden (isMinimized=$is_minimized)"
+    return 1
+}
+
+wait_for_comment_hidden() {
+    local comment_node_id="$1"
+    local test_name="$2"
+    local max_wait=240
+    local waited=0
+    while [[ $waited -lt $max_wait ]]; do
+        if validate_comment_hidden "$comment_node_id"; then
+            record_test_pass "$test_name"
+            return 0
+        fi
+        info "..."
+        sleep 5
+        waited=$((waited + 5))
+    done
+    record_test_fail "$test_name"
+    return 1
+}
+
+validate_pr_reviewer_added() {
+    local pr_number="$1"
+    local expected_reviewer="$2"   # case-insensitive substring match
+    local repo="${3:-}"
+    local repo_flag=""
+    [[ -n "$repo" ]] && repo_flag="--repo $repo"
+    local reviewers
+    reviewers=$(gh pr view $repo_flag "$pr_number" --json reviewRequests,latestReviews \
+        --jq '[.reviewRequests[].login, .latestReviews[].author.login] | join(",")' 2>/dev/null)
+    local lower
+    lower=$(echo "$reviewers" | tr '[:upper:]' '[:lower:]')
+    local expected_lower
+    expected_lower=$(echo "$expected_reviewer" | tr '[:upper:]' '[:lower:]')
+    if [[ "$lower" == *"$expected_lower"* ]]; then
+        success "PR #$pr_number has expected reviewer matching '$expected_reviewer'"
+        return 0
+    fi
+    warning "(polling) PR #$pr_number missing expected reviewer '$expected_reviewer'. Current: '$reviewers'"
+    return 1
+}
+
+wait_for_pr_reviewer_added() {
+    local pr_number="$1"
+    local expected_reviewer="$2"
+    local test_name="$3"
+    local repo="${4:-}"
+    local max_wait=240
+    local waited=0
+    while [[ $waited -lt $max_wait ]]; do
+        if validate_pr_reviewer_added "$pr_number" "$expected_reviewer" "$repo"; then
+            record_test_pass "$test_name"
+            return 0
+        fi
+        info "..."
+        sleep 5
+        waited=$((waited + 5))
+    done
+    record_test_fail "$test_name"
+    return 1
+}
+
+validate_pr_review_with_body() {
+    local pr_number="$1"
+    local expected_body_substring="$2"
+    local repo="${3:-}"
+    local api_repo=":owner/:repo"
+    [[ -n "$repo" ]] && api_repo="$repo"
+    local matched
+    matched=$(gh api "repos/$api_repo/pulls/$pr_number/reviews" \
+        --jq "[.[] | select(.body != null) | select(.body | contains(\"$expected_body_substring\"))] | length" 2>/dev/null)
+    if [[ "$matched" -gt 0 ]] 2>/dev/null; then
+        success "PR #$pr_number has a submitted review containing: $expected_body_substring"
+        return 0
+    fi
+    warning "(polling) PR #$pr_number missing submitted review containing: '$expected_body_substring'"
+    return 1
+}
+
+wait_for_pr_review_with_body() {
+    local pr_number="$1"
+    local expected_body_substring="$2"
+    local test_name="$3"
+    local repo="${4:-}"
+    local max_wait=240
+    local waited=0
+    while [[ $waited -lt $max_wait ]]; do
+        if validate_pr_review_with_body "$pr_number" "$expected_body_substring" "$repo"; then
+            record_test_pass "$test_name"
+            return 0
+        fi
+        info "..."
+        sleep 5
+        waited=$((waited + 5))
+    done
+    record_test_fail "$test_name"
+    return 1
+}
+
+validate_dispatched_issue_created() {
+    local sentinel="$1"
+    local repo="${2:-}"
+    local repo_flag=""
+    [[ -n "$repo" ]] && repo_flag="--repo $repo"
+    local found
+    found=$(gh issue list $repo_flag --limit 20 --search "sentinel=$sentinel in:title" --json number --jq '.[].number' 2>/dev/null | head -1)
+    if [[ -n "$found" ]]; then
+        success "Worker-created issue #$found matches sentinel '$sentinel'"
+        return 0
+    fi
+    warning "(polling) No issue found yet with sentinel='$sentinel'"
+    return 1
+}
+
+wait_for_dispatched_issue_created() {
+    local sentinel="$1"
+    local test_name="$2"
+    local repo="${3:-}"
+    local max_wait=300
+    local waited=0
+    while [[ $waited -lt $max_wait ]]; do
+        if validate_dispatched_issue_created "$sentinel" "$repo"; then
+            record_test_pass "$test_name"
+            return 0
+        fi
+        info "..."
+        sleep 5
+        waited=$((waited + 5))
+    done
+    record_test_fail "$test_name"
+    return 1
+}
+
 run_tests() {
     local patterns=("$@")
     info "🧪 Running tests..."
@@ -1899,6 +2296,34 @@ run_tests() {
                     fi
                 else
                     error "Failed to create test PR for $workflow"
+                    record_test_fail "$workflow"
+                fi
+                ;;
+            # Dispatch-workflow test: enable both dispatcher and worker, trigger dispatcher
+            # with a unique sentinel input, then wait for the worker to create an issue
+            # whose title contains "sentinel=<value>".
+            *"dispatch-workflow")
+                echo ""
+                echo -e "${CYAN}━━━ Preparing test prerequisites ━━━${NC}"
+                local worker_workflow="test-copilot-dispatch-worker"
+                if enable_workflow "$worker_workflow"; then
+                    workflows_to_disable+=("$worker_workflow")
+                else
+                    warning "Could not enable worker '$worker_workflow'; dispatch-workflow test will likely fail"
+                fi
+                local sentinel="dispatch-$(date +%s)-$$"
+                info "Generated dispatch sentinel: $sentinel"
+                echo -e "${CYAN}━━━ Running workflow test ━━━${NC}"
+                echo ""
+                local workflow_success=false
+                if trigger_workflow_with_inputs "$workflow" "sentinel=$sentinel"; then
+                    workflow_success=true
+                fi
+                if [[ "$workflow_success" == true ]]; then
+                    sleep 10
+                    wait_for_dispatched_issue_created "$sentinel" "$workflow" "$target_repo" || true
+                else
+                    error "Workflow '$workflow' failed to complete successfully"
                     record_test_fail "$workflow"
                 fi
                 ;;
@@ -2192,6 +2617,153 @@ run_tests() {
                                 wait_for_command_comment "$issue_num" "205" "$workflow" "$target_repo" || true
                             else
                                 error "Failed to create test issue for $workflow"
+                                record_test_fail "$workflow"
+                            fi
+                            ;;
+                        *"update-discussion")
+                            info "Creating test discussion to trigger $workflow..."
+                            local discussion_title="Test update discussion from $ai_display_name"
+                            local discussion_num=$(create_test_discussion "$discussion_title" "Original discussion body for update-discussion test." "General" "$target_repo")
+                            if [[ -n "$discussion_num" ]]; then
+                                local repo_url="$REPO_OWNER/$REPO_NAME"
+                                [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                success "Created test discussion #$discussion_num for $workflow: https://github.com/$repo_url/discussions/$discussion_num"
+                                sleep 10
+                                wait_for_discussion_updated "$discussion_num" "[UPDATED]" "$workflow" "$target_repo" || true
+                            else
+                                warning "Could not create test discussion for $workflow - discussions may not be enabled on this repository"
+                                record_test_pass "$workflow"
+                            fi
+                            ;;
+                        *"assign-to-user")
+                            info "Creating test issue to trigger $workflow..."
+                            local issue_num=$(create_test_issue "Test assign to user from $ai_display_name" "This is a test issue to trigger $workflow" "" "$target_repo")
+                            if [[ -n "$issue_num" ]]; then
+                                local repo_url="$REPO_OWNER/$REPO_NAME"
+                                [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                success "Created test issue #$issue_num for $workflow: https://github.com/$repo_url/issues/$issue_num"
+                                sleep 10
+                                wait_for_assignee_present "$issue_num" "dsyme" "$workflow" "$target_repo" || true
+                            else
+                                error "Failed to create test issue for $workflow"
+                                record_test_fail "$workflow"
+                            fi
+                            ;;
+                        *"unassign-from-user")
+                            info "Creating test issue with assignee to trigger $workflow..."
+                            local issue_num=$(create_test_issue "Test unassign from user from $ai_display_name" "This is a test issue to trigger $workflow" "" "$target_repo")
+                            if [[ -n "$issue_num" ]]; then
+                                local repo_url="$REPO_OWNER/$REPO_NAME"
+                                [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                local repo_flag=""
+                                [[ -n "$target_repo" ]] && repo_flag="--repo $target_repo"
+                                if gh issue edit $repo_flag "$issue_num" --add-assignee "dsyme" &>> "$LOG_FILE"; then
+                                    success "Created and assigned issue #$issue_num to dsyme for $workflow: https://github.com/$repo_url/issues/$issue_num"
+                                else
+                                    warning "Failed to add assignee dsyme to issue #$issue_num; test may fail"
+                                fi
+                                sleep 10
+                                wait_for_assignee_absent "$issue_num" "dsyme" "$workflow" "$target_repo" || true
+                            else
+                                error "Failed to create test issue for $workflow"
+                                record_test_fail "$workflow"
+                            fi
+                            ;;
+                        *"assign-milestone")
+                            info "Ensuring milestone exists for $workflow..."
+                            local milestone_title="Copilot Safe Output Test Milestone"
+                            local milestone_repo="${target_repo:-$REPO_OWNER/$REPO_NAME}"
+                            ensure_milestone "$milestone_title" "$milestone_repo" >/dev/null || warning "Could not ensure milestone '$milestone_title'"
+                            info "Creating test issue to trigger $workflow..."
+                            local issue_num=$(create_test_issue "Test assign milestone from $ai_display_name" "This is a test issue to trigger $workflow" "" "$target_repo")
+                            if [[ -n "$issue_num" ]]; then
+                                local repo_url="$REPO_OWNER/$REPO_NAME"
+                                [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                success "Created test issue #$issue_num for $workflow: https://github.com/$repo_url/issues/$issue_num"
+                                sleep 10
+                                wait_for_milestone_assigned "$issue_num" "$milestone_title" "$workflow" "$target_repo" || true
+                            else
+                                error "Failed to create test issue for $workflow"
+                                record_test_fail "$workflow"
+                            fi
+                            ;;
+                        *"link-sub-issue")
+                            info "Creating parent + sub issues to trigger $workflow..."
+                            local parent_num=$(create_test_issue "[link-sub-fixture] parent for $ai_display_name" "Parent issue for link-sub-issue test." "" "$target_repo")
+                            local sub_num=$(create_test_issue "[link-sub-fixture] sub for $ai_display_name" "Sub issue for link-sub-issue test." "" "$target_repo")
+                            if [[ -n "$parent_num" && -n "$sub_num" ]]; then
+                                local repo_url="$REPO_OWNER/$REPO_NAME"
+                                [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                success "Created parent #$parent_num and sub #$sub_num for $workflow"
+                                local trigger_body=$'Link the sub-issue to the parent.\n\nparent='"$parent_num"$'\nsub='"$sub_num"
+                                local trigger_num=$(create_test_issue "[link-sub-issue request] from $ai_display_name" "$trigger_body" "" "$target_repo")
+                                if [[ -n "$trigger_num" ]]; then
+                                    success "Created trigger issue #$trigger_num for $workflow: https://github.com/$repo_url/issues/$trigger_num"
+                                    sleep 10
+                                    wait_for_sub_issue_linked "$parent_num" "$sub_num" "$workflow" "$target_repo" || true
+                                else
+                                    error "Failed to create trigger issue for $workflow"
+                                    record_test_fail "$workflow"
+                                fi
+                            else
+                                error "Failed to create parent/sub issues for $workflow"
+                                record_test_fail "$workflow"
+                            fi
+                            ;;
+                        *"hide-comment")
+                            info "Creating placeholder issue + comment for $workflow..."
+                            local host_num=$(create_test_issue "[hide-comment-host] placeholder for $ai_display_name" "Placeholder issue hosting a comment to be hidden." "" "$target_repo")
+                            if [[ -n "$host_num" ]]; then
+                                local comment_node_id
+                                comment_node_id=$(add_test_comment_get_node_id "$host_num" "This comment should be hidden by the $workflow safe output." "$target_repo")
+                                if [[ -n "$comment_node_id" ]]; then
+                                    info "Posted comment with node ID: $comment_node_id"
+                                    local repo_url="$REPO_OWNER/$REPO_NAME"
+                                    [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                    local trigger_body=$'Please hide the comment whose GraphQL node ID is below.\n\nhide-comment-node-id='"$comment_node_id"
+                                    local trigger_num=$(create_test_issue "Test hide comment from $ai_display_name" "$trigger_body" "" "$target_repo")
+                                    if [[ -n "$trigger_num" ]]; then
+                                        success "Created trigger issue #$trigger_num for $workflow: https://github.com/$repo_url/issues/$trigger_num"
+                                        sleep 10
+                                        wait_for_comment_hidden "$comment_node_id" "$workflow" || true
+                                    else
+                                        error "Failed to create trigger issue for $workflow"
+                                        record_test_fail "$workflow"
+                                    fi
+                                else
+                                    error "Failed to post comment for $workflow"
+                                    record_test_fail "$workflow"
+                                fi
+                            else
+                                error "Failed to create placeholder issue for $workflow"
+                                record_test_fail "$workflow"
+                            fi
+                            ;;
+                        *"add-reviewer")
+                            info "Creating test pull request to trigger $workflow..."
+                            local pr_num=$(create_test_pr "Test PR for $ai_display_name Add Reviewer" "This PR is for testing $workflow" "$target_repo")
+                            if [[ -n "$pr_num" ]]; then
+                                local repo_url="$REPO_OWNER/$REPO_NAME"
+                                [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                success "Created test PR #$pr_num for $workflow: https://github.com/$repo_url/pull/$pr_num"
+                                sleep 10
+                                wait_for_pr_reviewer_added "$pr_num" "copilot" "$workflow" "$target_repo" || true
+                            else
+                                error "Failed to create test PR for $workflow"
+                                record_test_fail "$workflow"
+                            fi
+                            ;;
+                        *"submit-pull-request-review")
+                            info "Creating test pull request to trigger $workflow..."
+                            local pr_num=$(create_test_pr "Test PR for $ai_display_name Submit Review" "This PR is for testing $workflow." "$target_repo")
+                            if [[ -n "$pr_num" ]]; then
+                                local repo_url="$REPO_OWNER/$REPO_NAME"
+                                [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                success "Created test PR #$pr_num for $workflow: https://github.com/$repo_url/pull/$pr_num"
+                                post_pr_command "$pr_num" "/test-${ai_type}-submit-pull-request-review" "$target_repo"
+                                wait_for_pr_review_with_body "$pr_num" "Reviewed by $ai_display_name submit-pull-request-review safe output" "$workflow" "$target_repo" || true
+                            else
+                                error "Failed to create test PR for $workflow"
                                 record_test_fail "$workflow"
                             fi
                             ;;

@@ -1,0 +1,22 @@
+---
+on:
+  discussion:
+    types: [created]
+  reaction: eyes
+
+permissions: read-all
+
+engine: 
+  id: copilot
+
+safe-outputs:
+  update-discussion:
+    title:
+    body:
+    # min: 1
+---
+
+If the title of the discussion #${{ github.event.discussion.number }} is exactly "Test update discussion from Copilot" then:
+
+1. Update the title to "[UPDATED] Update Discussion Test - Processed by Copilot"
+2. Append a line to the body saying "This discussion was automatically updated by the Copilot agentic workflow."

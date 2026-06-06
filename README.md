@@ -74,8 +74,8 @@ Tracking the full matrix of [safe outputs](https://github.com/github/gh-aw/blob/
 ### Issues & Discussions — Remaining
 
 - [x] `close-issue` — test-copilot-close-issue
-- [ ] `link-sub-issue` — test-copilot-link-sub-issue
-- [ ] `update-discussion` — test-copilot-update-discussion
+- [x] `link-sub-issue` — test-copilot-link-sub-issue
+- [x] `update-discussion` — test-copilot-update-discussion
 - [x] `close-discussion` — test-copilot-close-discussion
 
 ### Pull Requests — Remaining
@@ -83,21 +83,24 @@ Tracking the full matrix of [safe outputs](https://github.com/github/gh-aw/blob/
 - [x] `close-pull-request` — test-copilot-close-pull-request
 - [ ] `reply-to-pull-request-review-comment` — test-copilot-reply-to-pull-request-review-comment
 - [ ] `resolve-pull-request-review-thread` — test-copilot-resolve-pull-request-review-thread
-- [ ] `submit-pull-request-review` — test-copilot-submit-pull-request-review
-- [ ] `add-reviewer` — test-copilot-add-reviewer
+- [x] `submit-pull-request-review` — test-copilot-submit-pull-request-review
+- [x] `add-reviewer` — test-copilot-add-reviewer
 
 ### Labels, Assignments & Reviews — Remaining
 
 - [x] `remove-labels` — test-copilot-remove-labels
-- [ ] `hide-comment` — test-copilot-hide-comment
-- [ ] `assign-milestone` — test-copilot-assign-milestone
-- [ ] `assign-to-user` — test-copilot-assign-to-user
-- [ ] `unassign-from-user` — test-copilot-unassign-from-user
+- [x] `hide-comment` — test-copilot-hide-comment
+- [x] `assign-milestone` — test-copilot-assign-milestone
+- [x] `assign-to-user` — test-copilot-assign-to-user
+- [x] `unassign-from-user` — test-copilot-unassign-from-user
+- [ ] `set-issue-type` — test-copilot-set-issue-type (requires repo-configured issue types)
+- [ ] `set-issue-field` — test-copilot-set-issue-field (requires repo-configured issue fields)
 
 ### Security & Agent Tasks — Remaining
 
-- [ ] `dispatch-workflow` — test-copilot-dispatch-workflow
+- [x] `dispatch-workflow` — test-copilot-dispatch-workflow
 - [ ] `call-workflow` — test-copilot-call-workflow
+- [ ] `upload-artifact` — test-copilot-upload-artifact
 
 ### Deferred (require special infrastructure)
 
@@ -109,3 +112,5 @@ Tracking the full matrix of [safe outputs](https://github.com/github/gh-aw/blob/
 - [ ] `autofix-code-scanning-alert` — requires existing code scanning alerts
 - [ ] `dispatch_repository` — experimental, requires cross-repo setup
 - [ ] `missing-data` — system type, auto-enabled
+- [ ] `reply-to-pull-request-review-comment` — requires existing PR review comment ID before workflow runs
+- [ ] `resolve-pull-request-review-thread` — requires existing PR review thread ID before workflow runs
