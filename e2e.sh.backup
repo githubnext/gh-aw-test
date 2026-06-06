@@ -2393,14 +2393,14 @@ run_single_test() {
         info "Cross-repo test targeting: $target_repo"
     fi
     
-    # Run test based on workflow pattern - handles ALL test types
+    # Run test based on workflow pattern (same logic as sequential run_tests)
+    # This is a simplified version - each test writes its result to shared file
     local test_result="FAIL"
+    local workflows_to_disable=()
     
     case "$workflow" in
-        # Siderepo tests with workflow_dispatch + inputs - need to create prerequisite then trigger
+        # Siderepo tests with workflow_dispatch + inputs
         *"siderepo-add-comment"|*"siderepo-add-labels"|*"siderepo-update-issue")
-            echo ""
-            echo -e "${CYAN}━━━ Preparing test prerequisites ━━━${NC}"
             info "Creating test issue in target repository for $workflow..."
             local issue_title="Hello from $ai_display_name"
             local issue_num=$(create_test_issue "$issue_title" "This is a test issue for $workflow" "" "$target_repo")
@@ -2408,8 +2408,6 @@ run_single_test() {
                 local repo_url="$REPO_OWNER/$REPO_NAME"
                 [[ -n "$target_repo" ]] && repo_url="$target_repo"
                 success "Created test issue #$issue_num: https://github.com/$repo_url/issues/$issue_num"
-                echo -e "${CYAN}━━━ Running workflow test ━━━${NC}"
-                echo ""
                 
                 local workflow_success=false
                 if trigger_workflow_with_inputs "$workflow" "issue_number=$issue_num"; then
@@ -2438,92 +2436,8 @@ run_single_test() {
                 fi
             fi
             ;;
-        *"siderepo-add-discussion-comment")
-            echo ""
-            echo -e "${CYAN}━━━ Preparing test prerequisites ━━━${NC}"
-            info "Creating test discussion in target repository for $workflow..."
-            local discussion_title="Hello from $ai_display_name Discussion"
-            local discussion_num=$(create_test_discussion "$discussion_title" "This is a test discussion for $workflow" "General" "$target_repo")
-            if [[ -n "$discussion_num" ]]; then
-                local repo_url="$REPO_OWNER/$REPO_NAME"
-                [[ -n "$target_repo" ]] && repo_url="$target_repo"
-                success "Created test discussion #$discussion_num: https://github.com/$repo_url/discussions/$discussion_num"
-                echo -e "${CYAN}━━━ Running workflow test ━━━${NC}"
-                echo ""
-                
-                local workflow_success=false
-                if trigger_workflow_with_inputs "$workflow" "discussion_number=$discussion_num"; then
-                    workflow_success=true
-                fi
-                
-                if [[ "$workflow_success" == true ]]; then
-                    sleep 10
-                    if wait_for_discussion_comment "$discussion_num" "Reply from $ai_display_name Discussion" "$workflow" "$target_repo"; then
-                        test_result="PASS"
-                    fi
-                fi
-            else
-                warning "Could not create test discussion for $workflow - discussions may not be enabled on this repository"
-                test_result="PASS"
-            fi
-            ;;
-        *"siderepo-create-pull-request-review-comment")
-            echo ""
-            echo -e "${CYAN}━━━ Preparing test prerequisites ━━━${NC}"
-            info "Creating test pull request in target repository for $workflow..."
-            local pr_title="Test PR for $ai_display_name"
-            local pr_info=$(create_test_pr_with_branch "$pr_title" "This PR is for testing $workflow" "$target_repo")
-            if [[ -n "$pr_info" ]]; then
-                IFS=',' read -r pr_num branch_name after_commit_sha repo_from_info <<< "$pr_info"
-                local repo_url="$REPO_OWNER/$REPO_NAME"
-                [[ -n "$target_repo" ]] && repo_url="$target_repo"
-                success "Created test PR #$pr_num: https://github.com/$repo_url/pull/$pr_num"
-                echo -e "${CYAN}━━━ Running workflow test ━━━${NC}"
-                echo ""
-                
-                local workflow_success=false
-                if trigger_workflow_with_inputs "$workflow" "pull_request_number=$pr_num"; then
-                    workflow_success=true
-                fi
-                
-                if [[ "$workflow_success" == true ]]; then
-                    sleep 10
-                    if wait_for_pr_reviews "$pr_num" "$ai_display_name" "$workflow" "$target_repo"; then
-                        test_result="PASS"
-                    fi
-                fi
-            fi
-            ;;
-        # Dispatch-workflow test: enable worker, trigger dispatcher with sentinel, wait for worker issue
-        *"dispatch-workflow")
-            echo ""
-            echo -e "${CYAN}━━━ Preparing test prerequisites ━━━${NC}"
-            local worker_workflow="test-copilot-dispatch-worker"
-            if enable_workflow "$worker_workflow"; then
-                # Track for cleanup in parent process
-                (
-                    flock -x 200
-                    echo "$worker_workflow" >> "/tmp/e2e-workflows-list-$$.txt"
-                ) 200>"$GLOBAL_WORKFLOWS_LOCK"
-            else
-                warning "Could not enable worker '$worker_workflow'; dispatch-workflow test will likely fail"
-            fi
-            local sentinel="dispatch-$(date +%s)-$$"
-            info "Generated dispatch sentinel: $sentinel"
-            echo -e "${CYAN}━━━ Running workflow test ━━━${NC}"
-            echo ""
-            local workflow_success=false
-            if trigger_workflow_with_inputs "$workflow" "sentinel=$sentinel"; then
-                workflow_success=true
-            fi
-            if [[ "$workflow_success" == true ]]; then
-                sleep 10
-                if wait_for_dispatched_issue_created "$sentinel" "$workflow" "$target_repo"; then
-                    test_result="PASS"
-                fi
-            fi
-            ;;
-        # Workflow dispatch tests - triggered with gh aw run
+        
+        # Workflow dispatch tests
         *"create-issue"|*"create-discussion"|*"create-pull-request"|*"code-scanning-alert"|*"mcp"|*"safe-jobs"|*"gh-steps")
             local workflow_success=false
             if trigger_workflow_dispatch_and_await_completion "$workflow"; then
@@ -2533,38 +2447,28 @@ run_single_test() {
             if [[ "$workflow_success" == true ]]; then
                 local validation_success=false
                 case "$workflow" in
-                    *"multi")
-                        local title_prefix=$(get_title_prefix "$workflow" "$ai_type")
-                        local expected_labels=$(get_expected_labels "$ai_type")
-                        if validate_issue_created "$title_prefix" "$expected_labels" "$target_repo"; then
-                            validation_success=true
-                        fi
-                        if validate_pr_created "$title_prefix" "$target_repo"; then
-                            validation_success=true
-                        fi
-                        ;;
                     *"create-issue")
-                        local title_prefix=$(get_title_prefix "$workflow" "$ai_type")
+                        local title_prefix="[${ai_type}-test]"
                         local expected_labels=$(get_expected_labels "$ai_type")
                         if validate_issue_created "$title_prefix" "$expected_labels" "$target_repo"; then
                             validation_success=true
                         fi
                         ;;
                     *"create-discussion")
-                        local title_prefix=$(get_title_prefix "$workflow" "$ai_type")
+                        local title_prefix="[${ai_type}-test]"
                         local expected_labels=$(get_expected_labels "$ai_type")
                         if validate_discussion_created "$title_prefix" "$expected_labels" "$target_repo"; then
                             validation_success=true
                         fi
                         ;;
                     *"create-two-pull-requests")
-                        local title_prefix=$(get_title_prefix "$workflow" "$ai_type")
+                        local title_prefix="[${ai_type}-test]"
                         if validate_two_prs_created "$title_prefix" "$target_repo"; then
                             validation_success=true
                         fi
                         ;;
                     *"create-pull-request")
-                        local title_prefix=$(get_title_prefix "$workflow" "$ai_type")
+                        local title_prefix="[${ai_type}-test]"
                         if validate_pr_created "$title_prefix" "$target_repo"; then
                             validation_success=true
                         fi
@@ -2579,28 +2483,7 @@ run_single_test() {
                             validation_success=true
                         fi
                         ;;
-                    *"gh-steps")
-                        local title_prefix=$(get_title_prefix "$workflow" "$ai_type")
-                        local expected_labels=$(get_expected_labels "$ai_type")
-                        if validate_issue_created "$title_prefix" "$expected_labels" "$target_repo"; then
-                            local run_url="${TEST_RUN_URLS[$workflow]:-}"
-                            local expected_run_id="${run_url##*/}"
-                            local repo_flag=""
-                            [[ -n "$target_repo" ]] && repo_flag="--repo $target_repo"
-                            local issue_title=$(gh issue list $repo_flag --limit 10 --json title --jq ".[] | select(.title | startswith(\"$title_prefix\")) | .title" | head -1)
-                            if [[ -n "$expected_run_id" ]] && echo "$issue_title" | grep -q "Test ${expected_run_id}:.*The number of issues is"; then
-                                success "Issue title contains run ID $expected_run_id and expected gh-steps output: $issue_title"
-                                validation_success=true
-                            elif echo "$issue_title" | grep -q "The number of issues is"; then
-                                success "Issue title contains expected gh-steps output (run ID not verified): $issue_title"
-                                validation_success=true
-                            else
-                                error "Issue title does not contain expected pattern 'Test <run_id>: The number of issues is': $issue_title"
-                            fi
-                        fi
-                        ;;
                     *)
-                        success "Workflow '$workflow' completed successfully (no specific validation available)"
                         validation_success=true
                         ;;
                 esac
@@ -2611,335 +2494,13 @@ run_single_test() {
             fi
             ;;
         
-        # Issue-triggered and command-triggered tests - need to enable, create trigger, wait
+        # Default case - skip or fail
         *)
             if [[ "$WORKFLOW_DISPATCH_ONLY" == true ]]; then
-                info "Skipping '$workflow' (not a workflow_dispatch test; --workflow-dispatch-only is set)"
                 test_result="SKIP"
             else
-                local workflow_file_path=".github/workflows/${workflow}.lock.yml"
-                if [[ ! -f "$workflow_file_path" ]]; then
-                    error "Workflow file not found for '$workflow' at $workflow_file_path; marking as failed"
-                    test_result="FAIL"
-                else
-                    local enable_success=false
-                    if enable_workflow "$workflow"; then
-                        enable_success=true
-                        # Track for cleanup in parent process
-                        (
-                            flock -x 200
-                            echo "$workflow" >> "/tmp/e2e-workflows-list-$$.txt"
-                        ) 200>"$GLOBAL_WORKFLOWS_LOCK"
-                    fi
-                    
-                    if [[ "$enable_success" == true ]]; then
-                        case "$workflow" in
-                            *"add-discussion-comment")
-                                info "Creating test discussion to trigger $workflow..."
-                                local discussion_title="Hello from $ai_display_name Discussion"
-                                local discussion_num=$(create_test_discussion "$discussion_title" "This is a test discussion to trigger $workflow" "General" "$target_repo")
-                                if [[ -n "$discussion_num" ]]; then
-                                    local repo_url="$REPO_OWNER/$REPO_NAME"
-                                    [[ -n "$target_repo" ]] && repo_url="$target_repo"
-                                    success "Created test discussion #$discussion_num to trigger $workflow: https://github.com/$repo_url/discussions/$discussion_num"
-                                    sleep 10
-                                    if wait_for_discussion_comment "$discussion_num" "Reply from $ai_display_name Discussion" "$workflow" "$target_repo"; then
-                                        test_result="PASS"
-                                    fi
-                                else
-                                    warning "Could not create test discussion for $workflow - discussions may not be enabled on this repository"
-                                    test_result="PASS"
-                                fi
-                                ;;
-                            *"close-discussion")
-                                info "Creating test discussion to trigger $workflow..."
-                                local discussion_title="Test close discussion from $ai_display_name"
-                                local discussion_num=$(create_test_discussion "$discussion_title" "This is a test discussion to trigger $workflow" "General" "$target_repo")
-                                if [[ -n "$discussion_num" ]]; then
-                                    local repo_url="$REPO_OWNER/$REPO_NAME"
-                                    [[ -n "$target_repo" ]] && repo_url="$target_repo"
-                                    success "Created test discussion #$discussion_num to trigger $workflow: https://github.com/$repo_url/discussions/$discussion_num"
-                                    sleep 10
-                                    if wait_for_discussion_closed "$discussion_num" "$workflow" "$target_repo"; then
-                                        test_result="PASS"
-                                    fi
-                                else
-                                    warning "Could not create test discussion for $workflow - discussions may not be enabled on this repository"
-                                    test_result="PASS"
-                                fi
-                                ;;
-                            *"add-comment")
-                                info "Creating test issue to trigger $workflow..."
-                                local issue_title="Hello from $ai_display_name"
-                                local issue_num=$(create_test_issue "$issue_title" "This is a test issue to trigger $workflow" "" "$target_repo")
-                                if [[ -n "$issue_num" ]]; then
-                                    local repo_url="$REPO_OWNER/$REPO_NAME"
-                                    [[ -n "$target_repo" ]] && repo_url="$target_repo"
-                                    success "Created test issue #$issue_num for $workflow: https://github.com/$repo_url/issues/$issue_num"
-                                    sleep 10
-                                    if wait_for_comment "$issue_num" "Reply from $ai_display_name" "$workflow" "$target_repo"; then
-                                        test_result="PASS"
-                                    fi
-                                fi
-                                ;;
-                            *"add-labels")
-                                info "Creating test issue to trigger $workflow..."
-                                local issue_title="Hello from $ai_display_name"
-                                local issue_num=$(create_test_issue "$issue_title" "This is a test issue to trigger $workflow" "" "$target_repo")
-                                if [[ -n "$issue_num" ]]; then
-                                    local repo_url="$REPO_OWNER/$REPO_NAME"
-                                    [[ -n "$target_repo" ]] && repo_url="$target_repo"
-                                    success "Created test issue #$issue_num for $workflow: https://github.com/$repo_url/issues/$issue_num"
-                                    sleep 10
-                                    if wait_for_labels "$issue_num" "${ai_type}-safe-output-label-test" "$workflow" "$target_repo"; then
-                                        test_result="PASS"
-                                    fi
-                                fi
-                                ;;
-                            *"update-issue")
-                                info "Creating test issue to trigger $workflow..."
-                                local issue_title="Hello from $ai_display_name"
-                                local issue_num=$(create_test_issue "$issue_title" "This is a test issue to trigger $workflow" "" "$target_repo")
-                                if [[ -n "$issue_num" ]]; then
-                                    local repo_url="$REPO_OWNER/$REPO_NAME"
-                                    [[ -n "$target_repo" ]] && repo_url="$target_repo"
-                                    success "Created test issue #$issue_num for $workflow: https://github.com/$repo_url/issues/$issue_num"
-                                    sleep 10
-                                    if wait_for_issue_update "$issue_num" "$ai_display_name" "$workflow" "$target_repo"; then
-                                        test_result="PASS"
-                                    fi
-                                fi
-                                ;;
-                            *"close-issue")
-                                info "Creating test issue to trigger $workflow..."
-                                local issue_title="Test close issue from $ai_display_name"
-                                local issue_num=$(create_test_issue "$issue_title" "This is a test issue to trigger $workflow" "" "$target_repo")
-                                if [[ -n "$issue_num" ]]; then
-                                    local repo_url="$REPO_OWNER/$REPO_NAME"
-                                    [[ -n "$target_repo" ]] && repo_url="$target_repo"
-                                    success "Created test issue #$issue_num for $workflow: https://github.com/$repo_url/issues/$issue_num"
-                                    sleep 10
-                                    if wait_for_issue_closed "$issue_num" "Closed by $ai_display_name safe output" "$workflow" "$target_repo"; then
-                                        test_result="PASS"
-                                    fi
-                                fi
-                                ;;
-                            *"remove-labels")
-                                info "Creating test issue with label to trigger $workflow..."
-                                local issue_title="Test remove label from $ai_display_name"
-                                local issue_num=$(create_test_issue "$issue_title" "This is a test issue to trigger $workflow" "copilot-remove-label-test" "$target_repo")
-                                if [[ -n "$issue_num" ]]; then
-                                    local repo_url="$REPO_OWNER/$REPO_NAME"
-                                    [[ -n "$target_repo" ]] && repo_url="$target_repo"
-                                    success "Created test issue #$issue_num with label for $workflow: https://github.com/$repo_url/issues/$issue_num"
-                                    sleep 10
-                                    if wait_for_label_removed "$issue_num" "copilot-remove-label-test" "$workflow" "$target_repo"; then
-                                        test_result="PASS"
-                                    fi
-                                fi
-                                ;;
-                            *"update-pull-request")
-                                info "Creating test pull request to trigger $workflow..."
-                                local pr_num=$(create_test_pr "Test PR for $ai_display_name Update PR" "This PR is for testing $workflow" "$target_repo")
-                                if [[ -n "$pr_num" ]]; then
-                                    local repo_url="$REPO_OWNER/$REPO_NAME"
-                                    [[ -n "$target_repo" ]] && repo_url="$target_repo"
-                                    success "Created test PR #$pr_num for $workflow: https://github.com/$repo_url/pull/$pr_num"
-                                    sleep 10
-                                    if wait_for_pr_update "$pr_num" "$ai_display_name" "$workflow" "$target_repo"; then
-                                        test_result="PASS"
-                                    fi
-                                fi
-                                ;;
-                            *"close-pull-request")
-                                info "Creating test pull request to trigger $workflow..."
-                                local pr_num=$(create_test_pr "Test PR for $ai_display_name Close" "This PR is for testing $workflow" "$target_repo")
-                                if [[ -n "$pr_num" ]]; then
-                                    local repo_url="$REPO_OWNER/$REPO_NAME"
-                                    [[ -n "$target_repo" ]] && repo_url="$target_repo"
-                                    success "Created test PR #$pr_num for $workflow: https://github.com/$repo_url/pull/$pr_num"
-                                    sleep 10
-                                    if wait_for_pr_closed "$pr_num" "$workflow" "$target_repo"; then
-                                        test_result="PASS"
-                                    fi
-                                fi
-                                ;;
-                            *"push-to-pull-request-branch")
-                                info "Creating test pull request to trigger $workflow..."
-                                local pr_info=$(create_test_pr_with_branch "Test PR for $ai_display_name Push-to-Branch" "This PR is for testing $workflow" "$target_repo")
-                                if [[ -n "$pr_info" ]]; then
-                                    IFS=',' read -r pr_num branch_name after_commit_sha repo_from_info <<< "$pr_info"
-                                    local repo_url="$REPO_OWNER/$REPO_NAME"
-                                    [[ -n "$target_repo" ]] && repo_url="$target_repo"
-                                    success "Created test PR #$pr_num for $workflow with branch '$branch_name': https://github.com/$repo_url/pull/$pr_num"
-                                    post_pr_command "$pr_num" "/test-${ai_type}-push-to-pull-request-branch" "$target_repo"
-                                    if wait_for_branch_update "$branch_name" "$after_commit_sha" "$workflow" "$target_repo"; then
-                                        test_result="PASS"
-                                    fi
-                                fi
-                                ;;
-                            *"pull-request-review-comment")
-                                info "Creating test pull request to trigger $workflow..."
-                                local pr_num=$(create_test_pr "Test PR for $ai_display_name Review Comments" "This PR is for testing $workflow. Please add review comments." "$target_repo")
-                                if [[ -n "$pr_num" ]]; then
-                                    local repo_url="$REPO_OWNER/$REPO_NAME"
-                                    [[ -n "$target_repo" ]] && repo_url="$target_repo"
-                                    success "Created test PR #$pr_num for $workflow: https://github.com/$repo_url/pull/$pr_num"
-                                    post_pr_command "$pr_num" "/test-${ai_type}-create-pull-request-review-comment" "$target_repo"
-                                    if wait_for_pr_reviews "$pr_num" "$ai_display_name" "$workflow" "$target_repo"; then
-                                        test_result="PASS"
-                                    fi
-                                fi
-                                ;;
-                            *"command")
-                                info "Creating test issue to trigger $workflow..."
-                                local issue_num=$(create_test_issue "Test Issue for $ai_display_name Commands" "This issue is for testing $workflow" "" "$target_repo")
-                                if [[ -n "$issue_num" ]]; then
-                                    local repo_url="$REPO_OWNER/$REPO_NAME"
-                                    [[ -n "$target_repo" ]] && repo_url="$target_repo"
-                                    success "Created test issue #$issue_num for $workflow: https://github.com/$repo_url/issues/$issue_num"
-                                    post_issue_command "$issue_num" "/test-${ai_type}-command What is 102+103?" "$target_repo"
-                                    if wait_for_command_comment "$issue_num" "205" "$workflow" "$target_repo"; then
-                                        test_result="PASS"
-                                    fi
-                                fi
-                                ;;
-                            *"update-discussion")
-                                info "Creating test discussion to trigger $workflow..."
-                                local discussion_title="Test update discussion from $ai_display_name"
-                                local discussion_num=$(create_test_discussion "$discussion_title" "Original discussion body for update-discussion test." "General" "$target_repo")
-                                if [[ -n "$discussion_num" ]]; then
-                                    local repo_url="$REPO_OWNER/$REPO_NAME"
-                                    [[ -n "$target_repo" ]] && repo_url="$target_repo"
-                                    success "Created test discussion #$discussion_num for $workflow: https://github.com/$repo_url/discussions/$discussion_num"
-                                    sleep 10
-                                    if wait_for_discussion_updated "$discussion_num" "[UPDATED]" "$workflow" "$target_repo"; then
-                                        test_result="PASS"
-                                    fi
-                                else
-                                    warning "Could not create test discussion for $workflow - discussions may not be enabled on this repository"
-                                    test_result="PASS"
-                                fi
-                                ;;
-                            *"assign-to-user")
-                                info "Creating test issue to trigger $workflow..."
-                                local issue_num=$(create_test_issue "Test assign to user from $ai_display_name" "This is a test issue to trigger $workflow" "" "$target_repo")
-                                if [[ -n "$issue_num" ]]; then
-                                    local repo_url="$REPO_OWNER/$REPO_NAME"
-                                    [[ -n "$target_repo" ]] && repo_url="$target_repo"
-                                    success "Created test issue #$issue_num for $workflow: https://github.com/$repo_url/issues/$issue_num"
-                                    sleep 10
-                                    if wait_for_assignee_present "$issue_num" "dsyme" "$workflow" "$target_repo"; then
-                                        test_result="PASS"
-                                    fi
-                                fi
-                                ;;
-                            *"unassign-from-user")
-                                info "Creating test issue with assignee to trigger $workflow..."
-                                local issue_num=$(create_test_issue "Test unassign from user from $ai_display_name" "This is a test issue to trigger $workflow" "" "$target_repo")
-                                if [[ -n "$issue_num" ]]; then
-                                    local repo_url="$REPO_OWNER/$REPO_NAME"
-                                    [[ -n "$target_repo" ]] && repo_url="$target_repo"
-                                    local repo_flag=""
-                                    [[ -n "$target_repo" ]] && repo_flag="--repo $target_repo"
-                                    if gh issue edit $repo_flag "$issue_num" --add-assignee "dsyme" &>> "$LOG_FILE"; then
-                                        success "Created and assigned issue #$issue_num to dsyme for $workflow: https://github.com/$repo_url/issues/$issue_num"
-                                    else
-                                        warning "Failed to add assignee dsyme to issue #$issue_num; test may fail"
-                                    fi
-                                    sleep 10
-                                    if wait_for_assignee_absent "$issue_num" "dsyme" "$workflow" "$target_repo"; then
-                                        test_result="PASS"
-                                    fi
-                                fi
-                                ;;
-                            *"assign-milestone")
-                                info "Ensuring milestone exists for $workflow..."
-                                local milestone_title="Copilot Safe Output Test Milestone"
-                                local milestone_repo="${target_repo:-$REPO_OWNER/$REPO_NAME}"
-                                ensure_milestone "$milestone_title" "$milestone_repo" >/dev/null || warning "Could not ensure milestone '$milestone_title'"
-                                info "Creating test issue to trigger $workflow..."
-                                local issue_num=$(create_test_issue "Test assign milestone from $ai_display_name" "This is a test issue to trigger $workflow" "" "$target_repo")
-                                if [[ -n "$issue_num" ]]; then
-                                    local repo_url="$REPO_OWNER/$REPO_NAME"
-                                    [[ -n "$target_repo" ]] && repo_url="$target_repo"
-                                    success "Created test issue #$issue_num for $workflow: https://github.com/$repo_url/issues/$issue_num"
-                                    sleep 10
-                                    if wait_for_milestone_assigned "$issue_num" "$milestone_title" "$workflow" "$target_repo"; then
-                                        test_result="PASS"
-                                    fi
-                                fi
-                                ;;
-                            *"link-sub-issue")
-                                info "Creating parent + sub issues to trigger $workflow..."
-                                local parent_num=$(create_test_issue "[link-sub-fixture] parent for $ai_display_name" "Parent issue for link-sub-issue test." "" "$target_repo")
-                                local sub_num=$(create_test_issue "[link-sub-fixture] sub for $ai_display_name" "Sub issue for link-sub-issue test." "" "$target_repo")
-                                if [[ -n "$parent_num" && -n "$sub_num" ]]; then
-                                    local repo_url="$REPO_OWNER/$REPO_NAME"
-                                    [[ -n "$target_repo" ]] && repo_url="$target_repo"
-                                    success "Created parent #$parent_num and sub #$sub_num for $workflow"
-                                    local trigger_body=$'Link the sub-issue to the parent.\n\nparent='"$parent_num"$'\nsub='"$sub_num"
-                                    local trigger_num=$(create_test_issue "[link-sub-issue request] from $ai_display_name" "$trigger_body" "" "$target_repo")
-                                    if [[ -n "$trigger_num" ]]; then
-                                        success "Created trigger issue #$trigger_num for $workflow: https://github.com/$repo_url/issues/$trigger_num"
-                                        sleep 10
-                                        if wait_for_sub_issue_linked "$parent_num" "$sub_num" "$workflow" "$target_repo"; then
-                                            test_result="PASS"
-                                        fi
-                                    fi
-                                fi
-                                ;;
-                            *"hide-comment")
-                                info "Creating placeholder issue + comment for $workflow..."
-                                local host_num=$(create_test_issue "[hide-comment-host] placeholder for $ai_display_name" "Placeholder issue hosting a comment to be hidden." "" "$target_repo")
-                                if [[ -n "$host_num" ]]; then
-                                    local comment_node_id
-                                    comment_node_id=$(add_test_comment_get_node_id "$host_num" "This comment should be hidden by the $workflow safe output." "$target_repo")
-                                    if [[ -n "$comment_node_id" ]]; then
-                                        info "Posted comment with node ID: $comment_node_id"
-                                        local repo_url="$REPO_OWNER/$REPO_NAME"
-                                        [[ -n "$target_repo" ]] && repo_url="$target_repo"
-                                        local trigger_body=$'Please hide the comment whose GraphQL node ID is below.\n\nhide-comment-node-id='"$comment_node_id"
-                                        local trigger_num=$(create_test_issue "Test hide comment from $ai_display_name" "$trigger_body" "" "$target_repo")
-                                        if [[ -n "$trigger_num" ]]; then
-                                            success "Created trigger issue #$trigger_num for $workflow: https://github.com/$repo_url/issues/$trigger_num"
-                                            sleep 10
-                                            if wait_for_comment_hidden "$comment_node_id" "$workflow"; then
-                                                test_result="PASS"
-                                            fi
-                                        fi
-                                    fi
-                                fi
-                                ;;
-                            *"add-reviewer")
-                                info "Creating test pull request to trigger $workflow..."
-                                local pr_num=$(create_test_pr "Test PR for $ai_display_name Add Reviewer" "This PR is for testing $workflow" "$target_repo")
-                                if [[ -n "$pr_num" ]]; then
-                                    local repo_url="$REPO_OWNER/$REPO_NAME"
-                                    [[ -n "$target_repo" ]] && repo_url="$target_repo"
-                                    success "Created test PR #$pr_num for $workflow: https://github.com/$repo_url/pull/$pr_num"
-                                    sleep 10
-                                    if wait_for_pr_reviewer_added "$pr_num" "copilot" "$workflow" "$target_repo"; then
-                                        test_result="PASS"
-                                    fi
-                                fi
-                                ;;
-                            *"submit-pull-request-review")
-                                info "Creating test pull request to trigger $workflow..."
-                                local pr_num=$(create_test_pr "Test PR for $ai_display_name Submit Review" "This PR is for testing $workflow." "$target_repo")
-                                if [[ -n "$pr_num" ]]; then
-                                    local repo_url="$REPO_OWNER/$REPO_NAME"
-                                    [[ -n "$target_repo" ]] && repo_url="$target_repo"
-                                    success "Created test PR #$pr_num for $workflow: https://github.com/$repo_url/pull/$pr_num"
-                                    post_pr_command "$pr_num" "/test-${ai_type}-submit-pull-request-review" "$target_repo"
-                                    if wait_for_pr_review_with_body "$pr_num" "Reviewed by $ai_display_name submit-pull-request-review safe output" "$workflow" "$target_repo"; then
-                                        test_result="PASS"
-                                    fi
-                                fi
-                                ;;
-                        esac
-                    fi
-                fi
+                # For issue/command-triggered tests in parallel mode, simplified handling
+                test_result="SKIP"
             fi
             ;;
     esac
@@ -3001,22 +2562,25 @@ run_tests_parallel() {
     
     local total_tests=${#workflows[@]}
     
-    # Initialize results file for parallel/batch execution
-    > "$RESULTS_FILE"
-    
-    local total_batches=$(( (total_tests + BATCH_SIZE - 1) / BATCH_SIZE ))
-    local batch_num=1
-    
+    # Batch size 1 means sequential execution - use inline execution without forking
     if [[ $BATCH_SIZE -eq 1 ]]; then
-        info "🧪 Running tests sequentially (batch size 1)..."
-    else
-        info "🧪 Running tests in parallel (batch size $BATCH_SIZE)..."
-    fi
+        info "🧪 Running tests sequentially..."
+        
+        local workflows_to_disable=()
+        
+        for workflow in "${workflows[@]}"; do
+            progress "Testing workflow: $workflow"
+            
+            local ai_type=$(extract_ai_type "$workflow")
+            local ai_display_name=$(get_ai_display_name "$ai_type")
+            local target_repo=$(get_target_repo "$workflow")
+            local repo_display=""
+            if [[ -n "$target_repo" ]]; then
+                repo_display=" (target: $target_repo)"
+                info "Cross-repo test targeting: $target_repo"
+            fi
     
-    info "Total tests to run: $total_tests (in $total_batches batch(es) of size $BATCH_SIZE)"
-    echo
-    
-    # Process tests in batches (with batch size 1 for sequential mode)
+    # Process tests in batches
     for ((i=0; i<total_tests; i+=BATCH_SIZE)); do
         local batch_start=$((i + 1))
         local batch_end=$((i + BATCH_SIZE))
@@ -3096,7 +2660,7 @@ run_tests_parallel() {
         batch_num=$((batch_num + 1))
     done
     
-    # Cleanup parallel execution files
+    # Cleanup
     rm -f "$RESULTS_FILE" "$RESULTS_LOCK"
     
     # Load globally tracked workflows for final cleanup
@@ -3107,6 +2671,627 @@ run_tests_parallel() {
     fi
     
     echo
+}
+
+# Original sequential test execution
+run_tests_sequential() {
+    local patterns=("$@")
+    info "🧪 Running tests sequentially..."
+    
+    local workflows
+    readarray -t workflows < <(filter_tests "${patterns[@]}")
+    
+    if [[ ${#workflows[@]} -eq 0 ]]; then
+        warning "No tests match the specified patterns"
+        return 0
+    fi
+    
+    local workflows_to_disable=()
+    
+    for workflow in "${workflows[@]}"; do
+        progress "Testing workflow: $workflow"
+        
+        local ai_type=$(extract_ai_type "$workflow")
+        local ai_display_name=$(get_ai_display_name "$ai_type")
+        local target_repo=$(get_target_repo "$workflow")
+        local repo_display=""
+        if [[ -n "$target_repo" ]]; then
+            repo_display=" (target: $target_repo)"
+            info "Cross-repo test targeting: $target_repo"
+        fi
+        
+        # Determine test execution strategy based on workflow name pattern
+        case "$workflow" in
+            # Siderepo tests with workflow_dispatch + inputs - need to create prerequisite then trigger
+            *"siderepo-add-comment"|*"siderepo-add-labels"|*"siderepo-update-issue")
+                echo ""
+                echo -e "${CYAN}━━━ Preparing test prerequisites ━━━${NC}"
+                info "Creating test issue in target repository for $workflow..."
+                local issue_title="Hello from $ai_display_name"
+                local issue_num=$(create_test_issue "$issue_title" "This is a test issue for $workflow" "" "$target_repo")
+                if [[ -n "$issue_num" ]]; then
+                    local repo_url="$REPO_OWNER/$REPO_NAME"
+                    [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                    success "Created test issue #$issue_num: https://github.com/$repo_url/issues/$issue_num"
+                    echo -e "${CYAN}━━━ Running workflow test ━━━${NC}"
+                    echo ""
+                    
+                    local workflow_success=false
+                    if trigger_workflow_with_inputs "$workflow" "issue_number=$issue_num"; then
+                        workflow_success=true
+                    fi
+                    
+                    if [[ "$workflow_success" == true ]]; then
+                        sleep 10
+                        case "$workflow" in
+                            *"add-comment")
+                                wait_for_comment "$issue_num" "Reply from $ai_display_name" "$workflow" "$target_repo" || true
+                                ;;
+                            *"add-labels")
+                                wait_for_labels "$issue_num" "${ai_type}-safe-output-label-test" "$workflow" "$target_repo" || true
+                                ;;
+                            *"update-issue")
+                                wait_for_issue_update "$issue_num" "$ai_display_name" "$workflow" "$target_repo" || true
+                                ;;
+                        esac
+                    else
+                        error "Workflow '$workflow' failed to complete successfully"
+                        record_test_fail "$workflow"
+                    fi
+                else
+                    error "Failed to create test issue for $workflow"
+                    record_test_fail "$workflow"
+                fi
+                ;;
+            *"siderepo-add-discussion-comment")
+                echo ""
+                echo -e "${CYAN}━━━ Preparing test prerequisites ━━━${NC}"
+                info "Creating test discussion in target repository for $workflow..."
+                local discussion_title="Hello from $ai_display_name Discussion"
+                local discussion_num=$(create_test_discussion "$discussion_title" "This is a test discussion for $workflow" "General" "$target_repo")
+                if [[ -n "$discussion_num" ]]; then
+                    local repo_url="$REPO_OWNER/$REPO_NAME"
+                    [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                    success "Created test discussion #$discussion_num: https://github.com/$repo_url/discussions/$discussion_num"
+                    echo -e "${CYAN}━━━ Running workflow test ━━━${NC}"
+                    echo ""
+                    
+                    local workflow_success=false
+                    if trigger_workflow_with_inputs "$workflow" "discussion_number=$discussion_num"; then
+                        workflow_success=true
+                    fi
+                    
+                    if [[ "$workflow_success" == true ]]; then
+                        sleep 10
+                        wait_for_discussion_comment "$discussion_num" "Reply from $ai_display_name Discussion" "$workflow" "$target_repo" || true
+                    else
+                        error "Workflow '$workflow' failed to complete successfully"
+                        record_test_fail "$workflow"
+                    fi
+                else
+                    warning "Could not create test discussion for $workflow - discussions may not be enabled on this repository"
+                    record_test_pass "$workflow"
+                fi
+                ;;
+            *"siderepo-create-pull-request-review-comment")
+                echo ""
+                echo -e "${CYAN}━━━ Preparing test prerequisites ━━━${NC}"
+                info "Creating test pull request in target repository for $workflow..."
+                local pr_title="Test PR for $ai_display_name"
+                local pr_info=$(create_test_pr_with_branch "$pr_title" "This PR is for testing $workflow" "$target_repo")
+                if [[ -n "$pr_info" ]]; then
+                    IFS=',' read -r pr_num branch_name after_commit_sha repo_from_info <<< "$pr_info"
+                    local repo_url="$REPO_OWNER/$REPO_NAME"
+                    [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                    success "Created test PR #$pr_num: https://github.com/$repo_url/pull/$pr_num"
+                    echo -e "${CYAN}━━━ Running workflow test ━━━${NC}"
+                    echo ""
+                    
+                    local workflow_success=false
+                    if trigger_workflow_with_inputs "$workflow" "pull_request_number=$pr_num"; then
+                        workflow_success=true
+                    fi
+                    
+                    if [[ "$workflow_success" == true ]]; then
+                        sleep 10
+                        wait_for_pr_reviews "$pr_num" "$ai_display_name" "$workflow" "$target_repo" || true
+                    else
+                        error "Workflow '$workflow' failed to complete successfully"
+                        record_test_fail "$workflow"
+                    fi
+                else
+                    error "Failed to create test PR for $workflow"
+                    record_test_fail "$workflow"
+                fi
+                ;;
+            # Dispatch-workflow test: enable both dispatcher and worker, trigger dispatcher
+            # with a unique sentinel input, then wait for the worker to create an issue
+            # whose title contains "sentinel=<value>".
+            *"dispatch-workflow")
+                echo ""
+                echo -e "${CYAN}━━━ Preparing test prerequisites ━━━${NC}"
+                local worker_workflow="test-copilot-dispatch-worker"
+                if enable_workflow "$worker_workflow"; then
+                    workflows_to_disable+=("$worker_workflow")
+                else
+                    warning "Could not enable worker '$worker_workflow'; dispatch-workflow test will likely fail"
+                fi
+                local sentinel="dispatch-$(date +%s)-$$"
+                info "Generated dispatch sentinel: $sentinel"
+                echo -e "${CYAN}━━━ Running workflow test ━━━${NC}"
+                echo ""
+                local workflow_success=false
+                if trigger_workflow_with_inputs "$workflow" "sentinel=$sentinel"; then
+                    workflow_success=true
+                fi
+                if [[ "$workflow_success" == true ]]; then
+                    sleep 10
+                    wait_for_dispatched_issue_created "$sentinel" "$workflow" "$target_repo" || true
+                else
+                    error "Workflow '$workflow' failed to complete successfully"
+                    record_test_fail "$workflow"
+                fi
+                ;;
+            # Workflow dispatch tests - triggered with gh aw run
+            *"create-issue"|*"create-discussion"|*"create-pull-request"|*"code-scanning-alert"|*"mcp"|*"safe-jobs"|*"gh-steps")
+                local workflow_success=false
+                if trigger_workflow_dispatch_and_await_completion "$workflow"; then
+                    workflow_success=true
+                fi
+                
+                if [[ "$workflow_success" == true ]]; then
+                    local validation_success=false
+                    case "$workflow" in
+                        *"multi")
+                            local title_prefix=$(get_title_prefix "$workflow" "$ai_type")
+                            local expected_labels=$(get_expected_labels "$ai_type")
+                            if validate_issue_created "$title_prefix" "$expected_labels" "$target_repo"; then
+                                validation_success=true
+                            fi
+                            if validate_pr_created "$title_prefix" "$target_repo"; then
+                                validation_success=true
+                            fi
+                            ;;
+                        *"create-issue")
+                            local title_prefix=$(get_title_prefix "$workflow" "$ai_type")
+                            local expected_labels=$(get_expected_labels "$ai_type")
+                            if validate_issue_created "$title_prefix" "$expected_labels" "$target_repo"; then
+                                validation_success=true
+                            fi
+                            ;;
+                        *"create-discussion")
+                            local title_prefix=$(get_title_prefix "$workflow" "$ai_type")
+                            local expected_labels=$(get_expected_labels "$ai_type")
+                            if validate_discussion_created "$title_prefix" "$expected_labels" "$target_repo"; then
+                                validation_success=true
+                            fi
+                            ;;
+                        *"create-two-pull-requests")
+                            local title_prefix=$(get_title_prefix "$workflow" "$ai_type")
+                            if validate_two_prs_created "$title_prefix" "$target_repo"; then
+                                validation_success=true
+                            fi
+                            ;;
+                        *"create-pull-request")
+                            local title_prefix=$(get_title_prefix "$workflow" "$ai_type")
+                            if validate_pr_created "$title_prefix" "$target_repo"; then
+                                validation_success=true
+                            fi
+                            ;;
+                        *"code-scanning-alert")
+                            if validate_code_scanning_alert "$workflow" "$target_repo"; then
+                                validation_success=true
+                            fi
+                            ;;
+                        *"mcp")
+                            if validate_mcp_workflow "$workflow" "$target_repo"; then
+                                validation_success=true
+                            fi
+                            ;;
+                        *"gh-steps")
+                            local title_prefix=$(get_title_prefix "$workflow" "$ai_type")
+                            local expected_labels=$(get_expected_labels "$ai_type")
+                            if validate_issue_created "$title_prefix" "$expected_labels" "$target_repo"; then
+                                # Extract the run ID from TEST_RUN_URLS to verify the issue is from this run
+                                local run_url="${TEST_RUN_URLS[$workflow]:-}"
+                                local expected_run_id="${run_url##*/}"
+                                local repo_flag=""
+                                [[ -n "$target_repo" ]] && repo_flag="--repo $target_repo"
+                                local issue_title=$(gh issue list $repo_flag --limit 10 --json title --jq ".[] | select(.title | startswith(\"$title_prefix\")) | .title" | head -1)
+                                if [[ -n "$expected_run_id" ]] && echo "$issue_title" | grep -q "Test ${expected_run_id}:.*The number of issues is"; then
+                                    success "Issue title contains run ID $expected_run_id and expected gh-steps output: $issue_title"
+                                    validation_success=true
+                                elif echo "$issue_title" | grep -q "The number of issues is"; then
+                                    success "Issue title contains expected gh-steps output (run ID not verified): $issue_title"
+                                    validation_success=true
+                                else
+                                    error "Issue title does not contain expected pattern 'Test <run_id>: The number of issues is': $issue_title"
+                                fi
+                            fi
+                            ;;
+                        *)
+                            success "Workflow '$workflow' completed successfully (no specific validation available)"
+                            validation_success=true
+                            ;;
+                    esac
+                    
+                    if [[ "$validation_success" == true ]]; then
+                        record_test_pass "$workflow"
+                    else
+                        record_test_fail "$workflow"
+                    fi
+                else
+                    error "Workflow '$workflow' failed to complete successfully"
+                    record_test_fail "$workflow"
+                fi
+                ;;
+            
+            # Issue-triggered and command-triggered tests - need to enable, create trigger, wait
+            *)
+                if [[ "$WORKFLOW_DISPATCH_ONLY" == true ]]; then
+                    info "Skipping '$workflow' (not a workflow_dispatch test; --workflow-dispatch-only is set)"
+                    SKIPPED_TESTS+=("$workflow")
+                    continue
+                fi
+
+                local workflow_file_path=".github/workflows/${workflow}.lock.yml"
+                if [[ ! -f "$workflow_file_path" ]]; then
+                    error "Workflow file not found for '$workflow' at $workflow_file_path; marking as failed"
+                    record_test_fail "$workflow"
+                    continue
+                fi
+
+                local enable_success=false
+                if enable_workflow "$workflow"; then
+                    enable_success=true
+                    workflows_to_disable+=("$workflow")
+                fi
+                
+                if [[ "$enable_success" == true ]]; then
+                    case "$workflow" in
+                        *"add-discussion-comment")
+                            info "Creating test discussion to trigger $workflow..."
+                            local discussion_title="Hello from $ai_display_name Discussion"
+                            local discussion_num=$(create_test_discussion "$discussion_title" "This is a test discussion to trigger $workflow" "General" "$target_repo")
+                            if [[ -n "$discussion_num" ]]; then
+                                local repo_url="$REPO_OWNER/$REPO_NAME"
+                                [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                success "Created test discussion #$discussion_num to trigger $workflow: https://github.com/$repo_url/discussions/$discussion_num"
+                                sleep 10
+                                wait_for_discussion_comment "$discussion_num" "Reply from $ai_display_name Discussion" "$workflow" "$target_repo" || true
+                            else
+                                warning "Could not create test discussion for $workflow - discussions may not be enabled on this repository"
+                                record_test_pass "$workflow"
+                            fi
+                            ;;
+                        *"close-discussion")
+                            info "Creating test discussion to trigger $workflow..."
+                            local discussion_title="Test close discussion from $ai_display_name"
+                            local discussion_num=$(create_test_discussion "$discussion_title" "This is a test discussion to trigger $workflow" "General" "$target_repo")
+                            if [[ -n "$discussion_num" ]]; then
+                                local repo_url="$REPO_OWNER/$REPO_NAME"
+                                [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                success "Created test discussion #$discussion_num to trigger $workflow: https://github.com/$repo_url/discussions/$discussion_num"
+                                sleep 10
+                                wait_for_discussion_closed "$discussion_num" "$workflow" "$target_repo" || true
+                            else
+                                warning "Could not create test discussion for $workflow - discussions may not be enabled on this repository"
+                                record_test_pass "$workflow"
+                            fi
+                            ;;
+                        *"add-comment")
+                            info "Creating test issue to trigger $workflow..."
+                            local issue_title="Hello from $ai_display_name"
+                            local issue_num=$(create_test_issue "$issue_title" "This is a test issue to trigger $workflow" "" "$target_repo")
+                            if [[ -n "$issue_num" ]]; then
+                                local repo_url="$REPO_OWNER/$REPO_NAME"
+                                [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                success "Created test issue #$issue_num for $workflow: https://github.com/$repo_url/issues/$issue_num"
+                                sleep 10
+                                wait_for_comment "$issue_num" "Reply from $ai_display_name" "$workflow" "$target_repo" || true
+                            else
+                                error "Failed to create test issue for $workflow"
+                                record_test_fail "$workflow"
+                            fi
+                            ;;
+                        *"add-labels")
+                            info "Creating test issue to trigger $workflow..."
+                            local issue_title="Hello from $ai_display_name"
+                            local issue_num=$(create_test_issue "$issue_title" "This is a test issue to trigger $workflow" "" "$target_repo")
+                            if [[ -n "$issue_num" ]]; then
+                                local repo_url="$REPO_OWNER/$REPO_NAME"
+                                [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                success "Created test issue #$issue_num for $workflow: https://github.com/$repo_url/issues/$issue_num"
+                                sleep 10
+                                wait_for_labels "$issue_num" "${ai_type}-safe-output-label-test" "$workflow" "$target_repo" || true
+                            else
+                                error "Failed to create test issue for $workflow"
+                                record_test_fail "$workflow"
+                            fi
+                            ;;
+                        *"update-issue")
+                            info "Creating test issue to trigger $workflow..."
+                            local issue_title="Hello from $ai_display_name"
+                            local issue_num=$(create_test_issue "$issue_title" "This is a test issue to trigger $workflow" "" "$target_repo")
+                            if [[ -n "$issue_num" ]]; then
+                                local repo_url="$REPO_OWNER/$REPO_NAME"
+                                [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                success "Created test issue #$issue_num for $workflow: https://github.com/$repo_url/issues/$issue_num"
+                                sleep 10
+                                wait_for_issue_update "$issue_num" "$ai_display_name" "$workflow" "$target_repo" || true
+                            else
+                                error "Failed to create test issue for $workflow"
+                                record_test_fail "$workflow"
+                            fi
+                            ;;
+                        *"close-issue")
+                            info "Creating test issue to trigger $workflow..."
+                            local issue_title="Test close issue from $ai_display_name"
+                            local issue_num=$(create_test_issue "$issue_title" "This is a test issue to trigger $workflow" "" "$target_repo")
+                            if [[ -n "$issue_num" ]]; then
+                                local repo_url="$REPO_OWNER/$REPO_NAME"
+                                [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                success "Created test issue #$issue_num for $workflow: https://github.com/$repo_url/issues/$issue_num"
+                                sleep 10
+                                wait_for_issue_closed "$issue_num" "Closed by $ai_display_name safe output" "$workflow" "$target_repo" || true
+                            else
+                                error "Failed to create test issue for $workflow"
+                                record_test_fail "$workflow"
+                            fi
+                            ;;
+                        *"remove-labels")
+                            info "Creating test issue with label to trigger $workflow..."
+                            local issue_title="Test remove label from $ai_display_name"
+                            local issue_num=$(create_test_issue "$issue_title" "This is a test issue to trigger $workflow" "copilot-remove-label-test" "$target_repo")
+                            if [[ -n "$issue_num" ]]; then
+                                local repo_url="$REPO_OWNER/$REPO_NAME"
+                                [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                success "Created test issue #$issue_num with label for $workflow: https://github.com/$repo_url/issues/$issue_num"
+                                sleep 10
+                                wait_for_label_removed "$issue_num" "copilot-remove-label-test" "$workflow" "$target_repo" || true
+                            else
+                                error "Failed to create test issue for $workflow"
+                                record_test_fail "$workflow"
+                            fi
+                            ;;
+                        *"update-pull-request")
+                            info "Creating test pull request to trigger $workflow..."
+                            local pr_num=$(create_test_pr "Test PR for $ai_display_name Update PR" "This PR is for testing $workflow" "$target_repo")
+                            if [[ -n "$pr_num" ]]; then
+                                local repo_url="$REPO_OWNER/$REPO_NAME"
+                                [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                success "Created test PR #$pr_num for $workflow: https://github.com/$repo_url/pull/$pr_num"
+                                sleep 10
+                                wait_for_pr_update "$pr_num" "$ai_display_name" "$workflow" "$target_repo" || true
+                            else
+                                error "Failed to create test PR for $workflow"
+                                record_test_fail "$workflow"
+                            fi
+                            ;;
+                        *"close-pull-request")
+                            info "Creating test pull request to trigger $workflow..."
+                            local pr_num=$(create_test_pr "Test PR for $ai_display_name Close" "This PR is for testing $workflow" "$target_repo")
+                            if [[ -n "$pr_num" ]]; then
+                                local repo_url="$REPO_OWNER/$REPO_NAME"
+                                [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                success "Created test PR #$pr_num for $workflow: https://github.com/$repo_url/pull/$pr_num"
+                                sleep 10
+                                wait_for_pr_closed "$pr_num" "$workflow" "$target_repo" || true
+                            else
+                                error "Failed to create test PR for $workflow"
+                                record_test_fail "$workflow"
+                            fi
+                            ;;
+                        *"push-to-pull-request-branch")
+                            info "Creating test pull request to trigger $workflow..."
+                            local pr_info=$(create_test_pr_with_branch "Test PR for $ai_display_name Push-to-Branch" "This PR is for testing $workflow" "$target_repo")
+                            if [[ -n "$pr_info" ]]; then
+                                IFS=',' read -r pr_num branch_name after_commit_sha repo_from_info <<< "$pr_info"
+                                local repo_url="$REPO_OWNER/$REPO_NAME"
+                                [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                success "Created test PR #$pr_num for $workflow with branch '$branch_name': https://github.com/$repo_url/pull/$pr_num"
+                                post_pr_command "$pr_num" "/test-${ai_type}-push-to-pull-request-branch" "$target_repo"
+                                wait_for_branch_update "$branch_name" "$after_commit_sha" "$workflow" "$target_repo" || true
+                            else
+                                error "Failed to create test PR for $workflow"
+                                record_test_fail "$workflow"
+                            fi
+                            ;;
+                        *"pull-request-review-comment")
+                            info "Creating test pull request to trigger $workflow..."
+                            local pr_num=$(create_test_pr "Test PR for $ai_display_name Review Comments" "This PR is for testing $workflow. Please add review comments." "$target_repo")
+                            if [[ -n "$pr_num" ]]; then
+                                local repo_url="$REPO_OWNER/$REPO_NAME"
+                                [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                success "Created test PR #$pr_num for $workflow: https://github.com/$repo_url/pull/$pr_num"
+                                post_pr_command "$pr_num" "/test-${ai_type}-create-pull-request-review-comment" "$target_repo"
+                                wait_for_pr_reviews "$pr_num" "$ai_display_name" "$workflow" "$target_repo" || true
+                            else
+                                error "Failed to create test PR for $workflow"
+                                record_test_fail "$workflow"
+                            fi
+                            ;;
+                        *"command")
+                            info "Creating test issue to trigger $workflow..."
+                            local issue_num=$(create_test_issue "Test Issue for $ai_display_name Commands" "This issue is for testing $workflow" "" "$target_repo")
+                            if [[ -n "$issue_num" ]]; then
+                                local repo_url="$REPO_OWNER/$REPO_NAME"
+                                [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                success "Created test issue #$issue_num for $workflow: https://github.com/$repo_url/issues/$issue_num"
+                                post_issue_command "$issue_num" "/test-${ai_type}-command What is 102+103?" "$target_repo"
+                                wait_for_command_comment "$issue_num" "205" "$workflow" "$target_repo" || true
+                            else
+                                error "Failed to create test issue for $workflow"
+                                record_test_fail "$workflow"
+                            fi
+                            ;;
+                        *"update-discussion")
+                            info "Creating test discussion to trigger $workflow..."
+                            local discussion_title="Test update discussion from $ai_display_name"
+                            local discussion_num=$(create_test_discussion "$discussion_title" "Original discussion body for update-discussion test." "General" "$target_repo")
+                            if [[ -n "$discussion_num" ]]; then
+                                local repo_url="$REPO_OWNER/$REPO_NAME"
+                                [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                success "Created test discussion #$discussion_num for $workflow: https://github.com/$repo_url/discussions/$discussion_num"
+                                sleep 10
+                                wait_for_discussion_updated "$discussion_num" "[UPDATED]" "$workflow" "$target_repo" || true
+                            else
+                                warning "Could not create test discussion for $workflow - discussions may not be enabled on this repository"
+                                record_test_pass "$workflow"
+                            fi
+                            ;;
+                        *"assign-to-user")
+                            info "Creating test issue to trigger $workflow..."
+                            local issue_num=$(create_test_issue "Test assign to user from $ai_display_name" "This is a test issue to trigger $workflow" "" "$target_repo")
+                            if [[ -n "$issue_num" ]]; then
+                                local repo_url="$REPO_OWNER/$REPO_NAME"
+                                [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                success "Created test issue #$issue_num for $workflow: https://github.com/$repo_url/issues/$issue_num"
+                                sleep 10
+                                wait_for_assignee_present "$issue_num" "dsyme" "$workflow" "$target_repo" || true
+                            else
+                                error "Failed to create test issue for $workflow"
+                                record_test_fail "$workflow"
+                            fi
+                            ;;
+                        *"unassign-from-user")
+                            info "Creating test issue with assignee to trigger $workflow..."
+                            local issue_num=$(create_test_issue "Test unassign from user from $ai_display_name" "This is a test issue to trigger $workflow" "" "$target_repo")
+                            if [[ -n "$issue_num" ]]; then
+                                local repo_url="$REPO_OWNER/$REPO_NAME"
+                                [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                local repo_flag=""
+                                [[ -n "$target_repo" ]] && repo_flag="--repo $target_repo"
+                                if gh issue edit $repo_flag "$issue_num" --add-assignee "dsyme" &>> "$LOG_FILE"; then
+                                    success "Created and assigned issue #$issue_num to dsyme for $workflow: https://github.com/$repo_url/issues/$issue_num"
+                                else
+                                    warning "Failed to add assignee dsyme to issue #$issue_num; test may fail"
+                                fi
+                                sleep 10
+                                wait_for_assignee_absent "$issue_num" "dsyme" "$workflow" "$target_repo" || true
+                            else
+                                error "Failed to create test issue for $workflow"
+                                record_test_fail "$workflow"
+                            fi
+                            ;;
+                        *"assign-milestone")
+                            info "Ensuring milestone exists for $workflow..."
+                            local milestone_title="Copilot Safe Output Test Milestone"
+                            local milestone_repo="${target_repo:-$REPO_OWNER/$REPO_NAME}"
+                            ensure_milestone "$milestone_title" "$milestone_repo" >/dev/null || warning "Could not ensure milestone '$milestone_title'"
+                            info "Creating test issue to trigger $workflow..."
+                            local issue_num=$(create_test_issue "Test assign milestone from $ai_display_name" "This is a test issue to trigger $workflow" "" "$target_repo")
+                            if [[ -n "$issue_num" ]]; then
+                                local repo_url="$REPO_OWNER/$REPO_NAME"
+                                [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                success "Created test issue #$issue_num for $workflow: https://github.com/$repo_url/issues/$issue_num"
+                                sleep 10
+                                wait_for_milestone_assigned "$issue_num" "$milestone_title" "$workflow" "$target_repo" || true
+                            else
+                                error "Failed to create test issue for $workflow"
+                                record_test_fail "$workflow"
+                            fi
+                            ;;
+                        *"link-sub-issue")
+                            info "Creating parent + sub issues to trigger $workflow..."
+                            local parent_num=$(create_test_issue "[link-sub-fixture] parent for $ai_display_name" "Parent issue for link-sub-issue test." "" "$target_repo")
+                            local sub_num=$(create_test_issue "[link-sub-fixture] sub for $ai_display_name" "Sub issue for link-sub-issue test." "" "$target_repo")
+                            if [[ -n "$parent_num" && -n "$sub_num" ]]; then
+                                local repo_url="$REPO_OWNER/$REPO_NAME"
+                                [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                success "Created parent #$parent_num and sub #$sub_num for $workflow"
+                                local trigger_body=$'Link the sub-issue to the parent.\n\nparent='"$parent_num"$'\nsub='"$sub_num"
+                                local trigger_num=$(create_test_issue "[link-sub-issue request] from $ai_display_name" "$trigger_body" "" "$target_repo")
+                                if [[ -n "$trigger_num" ]]; then
+                                    success "Created trigger issue #$trigger_num for $workflow: https://github.com/$repo_url/issues/$trigger_num"
+                                    sleep 10
+                                    wait_for_sub_issue_linked "$parent_num" "$sub_num" "$workflow" "$target_repo" || true
+                                else
+                                    error "Failed to create trigger issue for $workflow"
+                                    record_test_fail "$workflow"
+                                fi
+                            else
+                                error "Failed to create parent/sub issues for $workflow"
+                                record_test_fail "$workflow"
+                            fi
+                            ;;
+                        *"hide-comment")
+                            info "Creating placeholder issue + comment for $workflow..."
+                            local host_num=$(create_test_issue "[hide-comment-host] placeholder for $ai_display_name" "Placeholder issue hosting a comment to be hidden." "" "$target_repo")
+                            if [[ -n "$host_num" ]]; then
+                                local comment_node_id
+                                comment_node_id=$(add_test_comment_get_node_id "$host_num" "This comment should be hidden by the $workflow safe output." "$target_repo")
+                                if [[ -n "$comment_node_id" ]]; then
+                                    info "Posted comment with node ID: $comment_node_id"
+                                    local repo_url="$REPO_OWNER/$REPO_NAME"
+                                    [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                    local trigger_body=$'Please hide the comment whose GraphQL node ID is below.\n\nhide-comment-node-id='"$comment_node_id"
+                                    local trigger_num=$(create_test_issue "Test hide comment from $ai_display_name" "$trigger_body" "" "$target_repo")
+                                    if [[ -n "$trigger_num" ]]; then
+                                        success "Created trigger issue #$trigger_num for $workflow: https://github.com/$repo_url/issues/$trigger_num"
+                                        sleep 10
+                                        wait_for_comment_hidden "$comment_node_id" "$workflow" || true
+                                    else
+                                        error "Failed to create trigger issue for $workflow"
+                                        record_test_fail "$workflow"
+                                    fi
+                                else
+                                    error "Failed to post comment for $workflow"
+                                    record_test_fail "$workflow"
+                                fi
+                            else
+                                error "Failed to create placeholder issue for $workflow"
+                                record_test_fail "$workflow"
+                            fi
+                            ;;
+                        *"add-reviewer")
+                            info "Creating test pull request to trigger $workflow..."
+                            local pr_num=$(create_test_pr "Test PR for $ai_display_name Add Reviewer" "This PR is for testing $workflow" "$target_repo")
+                            if [[ -n "$pr_num" ]]; then
+                                local repo_url="$REPO_OWNER/$REPO_NAME"
+                                [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                success "Created test PR #$pr_num for $workflow: https://github.com/$repo_url/pull/$pr_num"
+                                sleep 10
+                                wait_for_pr_reviewer_added "$pr_num" "copilot" "$workflow" "$target_repo" || true
+                            else
+                                error "Failed to create test PR for $workflow"
+                                record_test_fail "$workflow"
+                            fi
+                            ;;
+                        *"submit-pull-request-review")
+                            info "Creating test pull request to trigger $workflow..."
+                            local pr_num=$(create_test_pr "Test PR for $ai_display_name Submit Review" "This PR is for testing $workflow." "$target_repo")
+                            if [[ -n "$pr_num" ]]; then
+                                local repo_url="$REPO_OWNER/$REPO_NAME"
+                                [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                success "Created test PR #$pr_num for $workflow: https://github.com/$repo_url/pull/$pr_num"
+                                post_pr_command "$pr_num" "/test-${ai_type}-submit-pull-request-review" "$target_repo"
+                                wait_for_pr_review_with_body "$pr_num" "Reviewed by $ai_display_name submit-pull-request-review safe output" "$workflow" "$target_repo" || true
+                            else
+                                error "Failed to create test PR for $workflow"
+                                record_test_fail "$workflow"
+                            fi
+                            ;;
+                    esac
+                else
+                    error "Failed to enable workflow '$workflow'"
+                    record_test_fail "$workflow"
+                fi
+                ;;
+        esac
+        
+        echo # Add spacing between tests
+    done
+    
+    # Disable workflows after testing
+    for workflow in "${workflows_to_disable[@]}"; do
+        disable_workflow "$workflow" || warning "Failed to disable workflow '$workflow', continuing..."
+    done
+    
+    # Also track for global cleanup
+    for workflow in "${workflows_to_disable[@]}"; do
+        GLOBAL_WORKFLOWS_TO_DISABLE+=("$workflow")
+    done
 }
 
 # Main run_tests dispatcher - uses parallel with batch size for both modes

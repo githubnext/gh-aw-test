@@ -9,7 +9,7 @@ engine:
 
 safe-outputs:
   create-pull-request:
-    title-prefix: "[codex-test] "
+    title-prefix: "[codex-test-single-pr] "
     labels: [codex, automation, bot]
 ---
 

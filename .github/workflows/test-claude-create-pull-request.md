@@ -9,7 +9,7 @@ engine:
 
 safe-outputs:
   create-pull-request:
-    title-prefix: "[claude-test] "
+    title-prefix: "[claude-test-single-pr] "
     labels: [claude, automation, bot]
     samples:
       - title: "Multi-commit test from Claude"

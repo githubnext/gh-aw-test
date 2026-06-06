@@ -9,7 +9,7 @@ engine:
 
 safe-outputs:
   create-pull-request:
-    title-prefix: "[claude-test] "
+    title-prefix: "[claude-test-two-prs] "
     labels: [claude, automation, bot]
     #max: 2
     samples:

@@ -9,7 +9,7 @@ engine:
 
 safe-outputs:
   create-pull-request:
-    title-prefix: "[copilot-test] "
+    title-prefix: "[copilot-test-single-pr] "
     labels: [copilot, automation, bot]
 ---
 

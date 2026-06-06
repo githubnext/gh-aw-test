@@ -20,7 +20,7 @@ checkout:
 
 safe-outputs:
   create-pull-request:
-    title-prefix: "[copilot-test] "
+    title-prefix: "[copilot-test-single-pr] "
     labels: [copilot, automation, bot]
     target-repo: 'githubnext/gh-aw-side-repo'
     allowed-repos: ['githubnext/gh-aw-side-repo']
