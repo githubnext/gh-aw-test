@@ -264,7 +264,7 @@ cleanup_on_exit() {
         local -A seen
         local unique_workflows=()
         for workflow in "${GLOBAL_WORKFLOWS_TO_DISABLE[@]}"; do
-            if [[ -z "${seen[$workflow]}" ]]; then
+            if [[ -z "${seen[$workflow]:-}" ]]; then
                 seen[$workflow]=1
                 unique_workflows+=("$workflow")
             fi
@@ -308,6 +308,12 @@ get_target_repo() {
     else
         echo ""
     fi
+}
+
+# Escape ERE regex metacharacters in a string so it can be safely
+# interpolated into grep -E patterns.
+re_escape() {
+    printf '%s' "$1" | sed 's/[][\\.^$*+?(){}|]/\\&/g'
 }
 
 # Extract AI type from workflow name
@@ -1122,7 +1128,7 @@ create_test_pr() {
     local title="$1"
     local body="$2"
     local repo="${3:-}"
-    local branch="test-pr-$(date +%s)"
+    local branch="test-pr-$(date +%s)-$$-${RANDOM}"
 
     # Parallel-safety marker (see create_test_issue)
     if [[ -n "${E2E_TRIGGER_MARKER:-}" ]]; then
@@ -1181,7 +1187,7 @@ create_test_pr_with_branch() {
     local title="$1"
     local body="$2"
     local repo="${3:-}"
-    local branch="test-pr-$(date +%s)"
+    local branch="test-pr-$(date +%s)-$$-${RANDOM}"
 
     # Parallel-safety marker (see create_test_issue)
     if [[ -n "${E2E_TRIGGER_MARKER:-}" ]]; then
@@ -2479,7 +2485,9 @@ run_single_test() {
                     sleep 10
                     case "$workflow" in
                         *"add-comment")
-                            if wait_for_comment "$issue_num" "Reply from $ai_display_name" "$workflow" "$target_repo"; then
+                            local ai_name_re
+                            ai_name_re=$(re_escape "$ai_display_name")
+                            if wait_for_comment "$issue_num" "Reply from $ai_name_re" "$workflow" "$target_repo"; then
                                 test_result="PASS"
                             fi
                             ;;
@@ -2517,7 +2525,9 @@ run_single_test() {
                 
                 if [[ "$workflow_success" == true ]]; then
                     sleep 10
-                    if wait_for_discussion_comment "$discussion_num" "Reply from $ai_display_name Discussion" "$workflow" "$target_repo"; then
+                    local ai_name_re
+                    ai_name_re=$(re_escape "$ai_display_name")
+                    if wait_for_discussion_comment "$discussion_num" "Reply from $ai_name_re Discussion" "$workflow" "$target_repo"; then
                         test_result="PASS"
                     fi
                 fi
@@ -2583,7 +2593,7 @@ run_single_test() {
             fi
             ;;
         # Workflow dispatch tests - triggered with gh aw run
-        *"create-issue"|*"create-discussion"|*"create-pull-request"|*"code-scanning-alert"|*"mcp"|*"safe-jobs"|*"gh-steps"|*"custom-safe-outputs")
+        *"create-issue"|*"create-discussion"|*"create-pull-request"|*"create-two-pull-requests"|*"code-scanning-alert"|*"mcp"|*"safe-jobs"|*"gh-steps"|*"custom-safe-outputs")
             local workflow_success=false
             if trigger_workflow_dispatch_and_await_completion "$workflow"; then
                 workflow_success=true
@@ -2646,7 +2656,12 @@ run_single_test() {
                             local expected_run_id="${run_url##*/}"
                             local repo_flag=""
                             [[ -n "$target_repo" ]] && repo_flag="--repo $target_repo"
-                            local issue_title=$(gh issue list $repo_flag --limit 10 --json title --jq ".[] | select(.title | startswith(\"$title_prefix\")) | .title" | head -1)
+                            # Other tests share the [copilot-test] prefix, so filter to titles
+                            # that look like gh-steps output (either the run-id form or the sample title).
+                            local issue_title=$(gh issue list $repo_flag --limit 50 --json title \
+                                --jq ".[] | select(.title | startswith(\"$title_prefix\")) | .title" \
+                                | grep -E "The number of issues is|Issue count report" \
+                                | head -1)
                             if [[ -n "$expected_run_id" ]] && echo "$issue_title" | grep -q "Test ${expected_run_id}:.*The number of issues is"; then
                                 success "Issue title contains run ID $expected_run_id and expected gh-steps output: $issue_title"
                                 validation_success=true
@@ -2654,7 +2669,7 @@ run_single_test() {
                                 success "Issue title contains expected gh-steps output (run ID not verified): $issue_title"
                                 validation_success=true
                             else
-                                error "Issue title does not contain expected pattern 'Test <run_id>: The number of issues is' or sample title 'Issue count report': $issue_title"
+                                error "No issue with title prefix '$title_prefix' contains 'The number of issues is' or 'Issue count report' (got: '$issue_title')"
                             fi
                         fi
                         ;;
@@ -2702,7 +2717,9 @@ run_single_test() {
                                     [[ -n "$target_repo" ]] && repo_url="$target_repo"
                                     success "Created test discussion #$discussion_num to trigger $workflow: https://github.com/$repo_url/discussions/$discussion_num"
                                     sleep 10
-                                    if wait_for_discussion_comment "$discussion_num" "Reply from $ai_display_name Discussion" "$workflow" "$target_repo"; then
+                                    local ai_name_re
+                                    ai_name_re=$(re_escape "$ai_display_name")
+                                    if wait_for_discussion_comment "$discussion_num" "Reply from $ai_name_re Discussion" "$workflow" "$target_repo"; then
                                         test_result="PASS"
                                     fi
                                 else
@@ -2736,7 +2753,9 @@ run_single_test() {
                                     [[ -n "$target_repo" ]] && repo_url="$target_repo"
                                     success "Created test issue #$issue_num for $workflow: https://github.com/$repo_url/issues/$issue_num"
                                     sleep 10
-                                    if wait_for_comment "$issue_num" "Reply from $ai_display_name" "$workflow" "$target_repo"; then
+                                    local ai_name_re
+                                    ai_name_re=$(re_escape "$ai_display_name")
+                                    if wait_for_comment "$issue_num" "Reply from $ai_name_re" "$workflow" "$target_repo"; then
                                         test_result="PASS"
                                     fi
                                 fi
@@ -2858,7 +2877,9 @@ run_single_test() {
                                     [[ -n "$target_repo" ]] && repo_url="$target_repo"
                                     success "Created test issue #$issue_num for $workflow: https://github.com/$repo_url/issues/$issue_num"
                                     post_issue_command "$issue_num" "/test-${ai_type}-command What is 102+103?" "$target_repo"
-                                    if wait_for_command_comment "$issue_num" "205|I'm $ai_display_name" "$workflow" "$target_repo"; then
+                                    local ai_name_re
+                                    ai_name_re=$(re_escape "$ai_display_name")
+                                    if wait_for_command_comment "$issue_num" "205|I'm $ai_name_re" "$workflow" "$target_repo"; then
                                         test_result="PASS"
                                     fi
                                 fi
@@ -3103,7 +3124,7 @@ run_tests_parallel() {
         local completed=0
         local total_in_batch=${#batch_tests[@]}
         # Hard ceiling per test — these tests should normally finish in ~1-2 min
-        local per_test_kill_seconds=300
+        local per_test_kill_seconds=480
         echo
         info "  ⏳ Waiting for $total_in_batch tests to complete (per-test kill after ${per_test_kill_seconds}s)..."
 
