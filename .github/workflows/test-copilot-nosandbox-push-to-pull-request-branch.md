@@ -17,8 +17,7 @@ sandbox:
 safe-outputs:
   push-to-pull-request-branch:
     samples:
-      - branch: "gh-aw-sample-copilot-nosandbox-push-branch"
-        message: "Multi-commit test push from Copilot (No Sandbox)"
+      - message: "Multi-commit test push from Copilot (nosandbox)"
         patch: |
           diff --git a/README-copilot-nosandbox-test.md b/README-copilot-nosandbox-test.md
           new file mode 100644

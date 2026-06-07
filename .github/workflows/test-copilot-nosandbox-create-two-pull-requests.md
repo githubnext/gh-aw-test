@@ -16,7 +16,7 @@ safe-outputs:
   create-pull-request:
     title-prefix: "[copilot-nosandbox-test-two-prs] "
     labels: [copilot, automation, bot, nosandbox]
-    #max: 2
+    max: 2
     samples:
       - title: "Feature A from Copilot (No Sandbox)"
         body: "Adds Feature A without sandbox protection."

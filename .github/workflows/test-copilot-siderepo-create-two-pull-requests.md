@@ -19,7 +19,7 @@ safe-outputs:
     target-repo: 'githubnext/gh-aw-side-repo'
     allowed-repos: ['githubnext/gh-aw-side-repo']
     github-token: ${{ secrets.TEMP_USER_PAT }}
-    # max: 2
+    max: 2
     samples:
       - title: "Feature A from Copilot"
         body: "Adds Feature A in side repository."

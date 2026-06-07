@@ -28,7 +28,8 @@ safe-outputs:
     # allowed-repos: ['githubnext/gh-aw-side-repo']
     # min: 1
     samples:
-      - status: "closed"
+      - issue_number: ${{ github.event.inputs.issue_number }}
+        status: "closed"
         title: "[UPDATED] Update Issue Test - Processed by Copilot"
         body: "This issue was automatically updated by the Copilot agentic workflow."
 ---

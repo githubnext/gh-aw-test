@@ -11,7 +11,7 @@ safe-outputs:
   create-pull-request:
     title-prefix: "[copilot-test-two-prs] "
     labels: [copilot, automation, bot]
-    #max: 2
+    max: 2
     samples:
       - title: "Feature A from Copilot"
         body: "Adds Feature A as part of the two-PR test."

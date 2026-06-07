@@ -12,8 +12,7 @@ engine:
 safe-outputs:
   push-to-pull-request-branch:
     samples:
-      - branch: "gh-aw-sample-codex-push-branch"
-        message: "Multi-commit test push from Codex"
+      - message: "Multi-commit test push from Codex"
         patch: |
           diff --git a/README-codex-test.md b/README-codex-test.md
           new file mode 100644

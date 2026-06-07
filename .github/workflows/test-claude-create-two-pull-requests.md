@@ -11,7 +11,7 @@ safe-outputs:
   create-pull-request:
     title-prefix: "[claude-test-two-prs] "
     labels: [claude, automation, bot]
-    #max: 2
+    max: 2
     samples:
       - title: "Feature A from Claude"
         body: "Adds Feature A as part of the two-PR test."

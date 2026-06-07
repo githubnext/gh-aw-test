@@ -12,8 +12,7 @@ engine:
 safe-outputs:
   push-to-pull-request-branch:
     samples:
-      - branch: "gh-aw-sample-claude-push-branch"
-        message: "Multi-commit test push from Claude"
+      - message: "Multi-commit test push from Claude"
         patch: |
           diff --git a/README-claude-test.md b/README-claude-test.md
           new file mode 100644

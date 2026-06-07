@@ -26,7 +26,8 @@ safe-outputs:
     allowed-repos: ['githubnext/gh-aw-side-repo']
     # min: 1
     samples:
-      - body: "Reply from Copilot Discussion"
+      - item_number: ${{ github.event.inputs.discussion_number }}
+        body: "Reply from Copilot Discussion"
 ---
 
 If the title of the discussion #${{ inputs.discussion_number }} in repository githubnext/gh-aw-side-repo is "Hello from Copilot Discussion" then add a comment on the discussion "Reply from Copilot Discussion".
