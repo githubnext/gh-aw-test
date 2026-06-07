@@ -13,10 +13,10 @@ engine:
 
 safe-outputs:
   add-reviewer:
-    allowed-reviewers: [copilot]
+    allowed-reviewers: [pelikhan]
     # min: 1
     samples:
-      - reviewers: ["copilot"]
+      - reviewers: ["pelikhan"]
 ---
 
-If the title of the pull request #${{ github.event.pull_request.number }} starts with "Test PR for Copilot Add Reviewer" then add "copilot" as a reviewer to the pull request.
+If the title of the pull request #${{ github.event.pull_request.number }} starts with "Test PR for Copilot Add Reviewer" then add "pelikhan" as a reviewer to the pull request.

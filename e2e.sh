@@ -264,7 +264,7 @@ cleanup_on_exit() {
         local -A seen
         local unique_workflows=()
         for workflow in "${GLOBAL_WORKFLOWS_TO_DISABLE[@]}"; do
-            if [[ -z "${seen[$workflow]:-}" ]]; then
+            if [[ -z "${seen[$workflow]}" ]]; then
                 seen[$workflow]=1
                 unique_workflows+=("$workflow")
             fi
@@ -308,12 +308,6 @@ get_target_repo() {
     else
         echo ""
     fi
-}
-
-# Escape ERE regex metacharacters in a string so it can be safely
-# interpolated into grep -E patterns.
-re_escape() {
-    printf '%s' "$1" | sed 's/[][\\.^$*+?(){}|]/\\&/g'
 }
 
 # Extract AI type from workflow name
@@ -1128,7 +1122,7 @@ create_test_pr() {
     local title="$1"
     local body="$2"
     local repo="${3:-}"
-    local branch="test-pr-$(date +%s)-$$-${RANDOM}"
+    local branch="test-pr-$(date +%s)"
 
     # Parallel-safety marker (see create_test_issue)
     if [[ -n "${E2E_TRIGGER_MARKER:-}" ]]; then
@@ -1187,7 +1181,7 @@ create_test_pr_with_branch() {
     local title="$1"
     local body="$2"
     local repo="${3:-}"
-    local branch="test-pr-$(date +%s)-$$-${RANDOM}"
+    local branch="test-pr-$(date +%s)"
 
     # Parallel-safety marker (see create_test_issue)
     if [[ -n "${E2E_TRIGGER_MARKER:-}" ]]; then
@@ -2485,9 +2479,7 @@ run_single_test() {
                     sleep 10
                     case "$workflow" in
                         *"add-comment")
-                            local ai_name_re
-                            ai_name_re=$(re_escape "$ai_display_name")
-                            if wait_for_comment "$issue_num" "Reply from $ai_name_re" "$workflow" "$target_repo"; then
+                            if wait_for_comment "$issue_num" "Reply from $ai_display_name" "$workflow" "$target_repo"; then
                                 test_result="PASS"
                             fi
                             ;;
@@ -2525,9 +2517,7 @@ run_single_test() {
                 
                 if [[ "$workflow_success" == true ]]; then
                     sleep 10
-                    local ai_name_re
-                    ai_name_re=$(re_escape "$ai_display_name")
-                    if wait_for_discussion_comment "$discussion_num" "Reply from $ai_name_re Discussion" "$workflow" "$target_repo"; then
+                    if wait_for_discussion_comment "$discussion_num" "Reply from $ai_display_name Discussion" "$workflow" "$target_repo"; then
                         test_result="PASS"
                     fi
                 fi
@@ -2593,7 +2583,7 @@ run_single_test() {
             fi
             ;;
         # Workflow dispatch tests - triggered with gh aw run
-        *"create-issue"|*"create-discussion"|*"create-pull-request"|*"create-two-pull-requests"|*"code-scanning-alert"|*"mcp"|*"safe-jobs"|*"gh-steps"|*"custom-safe-outputs")
+        *"create-issue"|*"create-discussion"|*"create-pull-request"|*"code-scanning-alert"|*"mcp"|*"safe-jobs"|*"gh-steps"|*"custom-safe-outputs")
             local workflow_success=false
             if trigger_workflow_dispatch_and_await_completion "$workflow"; then
                 workflow_success=true
@@ -2656,12 +2646,7 @@ run_single_test() {
                             local expected_run_id="${run_url##*/}"
                             local repo_flag=""
                             [[ -n "$target_repo" ]] && repo_flag="--repo $target_repo"
-                            # Other tests share the [copilot-test] prefix, so filter to titles
-                            # that look like gh-steps output (either the run-id form or the sample title).
-                            local issue_title=$(gh issue list $repo_flag --limit 50 --json title \
-                                --jq ".[] | select(.title | startswith(\"$title_prefix\")) | .title" \
-                                | grep -E "The number of issues is|Issue count report" \
-                                | head -1)
+                            local issue_title=$(gh issue list $repo_flag --limit 10 --json title --jq ".[] | select(.title | startswith(\"$title_prefix\")) | .title" | head -1)
                             if [[ -n "$expected_run_id" ]] && echo "$issue_title" | grep -q "Test ${expected_run_id}:.*The number of issues is"; then
                                 success "Issue title contains run ID $expected_run_id and expected gh-steps output: $issue_title"
                                 validation_success=true
@@ -2669,7 +2654,7 @@ run_single_test() {
                                 success "Issue title contains expected gh-steps output (run ID not verified): $issue_title"
                                 validation_success=true
                             else
-                                error "No issue with title prefix '$title_prefix' contains 'The number of issues is' or 'Issue count report' (got: '$issue_title')"
+                                error "Issue title does not contain expected pattern 'Test <run_id>: The number of issues is' or sample title 'Issue count report': $issue_title"
                             fi
                         fi
                         ;;
@@ -2717,9 +2702,7 @@ run_single_test() {
                                     [[ -n "$target_repo" ]] && repo_url="$target_repo"
                                     success "Created test discussion #$discussion_num to trigger $workflow: https://github.com/$repo_url/discussions/$discussion_num"
                                     sleep 10
-                                    local ai_name_re
-                                    ai_name_re=$(re_escape "$ai_display_name")
-                                    if wait_for_discussion_comment "$discussion_num" "Reply from $ai_name_re Discussion" "$workflow" "$target_repo"; then
+                                    if wait_for_discussion_comment "$discussion_num" "Reply from $ai_display_name Discussion" "$workflow" "$target_repo"; then
                                         test_result="PASS"
                                     fi
                                 else
@@ -2753,9 +2736,7 @@ run_single_test() {
                                     [[ -n "$target_repo" ]] && repo_url="$target_repo"
                                     success "Created test issue #$issue_num for $workflow: https://github.com/$repo_url/issues/$issue_num"
                                     sleep 10
-                                    local ai_name_re
-                                    ai_name_re=$(re_escape "$ai_display_name")
-                                    if wait_for_comment "$issue_num" "Reply from $ai_name_re" "$workflow" "$target_repo"; then
+                                    if wait_for_comment "$issue_num" "Reply from $ai_display_name" "$workflow" "$target_repo"; then
                                         test_result="PASS"
                                     fi
                                 fi
@@ -2877,9 +2858,7 @@ run_single_test() {
                                     [[ -n "$target_repo" ]] && repo_url="$target_repo"
                                     success "Created test issue #$issue_num for $workflow: https://github.com/$repo_url/issues/$issue_num"
                                     post_issue_command "$issue_num" "/test-${ai_type}-command What is 102+103?" "$target_repo"
-                                    local ai_name_re
-                                    ai_name_re=$(re_escape "$ai_display_name")
-                                    if wait_for_command_comment "$issue_num" "205|I'm $ai_name_re" "$workflow" "$target_repo"; then
+                                    if wait_for_command_comment "$issue_num" "205|I'm $ai_display_name" "$workflow" "$target_repo"; then
                                         test_result="PASS"
                                     fi
                                 fi
@@ -2999,7 +2978,7 @@ run_single_test() {
                                     [[ -n "$target_repo" ]] && repo_url="$target_repo"
                                     success "Created test PR #$pr_num for $workflow: https://github.com/$repo_url/pull/$pr_num"
                                     sleep 10
-                                    if wait_for_pr_reviewer_added "$pr_num" "copilot" "$workflow" "$target_repo"; then
+                                    if wait_for_pr_reviewer_added "$pr_num" "pelikhan" "$workflow" "$target_repo"; then
                                         test_result="PASS"
                                     fi
                                 fi
@@ -3124,25 +3103,11 @@ run_tests_parallel() {
         local completed=0
         local total_in_batch=${#batch_tests[@]}
         # Hard ceiling per test — these tests should normally finish in ~1-2 min
-        local per_test_kill_seconds=480
+        local per_test_kill_seconds=300
         echo
         info "  ⏳ Waiting for $total_in_batch tests to complete (per-test kill after ${per_test_kill_seconds}s)..."
 
-        # Decide on output style: interactive TTY redraws in place; non-TTY (CI,
-        # piped logs) prints a single status line at a coarse interval.
-        local is_tty=false
-        if [[ -t 1 ]]; then is_tty=true; fi
-        local term_cols=${COLUMNS:-0}
-        if [[ "$is_tty" == true && $term_cols -eq 0 ]]; then
-            term_cols=$(tput cols 2>/dev/null || echo 100)
-        fi
-        [[ $term_cols -le 20 ]] && term_cols=100
         local last_status_line_len=0
-        local loop_iter=0
-        # Print non-TTY status every NONTTY_STATUS_EVERY seconds
-        local nontty_status_every=30
-        local nontty_last_print=0
-
         while [[ $completed -lt $total_in_batch ]]; do
             completed=0
             local running_summary=()
@@ -3156,11 +3121,12 @@ run_tests_parallel() {
                 # Kill tests that exceed the hard ceiling
                 if [[ $elapsed -gt $per_test_kill_seconds ]]; then
                     local stuck_test="${pid_to_test[$pid]}"
-                    [[ "$is_tty" == true ]] && echo
+                    echo
                     warning "  ⏰ Killing '$stuck_test' (pid $pid) — exceeded ${per_test_kill_seconds}s"
                     kill -TERM "$pid" 2>/dev/null
                     sleep 1
                     kill -KILL "$pid" 2>/dev/null
+                    # Record as FAIL so the results reader sees it
                     (
                         flock -x 200
                         echo "$stuck_test|FAIL" >> "$RESULTS_FILE"
@@ -3171,57 +3137,29 @@ run_tests_parallel() {
                 running_summary+=("${pid_to_test[$pid]}(${elapsed}s)")
             done
 
+            # Show progress bar + running test names
             if [[ $total_in_batch -gt 0 ]]; then
                 local progress_pct=$(( completed * 100 / total_in_batch ))
                 local filled=$(( completed * 40 / total_in_batch ))
                 local empty=$(( 40 - filled ))
-                local running_count=${#running_summary[@]}
-                # Build a compact running-text that fits in the terminal
                 local running_text=""
-                if [[ $running_count -gt 0 ]]; then
-                    # bar + counters take ~60 visible chars; reserve that
-                    local budget=$(( term_cols - 60 ))
-                    [[ $budget -lt 20 ]] && budget=20
-                    local joined
-                    joined=$(IFS=','; echo "${running_summary[*]}")
-                    if (( ${#joined} > budget )); then
-                        # Truncate and append "…(+N more)"
-                        local more=$(( running_count - 1 ))
-                        local first="${running_summary[0]}"
-                        if [[ $more -gt 0 ]]; then
-                            running_text=" — running: ${first}, …(+${more} more)"
-                        else
-                            running_text=" — running: ${first}"
-                        fi
-                    else
-                        running_text=" — running: ${joined}"
-                    fi
+                if [[ ${#running_summary[@]} -gt 0 ]]; then
+                    running_text=" — running: $(IFS=', '; echo "${running_summary[*]}")"
                 fi
-
-                if [[ "$is_tty" == true ]]; then
-                    local line
-                    line=$(printf "\r  ${BLUE}[${GREEN}%${filled}s${NC}%${empty}s${BLUE}]${NC} ${completed}/${total_in_batch} (${progress_pct}%%)%s" "$(printf '#%.0s' $(seq 1 $filled 2>/dev/null))" "$(printf ' %.0s' $(seq 1 $empty 2>/dev/null))" "$running_text")
-                    local pad=""
-                    if (( ${#line} < last_status_line_len )); then
-                        pad=$(printf '%*s' $(( last_status_line_len - ${#line} )) "")
-                    fi
-                    printf "%s%s" "$line" "$pad"
-                    last_status_line_len=${#line}
-                else
-                    # Non-TTY: print a single line every nontty_status_every seconds
-                    if (( now - nontty_last_print >= nontty_status_every )) || (( loop_iter == 0 )); then
-                        printf "  [%d/%d] %d%% running=%d%s\n" \
-                            "$completed" "$total_in_batch" "$progress_pct" "$running_count" "$running_text" \
-                            | tee -a "$LOG_FILE"
-                        nontty_last_print=$now
-                    fi
+                local line
+                line=$(printf "\r  ${BLUE}[${GREEN}%${filled}s${NC}%${empty}s${BLUE}]${NC} ${completed}/${total_in_batch} (${progress_pct}%%)%s" "$(printf '#%.0s' $(seq 1 $filled 2>/dev/null))" "$(printf ' %.0s' $(seq 1 $empty 2>/dev/null))" "$running_text")
+                # Pad with spaces to overwrite previous longer line, then carriage return
+                local pad=""
+                if (( ${#line} < last_status_line_len )); then
+                    pad=$(printf '%*s' $(( last_status_line_len - ${#line} )) "")
                 fi
+                printf "%s%s" "$line" "$pad"
+                last_status_line_len=${#line}
             fi
 
-            loop_iter=$((loop_iter + 1))
             sleep 1
         done
-        [[ "$is_tty" == true ]] && echo
+        echo
         echo
         
         # Read batch results
