@@ -18,6 +18,10 @@ safe-outputs:
     workflows: [test-copilot-dispatch-worker]
     max: 1
     # min: 1
+    samples:
+      - workflow_name: "test-copilot-dispatch-worker"
+        inputs:
+          sentinel: "${{ github.event.inputs.sentinel }}"
 ---
 
 Dispatch the workflow named "test-copilot-dispatch-worker" with input `sentinel` set to "${{ github.event.inputs.sentinel }}".

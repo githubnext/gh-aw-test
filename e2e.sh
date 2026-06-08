@@ -1192,24 +1192,32 @@ create_test_pr_with_branch() {
 
     local repo_flag=""
     local api_repo=":owner/:repo"
-    local remote_url="origin"
     if [[ -n "$repo" ]]; then
         repo_flag="--repo $repo"
         api_repo="$repo"
-        remote_url="https://github.com/$repo.git"
     fi
-    
-    # Create a remote branch from main without changing local git state
-    git push "$remote_url" "main:$branch" &>/dev/null
-    
+
+    # Create the remote branch via gh api. `git push` against a cross-repo
+    # HTTPS URL has no credentials on the runner and was silently failing,
+    # leaving siderepo PR tests without a PR to trigger from.
+    local main_sha=$(gh api repos/"$api_repo"/git/refs/heads/main --jq '.object.sha' 2>/dev/null)
+    if [[ -z "$main_sha" ]]; then
+        echo ""
+        return
+    fi
+    gh api repos/"$api_repo"/git/refs \
+        --method POST \
+        --field ref="refs/heads/$branch" \
+        --field sha="$main_sha" &>/dev/null
+
     # Create a commit on the remote branch using GitHub API to make it different from main
     local commit_message="Test commit for PR"
     local file_content="# Test PR Content\n\nThis is a test file created for PR testing at $(date)"
     local file_path="test-file-$(date +%s)-${BASHPID:-$$}-$RANDOM.md"
-    
-    # Get the initial SHA of the branch (before our test commit)
-    local initial_sha=$(git ls-remote --heads "$remote_url" "$branch" 2>/dev/null | cut -f1)
-    
+
+    # Confirm the branch ref exists on the remote before adding a commit
+    local initial_sha=$(gh api repos/"$api_repo"/git/refs/heads/"$branch" --jq '.object.sha' 2>/dev/null)
+
     if [[ -n "$initial_sha" ]]; then
         # Create a new file on the branch using GitHub API
         gh api repos/"$api_repo"/contents/"$file_path" \
@@ -1217,13 +1225,13 @@ create_test_pr_with_branch() {
             --field message="$commit_message" \
             --field content="$(echo -e "$file_content" | base64 -w 0)" \
             --field branch="$branch" &>/dev/null
-        
+
         # Get the SHA after creating the test commit
-        local after_commit_sha=$(git ls-remote --heads "$remote_url" "$branch" 2>/dev/null | cut -f1)
-        
+        local after_commit_sha=$(gh api repos/"$api_repo"/git/refs/heads/"$branch" --jq '.object.sha' 2>/dev/null)
+
         # Create a PR using the GitHub CLI
         local pr_url=$(gh pr create $repo_flag --title "$title" --body "$body" --head "$branch" --base main 2>/dev/null)
-        
+
         if [[ -n "$pr_url" ]]; then
             local pr_number=$(echo "$pr_url" | grep -o '[0-9]\+$')
             echo "$pr_number,$branch,$after_commit_sha,$repo"
@@ -2946,11 +2954,7 @@ run_single_test() {
                                     local repo_url="$REPO_OWNER/$REPO_NAME"
                                     [[ -n "$target_repo" ]] && repo_url="$target_repo"
                                     success "Created parent #$parent_num and sub #$sub_num for $workflow"
-                                    local trigger_body=$'Link the sub-issue to the parent.\n\nparent='"$parent_num"$'\nsub='"$sub_num"
-                                    local trigger_num=$(create_test_issue "[link-sub-issue request] from $ai_display_name" "$trigger_body" "" "$target_repo")
-                                    if [[ -n "$trigger_num" ]]; then
-                                        success "Created trigger issue #$trigger_num for $workflow: https://github.com/$repo_url/issues/$trigger_num"
-                                        sleep 10
+                                    if trigger_workflow_with_inputs "$workflow" "parent_issue_number=$parent_num" "sub_issue_number=$sub_num"; then
                                         if wait_for_sub_issue_linked "$parent_num" "$sub_num" "$workflow" "$target_repo"; then
                                             test_result="PASS"
                                         fi
@@ -2965,13 +2969,7 @@ run_single_test() {
                                     comment_node_id=$(add_test_comment_get_node_id "$host_num" "This comment should be hidden by the $workflow safe output." "$target_repo")
                                     if [[ -n "$comment_node_id" ]]; then
                                         info "Posted comment with node ID: $comment_node_id"
-                                        local repo_url="$REPO_OWNER/$REPO_NAME"
-                                        [[ -n "$target_repo" ]] && repo_url="$target_repo"
-                                        local trigger_body=$'Please hide the comment whose GraphQL node ID is below.\n\nhide-comment-node-id='"$comment_node_id"
-                                        local trigger_num=$(create_test_issue "Test hide comment from $ai_display_name" "$trigger_body" "" "$target_repo")
-                                        if [[ -n "$trigger_num" ]]; then
-                                            success "Created trigger issue #$trigger_num for $workflow: https://github.com/$repo_url/issues/$trigger_num"
-                                            sleep 10
+                                        if trigger_workflow_with_inputs "$workflow" "comment_node_id=$comment_node_id" "host_issue_number=$host_num"; then
                                             if wait_for_comment_hidden "$comment_node_id" "$workflow"; then
                                                 test_result="PASS"
                                             fi
