@@ -1,41 +1,24 @@
-# Status after upstream fixes + local sample restoration (commit fde69be, 2026-06-07)
+# Status after commit (2026-06-08): two-PR sample patches now use feature-{a,b}/notes.md
+# (was feature-{a,b}/README.md, blocked by file-protection request_review fallback).
+#
 # Upstream gh-aw issues filed:
-#   #37545 - side-repo origin URL overwrite by "Configure Git credentials" step
-#   #37546 - push_to_pull_request_branch samples with static branch:
+#   #37545 - side-repo not checked out / origin URL handling in apply_samples path
+#   #37546 - push_to_pull_request_branch sample auto-fills `branch: gh-aw-sample-1`
+#            instead of resolving to the trigger's PR head ref
 #   #37550 - samples validation rejects dynamic tools (dispatch-workflow etc)
-#   #37530 (reopened via comment) - add_reviewer reports success but no observable change for Copilot bot
+#   #37530 (reopened) - add_reviewer Copilot bot needs CCR token (worked around: use pelikhan)
 #
-# Expected to PASS now (samples restored / lockfiles regenerated with gh-aw v0.78.3-50):
-#   test-copilot-create-two-pull-requests           - max:2 uncommented
-#   test-claude-create-two-pull-requests
-#   test-codex-create-two-pull-requests
-#   test-copilot-nosandbox-create-two-pull-requests
-#   test-copilot-siderepo-create-two-pull-requests  - (may still hit #37545)
-#   test-copilot-siderepo-add-labels                - runtime expr in sample
-#   test-copilot-siderepo-add-comment               - runtime expr
-#   test-copilot-siderepo-update-issue              - runtime expr
-#   test-copilot-siderepo-add-discussion-comment    - runtime expr
-#   test-copilot-push-to-pull-request-branch        - static branch removed (works around #37546)
-#   test-claude-push-to-pull-request-branch
-#   test-codex-push-to-pull-request-branch
-#   test-copilot-nosandbox-push-to-pull-request-branch
-#   test-copilot-nosandbox-add-discussion-comment   - sample body fixed
+# Expected to PASS after this commit:
+#   test-copilot-create-two-pull-requests           - patch now feature-a/notes.md
+#   test-copilot-nosandbox-create-two-pull-requests - patch now feature-a/notes.md
 #
-# Still expected to FAIL (upstream blockers):
-test-copilot-siderepo-create-pull-request          # gh-aw#37545 (siderepo origin overwrite) 27095643971
+# Still failing (upstream / design blockers):
+test-copilot-siderepo-create-pull-request                 # gh-aw#37545 (siderepo not in workspace at apply_samples)
 test-copilot-siderepo-create-pull-request-review-comment  # gh-aw#37545
-test-copilot-dispatch-workflow                     # gh-aw#37550 (no samples for dynamic tools) 27095402224
-test-copilot-hide-comment                          # design: needs runtime body parsing 27095402853
-test-copilot-link-sub-issue                        # design: needs runtime body parsing 27095288338
-test-copilot-create-two-pull-requests 27091347377
-test-copilot-gh-steps 27095190920
-test-copilot-update-pull-request 27095403884
-test-copilot-close-pull-request 27095403873
-test-copilot-push-to-pull-request-branch 27095404551
-test-copilot-create-pull-request-review-comment 27095404543
-test-copilot-nosandbox-add-discussion-comment 27095525758
-test-copilot-nosandbox-create-two-pull-requests 27091711926
-test-copilot-nosandbox-add-comment 27095525992
-test-copilot-nosandbox-command 27095646742
-test-copilot-siderepo-create-two-pull-requests 27091821151
-test-copilot-nosandbox-push-to-pull-request-branch 27095646745
+test-copilot-siderepo-create-two-pull-requests            # gh-aw#37545 (confirmed reproduces in samples path)
+test-copilot-push-to-pull-request-branch                  # gh-aw#37546 (branch auto-filled gh-aw-sample-1)
+test-copilot-nosandbox-push-to-pull-request-branch        # gh-aw#37546
+test-copilot-dispatch-workflow                            # gh-aw#37550
+test-copilot-custom-safe-outputs                          # no samples -> apply_samples produces 0 messages
+test-copilot-link-sub-issue                               # design: needs runtime body parsing (parent=X sub=Y); engine never invoked
+test-copilot-hide-comment                                 # design: needs runtime node id parsing; same root cause

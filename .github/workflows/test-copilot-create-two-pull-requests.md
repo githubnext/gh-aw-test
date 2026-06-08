@@ -17,10 +17,10 @@ safe-outputs:
         body: "Adds Feature A as part of the two-PR test."
         branch: "gh-aw-sample-copilot-feature-a"
         patch: |
-          diff --git a/feature-a/README.md b/feature-a/README.md
+          diff --git a/feature-a/notes.md b/feature-a/notes.md
           new file mode 100644
           --- /dev/null
-          +++ b/feature-a/README.md
+          +++ b/feature-a/notes.md
           @@ -0,0 +1,3 @@
           +# Feature A
           +
@@ -29,10 +29,10 @@ safe-outputs:
         body: "Adds Feature B as part of the two-PR test."
         branch: "gh-aw-sample-copilot-feature-b"
         patch: |
-          diff --git a/feature-b/README.md b/feature-b/README.md
+          diff --git a/feature-b/notes.md b/feature-b/notes.md
           new file mode 100644
           --- /dev/null
-          +++ b/feature-b/README.md
+          +++ b/feature-b/notes.md
           @@ -0,0 +1,3 @@
           +# Feature B
           +
@@ -47,7 +47,7 @@ This test workflow specifically tests creating two independent pull requests.
 
 ## First Pull Request
 
-1. **First commit**: Create a file "feature-a/README.md" with content:
+1. **First commit**: Create a file "feature-a/notes.md" with content:
    ```markdown
    # Feature A
    
@@ -70,7 +70,7 @@ Create the first pull request with title "Feature A: Multi-PR test" and body "Th
 
 ## Second Pull Request
 
-1. **First commit**: Create a file "feature-b/README.md" with content:
+1. **First commit**: Create a file "feature-b/notes.md" with content:
    ```markdown
    # Feature B
    
