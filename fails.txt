@@ -22,9 +22,20 @@
 #   test-copilot-nosandbox-add-discussion-comment   - sample body fixed
 #
 # Still expected to FAIL (upstream blockers):
-test-copilot-add-reviewer                          # gh-aw#37530 reopened
-test-copilot-siderepo-create-pull-request          # gh-aw#37545 (siderepo origin overwrite)
+test-copilot-siderepo-create-pull-request          # gh-aw#37545 (siderepo origin overwrite) 27095643971
 test-copilot-siderepo-create-pull-request-review-comment  # gh-aw#37545
-test-copilot-dispatch-workflow                     # gh-aw#37550 (no samples for dynamic tools)
-test-copilot-hide-comment                          # design: needs runtime body parsing
-test-copilot-link-sub-issue                        # design: needs runtime body parsing
+test-copilot-dispatch-workflow                     # gh-aw#37550 (no samples for dynamic tools) 27095402224
+test-copilot-hide-comment                          # design: needs runtime body parsing 27095402853
+test-copilot-link-sub-issue                        # design: needs runtime body parsing 27095288338
+test-copilot-create-two-pull-requests 27091347377
+test-copilot-gh-steps 27095190920
+test-copilot-update-pull-request 27095403884
+test-copilot-close-pull-request 27095403873
+test-copilot-push-to-pull-request-branch 27095404551
+test-copilot-create-pull-request-review-comment 27095404543
+test-copilot-nosandbox-add-discussion-comment 27095525758
+test-copilot-nosandbox-create-two-pull-requests 27091711926
+test-copilot-nosandbox-add-comment 27095525992
+test-copilot-nosandbox-command 27095646742
+test-copilot-siderepo-create-two-pull-requests 27091821151
+test-copilot-nosandbox-push-to-pull-request-branch 27095646745

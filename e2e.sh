@@ -264,7 +264,7 @@ cleanup_on_exit() {
         local -A seen
         local unique_workflows=()
         for workflow in "${GLOBAL_WORKFLOWS_TO_DISABLE[@]}"; do
-            if [[ -z "${seen[$workflow]}" ]]; then
+            if [[ -z "${seen[$workflow]:-}" ]]; then
                 seen[$workflow]=1
                 unique_workflows+=("$workflow")
             fi
@@ -395,6 +395,8 @@ get_title_prefix() {
         echo "[${ai_type}-test-two-prs] "
     elif [[ "$workflow_name" == *"create-pull-request"* ]]; then
         echo "[${ai_type}-test-single-pr] "
+    elif [[ "$workflow_name" == *"gh-steps"* ]]; then
+        echo "[${ai_type}-test-gh-steps] "
     else
         # Default for non-PR tests (issues, discussions, etc.)
         echo "[${ai_type}-test] "
@@ -1122,7 +1124,7 @@ create_test_pr() {
     local title="$1"
     local body="$2"
     local repo="${3:-}"
-    local branch="test-pr-$(date +%s)"
+    local branch="test-pr-$(date +%s)-${BASHPID:-$$}-$RANDOM"
 
     # Parallel-safety marker (see create_test_issue)
     if [[ -n "${E2E_TRIGGER_MARKER:-}" ]]; then
@@ -1146,7 +1148,7 @@ create_test_pr() {
     # Create a commit on the remote branch using GitHub API to make it different from main
     local commit_message="Test commit for PR"
     local file_content="# Test PR Content\n\nThis is a test file created for PR testing at $(date)"
-    local file_path="test-file-$(date +%s).md"
+    local file_path="test-file-$(date +%s)-${BASHPID:-$$}-$RANDOM.md"
     
     # Get the current SHA of the branch
     local remote_url="origin"
@@ -1181,7 +1183,7 @@ create_test_pr_with_branch() {
     local title="$1"
     local body="$2"
     local repo="${3:-}"
-    local branch="test-pr-$(date +%s)"
+    local branch="test-pr-$(date +%s)-${BASHPID:-$$}-$RANDOM"
 
     # Parallel-safety marker (see create_test_issue)
     if [[ -n "${E2E_TRIGGER_MARKER:-}" ]]; then
@@ -1203,7 +1205,7 @@ create_test_pr_with_branch() {
     # Create a commit on the remote branch using GitHub API to make it different from main
     local commit_message="Test commit for PR"
     local file_content="# Test PR Content\n\nThis is a test file created for PR testing at $(date)"
-    local file_path="test-file-$(date +%s).md"
+    local file_path="test-file-$(date +%s)-${BASHPID:-$$}-$RANDOM.md"
     
     # Get the initial SHA of the branch (before our test commit)
     local initial_sha=$(git ls-remote --heads "$remote_url" "$branch" 2>/dev/null | cut -f1)
@@ -1304,7 +1306,7 @@ validate_comment() {
     
     local comments=$(gh issue view $repo_flag "$issue_number" --json comments --jq '.comments[].body')
     
-    if echo "$comments" | grep -qE "$expected_comment_text"; then
+    if echo "$comments" | grep -qF "$expected_comment_text"; then
         success "Issue #$issue_number has expected comment containing: $expected_comment_text"
         return 0
     else
@@ -1651,7 +1653,7 @@ wait_for_comment() {
     local expected_text="$2"
     local test_name="$3"
     local repo="${4:-}"
-    local max_wait=240 # Max wait time in seconds (4 minutes)
+    local max_wait=480 # Max wait time in seconds (8 minutes)
     local waited=0
     
     while [[ $waited -lt $max_wait ]]; do
@@ -1673,7 +1675,7 @@ wait_for_labels() {
     local expected_label="$2"
     local test_name="$3"
     local repo="${4:-}"
-    local max_wait=240 # Max wait time in seconds (4 minutes)
+    local max_wait=480 # Max wait time in seconds (8 minutes)
     local waited=0
     
     while [[ $waited -lt $max_wait ]]; do
@@ -1695,7 +1697,7 @@ wait_for_issue_update() {
     local ai_type="$2"
     local test_name="$3"
     local repo="${4:-}"
-    local max_wait=240 # Max wait time in seconds (4 minutes)
+    local max_wait=480 # Max wait time in seconds (8 minutes)
     local waited=0
     
     while [[ $waited -lt $max_wait ]]; do
@@ -1756,7 +1758,7 @@ wait_for_issue_closed() {
     local expected_comment="$2"
     local test_name="$3"
     local repo="${4:-}"
-    local max_wait=240 # Max wait time in seconds (4 minutes)
+    local max_wait=480 # Max wait time in seconds (8 minutes)
     local waited=0
     
     while [[ $waited -lt $max_wait ]]; do
@@ -1799,7 +1801,7 @@ wait_for_label_removed() {
     local label_name="$2"
     local test_name="$3"
     local repo="${4:-}"
-    local max_wait=240 # Max wait time in seconds (4 minutes)
+    local max_wait=480 # Max wait time in seconds (8 minutes)
     local waited=0
     
     while [[ $waited -lt $max_wait ]]; do
@@ -1850,7 +1852,7 @@ wait_for_discussion_closed() {
     local discussion_number="$1"
     local test_name="$2"
     local repo="${3:-}"
-    local max_wait=240 # Max wait time in seconds (4 minutes)
+    local max_wait=480 # Max wait time in seconds (8 minutes)
     local waited=0
     
     while [[ $waited -lt $max_wait ]]; do
@@ -1892,7 +1894,7 @@ wait_for_pr_closed() {
     local pr_number="$1"
     local test_name="$2"
     local repo="${3:-}"
-    local max_wait=240 # Max wait time in seconds (4 minutes)
+    local max_wait=480 # Max wait time in seconds (8 minutes)
     local waited=0
     
     while [[ $waited -lt $max_wait ]]; do
@@ -1914,14 +1916,21 @@ wait_for_command_comment() {
     local expected_text="$2"
     local test_name="$3"
     local repo="${4:-}"
-    local max_wait=240 # Max wait time in seconds (4 minutes)
+    local max_wait=480 # Max wait time in seconds (8 minutes)
     local waited=0
     
+    # expected_text may contain '|'-separated alternatives; match any as a literal substring
+    local IFS='|'
+    read -ra _alts <<< "$expected_text"
+    unset IFS
+
     while [[ $waited -lt $max_wait ]]; do
-        if validate_comment "$issue_number" "$expected_text" "$repo"; then
-            record_test_pass "$test_name"
-            return 0
-        fi
+        for _alt in "${_alts[@]}"; do
+            if validate_comment "$issue_number" "$_alt" "$repo"; then
+                record_test_pass "$test_name"
+                return 0
+            fi
+        done
         info "..."
         sleep 5
         waited=$((waited + 5))
@@ -1936,7 +1945,7 @@ wait_for_branch_update() {
     local initial_sha="$2"
     local test_name="$3"
     local repo="${4:-}"
-    local max_wait=240 # Max wait time in seconds (4 minutes)
+    local max_wait=480 # Max wait time in seconds (8 minutes)
     local waited=0
     
     while [[ $waited -lt $max_wait ]]; do
@@ -1958,7 +1967,7 @@ wait_for_pr_reviews() {
     local ai_type="$2"
     local test_name="$3"
     local repo="${4:-}"
-    local max_wait=240 # Max wait time in seconds (4 minutes)
+    local max_wait=480 # Max wait time in seconds (8 minutes)
     local waited=0
     
     while [[ $waited -lt $max_wait ]]; do
@@ -1980,7 +1989,7 @@ wait_for_pr_update() {
     local ai_type="$2"
     local test_name="$3"
     local repo="${4:-}"
-    local max_wait=240 # Max wait time in seconds (4 minutes)
+    local max_wait=480 # Max wait time in seconds (8 minutes)
     local waited=0
 
     while [[ $waited -lt $max_wait ]]; do
@@ -2010,7 +2019,7 @@ validate_discussion_comment() {
     # Get discussion comments using GitHub API
     local comments=$(gh api repos/"$api_repo"/discussions/"$discussion_number"/comments --jq '.[].body' 2>/dev/null || echo "")
     
-    if echo "$comments" | grep -q "$expected_comment_text"; then
+    if echo "$comments" | grep -qF "$expected_comment_text"; then
         success "Discussion #$discussion_number has expected comment containing: $expected_comment_text"
         return 0
     else
@@ -2024,7 +2033,7 @@ wait_for_discussion_comment() {
     local expected_text="$2"
     local test_name="$3"
     local repo="${4:-}"
-    local max_wait=240 # Max wait time in seconds (4 minutes)
+    local max_wait=480 # Max wait time in seconds (8 minutes)
     local waited=0
     
     while [[ $waited -lt $max_wait ]]; do
@@ -2079,7 +2088,7 @@ wait_for_discussion_updated() {
     local expected_title_substring="$2"
     local test_name="$3"
     local repo="${4:-}"
-    local max_wait=240
+    local max_wait=480
     local waited=0
     while [[ $waited -lt $max_wait ]]; do
         if validate_discussion_updated "$discussion_number" "$expected_title_substring" "$repo"; then
@@ -2115,7 +2124,7 @@ wait_for_assignee_present() {
     local expected_assignee="$2"
     local test_name="$3"
     local repo="${4:-}"
-    local max_wait=240
+    local max_wait=480
     local waited=0
     while [[ $waited -lt $max_wait ]]; do
         if validate_assignee_present "$issue_number" "$expected_assignee" "$repo"; then
@@ -2151,7 +2160,7 @@ wait_for_assignee_absent() {
     local removed_assignee="$2"
     local test_name="$3"
     local repo="${4:-}"
-    local max_wait=240
+    local max_wait=480
     local waited=0
     while [[ $waited -lt $max_wait ]]; do
         if validate_assignee_absent "$issue_number" "$removed_assignee" "$repo"; then
@@ -2209,7 +2218,7 @@ wait_for_milestone_assigned() {
     local expected_milestone_title="$2"
     local test_name="$3"
     local repo="${4:-}"
-    local max_wait=240
+    local max_wait=480
     local waited=0
     while [[ $waited -lt $max_wait ]]; do
         if validate_milestone_assigned "$issue_number" "$expected_milestone_title" "$repo"; then
@@ -2256,7 +2265,7 @@ wait_for_sub_issue_linked() {
     local sub_number="$2"
     local test_name="$3"
     local repo="${4:-}"
-    local max_wait=240
+    local max_wait=480
     local waited=0
     while [[ $waited -lt $max_wait ]]; do
         if validate_sub_issue_linked "$parent_number" "$sub_number" "$repo"; then
@@ -2301,7 +2310,7 @@ validate_comment_hidden() {
 wait_for_comment_hidden() {
     local comment_node_id="$1"
     local test_name="$2"
-    local max_wait=240
+    local max_wait=480
     local waited=0
     while [[ $waited -lt $max_wait ]]; do
         if validate_comment_hidden "$comment_node_id"; then
@@ -2342,7 +2351,7 @@ wait_for_pr_reviewer_added() {
     local expected_reviewer="$2"
     local test_name="$3"
     local repo="${4:-}"
-    local max_wait=240
+    local max_wait=480
     local waited=0
     while [[ $waited -lt $max_wait ]]; do
         if validate_pr_reviewer_added "$pr_number" "$expected_reviewer" "$repo"; then
@@ -2379,7 +2388,7 @@ wait_for_pr_review_with_body() {
     local expected_body_substring="$2"
     local test_name="$3"
     local repo="${4:-}"
-    local max_wait=240
+    local max_wait=480
     local waited=0
     while [[ $waited -lt $max_wait ]]; do
         if validate_pr_review_with_body "$pr_number" "$expected_body_substring" "$repo"; then
@@ -2583,7 +2592,7 @@ run_single_test() {
             fi
             ;;
         # Workflow dispatch tests - triggered with gh aw run
-        *"create-issue"|*"create-discussion"|*"create-pull-request"|*"code-scanning-alert"|*"mcp"|*"safe-jobs"|*"gh-steps"|*"custom-safe-outputs")
+        *"create-issue"|*"create-discussion"|*"create-pull-request"|*"create-two-pull-requests"|*"code-scanning-alert"|*"mcp"|*"safe-jobs"|*"gh-steps"|*"custom-safe-outputs")
             local workflow_success=false
             if trigger_workflow_dispatch_and_await_completion "$workflow"; then
                 workflow_success=true
@@ -3102,8 +3111,8 @@ run_tests_parallel() {
         # Wait for batch to complete with live status
         local completed=0
         local total_in_batch=${#batch_tests[@]}
-        # Hard ceiling per test — these tests should normally finish in ~1-2 min
-        local per_test_kill_seconds=300
+        # Hard ceiling per test — PR-triggered tests + validation polling can take ~5–8 min in parallel
+        local per_test_kill_seconds=600
         echo
         info "  ⏳ Waiting for $total_in_batch tests to complete (per-test kill after ${per_test_kill_seconds}s)..."
 

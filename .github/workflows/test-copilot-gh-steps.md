@@ -25,7 +25,7 @@ steps:
 
 safe-outputs:
   create-issue:
-    title-prefix: "[copilot-test] "
+    title-prefix: "[copilot-test-gh-steps] "
     labels: [copilot, automation]
     samples:
       - title: "Issue count report"
