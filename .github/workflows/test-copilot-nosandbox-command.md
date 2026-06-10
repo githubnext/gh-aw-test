@@ -11,6 +11,9 @@ permissions: read-all
 engine: 
   id: copilot
 
+features:
+  dangerously-disable-sandbox-agent: "test environment with no useful secrets or information"
+
 sandbox:
   agent: false
 
