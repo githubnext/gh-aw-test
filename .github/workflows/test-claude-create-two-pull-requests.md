@@ -17,10 +17,10 @@ safe-outputs:
         body: "Adds Feature A as part of the two-PR test."
         branch: "gh-aw-sample-claude-feature-a"
         patch: |
-          diff --git a/feature-a/README.md b/feature-a/README.md
+          diff --git a/feature-a/notes.md b/feature-a/notes.md
           new file mode 100644
           --- /dev/null
-          +++ b/feature-a/README.md
+          +++ b/feature-a/notes.md
           @@ -0,0 +1,3 @@
           +# Feature A
           +
@@ -29,10 +29,10 @@ safe-outputs:
         body: "Adds Feature B as part of the two-PR test."
         branch: "gh-aw-sample-claude-feature-b"
         patch: |
-          diff --git a/feature-b/README.md b/feature-b/README.md
+          diff --git a/feature-b/notes.md b/feature-b/notes.md
           new file mode 100644
           --- /dev/null
-          +++ b/feature-b/README.md
+          +++ b/feature-b/notes.md
           @@ -0,0 +1,3 @@
           +# Feature B
           +

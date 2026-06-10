@@ -4,7 +4,7 @@ on:
 
 permissions: read-all
 
-engine: claude
+engine: codex
 
 safe-outputs:
   jobs:
