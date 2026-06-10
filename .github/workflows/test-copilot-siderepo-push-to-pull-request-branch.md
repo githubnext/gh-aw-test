@@ -29,8 +29,7 @@ safe-outputs:
     # target-repo: 'githubnext/gh-aw-side-repo'
     # allowed-repos: ['githubnext/gh-aw-side-repo']
     samples:
-      - branch: "gh-aw-sample-copilot-siderepo-push-branch"
-        message: "Multi-commit test push from Copilot in side repo"
+      - message: "Multi-commit test push from Copilot in side repo"
         patch: |
           diff --git a/README-copilot-siderepo-test.md b/README-copilot-siderepo-test.md
           new file mode 100644

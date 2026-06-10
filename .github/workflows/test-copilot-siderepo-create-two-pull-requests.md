@@ -12,6 +12,12 @@ tools:
     # The GitHub tools must be authorized to read across-repo 
     github-token: ${{ secrets.TEMP_USER_PAT }}
 
+checkout:
+  - repository: githubnext/gh-aw-side-repo
+    token: ${{ secrets.TEMP_USER_PAT }}
+    fetch: ["*"]
+    fetch-depth: 0
+
 safe-outputs:
   create-pull-request:
     title-prefix: "[copilot-test-two-prs] "

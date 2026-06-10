@@ -3153,6 +3153,15 @@ run_tests_parallel() {
                 if [[ ${#running_summary[@]} -gt 0 ]]; then
                     running_text=" — running: $(IFS=', '; echo "${running_summary[*]}")"
                 fi
+                # Visible prefix: "  [" + 40-char bar + "] N/M (PP%)"
+                local visible_prefix_len=$(( 2 + 1 + 40 + 1 + 1 + ${#completed} + 1 + ${#total_in_batch} + 2 + ${#progress_pct} + 2 ))
+                local max_width=120
+                local available=$(( max_width - visible_prefix_len ))
+                # Note: ${#running_text} counts UTF-8 bytes, so the em-dash counts as 3.
+                # That's fine — it just makes us truncate slightly earlier, never later.
+                if (( available > 4 )) && (( ${#running_text} > available )); then
+                    running_text="${running_text:0:$((available-1))}…"
+                fi
                 local line
                 line=$(printf "\r  ${BLUE}[${GREEN}%${filled}s${NC}%${empty}s${BLUE}]${NC} ${completed}/${total_in_batch} (${progress_pct}%%)%s" "$(printf '#%.0s' $(seq 1 $filled 2>/dev/null))" "$(printf ' %.0s' $(seq 1 $empty 2>/dev/null))" "$running_text")
                 # Pad with spaces to overwrite previous longer line, then carriage return

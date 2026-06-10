@@ -317,6 +317,7 @@ jobs:
           path: |
             /tmp/gh-aw/aw_info.json
             /tmp/gh-aw/model_multipliers.json
+            /tmp/gh-aw/models.json
             /tmp/gh-aw/aw-prompts/prompt.txt
             /tmp/gh-aw/aw-prompts/prompt-template.txt
             /tmp/gh-aw/aw-prompts/prompt-import-tree.json
@@ -804,6 +805,7 @@ jobs:
           GH_AW_AGENT_STDIO_LOG: /tmp/gh-aw/agent-stdio.log
           GH_AW_SAFE_OUTPUTS_CONFIG_PATH: ${{ runner.temp }}/gh-aw/safeoutputs/config.json
           GH_AW_SAFE_OUTPUTS: ${{ runner.temp }}/gh-aw/safeoutputs/outputs.jsonl
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           mkdir -p "$(dirname "$GH_AW_AGENT_STDIO_LOG")"
@@ -1152,7 +1154,7 @@ jobs:
       contents: write
       issues: write
       pull-requests: write
-    timeout-minutes: 15
+    timeout-minutes: 45
     env:
       GH_AW_AGENT_AIC: ${{ needs.agent.outputs.aic }}
       GH_AW_AIC: ${{ needs.agent.outputs.aic }}
