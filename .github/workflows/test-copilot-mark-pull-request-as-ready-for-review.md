@@ -14,6 +14,9 @@ engine:
 safe-outputs:
   mark-pull-request-as-ready-for-review:
     target: "triggering"
+    # markPullRequestReadyForReview GraphQL mutation is blocked for GITHUB_TOKEN
+    # (integration token); requires a user PAT. GH_AW_TEST_PAT is the repo-level PAT.
+    github-token: ${{ secrets.GH_AW_TEST_PAT }}
     # min: 1
     samples:
       - reason: "Marked ready for review by Copilot safe output"

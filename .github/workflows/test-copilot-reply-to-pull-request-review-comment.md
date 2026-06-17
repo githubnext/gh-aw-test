@@ -19,6 +19,7 @@ engine:
 
 safe-outputs:
   reply-to-pull-request-review-comment:
+    target: "*"  # workflow_dispatch has no PR context; pull_request_number comes from inputs
     # min: 1
     samples:
       - comment_id: "${{ github.event.inputs.comment_id }}"

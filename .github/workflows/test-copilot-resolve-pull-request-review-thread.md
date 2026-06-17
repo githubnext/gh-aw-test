@@ -19,6 +19,9 @@ engine:
 
 safe-outputs:
   resolve-pull-request-review-thread:
+    # resolveReviewThread GraphQL mutation is blocked for GITHUB_TOKEN (integration
+    # token); requires a user PAT. GH_AW_TEST_PAT is the repo-level PAT used by CI.
+    github-token: ${{ secrets.GH_AW_TEST_PAT }}
     # min: 1
     samples:
       - thread_id: "${{ github.event.inputs.thread_id }}"
