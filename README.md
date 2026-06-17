@@ -75,10 +75,12 @@ Tracking the full matrix of [safe outputs](https://github.com/github/gh-aw/blob/
 ### Pull Requests — Remaining
 
 - [x] `close-pull-request` — test-copilot-close-pull-request
-- [ ] `reply-to-pull-request-review-comment` — test-copilot-reply-to-pull-request-review-comment
-- [ ] `resolve-pull-request-review-thread` — test-copilot-resolve-pull-request-review-thread
+- [x] `reply-to-pull-request-review-comment` — test-copilot-reply-to-pull-request-review-comment
+- [x] `resolve-pull-request-review-thread` — test-copilot-resolve-pull-request-review-thread
 - [x] `submit-pull-request-review` — test-copilot-submit-pull-request-review
 - [x] `add-reviewer` — test-copilot-add-reviewer
+- [x] `mark-pull-request-as-ready-for-review` — test-copilot-mark-pull-request-as-ready-for-review
+- [ ] `merge-pull-request` — cannot yet be sample-tested because the current workflow schema rejects `samples:` for `merge-pull-request`
 
 ### Labels, Assignments & Reviews — Remaining
 
@@ -87,7 +89,7 @@ Tracking the full matrix of [safe outputs](https://github.com/github/gh-aw/blob/
 - [x] `assign-milestone` — test-copilot-assign-milestone
 - [x] `assign-to-user` — test-copilot-assign-to-user
 - [x] `unassign-from-user` — test-copilot-unassign-from-user
-- [ ] `set-issue-type` — test-copilot-set-issue-type (requires repo-configured issue types)
+- [x] `set-issue-type` — test-copilot-set-issue-type
 - [ ] `set-issue-field` — test-copilot-set-issue-field (requires repo-configured issue fields)
 
 ### Security & Agent Tasks — Remaining
@@ -95,6 +97,9 @@ Tracking the full matrix of [safe outputs](https://github.com/github/gh-aw/blob/
 - [x] `dispatch-workflow` — test-copilot-dispatch-workflow
 - [ ] `call-workflow` — test-copilot-call-workflow
 - [ ] `upload-artifact` — test-copilot-upload-artifact
+- [x] `noop` — test-copilot-noop
+- [x] `report-incomplete` — test-copilot-report-incomplete
+- [x] `create-check-run` — test-copilot-create-check-run
 
 ### Deferred (require special infrastructure)
 
@@ -103,8 +108,9 @@ Tracking the full matrix of [safe outputs](https://github.com/github/gh-aw/blob/
 - [ ] `create-project` / `update-project` / `create-project-status-update` — requires PAT with Projects permissions
 - [ ] `update-release` — requires existing releases
 - [ ] `upload-asset` — requires orphaned branch setup
+- [ ] `upload-artifact` — needs a staged fixture file plus artifact-specific assertions in the harness
 - [ ] `autofix-code-scanning-alert` — requires existing code scanning alerts
 - [ ] `dispatch_repository` — experimental, requires cross-repo setup
 - [ ] `missing-data` — system type, auto-enabled
-- [ ] `reply-to-pull-request-review-comment` — requires existing PR review comment ID before workflow runs
-- [ ] `resolve-pull-request-review-thread` — requires existing PR review thread ID before workflow runs
+- [ ] `create-check-run` — needs check-run specific assertions in the harness
+- [ ] `merge-pull-request` — parser currently rejects `samples:` on this safe output, so it does not fit the deterministic sample-based harness yet

@@ -439,6 +439,7 @@ get_all_tests() {
     echo "test-claude-create-code-scanning-alert"
     echo "test-codex-create-repository-code-scanning-alert"
     echo "test-copilot-create-repository-code-scanning-alert"
+    echo "test-copilot-create-check-run"
     echo "test-claude-mcp"
     echo "test-codex-mcp"
     echo "test-copilot-mcp"
@@ -474,6 +475,7 @@ get_all_tests() {
     echo "test-copilot-update-pull-request"
     echo "test-copilot-close-pull-request"
     echo "test-copilot-add-reviewer"
+    echo "test-copilot-mark-pull-request-as-ready-for-review"
     # Command-triggered tests
     echo "test-claude-command"
     echo "test-codex-command"
@@ -484,9 +486,14 @@ get_all_tests() {
     echo "test-claude-create-pull-request-review-comment"
     echo "test-codex-create-pull-request-review-comment"
     echo "test-copilot-create-pull-request-review-comment"
+    echo "test-copilot-reply-to-pull-request-review-comment"
+    echo "test-copilot-resolve-pull-request-review-thread"
     echo "test-copilot-submit-pull-request-review"
+    echo "test-copilot-set-issue-type"
     # Workflow_dispatch tests with inputs (dispatch-workflow needs a sentinel)
     echo "test-copilot-dispatch-workflow"
+    echo "test-copilot-noop"
+    echo "test-copilot-report-incomplete"
     # Nosandbox tests - limited set for claude/codex, full matrix for copilot
     echo "test-copilot-nosandbox-create-issue"
     echo "test-copilot-nosandbox-create-discussion"
@@ -2849,7 +2856,7 @@ run_single_test() {
             fi
             ;;
         # Workflow dispatch tests - triggered with gh aw run
-        *"create-issue"|*"create-discussion"|*"create-pull-request"|*"create-two-pull-requests"|*"code-scanning-alert"|*"mcp"|*"safe-jobs"|*"gh-steps"|*"custom-safe-outputs"|*"noop"|*"report-incomplete")
+        *"create-issue"|*"create-discussion"|*"create-pull-request"|*"create-two-pull-requests"|*"code-scanning-alert"|*"create-check-run"|*"mcp"|*"safe-jobs"|*"gh-steps"|*"custom-safe-outputs"|*"noop"|*"report-incomplete")
             local workflow_success=false
             if trigger_workflow_dispatch_and_await_completion "$workflow"; then
                 workflow_success=true
@@ -3089,6 +3096,19 @@ run_single_test() {
                                     fi
                                 fi
                                 ;;
+                            *"mark-pull-request-as-ready-for-review")
+                                info "Creating draft pull request to trigger $workflow..."
+                                local pr_num=$(create_test_draft_pr "Test PR for $ai_display_name Mark Ready" "This PR is for testing $workflow" "$target_repo")
+                                if [[ -n "$pr_num" ]]; then
+                                    local repo_url="$REPO_OWNER/$REPO_NAME"
+                                    [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                    success "Created draft test PR #$pr_num for $workflow: https://github.com/$repo_url/pull/$pr_num"
+                                    sleep 10
+                                    if wait_for_pr_ready_for_review "$pr_num" "$workflow" "$target_repo"; then
+                                        test_result="PASS"
+                                    fi
+                                fi
+                                ;;
                             *"push-to-pull-request-branch")
                                 info "Creating test pull request to trigger $workflow..."
                                 local pr_info=$(create_test_pr_with_branch "Test PR for $ai_display_name Push-to-Branch" "This PR is for testing $workflow" "$target_repo")
@@ -3100,6 +3120,36 @@ run_single_test() {
                                     post_pr_command "$pr_num" "/test-${ai_type}-push-to-pull-request-branch" "$target_repo"
                                     if wait_for_branch_update "$branch_name" "$after_commit_sha" "$workflow" "$target_repo"; then
                                         test_result="PASS"
+                                    fi
+                                fi
+                                ;;
+                            *"reply-to-pull-request-review-comment")
+                                info "Creating PR + review comment fixture to trigger $workflow..."
+                                local fixture=$(create_test_pr_with_review_comment "Test PR for $ai_display_name Reply Review Comment" "This PR is for testing $workflow." "$target_repo")
+                                if [[ -n "$fixture" ]]; then
+                                    IFS=',' read -r pr_num comment_id thread_id <<< "$fixture"
+                                    local repo_url="$REPO_OWNER/$REPO_NAME"
+                                    [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                    success "Created test PR #$pr_num with review comment $comment_id for $workflow: https://github.com/$repo_url/pull/$pr_num"
+                                    if [[ -n "$comment_id" ]] && trigger_workflow_with_inputs "$workflow" "pull_request_number=$pr_num" "comment_id=$comment_id"; then
+                                        if wait_for_review_comment_reply "$pr_num" "Reply from $ai_display_name reply-to-pull-request-review-comment safe output" "$workflow" "$target_repo"; then
+                                            test_result="PASS"
+                                        fi
+                                    fi
+                                fi
+                                ;;
+                            *"resolve-pull-request-review-thread")
+                                info "Creating PR + review thread fixture to trigger $workflow..."
+                                local fixture=$(create_test_pr_with_review_comment "Test PR for $ai_display_name Resolve Review Thread" "This PR is for testing $workflow." "$target_repo")
+                                if [[ -n "$fixture" ]]; then
+                                    IFS=',' read -r pr_num comment_id thread_id <<< "$fixture"
+                                    local repo_url="$REPO_OWNER/$REPO_NAME"
+                                    [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                    success "Created test PR #$pr_num with review thread $thread_id for $workflow: https://github.com/$repo_url/pull/$pr_num"
+                                    if [[ -n "$thread_id" ]] && trigger_workflow_with_inputs "$workflow" "pull_request_number=$pr_num" "thread_id=$thread_id"; then
+                                        if wait_for_review_thread_resolved "$thread_id" "$workflow"; then
+                                            test_result="PASS"
+                                        fi
                                     fi
                                 fi
                                 ;;
@@ -3191,6 +3241,19 @@ run_single_test() {
                                     success "Created test issue #$issue_num for $workflow: https://github.com/$repo_url/issues/$issue_num"
                                     sleep 10
                                     if wait_for_milestone_assigned "$issue_num" "$milestone_title" "$workflow" "$target_repo"; then
+                                        test_result="PASS"
+                                    fi
+                                fi
+                                ;;
+                            *"set-issue-type")
+                                info "Creating test issue to trigger $workflow..."
+                                local issue_num=$(create_test_issue "Test set issue type from $ai_display_name" "This is a test issue to trigger $workflow" "" "$target_repo")
+                                if [[ -n "$issue_num" ]]; then
+                                    local repo_url="$REPO_OWNER/$REPO_NAME"
+                                    [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                    success "Created test issue #$issue_num for $workflow: https://github.com/$repo_url/issues/$issue_num"
+                                    sleep 10
+                                    if wait_for_issue_type "$issue_num" "Task" "$workflow" "$target_repo"; then
                                         test_result="PASS"
                                     fi
                                 fi
