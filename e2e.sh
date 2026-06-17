@@ -2445,6 +2445,255 @@ wait_for_dispatched_issue_created() {
     return 1
 }
 
+# --- set-issue-type -----------------------------------------------------------
+
+validate_issue_type() {
+    local issue_number="$1"
+    local expected_type="$2"
+    local repo="${3:-}"
+
+    local owner="$REPO_OWNER"
+    local name="$REPO_NAME"
+    if [[ -n "$repo" ]]; then
+        owner=$(echo "$repo" | cut -d/ -f1)
+        name=$(echo "$repo" | cut -d/ -f2)
+    fi
+
+    local issue_type
+    issue_type=$(gh api graphql -f query="{ repository(owner: \"$owner\", name: \"$name\") { issue(number: $issue_number) { issueType { name } } } }" \
+        --jq '.data.repository.issue.issueType.name' 2>/dev/null)
+
+    if [[ "$issue_type" == "$expected_type" ]]; then
+        success "Issue #$issue_number has expected issue type: $issue_type"
+        return 0
+    fi
+    warning "(polling) Issue #$issue_number issue type not yet '$expected_type' (actual: '${issue_type:-none}')"
+    return 1
+}
+
+wait_for_issue_type() {
+    local issue_number="$1"
+    local expected_type="$2"
+    local test_name="$3"
+    local repo="${4:-}"
+    local max_wait=480
+    local waited=0
+    while [[ $waited -lt $max_wait ]]; do
+        if validate_issue_type "$issue_number" "$expected_type" "$repo"; then
+            record_test_pass "$test_name"
+            return 0
+        fi
+        info "..."
+        sleep 5
+        waited=$((waited + 5))
+    done
+    record_test_fail "$test_name"
+    return 1
+}
+
+# --- mark-pull-request-as-ready-for-review ------------------------------------
+
+# Creates a DRAFT pull request and prints its number, modelled on create_test_pr.
+create_test_draft_pr() {
+    local title="$1"
+    local body="$2"
+    local repo="${3:-}"
+    local branch="test-pr-$(date +%s)-${BASHPID:-$$}-$RANDOM"
+
+    if [[ -n "${E2E_TRIGGER_MARKER:-}" ]]; then
+        body+=$'\n\n'"$E2E_TRIGGER_MARKER"
+    fi
+
+    local repo_flag=""
+    local api_repo=":owner/:repo"
+    if [[ -n "$repo" ]]; then
+        repo_flag="--repo $repo"
+        api_repo="$repo"
+    fi
+
+    local main_sha=$(gh api repos/"$api_repo"/git/refs/heads/main --jq '.object.sha' 2>/dev/null)
+    [[ -z "$main_sha" ]] && { echo ""; return; }
+    gh api repos/"$api_repo"/git/refs --method POST \
+        --field ref="refs/heads/$branch" --field sha="$main_sha" &>/dev/null
+
+    local file_path="notes-$(date +%s)-${BASHPID:-$$}-$RANDOM.md"
+    local file_content="# Draft PR Content\n\nThis is a test file created for draft PR testing at $(date)"
+    gh api repos/"$api_repo"/contents/"$file_path" --method PUT \
+        --field message="Test commit for draft PR" \
+        --field content="$(echo -e "$file_content" | base64 -w 0)" \
+        --field branch="$branch" &>/dev/null
+
+    local pr_url=$(gh pr create $repo_flag --draft --title "$title" --body "$body" --head "$branch" --base main 2>/dev/null)
+    if [[ -n "$pr_url" ]]; then
+        echo "$pr_url" | grep -o '[0-9]\+$'
+    else
+        echo ""
+    fi
+}
+
+validate_pr_ready_for_review() {
+    local pr_number="$1"
+    local repo="${2:-}"
+    local repo_flag=""
+    [[ -n "$repo" ]] && repo_flag="--repo $repo"
+    local is_draft
+    is_draft=$(gh pr view $repo_flag "$pr_number" --json isDraft --jq '.isDraft' 2>/dev/null)
+    if [[ "$is_draft" == "false" ]]; then
+        success "PR #$pr_number is marked ready for review (isDraft=false)"
+        return 0
+    fi
+    warning "(polling) PR #$pr_number is still a draft (isDraft=$is_draft)"
+    return 1
+}
+
+wait_for_pr_ready_for_review() {
+    local pr_number="$1"
+    local test_name="$2"
+    local repo="${3:-}"
+    local max_wait=480
+    local waited=0
+    while [[ $waited -lt $max_wait ]]; do
+        if validate_pr_ready_for_review "$pr_number" "$repo"; then
+            record_test_pass "$test_name"
+            return 0
+        fi
+        info "..."
+        sleep 5
+        waited=$((waited + 5))
+    done
+    record_test_fail "$test_name"
+    return 1
+}
+
+# --- reply-to / resolve pull request review comment fixtures ------------------
+
+# Creates a PR with one added file and posts a single review comment on it.
+# Prints: "<pr_number>,<comment_id>,<thread_id>"
+create_test_pr_with_review_comment() {
+    local title="$1"
+    local body="$2"
+    local repo="${3:-}"
+    local branch="test-pr-$(date +%s)-${BASHPID:-$$}-$RANDOM"
+
+    if [[ -n "${E2E_TRIGGER_MARKER:-}" ]]; then
+        body+=$'\n\n'"$E2E_TRIGGER_MARKER"
+    fi
+
+    local repo_flag=""
+    local api_repo=":owner/:repo"
+    if [[ -n "$repo" ]]; then
+        repo_flag="--repo $repo"
+        api_repo="$repo"
+    fi
+
+    local main_sha=$(gh api repos/"$api_repo"/git/refs/heads/main --jq '.object.sha' 2>/dev/null)
+    [[ -z "$main_sha" ]] && { echo ""; return; }
+    gh api repos/"$api_repo"/git/refs --method POST \
+        --field ref="refs/heads/$branch" --field sha="$main_sha" &>/dev/null
+
+    local file_path="notes-$(date +%s)-${BASHPID:-$$}-$RANDOM.md"
+    local file_content="# Review target\n\nLine to be reviewed.\nAnother line.\n"
+    gh api repos/"$api_repo"/contents/"$file_path" --method PUT \
+        --field message="Add review target file" \
+        --field content="$(echo -e "$file_content" | base64 -w 0)" \
+        --field branch="$branch" &>/dev/null
+
+    local head_sha=$(gh api repos/"$api_repo"/git/refs/heads/"$branch" --jq '.object.sha' 2>/dev/null)
+    local pr_url=$(gh pr create $repo_flag --title "$title" --body "$body" --head "$branch" --base main 2>/dev/null)
+    [[ -z "$pr_url" ]] && { echo ""; return; }
+    local pr_number=$(echo "$pr_url" | grep -o '[0-9]\+$')
+
+    # Post a review comment on line 1 of the newly added file (added line, RIGHT side)
+    local comment_id
+    comment_id=$(gh api "repos/$api_repo/pulls/$pr_number/comments" --method POST \
+        --field body="Initial review comment for reply/resolve fixture" \
+        --field commit_id="$head_sha" \
+        --field path="$file_path" \
+        --field line=1 \
+        --field side="RIGHT" --jq '.id' 2>/dev/null)
+
+    # Resolve the thread node id via GraphQL
+    local owner="$REPO_OWNER"
+    local name="$REPO_NAME"
+    if [[ -n "$repo" ]]; then
+        owner=$(echo "$repo" | cut -d/ -f1)
+        name=$(echo "$repo" | cut -d/ -f2)
+    fi
+    local thread_id
+    thread_id=$(gh api graphql -f query="{ repository(owner: \"$owner\", name: \"$name\") { pullRequest(number: $pr_number) { reviewThreads(first: 20) { nodes { id comments(first: 1) { nodes { databaseId } } } } } } }" \
+        --jq ".data.repository.pullRequest.reviewThreads.nodes[] | select(.comments.nodes[0].databaseId == $comment_id) | .id" 2>/dev/null | head -1)
+
+    echo "$pr_number,$comment_id,$thread_id"
+}
+
+validate_review_comment_reply() {
+    local pr_number="$1"
+    local expected_body_substring="$2"
+    local repo="${3:-}"
+    local api_repo=":owner/:repo"
+    [[ -n "$repo" ]] && api_repo="$repo"
+    local matched
+    matched=$(gh api "repos/$api_repo/pulls/$pr_number/comments" \
+        --jq "[.[] | select(.body != null) | select(.body | contains(\"$expected_body_substring\"))] | length" 2>/dev/null)
+    if [[ "$matched" -gt 0 ]] 2>/dev/null; then
+        success "PR #$pr_number has a review comment reply containing: $expected_body_substring"
+        return 0
+    fi
+    warning "(polling) PR #$pr_number missing review comment reply containing: '$expected_body_substring'"
+    return 1
+}
+
+wait_for_review_comment_reply() {
+    local pr_number="$1"
+    local expected_body_substring="$2"
+    local test_name="$3"
+    local repo="${4:-}"
+    local max_wait=480
+    local waited=0
+    while [[ $waited -lt $max_wait ]]; do
+        if validate_review_comment_reply "$pr_number" "$expected_body_substring" "$repo"; then
+            record_test_pass "$test_name"
+            return 0
+        fi
+        info "..."
+        sleep 5
+        waited=$((waited + 5))
+    done
+    record_test_fail "$test_name"
+    return 1
+}
+
+validate_review_thread_resolved() {
+    local thread_id="$1"
+    local is_resolved
+    is_resolved=$(gh api graphql -f query="{ node(id: \"$thread_id\") { ... on PullRequestReviewThread { isResolved } } }" \
+        --jq '.data.node.isResolved' 2>/dev/null)
+    if [[ "$is_resolved" == "true" ]]; then
+        success "Review thread $thread_id is resolved"
+        return 0
+    fi
+    warning "(polling) Review thread $thread_id not yet resolved (isResolved=$is_resolved)"
+    return 1
+}
+
+wait_for_review_thread_resolved() {
+    local thread_id="$1"
+    local test_name="$2"
+    local max_wait=480
+    local waited=0
+    while [[ $waited -lt $max_wait ]]; do
+        if validate_review_thread_resolved "$thread_id"; then
+            record_test_pass "$test_name"
+            return 0
+        fi
+        info "..."
+        sleep 5
+        waited=$((waited + 5))
+    done
+    record_test_fail "$test_name"
+    return 1
+}
+
 # Execute a single test (used by parallel batch execution)
 # This function must handle all output synchronization
 run_single_test() {
@@ -2600,7 +2849,7 @@ run_single_test() {
             fi
             ;;
         # Workflow dispatch tests - triggered with gh aw run
-        *"create-issue"|*"create-discussion"|*"create-pull-request"|*"create-two-pull-requests"|*"code-scanning-alert"|*"mcp"|*"safe-jobs"|*"gh-steps"|*"custom-safe-outputs")
+        *"create-issue"|*"create-discussion"|*"create-pull-request"|*"create-two-pull-requests"|*"code-scanning-alert"|*"mcp"|*"safe-jobs"|*"gh-steps"|*"custom-safe-outputs"|*"noop"|*"report-incomplete")
             local workflow_success=false
             if trigger_workflow_dispatch_and_await_completion "$workflow"; then
                 workflow_success=true
