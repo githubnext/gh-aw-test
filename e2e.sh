@@ -63,7 +63,7 @@ declare -a SKIPPED_TESTS=()
 declare -A TEST_RUN_URLS=()  # maps test name -> actions run URL (when available)
 
 # Parallel execution settings
-BATCH_SIZE=10
+BATCH_SIZE=20
 NO_PARALLEL=false
 
 # Lock file for synchronized result tracking across parallel processes
