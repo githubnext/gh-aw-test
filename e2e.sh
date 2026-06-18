@@ -3718,7 +3718,9 @@ run_tests_parallel() {
         echo
         info "  ⏳ Waiting for $total_in_batch tests to complete (per-test kill after ${per_test_kill_seconds}s)..."
 
-        local last_status_line_len=0
+        # Save cursor position; each iteration restores here and erases to end-of-screen,
+        # so the bar redraws in-place regardless of terminal width or line wrapping.
+        printf "\033[s"
         while [[ $completed -lt $total_in_batch ]]; do
             completed=0
             local running_summary=()
@@ -3732,8 +3734,9 @@ run_tests_parallel() {
                 # Kill tests that exceed the hard ceiling
                 if [[ $elapsed -gt $per_test_kill_seconds ]]; then
                     local stuck_test="${pid_to_test[$pid]}"
-                    echo
+                    printf "\033[u\033[J"
                     warning "  ⏰ Killing '$stuck_test' (pid $pid) — exceeded ${per_test_kill_seconds}s"
+                    printf "\033[s"
                     kill -TERM "$pid" 2>/dev/null
                     sleep 1
                     kill -KILL "$pid" 2>/dev/null
@@ -3757,24 +3760,20 @@ run_tests_parallel() {
                 if [[ ${#running_summary[@]} -gt 0 ]]; then
                     running_text=" — running: $(IFS=', '; echo "${running_summary[*]}")"
                 fi
+                local term_width; term_width=$(tput cols 2>/dev/null || echo "${COLUMNS:-80}")
                 # Visible prefix: "  [" + 40-char bar + "] N/M (PP%)"
                 local visible_prefix_len=$(( 2 + 1 + 40 + 1 + 1 + ${#completed} + 1 + ${#total_in_batch} + 2 + ${#progress_pct} + 2 ))
-                local max_width; max_width=$(( ${COLUMNS:-80} ))
-                local available=$(( max_width - visible_prefix_len ))
+                local available=$(( term_width - visible_prefix_len ))
                 # Note: ${#running_text} counts UTF-8 bytes, so the em-dash counts as 3.
                 # That's fine — it just makes us truncate slightly earlier, never later.
                 if (( available > 4 )) && (( ${#running_text} > available )); then
                     running_text="${running_text:0:$((available-1))}…"
                 fi
-                local line
-                line=$(printf "\r  ${BLUE}[${GREEN}%${filled}s${NC}%${empty}s${BLUE}]${NC} ${completed}/${total_in_batch} (${progress_pct}%%)%s" "$(printf '#%.0s' $(seq 1 $filled 2>/dev/null))" "$(printf ' %.0s' $(seq 1 $empty 2>/dev/null))" "$running_text")
-                # Pad with spaces to overwrite previous longer line, then carriage return
-                local pad=""
-                if (( ${#line} < last_status_line_len )); then
-                    pad=$(printf '%*s' $(( last_status_line_len - ${#line} )) "")
-                fi
-                printf "%s%s" "$line" "$pad"
-                last_status_line_len=${#line}
+                # Restore cursor to saved position, erase to end of screen, redraw bar.
+                printf "\033[u\033[J  ${BLUE}[${GREEN}%${filled}s${NC}%${empty}s${BLUE}]${NC} ${completed}/${total_in_batch} (${progress_pct}%%)%s" \
+                    "$(printf '#%.0s' $(seq 1 $filled 2>/dev/null))" \
+                    "$(printf ' %.0s' $(seq 1 $empty 2>/dev/null))" \
+                    "$running_text"
             fi
 
             sleep 1
