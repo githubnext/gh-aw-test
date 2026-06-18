@@ -3718,9 +3718,15 @@ run_tests_parallel() {
         echo
         info "  ⏳ Waiting for $total_in_batch tests to complete (per-test kill after ${per_test_kill_seconds}s)..."
 
-        # Save cursor position; each iteration restores here and erases to end-of-screen,
-        # so the bar redraws in-place regardless of terminal width or line wrapping.
-        printf "\033[s"
+        # Use tput cuu1 (cursor up 1) + tput el (erase line) to redraw the bar
+        # in-place.  Works universally: stdout must be a real TTY and tput must
+        # understand the cursor-up capability.
+        local can_inline=false
+        if [[ -t 1 ]] && tput cuu1 >/dev/null 2>&1; then
+            can_inline=true
+        fi
+        local bar_printed=false   # true once we have a bar line on screen to erase
+
         while [[ $completed -lt $total_in_batch ]]; do
             completed=0
             local running_summary=()
@@ -3734,9 +3740,7 @@ run_tests_parallel() {
                 # Kill tests that exceed the hard ceiling
                 if [[ $elapsed -gt $per_test_kill_seconds ]]; then
                     local stuck_test="${pid_to_test[$pid]}"
-                    printf "\033[u\033[J"
                     warning "  ⏰ Killing '$stuck_test' (pid $pid) — exceeded ${per_test_kill_seconds}s"
-                    printf "\033[s"
                     kill -TERM "$pid" 2>/dev/null
                     sleep 1
                     kill -KILL "$pid" 2>/dev/null
@@ -3746,6 +3750,7 @@ run_tests_parallel() {
                         echo "$stuck_test|FAIL" >> "$RESULTS_FILE"
                     ) 200>"$RESULTS_LOCK"
                     completed=$((completed + 1))
+                    bar_printed=false   # warning was printed; don't try to cuu1 over it
                     continue
                 fi
                 running_summary+=("${pid_to_test[$pid]}(${elapsed}s)")
@@ -3763,22 +3768,29 @@ run_tests_parallel() {
                 local term_width; term_width=$(tput cols 2>/dev/null || echo "${COLUMNS:-80}")
                 # Visible prefix: "  [" + 40-char bar + "] N/M (PP%)"
                 local visible_prefix_len=$(( 2 + 1 + 40 + 1 + 1 + ${#completed} + 1 + ${#total_in_batch} + 2 + ${#progress_pct} + 2 ))
-                local available=$(( term_width - visible_prefix_len ))
+                # Leave 1 spare column so the bar never reaches the right edge and wraps.
+                local available=$(( term_width - visible_prefix_len - 1 ))
                 # Note: ${#running_text} counts UTF-8 bytes, so the em-dash counts as 3.
                 # That's fine — it just makes us truncate slightly earlier, never later.
                 if (( available > 4 )) && (( ${#running_text} > available )); then
                     running_text="${running_text:0:$((available-1))}…"
                 fi
-                # Restore cursor to saved position, erase to end of screen, redraw bar.
-                printf "\033[u\033[J  ${BLUE}[${GREEN}%${filled}s${NC}%${empty}s${BLUE}]${NC} ${completed}/${total_in_batch} (${progress_pct}%%)%s" \
+
+                # If we already have a bar on screen, erase it before redrawing.
+                if $can_inline && $bar_printed; then
+                    tput cuu1 2>/dev/null
+                    tput el   2>/dev/null
+                fi
+
+                printf "  ${BLUE}[${GREEN}%${filled}s${NC}%${empty}s${BLUE}]${NC} ${completed}/${total_in_batch} (${progress_pct}%%)%s\n" \
                     "$(printf '#%.0s' $(seq 1 $filled 2>/dev/null))" \
                     "$(printf ' %.0s' $(seq 1 $empty 2>/dev/null))" \
                     "$running_text"
+                bar_printed=$can_inline
             fi
 
             sleep 1
         done
-        echo
         echo
         
         # Read batch results
