@@ -51,6 +51,10 @@ on:
           - release          # latest release / extension / samples=true
           - prerelease       # latest pre-release / extension / samples=true
           - full             # full matrix, run serially
+      gh_aw_ref:
+        description: 'github/gh-aw branch, tag, or SHA to test in source mode (e.g. main, a feature branch, or a commit SHA). Applies to the quick / main-live selections; defaults to main.'
+        required: false
+        default: ''
       refs:
         description: 'Optional comma-separated list of gh-aw refs to test (overrides main / latest pre-release / latest release auto-detection). Only used when selection=full.'
         required: false
@@ -81,6 +85,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_AW_TEST_PAT }}
           OVERRIDE: ${{ inputs.refs }}
+          # Optional github/gh-aw branch/tag/SHA to test in source mode. Applies
+          # to the single-entry quick / main-live selections; empty => main.
+          GH_AW_REF_INPUT: ${{ inputs.gh_aw_ref }}
           # On `schedule` (and any non-dispatch event) there is no selection
           # input, so default to the full matrix. On workflow_dispatch this is
           # the user's chosen option (default `quick`).
@@ -106,6 +113,15 @@ jobs:
 
           echo "Selection: $SELECTION"
 
+          # The single-entry source-mode selections (quick / main-live) test a
+          # specific github/gh-aw ref. Default to `main`, but allow the dispatch
+          # input `gh_aw_ref` to point them at any branch, tag, or SHA. The label
+          # is slugified from the ref so job titles / branches stay readable.
+          src_ref="${GH_AW_REF_INPUT:-main}"
+          [[ -z "$src_ref" ]] && src_ref="main"
+          src_label=$(echo "$src_ref" | tr '/' '-' | tr -cd 'A-Za-z0-9._-')
+          echo "Source-mode ref: $src_ref (label: $src_label)"
+
           # Each matrix entry is a single, fully-specified combination:
           #   label   : short human-readable name used in job titles / report
           #   ref     : git ref / tag passed to the build or install step
@@ -124,10 +140,12 @@ jobs:
           # selections pick exactly one combination for a fast manual dispatch.
           case "$SELECTION" in
             quick)
-              matrix=$(jq -nc '[{ label: "main", ref: "main", mode: "source", samples: true }]')
+              matrix=$(jq -nc --arg ref "$src_ref" --arg label "$src_label" \
+                '[{ label: $label, ref: $ref, mode: "source", samples: true }]')
               ;;
             main-live)
-              matrix=$(jq -nc '[{ label: "main", ref: "main", mode: "source", samples: false }]')
+              matrix=$(jq -nc --arg ref "$src_ref" --arg label "$src_label" \
+                '[{ label: $label, ref: $ref, mode: "source", samples: false }]')
               ;;
             release)
               matrix=$(jq -nc --arg rel "$latest_release" \
