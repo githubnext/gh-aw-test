@@ -540,15 +540,13 @@ jobs:
             echo
 
             # -------- Resolved refs (reference) --------
-            echo "<details><summary>Resolved gh-aw refs</summary>"
+            echo "## Resolved gh-aw refs"
             echo
             echo "| label              | ref                       | mode      |"
             echo "|--------------------|---------------------------|-----------|"
             echo "| main               | \`main\` (\`$MAIN_SHA\`)    | source    |"
             echo "| latest release     | \`$LATEST_RELEASE\`        | extension |"
             echo "| latest pre-release | \`$LATEST_PRERELEASE\`     | extension |"
-            echo
-            echo "</details>"
             echo
             echo "---"
             echo
