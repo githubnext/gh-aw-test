@@ -58,6 +58,7 @@ cleanup_test_resources() {
     local prs_closed=0
     local discussions_closed=0
     local branches_deleted=0
+    local releases_deleted=0
         
     # Close all issues
     info "Checking for open issues to close..."
@@ -175,12 +176,30 @@ cleanup_test_resources() {
                 fi
             fi
         fi
-    done < <(git branch -r 2>/dev/null | grep 'origin/test-pr-\|origin/claude-test-branch\|origin/codex-test-branch' | sed 's/origin\///' || true)
+    done < <(git branch -r 2>/dev/null | grep 'origin/test-pr-\|origin/claude-test-branch\|origin/codex-test-branch\|origin/assets/test-' | sed 's/origin\///' || true)
+
+    # Delete test releases (and their tags) created by update-release tests
+    info "Checking for test releases to delete..."
+    while read -r tag; do
+        if [[ -n "$tag" ]]; then
+            if [[ "$DRY_RUN" == "true" ]]; then
+                info "[DRY RUN] Would delete release/tag: $tag"
+                ((releases_deleted++))
+            else
+                if gh release delete "$tag" --cleanup-tag --yes &>/dev/null; then
+                    info "Deleted release/tag: $tag"
+                    ((releases_deleted++))
+                else
+                    warning "Failed to delete release/tag: $tag"
+                fi
+            fi
+        fi
+    done < <(gh release list --limit 100 --json tagName --jq '.[].tagName' 2>/dev/null | grep '^e2e-release-' || true)
     
     if [[ "$DRY_RUN" == "true" ]]; then
-        success "[DRY RUN] Would cleanup: $issues_closed issues, $prs_closed PRs, $discussions_closed discussions, $branches_deleted branches"
+        success "[DRY RUN] Would cleanup: $issues_closed issues, $prs_closed PRs, $discussions_closed discussions, $branches_deleted branches, $releases_deleted releases"
     else
-        success "Cleanup completed: $issues_closed issues closed, $prs_closed PRs closed, $discussions_closed discussions closed, $branches_deleted branches deleted"
+        success "Cleanup completed: $issues_closed issues closed, $prs_closed PRs closed, $discussions_closed discussions closed, $branches_deleted branches deleted, $releases_deleted releases deleted"
     fi
 }
 

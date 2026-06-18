@@ -95,22 +95,21 @@ Tracking the full matrix of [safe outputs](https://github.com/github/gh-aw/blob/
 ### Security & Agent Tasks — Remaining
 
 - [x] `dispatch-workflow` — test-copilot-dispatch-workflow
-- [ ] `call-workflow` — test-copilot-call-workflow
+- [x] `call-workflow` — test-copilot-call-workflow (worker: test-copilot-call-worker)
+- [x] `upload-asset` — test-copilot-upload-asset (auto-creates orphaned `assets/` branch)
 - [ ] `upload-artifact` — test-copilot-upload-artifact
 - [x] `noop` — test-copilot-noop
 - [x] `report-incomplete` — test-copilot-report-incomplete
 - [x] `create-check-run` — test-copilot-create-check-run
+- [x] `update-release` — test-copilot-update-release
 
 ### Deferred (require special infrastructure)
 
 - [ ] `assign-to-agent` — requires Copilot coding agent access
 - [ ] `create-agent-session` — requires Copilot coding agent access
 - [ ] `create-project` / `update-project` / `create-project-status-update` — requires PAT with Projects permissions
-- [ ] `update-release` — requires existing releases
-- [ ] `upload-asset` — requires orphaned branch setup
 - [ ] `upload-artifact` — needs a staged fixture file plus artifact-specific assertions in the harness
 - [ ] `autofix-code-scanning-alert` — requires existing code scanning alerts
 - [ ] `dispatch_repository` — experimental, requires cross-repo setup
 - [ ] `missing-data` — system type, auto-enabled
-- [ ] `create-check-run` — needs check-run specific assertions in the harness
-- [ ] `merge-pull-request` — parser currently rejects `samples:` on this safe output, so it does not fit the deterministic sample-based harness yet
+- [ ] `merge-pull-request` — verified against `github/gh-aw@origin/main`: the workflow JSON schema still rejects `samples:` on `merge-pull-request` (the Go struct accepts it, but schema validation fails compile), so it cannot be sample-tested yet

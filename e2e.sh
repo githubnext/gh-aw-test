@@ -492,8 +492,11 @@ get_all_tests() {
     echo "test-copilot-set-issue-type"
     # Workflow_dispatch tests with inputs (dispatch-workflow needs a sentinel)
     echo "test-copilot-dispatch-workflow"
+    echo "test-copilot-call-workflow"
     echo "test-copilot-noop"
     echo "test-copilot-report-incomplete"
+    echo "test-copilot-update-release"
+    echo "test-copilot-upload-asset"
     # Nosandbox tests - limited set for claude/codex, full matrix for copilot
     echo "test-copilot-nosandbox-create-issue"
     echo "test-copilot-nosandbox-create-discussion"
@@ -2701,6 +2704,102 @@ wait_for_review_thread_resolved() {
     return 1
 }
 
+# --- update-release -----------------------------------------------------------
+
+# Creates a GitHub release with a unique tag and a known body, then prints the tag.
+create_test_release() {
+    local title="$1"
+    local repo="${2:-}"
+    local tag="e2e-release-$(date +%s)-${BASHPID:-$$}-$RANDOM"
+    local repo_flag=""
+    [[ -n "$repo" ]] && repo_flag="--repo $repo"
+
+    if gh release create "$tag" $repo_flag \
+        --target main \
+        --title "$title" \
+        --notes "Original release body for update-release test." &>/dev/null; then
+        echo "$tag"
+    else
+        echo ""
+    fi
+}
+
+validate_release_body_updated() {
+    local tag="$1"
+    local expected_substring="$2"
+    local repo="${3:-}"
+    local repo_flag=""
+    [[ -n "$repo" ]] && repo_flag="--repo $repo"
+
+    local body
+    body=$(gh release view "$tag" $repo_flag --json body --jq '.body' 2>/dev/null)
+    if echo "$body" | grep -qF "$expected_substring"; then
+        success "Release '$tag' body contains expected text: $expected_substring"
+        return 0
+    fi
+    warning "(polling) Release '$tag' body not yet updated. Actual: ${body:0:200}..."
+    return 1
+}
+
+wait_for_release_body_updated() {
+    local tag="$1"
+    local expected_substring="$2"
+    local test_name="$3"
+    local repo="${4:-}"
+    local max_wait=480
+    local waited=0
+    while [[ $waited -lt $max_wait ]]; do
+        if validate_release_body_updated "$tag" "$expected_substring" "$repo"; then
+            record_test_pass "$test_name"
+            return 0
+        fi
+        info "..."
+        sleep 5
+        waited=$((waited + 5))
+    done
+    record_test_fail "$test_name"
+    return 1
+}
+
+# --- upload-asset -------------------------------------------------------------
+
+# Checks that the orphaned assets branch exists and contains at least one
+# committed file (the asset is named "<sha256>.png" by the upload job).
+validate_asset_published() {
+    local branch="$1"
+    local repo="${2:-}"
+    local repo_path="$REPO_OWNER/$REPO_NAME"
+    [[ -n "$repo" ]] && repo_path="$repo"
+
+    local contents
+    contents=$(gh api "repos/$repo_path/contents?ref=$branch" --jq '.[].name' 2>/dev/null)
+    if echo "$contents" | grep -qiE '\.png$'; then
+        success "Asset branch '$branch' contains a published .png asset: $(echo "$contents" | tr '\n' ' ')"
+        return 0
+    fi
+    warning "(polling) Asset branch '$branch' has no .png asset yet. Contents: $(echo "$contents" | tr '\n' ' ')"
+    return 1
+}
+
+wait_for_asset_published() {
+    local branch="$1"
+    local test_name="$2"
+    local repo="${3:-}"
+    local max_wait=480
+    local waited=0
+    while [[ $waited -lt $max_wait ]]; do
+        if validate_asset_published "$branch" "$repo"; then
+            record_test_pass "$test_name"
+            return 0
+        fi
+        info "..."
+        sleep 5
+        waited=$((waited + 5))
+    done
+    record_test_fail "$test_name"
+    return 1
+}
+
 # Execute a single test (used by parallel batch execution)
 # This function must handle all output synchronization
 run_single_test() {
@@ -2853,6 +2952,69 @@ run_single_test() {
                 if wait_for_dispatched_issue_created "$sentinel" "$workflow" "$target_repo"; then
                     test_result="PASS"
                 fi
+            fi
+            ;;
+        # Call-workflow test: dispatch the gateway with a sentinel; the gateway
+        # activates the reusable worker (test-copilot-call-worker) via workflow_call,
+        # which creates an issue carrying the sentinel. The worker runs as part of the
+        # gateway run (uses:) so it does not need to be enabled separately.
+        *"call-workflow")
+            echo ""
+            echo -e "${CYAN}━━━ Preparing test prerequisites ━━━${NC}"
+            local sentinel="call-$(date +%s)-$$"
+            info "Generated call-workflow sentinel: $sentinel"
+            echo -e "${CYAN}━━━ Running workflow test ━━━${NC}"
+            echo ""
+            local workflow_success=false
+            if trigger_workflow_with_inputs "$workflow" "sentinel=$sentinel"; then
+                workflow_success=true
+            fi
+            if [[ "$workflow_success" == true ]]; then
+                sleep 10
+                if wait_for_dispatched_issue_created "$sentinel" "$workflow" "$target_repo"; then
+                    test_result="PASS"
+                fi
+            fi
+            ;;
+        # Upload-asset test: dispatch, then verify the orphaned assets branch got a .png
+        *"upload-asset")
+            echo ""
+            echo -e "${CYAN}━━━ Running workflow test ━━━${NC}"
+            echo ""
+            local workflow_success=false
+            if trigger_workflow_dispatch_and_await_completion "$workflow"; then
+                workflow_success=true
+            fi
+            if [[ "$workflow_success" == true ]]; then
+                sleep 10
+                if wait_for_asset_published "assets/$workflow" "$workflow" "$target_repo"; then
+                    test_result="PASS"
+                fi
+            fi
+            ;;
+        # Update-release test: create a release fixture, dispatch with its tag, await body update
+        *"update-release")            echo ""
+            echo -e "${CYAN}━━━ Preparing test prerequisites ━━━${NC}"
+            info "Creating test release for $workflow..."
+            local release_tag=$(create_test_release "Release for $ai_display_name update-release test" "$target_repo")
+            if [[ -n "$release_tag" ]]; then
+                local repo_url="$REPO_OWNER/$REPO_NAME"
+                [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                success "Created test release '$release_tag': https://github.com/$repo_url/releases/tag/$release_tag"
+                echo -e "${CYAN}━━━ Running workflow test ━━━${NC}"
+                echo ""
+                local workflow_success=false
+                if trigger_workflow_with_inputs "$workflow" "release_tag=$release_tag"; then
+                    workflow_success=true
+                fi
+                if [[ "$workflow_success" == true ]]; then
+                    sleep 10
+                    if wait_for_release_body_updated "$release_tag" "Updated by $ai_display_name update-release safe output" "$workflow" "$target_repo"; then
+                        test_result="PASS"
+                    fi
+                fi
+            else
+                error "Could not create test release for $workflow"
             fi
             ;;
         # Workflow dispatch tests - triggered with gh aw run
