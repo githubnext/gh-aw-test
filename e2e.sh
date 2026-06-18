@@ -3910,7 +3910,71 @@ ISSUEBODY
 }
 
 run_rerun() {
-    local filter_test="${1:-}"
+    local filter_test=""
+
+    # Parse options and an optional positional TEST_NAME filter. This mirrors
+    # the option parsing in main() so that flags like --gh-aw-ref work with the
+    # rerun subcommand (e.g. './e2e.sh rerun --gh-aw-ref main').
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --workflow-dispatch-only)
+                WORKFLOW_DISPATCH_ONLY=true
+                shift
+                ;;
+            --use-samples)
+                USE_SAMPLES=true
+                shift
+                ;;
+            --batch-size)
+                if [[ $# -lt 2 || ! "$2" =~ ^[0-9]+$ ]]; then
+                    error "--batch-size requires a positive integer value"
+                    exit 1
+                fi
+                BATCH_SIZE="$2"
+                shift 2
+                ;;
+            --batch-size=*)
+                BATCH_SIZE="${1#*=}"
+                if [[ ! "$BATCH_SIZE" =~ ^[0-9]+$ ]]; then
+                    error "--batch-size requires a positive integer value"
+                    exit 1
+                fi
+                shift
+                ;;
+            --no-parallel)
+                NO_PARALLEL=true
+                shift
+                ;;
+            --gh-aw-ref)
+                if [[ $# -lt 2 || -z "$2" ]]; then
+                    error "--gh-aw-ref requires a value (branch, tag, or SHA)"
+                    exit 1
+                fi
+                GH_AW_REF="$2"
+                shift 2
+                ;;
+            --gh-aw-ref=*)
+                GH_AW_REF="${1#*=}"
+                if [[ -z "$GH_AW_REF" ]]; then
+                    error "--gh-aw-ref requires a value (branch, tag, or SHA)"
+                    exit 1
+                fi
+                shift
+                ;;
+            -*)
+                error "Unknown option for rerun: $1"
+                exit 1
+                ;;
+            *)
+                if [[ -n "$filter_test" ]]; then
+                    error "rerun accepts at most one TEST_NAME filter (got '$filter_test' and '$1')"
+                    exit 1
+                fi
+                filter_test="$1"
+                shift
+                ;;
+        esac
+    done
 
     if [[ ! -f "fails.txt" ]]; then
         error "fails.txt not found. Run e2e tests first to generate failure records."
@@ -3953,7 +4017,8 @@ main() {
         return 0
     fi
     if [[ "${1:-}" == "rerun" ]]; then
-        run_rerun "${2:-}"
+        shift
+        run_rerun "$@"
         return 0
     fi
 

@@ -1,10 +1,5 @@
 {
   "entries": {
-    "actions/ai-inference@v1": {
-      "repo": "actions/ai-inference",
-      "version": "v1",
-      "sha": "b81b2afb8390ee6839b494a404766bef6493c7d9"
-    },
     "actions/cache/restore@v5.0.5": {
       "repo": "actions/cache/restore",
       "version": "v5.0.5",
@@ -29,56 +24,6 @@
       "repo": "actions/github-script",
       "version": "v9.0.0",
       "sha": "3a2844b7e9c422d3c10d287c895573f7108da1b3"
-    },
-    "github/gh-aw/actions/setup@v0.43.22": {
-      "repo": "github/gh-aw/actions/setup",
-      "version": "v0.43.22",
-      "sha": "fe858c3e14589bf396594a0b106e634d9065823e"
-    },
-    "github/gh-aw/actions/setup@v0.47.5": {
-      "repo": "github/gh-aw/actions/setup",
-      "version": "v0.47.5",
-      "sha": "9450254bc994da0d6a346ce438a4b3764f01c456"
-    },
-    "github/gh-aw/actions/setup@v0.47.6": {
-      "repo": "github/gh-aw/actions/setup",
-      "version": "v0.47.6",
-      "sha": "3b6ab5488e05abd34d6a599d61459477e45d5299"
-    },
-    "github/gh-aw/actions/setup@v0.50.1": {
-      "repo": "github/gh-aw/actions/setup",
-      "version": "v0.50.1",
-      "sha": "fad43e3c91a4e1d43e458f68e96574127934e7d1"
-    },
-    "github/gh-aw/actions/setup@v0.50.7": {
-      "repo": "github/gh-aw/actions/setup",
-      "version": "v0.50.7",
-      "sha": "9cbca3cd9be433a23a38e4da332635097fd40251"
-    },
-    "github/gh-aw/actions/setup@v0.51.0": {
-      "repo": "github/gh-aw/actions/setup",
-      "version": "v0.51.0",
-      "sha": "19c329d562f8cd58c3b6f07c7d9894c60bc609d2"
-    },
-    "github/gh-aw/actions/setup@v0.51.2": {
-      "repo": "github/gh-aw/actions/setup",
-      "version": "v0.51.2",
-      "sha": "cccf96100f50705c4291b91a6071c556f72cb3ef"
-    },
-    "github/gh-aw/actions/setup@v0.51.4": {
-      "repo": "github/gh-aw/actions/setup",
-      "version": "v0.51.4",
-      "sha": "e422993ded9178a8a35804fbc44b1ca761513d15"
-    },
-    "github/gh-aw/actions/setup@v0.51.5": {
-      "repo": "github/gh-aw/actions/setup",
-      "version": "v0.51.5",
-      "sha": "88319be75ab1adc60640307a10e5cf04b3deff1e"
-    },
-    "github/gh-aw/actions/setup@v0.57.2": {
-      "repo": "github/gh-aw/actions/setup",
-      "version": "v0.57.2",
-      "sha": "32b3a711a9ee97d38e3989c90af0385aff0066a7"
     }
   }
 }
