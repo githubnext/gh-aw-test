@@ -3877,7 +3877,13 @@ print_final_report() {
     echo -e "${CYAN}📈 Success Rate: ${success_rate}% (${#PASSED_TESTS[@]}/$total_tests)${NC}"
     echo -e "${CYAN}📄 Log file: $LOG_FILE${NC}"
     echo "============================================"
-    
+
+    # If anything failed, emit a ready-to-paste prompt for a coding agent to
+    # triage the failures from the run logs.
+    if [[ ${#FAILED_TESTS[@]} -gt 0 || -f "fails.txt" ]]; then
+        print_agent_triage_prompt
+    fi
+
     if [[ -f "fails.txt" ]]; then
         info "Remaining failures in fails.txt (run './e2e.sh report' to file issues, './e2e.sh rerun' to retry)"
         exit 1
@@ -3885,6 +3891,60 @@ print_final_report() {
         info "Failures recorded in fails.txt (run './e2e.sh report' to file issues, './e2e.sh rerun' to retry)"
         exit 1
     fi
+}
+
+# Emit a copy-paste prompt instructing a coding agent to debug the failed tests
+# from the run logs and categorize each failure as transient / test-framework
+# bug / gh-aw bug (filing github/gh-aw issues for the latter).
+print_agent_triage_prompt() {
+    local failed_list=""
+    if [[ ${#FAILED_TESTS[@]} -gt 0 ]]; then
+        failed_list=$(printf '  - %s\n' "${FAILED_TESTS[@]}")
+    elif [[ -f "fails.txt" ]]; then
+        failed_list=$(sed 's/^/  - /' "fails.txt")
+    fi
+
+    echo
+    echo "============================================"
+    echo -e "${CYAN}🤖 AGENT TRIAGE PROMPT${NC}"
+    echo "============================================"
+    echo "Copy the block below into a coding agent to investigate the failures:"
+    echo
+    cat <<EOF
+You are triaging failures from the gh-aw-test E2E suite.
+Test harness repository: $REPO_OWNER/$REPO_NAME (this repo; runner is e2e.sh).
+Repository under test: github/gh-aw (the gh-aw CLI/compiler).
+Local run log: $LOG_FILE
+
+Failed tests:
+$failed_list
+
+Goal: for EACH failed test, access the GitHub Actions logs for its run (the run
+IDs are recorded next to each test in fails.txt; use 'gh run view <run-id> --log'
+and 'gh run view <run-id> --log-failed'), plus the local log $LOG_FILE, determine
+the root cause, and categorize the failure as exactly one of:
+
+  1. TRANSIENT — flaky/infra/network/rate-limit/timing; not a real defect.
+     Action: note it and recommend a re-run (./e2e.sh rerun <test>).
+  2. TEST-FRAMEWORK BUG — a defect in this repo's harness (e2e.sh), a workflow
+     source file (.github/workflows/test-*.md), a sample, or CI config.
+     Action: propose a concrete fix (file + change) in $REPO_OWNER/$REPO_NAME.
+  3. GH-AW BUG — a defect in github/gh-aw itself (compiler output, runtime engine
+     behaviour, safe-output handling, etc.).
+     Action: open an issue in github/gh-aw with a minimal repro, the failing test
+     name, the gh-aw ref/mode/samples combination, and links to the relevant log
+     lines. Check for an existing open issue first and link it instead of filing
+     a duplicate.
+
+Steps:
+  - Read AGENTS.md and memory notes in this repo for harness conventions first.
+  - Group failures by suspected root cause; one gh-aw bug may explain several.
+  - Produce a table: test | category | root cause | recommended action | issue/PR link.
+  - Only open github/gh-aw issues for category 3, and only after confirming no
+    duplicate exists.
+EOF
+    echo
+    echo "============================================"
 }
 
 run_report() {

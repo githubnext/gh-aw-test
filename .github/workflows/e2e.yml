@@ -469,6 +469,46 @@ jobs:
             echo "\`e2e.sh\` into no-push / no-secret-mutation mode automatically so parallel matrix"
             echo "jobs don't race each other. See \`.github/workflows/e2e.yml\` for the design rationale._"
 
+            # When anything failed, append a ready-to-paste prompt for a coding
+            # agent to triage the failures from the run logs.
+            if [[ "$overall_failed" != "0" ]]; then
+              echo
+              echo "## 🤖 Agent triage prompt"
+              echo
+              echo "Copy the block below into a coding agent (e.g. Copilot) to investigate the failures:"
+              echo
+              echo '```text'
+              echo "You are triaging failures from the gh-aw-test E2E suite."
+              echo "Run: $RUN_URL"
+              echo "Repository under test: github/gh-aw (the gh-aw CLI/compiler)."
+              echo "Test harness repository: $GITHUB_REPOSITORY (this repo; runner is e2e.sh)."
+              echo
+              echo "Goal: for EACH failed test listed in this status report, access the GitHub"
+              echo "Actions logs for the run above (and the per-entry artifacts e2e-<label>-samples-<bool>,"
+              echo "which contain e2e-test-*.log, e2e-output.log and fails.txt), determine the root"
+              echo "cause, and categorize the failure as exactly one of:"
+              echo
+              echo "  1. TRANSIENT — flaky/infra/network/rate-limit/timing; not a real defect."
+              echo "     Action: note it and recommend a re-run (./e2e.sh rerun)."
+              echo "  2. TEST-FRAMEWORK BUG — a defect in this repo's harness (e2e.sh), a workflow"
+              echo "     source file (.github/workflows/test-*.md), a sample, or CI config."
+              echo "     Action: propose a concrete fix (file + change) in $GITHUB_REPOSITORY."
+              echo "  3. GH-AW BUG — a defect in github/gh-aw itself (compiler output, runtime"
+              echo "     engine behaviour, safe-output handling, etc.)."
+              echo "     Action: open an issue in github/gh-aw with a minimal repro, the failing"
+              echo "     test name, the gh-aw ref/mode/samples combination, and links to the"
+              echo "     relevant log lines. Check for an existing open issue first and link it"
+              echo "     instead of filing a duplicate."
+              echo
+              echo "Steps:"
+              echo "  - Use 'gh run view <run-id> --log' and 'gh run download <run-id>' to fetch logs/artifacts."
+              echo "  - Read AGENTS.md in $GITHUB_REPOSITORY for harness conventions before proposing fixes."
+              echo "  - Group failures by suspected root cause; the same gh-aw bug may explain several."
+              echo "  - Produce a table: test | category | root cause | recommended action | issue/PR link."
+              echo "  - Only open github/gh-aw issues for category 3, and only after confirming no duplicate exists."
+              echo '```'
+            fi
+
             echo "$overall_failed" > /tmp/overall_failed
           } > report.md
 
