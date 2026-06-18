@@ -183,6 +183,18 @@ GH_AW_REF=""
 GH_AW_SRC_DIR="../gh-aw"
 GH_AW_BIN="gh aw"
 
+# --branch / $E2E_BRANCH: when non-empty, e2e.sh pushes the recompiled
+# workflows to this branch (force-push) instead of committing to main, and
+# dispatches every test workflow with `--ref <branch>` so the run executes the
+# branch's version. This isolates concurrent/serial matrix entries from each
+# other (and from main) — each (gh-aw ref × samples) combination gets its own
+# stable branch that is reused and force-updated on every run. When empty, the
+# legacy behaviour (push to main, dispatch from the default branch) is used.
+E2E_BRANCH="${E2E_BRANCH:-}"
+# DISPATCH_REF is derived from E2E_BRANCH and passed to `gh aw run --ref` /
+# `gh workflow run --ref`. Empty means "use the repository default branch".
+DISPATCH_REF=""
+
 # CI mode: when the standard `$CI` environment variable is set to `true`
 # (which GitHub Actions and most other CI providers do automatically), e2e.sh
 # does NOT mutate repository secrets. Default to false if unset.
@@ -699,29 +711,64 @@ check_prerequisites() {
         exit 1
     fi
 
-    # If there are any updates from the compile, commit them and push them to main to make
-    # sure the workflows are up to date for testing.
+    # If there are any updates from the compile, commit them and push them so the
+    # workflows are up to date for testing.
+    #
+    # Two destinations:
+    #   * E2E_BRANCH set  -> create/reset a dedicated branch from the current
+    #     HEAD, commit any changes, and force-push the branch. Test workflows are
+    #     later dispatched with `--ref $E2E_BRANCH`, so this never touches main
+    #     and parallel/serial matrix entries can't clobber each other.
+    #   * E2E_BRANCH empty -> legacy behaviour: commit and push to main.
     # NOTE: when running against --gh-aw-ref the lock.yml diff is expected; we still
     # push so the test runs see the ref-specific workflows.
 
-    local git_status
-    git_status=$(git status --porcelain)
-    if [[ -n "$git_status" ]]; then
-        local commit_msg="chore: update compiled workflows via e2e.sh"
-        if [[ -n "$GH_AW_REF" ]]; then
-            commit_msg="chore: e2e.sh recompile against gh-aw ref ${GH_AW_REF}"
+    local commit_msg="chore: update compiled workflows via e2e.sh"
+    if [[ -n "$GH_AW_REF" ]]; then
+        commit_msg="chore: e2e.sh recompile against gh-aw ref ${GH_AW_REF}"
+    fi
+
+    if [[ -n "$E2E_BRANCH" ]]; then
+        DISPATCH_REF="$E2E_BRANCH"
+        info "Using dedicated test branch '$E2E_BRANCH' (workflows dispatched with --ref '$E2E_BRANCH')"
+        # Move onto the dedicated branch, carrying any compile changes in the
+        # working tree with us.
+        if ! git checkout -B "$E2E_BRANCH" &>> "$LOG_FILE"; then
+            error "Failed to create/reset local branch '$E2E_BRANCH'. Check $LOG_FILE for details"
+            exit 1
         fi
-        info "Detected changes after compile; committing and pushing to main branch"
-        git add . &>> "$LOG_FILE"
-        git commit -m "$commit_msg" &>> "$LOG_FILE"
-        if git push origin main &>> "$LOG_FILE"; then
-            success "Changes pushed to main branch"
+        local git_status
+        git_status=$(git status --porcelain)
+        if [[ -n "$git_status" ]]; then
+            git add . &>> "$LOG_FILE"
+            git commit -m "$commit_msg" &>> "$LOG_FILE"
         else
-            error "Failed to push changes to main branch. Check $LOG_FILE for details"
+            info "No changes detected after compile; force-pushing branch to keep it in sync"
+        fi
+        # Always force-push so the remote branch exactly matches the compiled
+        # state (the branch is ephemeral/reused and safe to overwrite).
+        if git push --force origin "$E2E_BRANCH" &>> "$LOG_FILE"; then
+            success "Pushed compiled workflows to branch '$E2E_BRANCH'"
+        else
+            error "Failed to push to branch '$E2E_BRANCH'. Check $LOG_FILE for details"
             exit 1
         fi
     else
-        info "No changes detected after compile"
+        local git_status
+        git_status=$(git status --porcelain)
+        if [[ -n "$git_status" ]]; then
+            info "Detected changes after compile; committing and pushing to main branch"
+            git add . &>> "$LOG_FILE"
+            git commit -m "$commit_msg" &>> "$LOG_FILE"
+            if git push origin main &>> "$LOG_FILE"; then
+                success "Changes pushed to main branch"
+            else
+                error "Failed to push changes to main branch. Check $LOG_FILE for details"
+                exit 1
+            fi
+        else
+            info "No changes detected after compile"
+        fi
     fi
 
     # PAT handling.
@@ -977,7 +1024,11 @@ trigger_workflow_dispatch_and_await_completion() {
     local before_run_id=$(get_latest_run_id "$workflow_file")
     
     # Trigger the workflow using gh aw run
-    if $GH_AW_BIN run "$workflow_name" &>> "$LOG_FILE"; then
+    local -a run_args=("$workflow_name")
+    if [[ -n "$DISPATCH_REF" ]]; then
+        run_args+=(--ref "$DISPATCH_REF")
+    fi
+    if $GH_AW_BIN run "${run_args[@]}" &>> "$LOG_FILE"; then
         success "Successfully triggered '$workflow_name'"
         
         # Wait a bit for the new run to appear
@@ -1025,6 +1076,9 @@ trigger_workflow_with_inputs() {
     
     # Build the gh workflow run command with inputs
     local cmd="gh workflow run \"$workflow_file\""
+    if [[ -n "$DISPATCH_REF" ]]; then
+        cmd+=" --ref \"$DISPATCH_REF\""
+    fi
     for input in "${inputs[@]}"; do
         cmd+=" -f $input"
     done
@@ -3961,6 +4015,22 @@ run_rerun() {
                 fi
                 shift
                 ;;
+            --branch)
+                if [[ $# -lt 2 || -z "$2" ]]; then
+                    error "--branch requires a value (branch name to push/dispatch from)"
+                    exit 1
+                fi
+                E2E_BRANCH="$2"
+                shift 2
+                ;;
+            --branch=*)
+                E2E_BRANCH="${1#*=}"
+                if [[ -z "$E2E_BRANCH" ]]; then
+                    error "--branch requires a value (branch name to push/dispatch from)"
+                    exit 1
+                fi
+                shift
+                ;;
             -*)
                 error "Unknown option for rerun: $1"
                 exit 1
@@ -4080,6 +4150,22 @@ main() {
                 fi
                 shift
                 ;;
+            --branch)
+                if [[ $# -lt 2 || -z "$2" ]]; then
+                    error "--branch requires a value (branch name to push/dispatch from)"
+                    exit 1
+                fi
+                E2E_BRANCH="$2"
+                shift 2
+                ;;
+            --branch=*)
+                E2E_BRANCH="${1#*=}"
+                if [[ -z "$E2E_BRANCH" ]]; then
+                    error "--branch requires a value (branch name to push/dispatch from)"
+                    exit 1
+                fi
+                shift
+                ;;
             --help|-h)
                 echo "Usage: $0 [OPTIONS] [TEST_PATTERNS...]"
                 echo "       $0 report"
@@ -4104,6 +4190,11 @@ main() {
                 echo "                             '../gh-aw/gh-aw compile --gh-aw-ref <ref>' so the"
                 echo "                             generated lock.yml files reference"
                 echo "                             github/gh-aw/actions/setup@<ref> at runtime."
+                echo "  --branch <name>            Push recompiled workflows to <name> (force-push)"
+                echo "                             instead of main, and dispatch every test with"
+                echo "                             '--ref <name>'. Isolates matrix entries from each"
+                echo "                             other and from main. Also honoured via the"
+                echo "                             E2E_BRANCH environment variable."
                 echo "  --help, -h                 Show this help message"
                 echo ""
                 echo "TEST_PATTERNS:"

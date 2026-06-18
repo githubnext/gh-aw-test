@@ -1,34 +1,37 @@
 name: E2E Against gh-aw Matrix
 
-# Compile-compatibility matrix that runs the E2E suite against three gh-aw refs
-# in parallel:
-#   1. github/gh-aw `main`
-#   2. the latest gh-aw pre-release tag
-#   3. the latest gh-aw stable release tag
+# Compile-compatibility matrix that runs the E2E suite against multiple gh-aw
+# refs × samples modes. The scheduled (nightly) run exercises the full matrix:
+#   1. github/gh-aw `main`              (source mode)
+#   2. the latest gh-aw pre-release tag (extension mode)
+#   3. the latest gh-aw stable release  (extension mode)
+# each crossed with samples=false (live engine) and samples=true (deterministic).
 #
-# What runs and what doesn't
-# --------------------------
-# Each matrix entry checks out github/gh-aw at the given ref, runs `make build`,
-# and then calls `e2e.sh --gh-aw-ref <ref> --workflow-dispatch-only`.
+# Execution model
+# ---------------
+# * SERIAL: the matrix runs with `max-parallel: 1`. Each entry itself dispatches
+#   dozens of test workflows, so running entries concurrently would flood GitHub
+#   Actions. Entries are therefore queued one at a time (`fail-fast: false` so a
+#   single entry's failure doesn't cancel the rest).
+# * BRANCH ISOLATION: each entry pushes its recompiled workflows to a dedicated
+#   branch `e2e/<ref>-samples-<bool>` (force-pushed, reused each run) via
+#   `e2e.sh --branch <branch>`, and dispatches every test with `gh aw run
+#   --ref <branch>`. This means NO entry pushes to or runs from `main`, so the
+#   recompiled, ref-specific workflows (referencing
+#   `github/gh-aw/actions/setup@<ref>`) are the ones actually executed — and
+#   parallel/serial entries can never clobber each other or main.
 #
-# Because `$CI` is set to `true` by GitHub Actions, `e2e.sh` automatically
-# switches into CI mode: it does NOT commit/push the recompiled lockfiles and
-# does NOT mutate the repository's `TEMP_USER_PAT` secret. That makes this
-# workflow safe to run on any cadence without racing concurrent CI runs. The
-# trade-off is that the runtime workflow_dispatch tests triggered by `e2e.sh`
-# execute whatever workflows are currently committed to main (not the
-# locally-recompiled ones referencing `github/gh-aw/actions/setup@<ref>`).
-# In practice this means this workflow:
-#   * VALIDATES that `gh-aw compile --gh-aw-ref <ref>` succeeds for every
-#     workflow source file in this repository (the most common failure mode
-#     when the compiler changes shape on gh-aw main).
-#   * EXECUTES the standard dispatch tests against whatever is on main, giving
-#     the same level of runtime confidence as the previous nightly job.
+# Manual dispatch
+# ---------------
+# `workflow_dispatch` exposes a `selection` choice so a human can run a single
+# combination quickly instead of the whole matrix. The default is `quick`
+# (main / source / samples=true). `full` runs the entire matrix serially, same
+# as the nightly schedule.
 #
-# If you ever want each matrix entry to actually run the recompiled workflows
-# end-to-end, you would need a per-ref push branch and a `gh workflow run --ref`
-# extension to `e2e.sh`. That is intentionally not done here so the workflow
-# never touches main.
+# Because `$CI` is set to `true` by GitHub Actions, `e2e.sh` runs in CI mode: it
+# does NOT mutate the repository's `TEMP_USER_PAT` secret (it relies on the
+# pre-configured repo secret + the `GH_AW_TEST_PAT` env var instead).
+#
 # Required secrets:
 #   * GH_AW_TEST_PAT      (required) — PAT used for all operations except copilot requests
 
@@ -37,8 +40,19 @@ on:
     - cron: '0 3 * * *'   # Nightly at 03:00 UTC
   workflow_dispatch:
     inputs:
+      selection:
+        description: 'Which part of the matrix to run'
+        required: false
+        type: choice
+        default: quick
+        options:
+          - quick            # main / source / samples=true   (fast, deterministic)
+          - main-live        # main / source / samples=false  (live engine path)
+          - release          # latest release / extension / samples=true
+          - prerelease       # latest pre-release / extension / samples=true
+          - full             # full matrix, run serially
       refs:
-        description: 'Optional comma-separated list of gh-aw refs to test (overrides main / latest pre-release / latest release auto-detection)'
+        description: 'Optional comma-separated list of gh-aw refs to test (overrides main / latest pre-release / latest release auto-detection). Only used when selection=full.'
         required: false
         default: ''
 
@@ -67,6 +81,10 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_AW_TEST_PAT }}
           OVERRIDE: ${{ inputs.refs }}
+          # On `schedule` (and any non-dispatch event) there is no selection
+          # input, so default to the full matrix. On workflow_dispatch this is
+          # the user's chosen option (default `quick`).
+          SELECTION: ${{ github.event_name == 'workflow_dispatch' && inputs.selection || 'full' }}
         run: |
           set -euo pipefail
 
@@ -86,46 +104,71 @@ jobs:
             latest_prerelease="$latest_release"
           fi
 
-          # Build the matrix. Each entry has:
-          #   label : short human-readable name used in job titles / report
-          #   ref   : git ref / tag passed to the build or install step
-          #   mode  : 'source'    => check out github/gh-aw at <ref>, `make build`,
-          #                         then run e2e.sh --gh-aw-ref <ref>. Used for
-          #                         non-release refs (main, branches, SHAs) that
-          #                         have no published gh extension release.
-          #           'extension' => `gh extension install github/gh-aw --pin <ref>`,
-          #                         then run e2e.sh with NO --gh-aw-ref. Used for
-          #                         release / pre-release tags so we exercise the
-          #                         exact published artifact users see.
+          echo "Selection: $SELECTION"
+
+          # Each matrix entry is a single, fully-specified combination:
+          #   label   : short human-readable name used in job titles / report
+          #   ref     : git ref / tag passed to the build or install step
+          #   mode    : 'source'    => check out github/gh-aw at <ref>, `make build`,
+          #                           then run e2e.sh --gh-aw-ref <ref>.
+          #             'extension' => `gh extension install github/gh-aw --pin <ref>`,
+          #                           then run e2e.sh with NO --gh-aw-ref.
+          #   samples : true  => run with --use-samples (deterministic, no engine)
+          #             false => run against the live AI engine
           #
-          # Override format (workflow_dispatch input `refs`): comma-separated tokens.
-          # Each token may be either a bare ref (defaults to mode=source) or
-          # "<ref>:source" / "<ref>:extension" to force a mode.
-          if [[ -n "$OVERRIDE" ]]; then
-            matrix=$(echo "$OVERRIDE" | jq -Rsc '
-              split(",")
-              | map(gsub("^\\s+|\\s+$";""))
-              | map(select(length>0))
-              | map(
-                  if test(":") then
-                    (split(":") | { label: .[0], ref: .[0], mode: (.[1] // "source") })
-                  else
-                    { label: ., ref: ., mode: "source" }
-                  end
-                )
-            ')
-          else
-            matrix=$(jq -nc \
-              --arg pre "$latest_prerelease" \
-              --arg rel "$latest_release" \
-              '[
-                { label: "main",           ref: "main", mode: "source" },
-                { label: "pre-release",    ref: $pre,  mode: "extension" },
-                { label: "release",        ref: $rel,  mode: "extension" }
-              ]
-              # de-dupe by ref so pre-release==release does not run twice
-              | unique_by(.ref)')
-          fi
+          # The job that consumes this matrix runs serially (max-parallel: 1) and
+          # each entry pushes to its own dedicated branch, so entries never race
+          # each other or main.
+          #
+          # `full` builds the complete (ref × samples) product. The single-entry
+          # selections pick exactly one combination for a fast manual dispatch.
+          case "$SELECTION" in
+            quick)
+              matrix=$(jq -nc '[{ label: "main", ref: "main", mode: "source", samples: true }]')
+              ;;
+            main-live)
+              matrix=$(jq -nc '[{ label: "main", ref: "main", mode: "source", samples: false }]')
+              ;;
+            release)
+              matrix=$(jq -nc --arg rel "$latest_release" \
+                '[{ label: "release", ref: $rel, mode: "extension", samples: true }]')
+              ;;
+            prerelease)
+              matrix=$(jq -nc --arg pre "$latest_prerelease" \
+                '[{ label: "pre-release", ref: $pre, mode: "extension", samples: true }]')
+              ;;
+            full|*)
+              # Override format (workflow_dispatch input `refs`): comma-separated
+              # tokens. Each token may be a bare ref (mode=source) or
+              # "<ref>:source" / "<ref>:extension" to force a mode.
+              if [[ -n "$OVERRIDE" ]]; then
+                base=$(echo "$OVERRIDE" | jq -Rc '
+                  split(",")
+                  | map(gsub("^\\s+|\\s+$";""))
+                  | map(select(length>0))
+                  | map(
+                      if test(":") then
+                        (split(":") | { label: .[0], ref: .[0], mode: (.[1] // "source") })
+                      else
+                        { label: ., ref: ., mode: "source" }
+                      end
+                    )')
+              else
+                base=$(jq -nc \
+                  --arg pre "$latest_prerelease" \
+                  --arg rel "$latest_release" \
+                  '[
+                    { label: "main",           ref: "main", mode: "source" },
+                    { label: "pre-release",    ref: $pre,  mode: "extension" },
+                    { label: "release",        ref: $rel,  mode: "extension" }
+                  ]
+                  # de-dupe by ref so pre-release==release does not run twice
+                  | unique_by(.ref)')
+              fi
+              # Expand each base entry across samples=false and samples=true.
+              matrix=$(echo "$base" | jq -c '[ .[] as $e | (false, true) | $e + { samples: . } ]')
+              ;;
+          esac
 
           echo "Resolved:"
           echo "  main:               main ($main_sha)"
@@ -141,21 +184,29 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
   e2e:
-    name: "E2E: ${{ matrix.entry.label }} (gh-aw@${{ matrix.entry.ref }}, ${{ matrix.entry.mode }}, samples=${{ matrix.samples }})"
+    name: "E2E: ${{ matrix.entry.label }} (gh-aw@${{ matrix.entry.ref }}, ${{ matrix.entry.mode }}, samples=${{ matrix.entry.samples }})"
     needs: resolve-refs
     runs-on: ubuntu-latest
     timeout-minutes: 90
     strategy:
+      # Run entries one at a time so the suite never floods GitHub Actions with
+      # concurrent dispatched test runs (each entry itself dispatches many
+      # workflows). fail-fast is off so one entry's failure doesn't cancel the
+      # rest of the (serial) queue.
       fail-fast: false
+      max-parallel: 1
       matrix:
         entry: ${{ fromJSON(needs.resolve-refs.outputs.matrix) }}
-        samples: [false, true]
     steps:
       - name: Checkout gh-aw-test
         uses: actions/checkout@v4
         with:
           path: gh-aw-test
-          fetch-depth: 1
+          fetch-depth: 0
+          # Use the PAT so e2e.sh can force-push the recompiled workflows to its
+          # dedicated `e2e/<ref>-samples-<bool>` branch (the default GITHUB_TOKEN
+          # only has contents:read in this workflow).
+          token: ${{ secrets.GH_AW_TEST_PAT }}
 
       # --- source mode: build gh-aw from a checkout ---------------------------
       - name: Checkout github/gh-aw at ${{ matrix.entry.ref }} (source mode)
@@ -210,7 +261,7 @@ jobs:
           GH_AW_TEST_PAT: ${{ secrets.GH_AW_TEST_PAT }}
           E2E_REF: ${{ matrix.entry.ref }}
           E2E_MODE: ${{ matrix.entry.mode }}
-          E2E_USE_SAMPLES: ${{ matrix.samples }}
+          E2E_USE_SAMPLES: ${{ matrix.entry.samples }}
         run: |
           set +e
           chmod +x ./e2e.sh
@@ -218,30 +269,45 @@ jobs:
             echo "::error::GH_AW_TEST_PAT secret is not set on this repository. The matrix runs e2e.sh in mode, which does not mutate repo secrets and therefore requires GH_AW_TEST_PAT to be supplied via secrets.GH_AW_TEST_PAT."
             exit 1
           fi
-          
+
+          # e2e.sh commits the recompiled workflows before force-pushing them to
+          # the dedicated branch; CI runners have no default git identity.
+          git config user.name  "gh-aw-test e2e bot"
+          git config user.email "gh-aw-test-e2e@users.noreply.github.com"
+
+          # Slug uniquely identifies this (ref × samples) combination and is used
+          # both for the dedicated test branch and the per-entry report files.
+          slug=$(echo "${E2E_REF}-samples-${E2E_USE_SAMPLES}" | tr '/' '_' | tr -cd 'A-Za-z0-9._-')
+
+          # Push recompiled workflows to a dedicated branch and dispatch every
+          # test with --ref <branch> so serial matrix entries never push to main
+          # or clobber each other. The branch is stable per (ref × samples) and
+          # force-updated on every run.
+          export E2E_BRANCH="e2e/${slug}"
+
           # Build flags
           SAMPLES_FLAG=""
           if [[ "$E2E_USE_SAMPLES" == "true" ]]; then
             SAMPLES_FLAG="--use-samples"
           fi
-          
+
           if [[ "$E2E_MODE" == "source" ]]; then
             # source mode: locally-built binary + --gh-aw-ref so lockfiles
             # reference github/gh-aw/actions/setup@<ref>.
             # ($CI=true is set automatically by GitHub Actions, so e2e.sh runs
-            # in CI mode: no push, no secret mutation.)
-            ./e2e.sh --gh-aw-ref "$E2E_REF" --workflow-dispatch-only $SAMPLES_FLAG 2>&1 | tee e2e-output.log
+            # in CI mode: no secret mutation. Workflows are pushed to
+            # $E2E_BRANCH, not main.)
+            ./e2e.sh --gh-aw-ref "$E2E_REF" --branch "$E2E_BRANCH" --workflow-dispatch-only $SAMPLES_FLAG 2>&1 | tee e2e-output.log
           else
             # extension mode: rely on the installed `gh aw` (pinned to $E2E_REF),
             # no --gh-aw-ref override — lockfiles will reference the published
             # gh-aw-actions release that ships with that gh-aw version, which is
             # exactly what end users get.
-            ./e2e.sh --workflow-dispatch-only $SAMPLES_FLAG 2>&1 | tee e2e-output.log
+            ./e2e.sh --branch "$E2E_BRANCH" --workflow-dispatch-only $SAMPLES_FLAG 2>&1 | tee e2e-output.log
           fi
           rc=${PIPESTATUS[0]}
           echo "exit_code=$rc" >> "$GITHUB_OUTPUT"
 
-          slug=$(echo "$E2E_REF" | tr '/' '_' | tr -cd 'A-Za-z0-9._-')
           mkdir -p ../report
           if [[ -s fails.txt ]]; then
             cp fails.txt "../report/fails-${slug}.txt"
@@ -261,7 +327,7 @@ jobs:
         working-directory: gh-aw-test
         run: |
           {
-            echo "## E2E: ${{ matrix.entry.label }} — gh-aw@${{ matrix.entry.ref }} (${{ matrix.entry.mode }} mode)"
+            echo "## E2E: ${{ matrix.entry.label }} — gh-aw@${{ matrix.entry.ref }} (${{ matrix.entry.mode }} mode, samples=${{ matrix.entry.samples }})"
             echo
             echo "Exit code: \`${{ steps.run.outputs.exit_code }}\`"
             echo
@@ -275,11 +341,11 @@ jobs:
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Upload artifacts for ${{ matrix.entry.label }}
+      - name: Upload artifacts for ${{ matrix.entry.label }} (samples=${{ matrix.entry.samples }})
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: e2e-${{ matrix.entry.label }}
+          name: e2e-${{ matrix.entry.label }}-samples-${{ matrix.entry.samples }}
           path: |
             gh-aw-test/e2e-test-*.log
             gh-aw-test/e2e-output.log
@@ -329,16 +395,17 @@ jobs:
             echo
             echo "## Per-entry results"
             echo
-            echo "| label | gh-aw ref | mode | exit code | failed tests |"
-            echo "|---|---|---|---|---|"
+            echo "| label | gh-aw ref | mode | samples | exit code | failed tests |"
+            echo "|---|---|---|---|---|---|"
 
             overall_failed=0
-            # Iterate the matrix output (array of {label, ref, mode} objects).
-            while IFS=$'\t' read -r label ref mode; do
+            # Iterate the matrix output (array of {label, ref, mode, samples}).
+            while IFS=$'\t' read -r label ref mode samples; do
               [[ -z "$label" ]] && continue
-              slug=$(echo "$ref" | tr '/' '_' | tr -cd 'A-Za-z0-9._-')
-              rc_file="artifacts/e2e-${label}/report/rc-${slug}.txt"
-              fails_file="artifacts/e2e-${label}/report/fails-${slug}.txt"
+              slug=$(echo "${ref}-samples-${samples}" | tr '/' '_' | tr -cd 'A-Za-z0-9._-')
+              art="artifacts/e2e-${label}-samples-${samples}"
+              rc_file="${art}/report/rc-${slug}.txt"
+              fails_file="${art}/report/fails-${slug}.txt"
               if [[ -f "$rc_file" ]]; then
                 rc=$(cat "$rc_file")
               else
@@ -352,23 +419,23 @@ jobs:
               if [[ "$rc" != "0" || "$count" -gt 0 ]]; then
                 overall_failed=1
               fi
-              echo "| $label | \`$ref\` | $mode | \`$rc\` | $count |"
-            done < <(echo "$MATRIX_JSON" | jq -r '.[] | [.label, .ref, .mode] | @tsv')
+              echo "| $label | \`$ref\` | $mode | $samples | \`$rc\` | $count |"
+            done < <(echo "$MATRIX_JSON" | jq -r '.[] | [.label, .ref, .mode, (.samples|tostring)] | @tsv')
 
             echo
-            while IFS=$'\t' read -r label ref mode; do
+            while IFS=$'\t' read -r label ref mode samples; do
               [[ -z "$label" ]] && continue
-              slug=$(echo "$ref" | tr '/' '_' | tr -cd 'A-Za-z0-9._-')
-              fails_file="artifacts/e2e-${label}/report/fails-${slug}.txt"
+              slug=$(echo "${ref}-samples-${samples}" | tr '/' '_' | tr -cd 'A-Za-z0-9._-')
+              fails_file="artifacts/e2e-${label}-samples-${samples}/report/fails-${slug}.txt"
               if [[ -s "$fails_file" ]]; then
-                echo "### Failures: $label (\`$ref\`, $mode)"
+                echo "### Failures: $label (\`$ref\`, $mode, samples=$samples)"
                 echo
                 echo '```'
                 cat "$fails_file"
                 echo '```'
                 echo
               fi
-            done < <(echo "$MATRIX_JSON" | jq -r '.[] | [.label, .ref, .mode] | @tsv')
+            done < <(echo "$MATRIX_JSON" | jq -r '.[] | [.label, .ref, .mode, (.samples|tostring)] | @tsv')
 
             echo
             echo "---"
