@@ -1,5 +1,5 @@
-# gh-aw-metadata: {"schema_version":"v4","frontmatter_hash":"7ecb65380fe2c79b519957b458e43e13b4176f50d9155fd185cd8a151551ba36","body_hash":"2df65e12dfeaaaf2f83f3f3527aeca03979bb80bb7fe566884493ba595fb63c1","compiler_version":"v0.80.4-19-g79b10f0d36","strict":true,"agent_id":"copilot","engine_versions":{"copilot":"1.0.63"}}
-# gh-aw-manifest: {"version":1,"secrets":["COPILOT_GITHUB_TOKEN","GH_AW_GITHUB_MCP_SERVER_TOKEN","GH_AW_GITHUB_TOKEN","GITHUB_TOKEN","TEMP_USER_PAT"],"actions":[{"repo":"actions/cache/restore","sha":"27d5ce7f107fe9357f9df03efb73ab90386fccae","version":"v5.0.5"},{"repo":"actions/cache/save","sha":"27d5ce7f107fe9357f9df03efb73ab90386fccae","version":"v5.0.5"},{"repo":"actions/checkout","sha":"df4cb1c069e1874edd31b4311f1884172cec0e10","version":"v6.0.3"},{"repo":"actions/download-artifact","sha":"3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c","version":"v8.0.1"},{"repo":"actions/github-script","sha":"373c709c69115d41ff229c7e5df9f8788daa9553","version":"v9"},{"repo":"actions/github-script","sha":"3a2844b7e9c422d3c10d287c895573f7108da1b3","version":"v9.0.0"},{"repo":"actions/upload-artifact","sha":"043fb46d1a93c77aae656e7c1c64a875d1fc6a0a","version":"v7.0.1"},{"repo":"github/codeql-action/upload-sarif","sha":"8aad20d150bbac5944a9f9d289da16a4b0d87c1e","version":"v4.36.2"},{"repo":"github/gh-aw/actions/setup","sha":"79b10f0d3629582b3e4738b5ec9d82d542a265d2","version":"79b10f0d3629582b3e4738b5ec9d82d542a265d2"}],"containers":[{"image":"ghcr.io/github/gh-aw-firewall/agent:0.27.4","digest":"sha256:b268ebf37df2428b19efcb383f001d65dc6a5ec10af43feb886d1a8477ab0e3a","pinned_image":"ghcr.io/github/gh-aw-firewall/agent:0.27.4@sha256:b268ebf37df2428b19efcb383f001d65dc6a5ec10af43feb886d1a8477ab0e3a"},{"image":"ghcr.io/github/gh-aw-firewall/api-proxy:0.27.4","digest":"sha256:3ea0d12a2d124db8ed6e2d18aff040e30ab3568161f258a132fccdeede4198cd","pinned_image":"ghcr.io/github/gh-aw-firewall/api-proxy:0.27.4@sha256:3ea0d12a2d124db8ed6e2d18aff040e30ab3568161f258a132fccdeede4198cd"},{"image":"ghcr.io/github/gh-aw-firewall/squid:0.27.4","digest":"sha256:87979038897e40caed22245b64d1daa796390d2dca289b99d3d1174c85740af8","pinned_image":"ghcr.io/github/gh-aw-firewall/squid:0.27.4@sha256:87979038897e40caed22245b64d1daa796390d2dca289b99d3d1174c85740af8"},{"image":"ghcr.io/github/gh-aw-mcpg:v0.3.26","digest":"sha256:d3b03f54eee3a8176818c9a52087623e45b7f644a28814337fcc0838e2534490","pinned_image":"ghcr.io/github/gh-aw-mcpg:v0.3.26@sha256:d3b03f54eee3a8176818c9a52087623e45b7f644a28814337fcc0838e2534490"},{"image":"ghcr.io/github/gh-aw-node","digest":"sha256:529d02eb970b1161aa25c593a9c3df57fdfad5a8add328cb3b6eccef66f3183b","pinned_image":"ghcr.io/github/gh-aw-node@sha256:529d02eb970b1161aa25c593a9c3df57fdfad5a8add328cb3b6eccef66f3183b"},{"image":"ghcr.io/github/github-mcp-server:v1.3.0","digest":"sha256:5c83359327a0bacc3d34db730bea6557d39d341cee0bf6c58c9a896e33150e80","pinned_image":"ghcr.io/github/github-mcp-server:v1.3.0@sha256:5c83359327a0bacc3d34db730bea6557d39d341cee0bf6c58c9a896e33150e80"}]}
+# gh-aw-metadata: {"schema_version":"v4","frontmatter_hash":"7ecb65380fe2c79b519957b458e43e13b4176f50d9155fd185cd8a151551ba36","body_hash":"2df65e12dfeaaaf2f83f3f3527aeca03979bb80bb7fe566884493ba595fb63c1","compiler_version":"v0.80.4-21-gbb2f7a91a1","strict":true,"agent_id":"copilot","engine_versions":{"copilot":"1.0.63"}}
+# gh-aw-manifest: {"version":1,"secrets":["COPILOT_GITHUB_TOKEN","GH_AW_GITHUB_MCP_SERVER_TOKEN","GH_AW_GITHUB_TOKEN","GITHUB_TOKEN","TEMP_USER_PAT"],"actions":[{"repo":"actions/cache/restore","sha":"27d5ce7f107fe9357f9df03efb73ab90386fccae","version":"v5.0.5"},{"repo":"actions/cache/save","sha":"27d5ce7f107fe9357f9df03efb73ab90386fccae","version":"v5.0.5"},{"repo":"actions/checkout","sha":"df4cb1c069e1874edd31b4311f1884172cec0e10","version":"v6.0.3"},{"repo":"actions/download-artifact","sha":"3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c","version":"v8.0.1"},{"repo":"actions/github-script","sha":"373c709c69115d41ff229c7e5df9f8788daa9553","version":"v9"},{"repo":"actions/github-script","sha":"3a2844b7e9c422d3c10d287c895573f7108da1b3","version":"v9.0.0"},{"repo":"actions/upload-artifact","sha":"043fb46d1a93c77aae656e7c1c64a875d1fc6a0a","version":"v7.0.1"},{"repo":"github/codeql-action/upload-sarif","sha":"8aad20d150bbac5944a9f9d289da16a4b0d87c1e","version":"v4.36.2"},{"repo":"github/gh-aw/actions/setup","sha":"bb2f7a91a1c14b4a8ca3939ae8e4ec95bc56aa24","version":"bb2f7a91a1c14b4a8ca3939ae8e4ec95bc56aa24"}],"containers":[{"image":"ghcr.io/github/gh-aw-firewall/agent:0.27.4","digest":"sha256:b268ebf37df2428b19efcb383f001d65dc6a5ec10af43feb886d1a8477ab0e3a","pinned_image":"ghcr.io/github/gh-aw-firewall/agent:0.27.4@sha256:b268ebf37df2428b19efcb383f001d65dc6a5ec10af43feb886d1a8477ab0e3a"},{"image":"ghcr.io/github/gh-aw-firewall/api-proxy:0.27.4","digest":"sha256:3ea0d12a2d124db8ed6e2d18aff040e30ab3568161f258a132fccdeede4198cd","pinned_image":"ghcr.io/github/gh-aw-firewall/api-proxy:0.27.4@sha256:3ea0d12a2d124db8ed6e2d18aff040e30ab3568161f258a132fccdeede4198cd"},{"image":"ghcr.io/github/gh-aw-firewall/squid:0.27.4","digest":"sha256:87979038897e40caed22245b64d1daa796390d2dca289b99d3d1174c85740af8","pinned_image":"ghcr.io/github/gh-aw-firewall/squid:0.27.4@sha256:87979038897e40caed22245b64d1daa796390d2dca289b99d3d1174c85740af8"},{"image":"ghcr.io/github/gh-aw-mcpg:v0.3.26","digest":"sha256:d3b03f54eee3a8176818c9a52087623e45b7f644a28814337fcc0838e2534490","pinned_image":"ghcr.io/github/gh-aw-mcpg:v0.3.26@sha256:d3b03f54eee3a8176818c9a52087623e45b7f644a28814337fcc0838e2534490"},{"image":"ghcr.io/github/gh-aw-node","digest":"sha256:529d02eb970b1161aa25c593a9c3df57fdfad5a8add328cb3b6eccef66f3183b","pinned_image":"ghcr.io/github/gh-aw-node@sha256:529d02eb970b1161aa25c593a9c3df57fdfad5a8add328cb3b6eccef66f3183b"},{"image":"ghcr.io/github/github-mcp-server:v1.3.0","digest":"sha256:5c83359327a0bacc3d34db730bea6557d39d341cee0bf6c58c9a896e33150e80","pinned_image":"ghcr.io/github/github-mcp-server:v1.3.0@sha256:5c83359327a0bacc3d34db730bea6557d39d341cee0bf6c58c9a896e33150e80"}]}
 # This file was automatically generated by gh-aw. DO NOT EDIT. To debug this workflow, load the skill at https://github.com/github/gh-aw/blob/main/debug.md
 #
 #    ___                   _   _      
@@ -40,7 +40,7 @@
 #   - actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
 #   - actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
 #   - github/codeql-action/upload-sarif@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4.36.2
-#   - github/gh-aw/actions/setup@79b10f0d3629582b3e4738b5ec9d82d542a265d2
+#   - github/gh-aw/actions/setup@bb2f7a91a1c14b4a8ca3939ae8e4ec95bc56aa24
 #
 # Container images used:
 #   - ghcr.io/github/gh-aw-firewall/agent:0.27.4@sha256:b268ebf37df2428b19efcb383f001d65dc6a5ec10af43feb886d1a8477ab0e3a
@@ -92,7 +92,7 @@ jobs:
     steps:
       - name: Setup Scripts
         id: setup
-        uses: github/gh-aw/actions/setup@79b10f0d3629582b3e4738b5ec9d82d542a265d2
+        uses: github/gh-aw/actions/setup@bb2f7a91a1c14b4a8ca3939ae8e4ec95bc56aa24
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
           job-name: ${{ github.job }}
@@ -397,7 +397,7 @@ jobs:
     steps:
       - name: Setup Scripts
         id: setup
-        uses: github/gh-aw/actions/setup@79b10f0d3629582b3e4738b5ec9d82d542a265d2
+        uses: github/gh-aw/actions/setup@bb2f7a91a1c14b4a8ca3939ae8e4ec95bc56aa24
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
           job-name: ${{ github.job }}
@@ -933,7 +933,7 @@ jobs:
     steps:
       - name: Setup Scripts
         id: setup
-        uses: github/gh-aw/actions/setup@79b10f0d3629582b3e4738b5ec9d82d542a265d2
+        uses: github/gh-aw/actions/setup@bb2f7a91a1c14b4a8ca3939ae8e4ec95bc56aa24
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
           job-name: ${{ github.job }}
@@ -1159,7 +1159,7 @@ jobs:
     steps:
       - name: Setup Scripts
         id: setup
-        uses: github/gh-aw/actions/setup@79b10f0d3629582b3e4738b5ec9d82d542a265d2
+        uses: github/gh-aw/actions/setup@bb2f7a91a1c14b4a8ca3939ae8e4ec95bc56aa24
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
           job-name: ${{ github.job }}
