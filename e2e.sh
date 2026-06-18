@@ -452,6 +452,8 @@ get_title_prefix() {
     # Determine the appropriate suffix based on workflow type
     if [[ "$workflow_name" == *"create-two-pull-requests"* ]]; then
         echo "[${ai_type}-test-two-prs] "
+    elif [[ "$workflow_name" == *"subdir-create-pull-request"* ]]; then
+        echo "[${ai_type}-test-subdir-pr] "
     elif [[ "$workflow_name" == *"create-pull-request"* ]]; then
         echo "[${ai_type}-test-single-pr] "
     elif [[ "$workflow_name" == *"gh-steps"* ]]; then
@@ -575,6 +577,7 @@ get_all_tests() {
     echo "test-copilot-siderepo-create-issue"
     echo "test-copilot-siderepo-create-discussion"
     echo "test-copilot-siderepo-create-pull-request"
+    echo "test-copilot-siderepo-subdir-create-pull-request"
     echo "test-copilot-siderepo-create-two-pull-requests"
     # echo "test-copilot-siderepo-create-repository-code-scanning-alert"  # Disabled: doesn't support target-repo
     echo "test-copilot-siderepo-mcp"
