@@ -63,7 +63,7 @@ declare -a SKIPPED_TESTS=()
 declare -A TEST_RUN_URLS=()  # maps test name -> actions run URL (when available)
 
 # Parallel execution settings
-BATCH_SIZE=20
+BATCH_SIZE=25
 NO_PARALLEL=false
 
 # Lock file for synchronized result tracking across parallel processes
@@ -3759,7 +3759,7 @@ run_tests_parallel() {
                 fi
                 # Visible prefix: "  [" + 40-char bar + "] N/M (PP%)"
                 local visible_prefix_len=$(( 2 + 1 + 40 + 1 + 1 + ${#completed} + 1 + ${#total_in_batch} + 2 + ${#progress_pct} + 2 ))
-                local max_width=120
+                local max_width; max_width=$(( ${COLUMNS:-80} ))
                 local available=$(( max_width - visible_prefix_len ))
                 # Note: ${#running_text} counts UTF-8 bytes, so the em-dash counts as 3.
                 # That's fine — it just makes us truncate slightly earlier, never later.
@@ -3881,9 +3881,9 @@ print_final_report() {
     echo -e "${CYAN}📄 Log file: $LOG_FILE${NC}"
     echo "============================================"
 
-    # If anything failed, emit a ready-to-paste prompt for a coding agent to
+    # If anything failed in this run, emit a ready-to-paste prompt for a coding agent to
     # triage the failures from the run logs.
-    if [[ ${#FAILED_TESTS[@]} -gt 0 || -f "fails.txt" ]]; then
+    if [[ ${#FAILED_TESTS[@]} -gt 0 ]]; then
         print_agent_triage_prompt
     fi
 
