@@ -1,4 +1,4 @@
-name: E2E Against gh-aw Matrix
+name: e2e
 
 # Compile-compatibility matrix that runs the E2E suite against multiple gh-aw
 # refs × samples modes. The scheduled (nightly) run exercises the full matrix:

@@ -81,7 +81,7 @@ GLOBAL_WORKFLOWS_LOCK="/tmp/e2e-workflows-$$.lock"
 # Names must match the `name:` field of the workflow as reported by
 # `gh workflow list`.
 declare -a NEVER_DISABLE_WORKFLOWS=(
-    "E2E Against gh-aw Matrix"
+    "e2e"
 )
 
 # Returns 0 (true) if the given workflow name is on the never-disable list.
