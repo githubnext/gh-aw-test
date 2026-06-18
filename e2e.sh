@@ -73,6 +73,27 @@ RESULTS_LOCK="/tmp/e2e-results-$$.lock"
 declare -a GLOBAL_WORKFLOWS_TO_DISABLE=()
 GLOBAL_WORKFLOWS_LOCK="/tmp/e2e-workflows-$$.lock"
 
+# Workflows that must NEVER be disabled by the runner. These are the CI/infra
+# workflows (the nightly E2E matrix in particular) that need to stay enabled so
+# their `schedule:` triggers keep firing. `disable_all_workflows_before_testing`
+# disables every active workflow before a run, so without this allow-list it
+# would turn off the very workflow that invokes it in CI, killing nightly runs.
+# Names must match the `name:` field of the workflow as reported by
+# `gh workflow list`.
+declare -a NEVER_DISABLE_WORKFLOWS=(
+    "E2E Against gh-aw Matrix"
+)
+
+# Returns 0 (true) if the given workflow name is on the never-disable list.
+is_protected_workflow() {
+    local name="$1"
+    local protected
+    for protected in "${NEVER_DISABLE_WORKFLOWS[@]}"; do
+        [[ "$name" == "$protected" ]] && return 0
+    done
+    return 1
+}
+
 # Record a test pass: update arrays and remove from fails.txt
 record_test_pass() {
     local test_name="$1"
@@ -272,6 +293,12 @@ cleanup_on_exit() {
         
         info "Disabling ${#unique_workflows[@]} workflow(s) in parallel that were enabled during testing..."
         for workflow in "${unique_workflows[@]}"; do
+            # Never disable protected CI/infra workflows (e.g. the nightly E2E
+            # matrix) even if they somehow ended up on the disable queue.
+            if is_protected_workflow "$workflow"; then
+                info "  🔒 Keeping '$workflow' enabled (protected workflow)"
+                continue
+            fi
             (disable_workflow "$workflow" 2>/dev/null || warning "Failed to disable workflow '$workflow', continuing...") &
         done
         wait
@@ -745,6 +772,13 @@ disable_all_workflows_before_testing() {
     local already_disabled_count=0
 
     while IFS=$'\t' read -r workflow_name workflow_state; do
+        # Never disable protected CI/infra workflows (e.g. the nightly E2E
+        # matrix), otherwise the scheduled run that invokes us in CI would be
+        # turned off and nightly testing would stop.
+        if is_protected_workflow "$workflow_name"; then
+            info "  🔒 Keeping '$workflow_name' enabled (protected workflow)"
+            continue
+        fi
         # Skip if already disabled
         if [[ "$workflow_state" == "disabled_manually" ]] || [[ "$workflow_state" == "disabled_inactivity" ]]; then
             info "  ⏭️  Skipping '$workflow_name' (already $workflow_state)"

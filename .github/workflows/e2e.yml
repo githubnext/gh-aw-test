@@ -123,7 +123,7 @@ jobs:
                 { label: "pre-release",    ref: $pre,  mode: "extension" },
                 { label: "release",        ref: $rel,  mode: "extension" }
               ]
-              # de-dupe by ref so pre-release==release doesn't run twice
+              # de-dupe by ref so pre-release==release does not run twice
               | unique_by(.ref)')
           fi
 
