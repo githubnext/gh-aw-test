@@ -25,6 +25,7 @@
 #   --workflow-dispatch-only   Only run tests that use workflow_dispatch trigger
 #                              (skip issue/comment/PR-triggered tests)
 #   --use-samples              Use declared samples for more deterministic testing
+#   --verbose, -v              Stream build/compile/version diagnostics to stdout
 #   --help, -h                 Show help message
 #
 # Examples:
@@ -172,6 +173,11 @@ TEMP_USER_PAT_SET=false
 WORKFLOW_DISPATCH_ONLY=false
 USE_SAMPLES=false
 
+# --verbose: when true, build/compile/version diagnostics that normally go only
+# to $LOG_FILE are ALSO streamed to stdout. Useful in CI where $LOG_FILE is not
+# surfaced and a failing `make build` / capability probe is otherwise opaque.
+VERBOSE=false
+
 # Shared results file for parallel execution
 RESULTS_FILE="/tmp/e2e-results-$$.txt"
 
@@ -223,6 +229,20 @@ error() {
 
 progress() {
     echo -e "${PURPLE}🔨 $*${NC}" | tee -a "$LOG_FILE"
+}
+
+# Run a command, always appending its combined output to $LOG_FILE. When
+# VERBOSE is true the output is ALSO streamed to stdout (via the terminal),
+# which is important in CI where $LOG_FILE is not otherwise surfaced. Returns
+# the command's exit status.
+run_logged() {
+    if [[ "$VERBOSE" == true ]]; then
+        # tee keeps the log file in sync while echoing to the console.
+        "$@" 2>&1 | tee -a "$LOG_FILE"
+        return "${PIPESTATUS[0]}"
+    else
+        "$@" &>> "$LOG_FILE"
+    fi
 }
 
 # Secret management functions
@@ -601,7 +621,7 @@ setup_local_gh_aw_binary() {
 
     progress "Fetching latest refs from origin in $GH_AW_SRC_DIR..."
     # --force + --prune-tags tolerates moved/deleted upstream tags
-    if ! git -C "$GH_AW_SRC_DIR" fetch origin --prune --prune-tags --tags --force &>> "$LOG_FILE"; then
+    if ! run_logged git -C "$GH_AW_SRC_DIR" fetch origin --prune --prune-tags --tags --force; then
         error "Failed to fetch from origin in $GH_AW_SRC_DIR"
         exit 1
     fi
@@ -609,19 +629,24 @@ setup_local_gh_aw_binary() {
     progress "Resetting $GH_AW_SRC_DIR to '$GH_AW_REF'..."
     # Try branch (origin/<ref>) first, then fall back to tag/SHA.
     if git -C "$GH_AW_SRC_DIR" rev-parse --verify "origin/$GH_AW_REF" &>/dev/null; then
-        if ! git -C "$GH_AW_SRC_DIR" checkout -B "$GH_AW_REF" "origin/$GH_AW_REF" &>> "$LOG_FILE"; then
+        if ! run_logged git -C "$GH_AW_SRC_DIR" checkout -B "$GH_AW_REF" "origin/$GH_AW_REF"; then
             error "Failed to checkout branch '$GH_AW_REF' in $GH_AW_SRC_DIR"
             exit 1
         fi
     else
-        if ! git -C "$GH_AW_SRC_DIR" checkout --detach "$GH_AW_REF" &>> "$LOG_FILE"; then
+        if ! run_logged git -C "$GH_AW_SRC_DIR" checkout --detach "$GH_AW_REF"; then
             error "Failed to checkout ref '$GH_AW_REF' in $GH_AW_SRC_DIR (not a branch, tag, or SHA)"
             exit 1
         fi
     fi
 
+    # Record the resolved commit so a stale/empty build is easy to diagnose.
+    local resolved_sha
+    resolved_sha=$(git -C "$GH_AW_SRC_DIR" rev-parse --short HEAD 2>/dev/null || echo "unknown")
+    info "  $GH_AW_SRC_DIR is at commit $resolved_sha"
+
     progress "Building gh-aw binary at $GH_AW_SRC_DIR (make build)..."
-    if ! (cd "$GH_AW_SRC_DIR" && make build) &>> "$LOG_FILE"; then
+    if ! ( cd "$GH_AW_SRC_DIR" && run_logged make build ); then
         error "Failed to build gh-aw binary in $GH_AW_SRC_DIR. Check $LOG_FILE for details"
         exit 1
     fi
@@ -633,13 +658,27 @@ setup_local_gh_aw_binary() {
     fi
 
     GH_AW_BIN="$bin_path"
+    # Capture version output (incl. stderr) for diagnostics. An empty version
+    # usually means the build silently produced a binary without ldflags/version
+    # info or that an old binary is being reused.
     local built_version
-    built_version=$($GH_AW_BIN --version 2>/dev/null || echo "unknown")
-    success "Built gh-aw binary: $bin_path ($built_version)"
+    built_version=$($GH_AW_BIN --version 2>&1 || echo "unknown")
+    echo "gh-aw --version output: ${built_version:-<empty>}" >> "$LOG_FILE"
+    success "Built gh-aw binary: $bin_path (commit $resolved_sha, version: ${built_version:-<empty>})"
 
-    # Verify the binary supports --gh-aw-ref.
-    if ! $GH_AW_BIN compile --help 2>&1 | grep -q -- "--gh-aw-ref"; then
-        error "The built gh-aw binary does not support --gh-aw-ref. The ref '$GH_AW_REF' is likely older than the flag's introduction."
+    # Verify the binary supports --gh-aw-ref. Capture the help output so a
+    # failure here can be diagnosed (e.g. ref older than the flag, or the wrong
+    # binary was built/picked up).
+    local compile_help
+    compile_help=$($GH_AW_BIN compile --help 2>&1)
+    echo "--- '$GH_AW_BIN compile --help' output ---" >> "$LOG_FILE"
+    echo "$compile_help" >> "$LOG_FILE"
+    if [[ "$VERBOSE" == true ]]; then
+        echo "$compile_help"
+    fi
+    if ! grep -q -- "--gh-aw-ref" <<< "$compile_help"; then
+        error "The built gh-aw binary does not support --gh-aw-ref. The ref '$GH_AW_REF' (commit $resolved_sha) is likely older than the flag's introduction, or the wrong binary was built (version: ${built_version:-<empty>})."
+        error "Re-run with --verbose to see the full build and 'compile --help' output."
         exit 1
     fi
 }
@@ -3979,6 +4018,10 @@ run_rerun() {
                 USE_SAMPLES=true
                 shift
                 ;;
+            --verbose|-v)
+                VERBOSE=true
+                shift
+                ;;
             --batch-size)
                 if [[ $# -lt 2 || ! "$2" =~ ^[0-9]+$ ]]; then
                     error "--batch-size requires a positive integer value"
@@ -4114,6 +4157,10 @@ main() {
                 USE_SAMPLES=true
                 shift
                 ;;
+            --verbose|-v)
+                VERBOSE=true
+                shift
+                ;;
             --batch-size)
                 if [[ $# -lt 2 || ! "$2" =~ ^[0-9]+$ ]]; then
                     error "--batch-size requires a positive integer value"
@@ -4182,6 +4229,8 @@ main() {
                 echo "  --workflow-dispatch-only   Only run tests that use workflow_dispatch trigger"
                 echo "                             (skip issue/comment/PR-triggered tests)"
                 echo "  --use-samples              Use declared samples for more deterministic testing"
+                echo "  --verbose, -v              Stream build/compile/version diagnostics to stdout"
+                echo "                             (otherwise they only go to the run's log file)."
                 echo "  --batch-size <N>           Run tests in parallel batches of N tests (default: 10)"
                 echo "  --no-parallel              Disable parallel execution (run tests sequentially)"
                 echo "  --gh-aw-ref <ref>          Run E2E tests against gh-aw at this branch/tag/SHA."
