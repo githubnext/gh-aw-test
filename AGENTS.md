@@ -134,7 +134,8 @@ and a local clone of `github/gh-aw` if you plan to use `--gh-aw-ref`.
 ```
 
 The runner writes a timestamped `e2e-test-YYYYMMDD-HHMMSS.log` and updates
-`fails.txt` in place. Both are gitignored as `*.log` / `fails.txt`.
+`fails.txt` in place. The logs are gitignored (`*.log`); `fails.txt` is
+**tracked** and committed (it is the persisted failure list, see §7).
 
 ## 7. `fails.txt` is the source of truth for failures
 
@@ -153,10 +154,15 @@ in `fails.txt`, and `./e2e.sh report` to open issues for each entry.
 
 `.github/workflows/e2e.yml` runs `./e2e.sh --gh-aw-ref <ref>
 --workflow-dispatch-only` for `main`, the latest pre-release, and the latest
-stable release of gh-aw, every night at 03:00 UTC. Because GitHub Actions
+stable release of gh-aw, every night at 03:00 UTC. The matrix is **serial**
+(`max-parallel: 1`); each entry recompiles its workflows, **pushes them to
+`main`**, and dispatches every test from `main`. Running from `main` exercises
+the common case users hit and keeps create-pull-request's `fetch-depth: 1`
+merge-base against `origin/main` trivially resolvable. Because GitHub Actions
 exports `CI=true`, the runner enters **CI mode**:
 
-- It does **not** commit/push recompiled lockfiles.
+- It **does** commit/push recompiled lockfiles to `main` (serial entries
+  cannot clobber each other).
 - It does **not** mutate the repository's `TEMP_USER_PAT` secret.
 - It does **not** run issue/comment/PR-triggered tests (only `workflow_dispatch`).
 
@@ -240,8 +246,8 @@ secret-handling sections.
 
 ## 14. Things not to do
 
-- Do not commit `e2e-test-*.log` or `fails.txt.bak` (gitignored, but
-  occasionally untracked copies sneak in).
+- Do not commit `e2e-test-*.log` (gitignored via `*.log`). `fails.txt.bak`
+  is **not** gitignored — do not commit stray copies of it either.
 - Do not delete `e2e.sh.backup` or `e2e.sh.before-full-consolidation`
   without confirming with the maintainer — they document the consolidation
   documented in `CONSOLIDATION_COMPLETE.md`.

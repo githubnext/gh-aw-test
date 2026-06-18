@@ -13,13 +13,12 @@ name: e2e
 #   dozens of test workflows, so running entries concurrently would flood GitHub
 #   Actions. Entries are therefore queued one at a time (`fail-fast: false` so a
 #   single entry's failure doesn't cancel the rest).
-# * BRANCH ISOLATION: each entry pushes its recompiled workflows to a dedicated
-#   branch `e2e/<ref>-samples-<bool>` (force-pushed, reused each run) via
-#   `e2e.sh --branch <branch>`, and dispatches every test with `gh aw run
-#   --ref <branch>`. This means NO entry pushes to or runs from `main`, so the
-#   recompiled, ref-specific workflows (referencing
-#   `github/gh-aw/actions/setup@<ref>`) are the ones actually executed — and
-#   parallel/serial entries can never clobber each other or main.
+# * RUNS FROM MAIN: each entry recompiles its workflows, pushes them to `main`,
+#   and dispatches every test from `main`. Because the matrix is serial, entries
+#   cannot clobber each other, so the dedicated-branch isolation used previously
+#   is unnecessary. Running from `main` exercises the common case users
+#   experience and keeps create-pull-request's fetch-depth:1 merge-base against
+#   origin/main trivially resolvable (no divergent test branch).
 #
 # Manual dispatch
 # ---------------
@@ -221,9 +220,8 @@ jobs:
         with:
           path: gh-aw-test
           fetch-depth: 0
-          # Use the PAT so e2e.sh can force-push the recompiled workflows to its
-          # dedicated `e2e/<ref>-samples-<bool>` branch (the default GITHUB_TOKEN
-          # only has contents:read in this workflow).
+          # Use the PAT so e2e.sh can push the recompiled workflows to main
+          # (the default GITHUB_TOKEN only has contents:read in this workflow).
           token: ${{ secrets.GH_AW_TEST_PAT }}
 
       # --- source mode: build gh-aw from a checkout ---------------------------
@@ -288,20 +286,20 @@ jobs:
             exit 1
           fi
 
-          # e2e.sh commits the recompiled workflows before force-pushing them to
-          # the dedicated branch; CI runners have no default git identity.
+          # e2e.sh commits the recompiled workflows and pushes them to main;
+          # CI runners have no default git identity.
           git config user.name  "gh-aw-test e2e bot"
           git config user.email "gh-aw-test-e2e@users.noreply.github.com"
 
           # Slug uniquely identifies this (ref × samples) combination and is used
-          # both for the dedicated test branch and the per-entry report files.
+          # for the per-entry report files.
           slug=$(echo "${E2E_REF}-samples-${E2E_USE_SAMPLES}" | tr '/' '_' | tr -cd 'A-Za-z0-9._-')
 
-          # Push recompiled workflows to a dedicated branch and dispatch every
-          # test with --ref <branch> so serial matrix entries never push to main
-          # or clobber each other. The branch is stable per (ref × samples) and
-          # force-updated on every run.
-          export E2E_BRANCH="e2e/${slug}"
+          # The matrix is serial (max-parallel: 1), so each entry can safely
+          # recompile, push to main, and dispatch every test from main without
+          # clobbering another entry. Running from main tests the common case
+          # users actually experience (and keeps create-pull-request's
+          # fetch-depth:1 merge-base against origin/main trivially resolvable).
 
           # Build flags
           SAMPLES_FLAG=""
@@ -313,18 +311,18 @@ jobs:
             # source mode: locally-built binary + --gh-aw-ref so lockfiles
             # reference github/gh-aw/actions/setup@<ref>.
             # ($CI=true is set automatically by GitHub Actions, so e2e.sh runs
-            # in CI mode: no secret mutation. Workflows are pushed to
-            # $E2E_BRANCH, not main.)
+            # in CI mode: no secret mutation. Recompiled workflows are pushed
+            # to main.)
             # --verbose streams the gh-aw build/compile/version diagnostics to
             # the job log (otherwise they'd only land in the e2e-test-*.log
             # artifact, making build failures opaque in CI).
-            ./e2e.sh --gh-aw-ref "$E2E_REF" --branch "$E2E_BRANCH" --workflow-dispatch-only --verbose $SAMPLES_FLAG 2>&1 | tee e2e-output.log
+            ./e2e.sh --gh-aw-ref "$E2E_REF" --workflow-dispatch-only --verbose $SAMPLES_FLAG 2>&1 | tee e2e-output.log
           else
             # extension mode: rely on the installed `gh aw` (pinned to $E2E_REF),
             # no --gh-aw-ref override — lockfiles will reference the published
             # gh-aw-actions release that ships with that gh-aw version, which is
             # exactly what end users get.
-            ./e2e.sh --branch "$E2E_BRANCH" --workflow-dispatch-only --verbose $SAMPLES_FLAG 2>&1 | tee e2e-output.log
+            ./e2e.sh --workflow-dispatch-only --verbose $SAMPLES_FLAG 2>&1 | tee e2e-output.log
           fi
           rc=${PIPESTATUS[0]}
           echo "exit_code=$rc" >> "$GITHUB_OUTPUT"
@@ -554,9 +552,11 @@ jobs:
             echo "locally-built \`gh-aw\` from the github/gh-aw checkout. The release / pre-release entries"
             echo "install the published \`gh aw\` extension at the pinned tag (\`gh extension install\`"
             echo "--pin <tag>\`) and run \`e2e.sh --workflow-dispatch-only\` against that, so they"
-            echo "exercise exactly the artifact users see. GitHub Actions sets \`CI=true\`, which puts"
-            echo "\`e2e.sh\` into no-push / no-secret-mutation mode automatically so parallel matrix"
-            echo "jobs don't race each other. See \`.github/workflows/e2e.yml\` for the design rationale._"
+            echo "exercise exactly the artifact users see. Each entry recompiles its workflows, pushes"
+            echo "them to \`main\`, and dispatches every test from \`main\`. The matrix is serial"
+            echo "(\`max-parallel: 1\`), so entries can't clobber each other; GitHub Actions sets"
+            echo "\`CI=true\`, which puts \`e2e.sh\` into no-secret-mutation mode automatically. See"
+            echo "\`.github/workflows/e2e.yml\` for the design rationale._"
 
             # When anything failed, append a ready-to-paste prompt for a coding
             # agent to triage the failures from the run logs.
