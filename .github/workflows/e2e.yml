@@ -394,19 +394,153 @@ jobs:
           LATEST_RELEASE: ${{ needs.resolve-refs.outputs.latest_release }}
           LATEST_PRERELEASE: ${{ needs.resolve-refs.outputs.latest_prerelease }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          SERVER_URL: ${{ github.server_url }}
+          REPO: ${{ github.repository }}
           E2E_RESULT: ${{ needs.e2e.result }}
         run: |
           set -euo pipefail
 
+          # ---------------------------------------------------------------
+          # Pass 1: gather per-entry data into TSV accumulators so we can
+          # render an aggregate summary and a failures-first report.
+          # ---------------------------------------------------------------
+          entries_tsv=$(mktemp)     # label \t ref \t mode \t samples \t rc \t count \t status
+          failed_tests_tsv=$(mktemp)  # test \t label \t ref \t mode \t samples \t run_url
+
+          total_entries=0
+          entries_passed=0
+          entries_failed=0
+          entries_unknown=0
+          total_failed_tests=0
+          overall_failed=0
+
+          while IFS=$'\t' read -r label ref mode samples; do
+            [[ -z "$label" ]] && continue
+            total_entries=$((total_entries + 1))
+            slug=$(echo "${ref}-samples-${samples}" | tr '/' '_' | tr -cd 'A-Za-z0-9._-')
+            art="artifacts/e2e-${label}-samples-${samples}"
+            rc_file="${art}/report/rc-${slug}.txt"
+            fails_file="${art}/report/fails-${slug}.txt"
+
+            if [[ -f "$rc_file" ]]; then
+              rc=$(cat "$rc_file")
+            else
+              rc="?"
+            fi
+
+            count=0
+            if [[ -s "$fails_file" ]]; then
+              count=$(grep -c . "$fails_file" || true)
+              # Collect each failed test + a link to its latest run.
+              while IFS= read -r fline; do
+                [[ -z "$fline" ]] && continue
+                tname="${fline%% *}"
+                run_url=""
+                if [[ "$fline" == *" "* ]]; then
+                  last_id="${fline##* }"
+                  run_url="${SERVER_URL}/${REPO}/actions/runs/${last_id}"
+                fi
+                printf '%s\t%s\t%s\t%s\t%s\t%s\n' \
+                  "$tname" "$label" "$ref" "$mode" "$samples" "$run_url" >> "$failed_tests_tsv"
+              done < "$fails_file"
+            fi
+
+            # Determine entry status.
+            if [[ "$rc" == "?" ]]; then
+              status="⚪ unknown"
+              entries_unknown=$((entries_unknown + 1))
+              overall_failed=1
+            elif [[ "$rc" == "0" && "$count" -eq 0 ]]; then
+              status="✅ pass"
+              entries_passed=$((entries_passed + 1))
+            else
+              status="❌ fail"
+              entries_failed=$((entries_failed + 1))
+              overall_failed=1
+            fi
+
+            total_failed_tests=$((total_failed_tests + count))
+            printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+              "$label" "$ref" "$mode" "$samples" "$rc" "$count" "$status" >> "$entries_tsv"
+          done < <(echo "$MATRIX_JSON" | jq -r '.[] | [.label, .ref, .mode, (.samples|tostring)] | @tsv')
+
+          if [[ "$overall_failed" == "0" ]]; then
+            headline="✅ All ${total_entries} matrix entr$([[ $total_entries -eq 1 ]] && echo y || echo ies) passed"
+          else
+            headline="❌ ${entries_failed} of ${total_entries} matrix entr$([[ $total_entries -eq 1 ]] && echo y || echo ies) failed (${total_failed_tests} failed test run(s))"
+          fi
+
+          # ---------------------------------------------------------------
+          # Pass 2: render the markdown report.
+          # ---------------------------------------------------------------
           {
             echo "# E2E status report (gh-aw matrix)"
             echo
-            echo "* Run: $RUN_URL"
-            echo "* Trigger: \`${{ github.event_name }}\`"
-            echo "* Generated: \`$(date -u +%FT%TZ)\`"
-            echo "* Matrix outcome: \`$E2E_RESULT\`"
+            echo "## ${headline}"
             echo
-            echo "## Resolved gh-aw refs"
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Run | [$RUN_URL]($RUN_URL) |"
+            echo "| Trigger | \`${{ github.event_name }}\` |"
+            echo "| Generated | \`$(date -u +%FT%TZ)\` |"
+            echo "| Matrix outcome | \`$E2E_RESULT\` |"
+            echo
+
+            # Aggregate roll-up across all jobs (most useful when >1 entry).
+            if [[ "$total_entries" -gt 1 ]]; then
+              echo "## 📊 Overall summary (all jobs)"
+              echo
+              echo "| metric | count |"
+              echo "|---|--:|"
+              echo "| Matrix entries | $total_entries |"
+              echo "| ✅ Entries passed | $entries_passed |"
+              echo "| ❌ Entries failed | $entries_failed |"
+              if [[ "$entries_unknown" -gt 0 ]]; then
+                echo "| ⚪ Entries unknown | $entries_unknown |"
+              fi
+              echo "| 🧪 Failed test runs (total) | $total_failed_tests |"
+              echo
+            fi
+
+            # -------- Failures first --------
+            if [[ -s "$failed_tests_tsv" ]]; then
+              echo "## ❌ Failures"
+              echo
+              echo "All failing test runs across every matrix entry, most actionable first:"
+              echo
+              echo "| test | entry | ref | mode | samples | run |"
+              echo "|---|---|---|---|:--:|---|"
+              # Sort by test name so the same test across entries groups together.
+              sort -f "$failed_tests_tsv" | while IFS=$'\t' read -r tname label ref mode samples run_url; do
+                [[ -z "$tname" ]] && continue
+                if [[ -n "$run_url" ]]; then
+                  link="[logs]($run_url)"
+                else
+                  link="_n/a_"
+                fi
+                echo "| \`$tname\` | $label | \`$ref\` | $mode | $samples | $link |"
+              done
+              echo
+            else
+              echo "## ✅ No failing tests"
+              echo
+              echo "Every matrix entry completed without recording a failed test."
+              echo
+            fi
+
+            # -------- Per-entry results --------
+            echo "## Per-entry results"
+            echo
+            echo "| status | label | gh-aw ref | mode | samples | exit code | failed tests |"
+            echo "|:--:|---|---|---|:--:|:--:|--:|"
+            while IFS=$'\t' read -r label ref mode samples rc count status; do
+              [[ -z "$label" ]] && continue
+              echo "| $status | $label | \`$ref\` | $mode | $samples | \`$rc\` | $count |"
+            done < "$entries_tsv"
+            echo
+
+            # -------- Resolved refs (reference) --------
+            echo "<details><summary>Resolved gh-aw refs</summary>"
             echo
             echo "| label              | ref                       | mode      |"
             echo "|--------------------|---------------------------|-----------|"
@@ -414,50 +548,7 @@ jobs:
             echo "| latest release     | \`$LATEST_RELEASE\`        | extension |"
             echo "| latest pre-release | \`$LATEST_PRERELEASE\`     | extension |"
             echo
-            echo "## Per-entry results"
-            echo
-            echo "| label | gh-aw ref | mode | samples | exit code | failed tests |"
-            echo "|---|---|---|---|---|---|"
-
-            overall_failed=0
-            # Iterate the matrix output (array of {label, ref, mode, samples}).
-            while IFS=$'\t' read -r label ref mode samples; do
-              [[ -z "$label" ]] && continue
-              slug=$(echo "${ref}-samples-${samples}" | tr '/' '_' | tr -cd 'A-Za-z0-9._-')
-              art="artifacts/e2e-${label}-samples-${samples}"
-              rc_file="${art}/report/rc-${slug}.txt"
-              fails_file="${art}/report/fails-${slug}.txt"
-              if [[ -f "$rc_file" ]]; then
-                rc=$(cat "$rc_file")
-              else
-                rc="?"
-              fi
-              if [[ -s "$fails_file" ]]; then
-                count=$(grep -c . "$fails_file" || true)
-              else
-                count=0
-              fi
-              if [[ "$rc" != "0" || "$count" -gt 0 ]]; then
-                overall_failed=1
-              fi
-              echo "| $label | \`$ref\` | $mode | $samples | \`$rc\` | $count |"
-            done < <(echo "$MATRIX_JSON" | jq -r '.[] | [.label, .ref, .mode, (.samples|tostring)] | @tsv')
-
-            echo
-            while IFS=$'\t' read -r label ref mode samples; do
-              [[ -z "$label" ]] && continue
-              slug=$(echo "${ref}-samples-${samples}" | tr '/' '_' | tr -cd 'A-Za-z0-9._-')
-              fails_file="artifacts/e2e-${label}-samples-${samples}/report/fails-${slug}.txt"
-              if [[ -s "$fails_file" ]]; then
-                echo "### Failures: $label (\`$ref\`, $mode, samples=$samples)"
-                echo
-                echo '```'
-                cat "$fails_file"
-                echo '```'
-                echo
-              fi
-            done < <(echo "$MATRIX_JSON" | jq -r '.[] | [.label, .ref, .mode, (.samples|tostring)] | @tsv')
-
+            echo "</details>"
             echo
             echo "---"
             echo
@@ -512,6 +603,7 @@ jobs:
             echo "$overall_failed" > /tmp/overall_failed
           } > report.md
 
+          rm -f "$entries_tsv" "$failed_tests_tsv"
           cat report.md
 
       - name: Ensure status-report label exists
