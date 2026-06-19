@@ -13,12 +13,9 @@ name: e2e
 #   dozens of test workflows, so running entries concurrently would flood GitHub
 #   Actions. Entries are therefore queued one at a time (`fail-fast: false` so a
 #   single entry's failure doesn't cancel the rest).
-# * RUNS FROM MAIN: each entry recompiles its workflows, pushes them to `main`,
-#   and dispatches every test from `main`. Because the matrix is serial, entries
-#   cannot clobber each other, so the dedicated-branch isolation used previously
-#   is unnecessary. Running from `main` exercises the common case users
-#   experience and keeps create-pull-request's fetch-depth:1 merge-base against
-#   origin/main trivially resolvable (no divergent test branch).
+# * DEDICATED BRANCH PER ENTRY: each matrix entry recompiles workflows, force-pushes
+#   to a per-entry branch, and dispatches tests from that branch via `--ref`.
+#   This avoids races and avoids relying on direct pushes to `main`.
 #
 # Manual dispatch
 # ---------------
@@ -220,8 +217,8 @@ jobs:
         with:
           path: gh-aw-test
           fetch-depth: 0
-          # Use the PAT so e2e.sh can push the recompiled workflows to main
-          # (the default GITHUB_TOKEN only has contents:read in this workflow).
+          # Use the PAT so e2e.sh can push recompiled workflows to per-entry
+          # branches (the default GITHUB_TOKEN only has contents:read here).
           token: ${{ secrets.GH_AW_TEST_PAT }}
 
       # --- source mode: build gh-aw from a checkout ---------------------------
@@ -286,20 +283,18 @@ jobs:
             exit 1
           fi
 
-          # e2e.sh commits the recompiled workflows and pushes them to main;
-          # CI runners have no default git identity.
+          # e2e.sh commits the recompiled workflows and force-pushes to a
+          # per-entry branch; CI runners have no default git identity.
           git config user.name  "gh-aw-test e2e bot"
           git config user.email "gh-aw-test-e2e@users.noreply.github.com"
 
           # Slug uniquely identifies this (ref × samples) combination and is used
           # for the per-entry report files.
           slug=$(echo "${E2E_REF}-samples-${E2E_USE_SAMPLES}" | tr '/' '_' | tr -cd 'A-Za-z0-9._-')
+          e2e_branch="e2e-matrix-${slug}"
 
-          # The matrix is serial (max-parallel: 1), so each entry can safely
-          # recompile, push to main, and dispatch every test from main without
-          # clobbering another entry. Running from main tests the common case
-          # users actually experience (and keeps create-pull-request's
-          # fetch-depth:1 merge-base against origin/main trivially resolvable).
+          # Ensure each matrix entry reports only failures from this run.
+          rm -f fails.txt
 
           # Build flags
           SAMPLES_FLAG=""
@@ -311,18 +306,17 @@ jobs:
             # source mode: locally-built binary + --gh-aw-ref so lockfiles
             # reference github/gh-aw/actions/setup@<ref>.
             # ($CI=true is set automatically by GitHub Actions, so e2e.sh runs
-            # in CI mode: no secret mutation. Recompiled workflows are pushed
-            # to main.)
+            # in CI mode: no secret mutation.)
             # --verbose streams the gh-aw build/compile/version diagnostics to
             # the job log (otherwise they'd only land in the e2e-test-*.log
             # artifact, making build failures opaque in CI).
-            ./e2e.sh --gh-aw-ref "$E2E_REF" --workflow-dispatch-only --verbose $SAMPLES_FLAG 2>&1 | tee e2e-output.log
+            ./e2e.sh --gh-aw-ref "$E2E_REF" --branch "$e2e_branch" --workflow-dispatch-only --verbose $SAMPLES_FLAG 2>&1 | tee e2e-output.log
           else
             # extension mode: rely on the installed `gh aw` (pinned to $E2E_REF),
             # no --gh-aw-ref override — lockfiles will reference the published
             # gh-aw-actions release that ships with that gh-aw version, which is
             # exactly what end users get.
-            ./e2e.sh --workflow-dispatch-only --verbose $SAMPLES_FLAG 2>&1 | tee e2e-output.log
+            ./e2e.sh --branch "$e2e_branch" --workflow-dispatch-only --verbose $SAMPLES_FLAG 2>&1 | tee e2e-output.log
           fi
           rc=${PIPESTATUS[0]}
           echo "exit_code=$rc" >> "$GITHUB_OUTPUT"
@@ -548,13 +542,13 @@ jobs:
             echo
             echo "---"
             echo
-            echo "_The \`main\` entry runs \`e2e.sh --gh-aw-ref main --workflow-dispatch-only\` against a"
+            echo "_The \`main\` entry runs \`e2e.sh --gh-aw-ref main --branch <entry-branch> --workflow-dispatch-only\` against a"
             echo "locally-built \`gh-aw\` from the github/gh-aw checkout. The release / pre-release entries"
-            echo "install the published \`gh aw\` extension at the pinned tag (\`gh extension install\`"
-            echo "--pin <tag>\`) and run \`e2e.sh --workflow-dispatch-only\` against that, so they"
-            echo "exercise exactly the artifact users see. Each entry recompiles its workflows, pushes"
-            echo "them to \`main\`, and dispatches every test from \`main\`. The matrix is serial"
-            echo "(\`max-parallel: 1\`), so entries can't clobber each other; GitHub Actions sets"
+            echo "install the published \`gh aw\` extension at the pinned tag (\`gh extension install --pin <tag>\`)"
+            echo "and run \`e2e.sh --branch <entry-branch> --workflow-dispatch-only\` against that, so they"
+            echo "exercise exactly the artifact users see. Each entry recompiles workflows, pushes to its own"
+            echo "dedicated branch, and dispatches tests from that branch. The matrix is serial (\`max-parallel: 1\`),"
+            echo "so entries don't race each other; GitHub Actions sets"
             echo "\`CI=true\`, which puts \`e2e.sh\` into no-secret-mutation mode automatically. See"
             echo "\`.github/workflows/e2e.yml\` for the design rationale._"
 
