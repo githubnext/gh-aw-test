@@ -1,5 +1,5 @@
-# gh-aw-metadata: {"schema_version":"v4","frontmatter_hash":"ef665b446b9f166c27b3d969124e15a8adb3ed5c0f5812724f8690a801df2c19","body_hash":"c9642a25a1050919820964322e94a86adc63b8392d2611cf934f353d7e5d96d8","compiler_version":"v0.80.4-45-g05ac29e996","strict":true,"agent_id":"claude","engine_versions":{"claude":"2.1.179"}}
-# gh-aw-manifest: {"version":1,"secrets":["ANTHROPIC_API_KEY","GH_AW_GITHUB_MCP_SERVER_TOKEN","GH_AW_GITHUB_TOKEN","GITHUB_TOKEN"],"actions":[{"repo":"actions/cache/restore","sha":"27d5ce7f107fe9357f9df03efb73ab90386fccae","version":"v5.0.5"},{"repo":"actions/cache/save","sha":"27d5ce7f107fe9357f9df03efb73ab90386fccae","version":"v5.0.5"},{"repo":"actions/checkout","sha":"df4cb1c069e1874edd31b4311f1884172cec0e10","version":"v6.0.3"},{"repo":"actions/download-artifact","sha":"3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c","version":"v8.0.1"},{"repo":"actions/github-script","sha":"373c709c69115d41ff229c7e5df9f8788daa9553","version":"v9"},{"repo":"actions/github-script","sha":"3a2844b7e9c422d3c10d287c895573f7108da1b3","version":"v9.0.0"},{"repo":"actions/setup-node","sha":"48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e","version":"v6.4.0"},{"repo":"actions/upload-artifact","sha":"043fb46d1a93c77aae656e7c1c64a875d1fc6a0a","version":"v7.0.1"},{"repo":"github/gh-aw/actions/setup","sha":"05ac29e99662afa716f68e62c0d93f49f22cc511","version":"05ac29e99662afa716f68e62c0d93f49f22cc511"}],"containers":[{"image":"ghcr.io/github/gh-aw-firewall/agent:0.27.6","digest":"sha256:5b778c712a25397a38a47cee3467a9cbc726b16320cc133a0758c0592a6f0792","pinned_image":"ghcr.io/github/gh-aw-firewall/agent:0.27.6@sha256:5b778c712a25397a38a47cee3467a9cbc726b16320cc133a0758c0592a6f0792"},{"image":"ghcr.io/github/gh-aw-firewall/api-proxy:0.27.6","digest":"sha256:7b14e481f3a9898f1e9be50acc4e58541d9fcd85b49b1e4945b708f1bf1bf68e","pinned_image":"ghcr.io/github/gh-aw-firewall/api-proxy:0.27.6@sha256:7b14e481f3a9898f1e9be50acc4e58541d9fcd85b49b1e4945b708f1bf1bf68e"},{"image":"ghcr.io/github/gh-aw-firewall/squid:0.27.6","digest":"sha256:730985e67931b9774545bce76b3ac5a354aa1dc11f19ee8f2d9cbf3211d73c3a","pinned_image":"ghcr.io/github/gh-aw-firewall/squid:0.27.6@sha256:730985e67931b9774545bce76b3ac5a354aa1dc11f19ee8f2d9cbf3211d73c3a"},{"image":"ghcr.io/github/gh-aw-mcpg:v0.3.27","digest":"sha256:fe984bddde4ec05d756d9043edb0a32912e6b7b72f6a121b1082f29221421cc7","pinned_image":"ghcr.io/github/gh-aw-mcpg:v0.3.27@sha256:fe984bddde4ec05d756d9043edb0a32912e6b7b72f6a121b1082f29221421cc7"},{"image":"ghcr.io/github/gh-aw-node","digest":"sha256:529d02eb970b1161aa25c593a9c3df57fdfad5a8add328cb3b6eccef66f3183b","pinned_image":"ghcr.io/github/gh-aw-node@sha256:529d02eb970b1161aa25c593a9c3df57fdfad5a8add328cb3b6eccef66f3183b"},{"image":"ghcr.io/github/github-mcp-server:v1.3.0","digest":"sha256:5c83359327a0bacc3d34db730bea6557d39d341cee0bf6c58c9a896e33150e80","pinned_image":"ghcr.io/github/github-mcp-server:v1.3.0@sha256:5c83359327a0bacc3d34db730bea6557d39d341cee0bf6c58c9a896e33150e80"}]}
+# gh-aw-metadata: {"schema_version":"v4","frontmatter_hash":"ef665b446b9f166c27b3d969124e15a8adb3ed5c0f5812724f8690a801df2c19","body_hash":"c9642a25a1050919820964322e94a86adc63b8392d2611cf934f353d7e5d96d8","compiler_version":"393419b2fb","strict":true,"agent_id":"claude","engine_versions":{"claude":"2.1.179"}}
+# gh-aw-manifest: {"version":1,"secrets":["ANTHROPIC_API_KEY","GH_AW_GITHUB_MCP_SERVER_TOKEN","GH_AW_GITHUB_TOKEN","GITHUB_TOKEN"],"actions":[{"repo":"actions/cache/restore","sha":"27d5ce7f107fe9357f9df03efb73ab90386fccae","version":"v5.0.5"},{"repo":"actions/cache/save","sha":"27d5ce7f107fe9357f9df03efb73ab90386fccae","version":"v5.0.5"},{"repo":"actions/checkout","sha":"df4cb1c069e1874edd31b4311f1884172cec0e10","version":"v6.0.3"},{"repo":"actions/download-artifact","sha":"3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c","version":"v8.0.1"},{"repo":"actions/github-script","sha":"373c709c69115d41ff229c7e5df9f8788daa9553","version":"v9"},{"repo":"actions/github-script","sha":"3a2844b7e9c422d3c10d287c895573f7108da1b3","version":"v9.0.0"},{"repo":"actions/setup-node","sha":"48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e","version":"v6.4.0"},{"repo":"actions/upload-artifact","sha":"043fb46d1a93c77aae656e7c1c64a875d1fc6a0a","version":"v7.0.1"},{"repo":"github/gh-aw/actions/setup","sha":"af93fe222eef4e92e88ea7624d5342f3c0c48723","version":"af93fe222eef4e92e88ea7624d5342f3c0c48723"}],"containers":[{"image":"ghcr.io/github/gh-aw-firewall/agent:0.27.7"},{"image":"ghcr.io/github/gh-aw-firewall/api-proxy:0.27.7"},{"image":"ghcr.io/github/gh-aw-firewall/squid:0.27.7"},{"image":"ghcr.io/github/gh-aw-mcpg:v0.3.27","digest":"sha256:fe984bddde4ec05d756d9043edb0a32912e6b7b72f6a121b1082f29221421cc7","pinned_image":"ghcr.io/github/gh-aw-mcpg:v0.3.27@sha256:fe984bddde4ec05d756d9043edb0a32912e6b7b72f6a121b1082f29221421cc7"},{"image":"ghcr.io/github/gh-aw-node","digest":"sha256:529d02eb970b1161aa25c593a9c3df57fdfad5a8add328cb3b6eccef66f3183b","pinned_image":"ghcr.io/github/gh-aw-node@sha256:529d02eb970b1161aa25c593a9c3df57fdfad5a8add328cb3b6eccef66f3183b"},{"image":"ghcr.io/github/github-mcp-server:v1.3.0","digest":"sha256:5c83359327a0bacc3d34db730bea6557d39d341cee0bf6c58c9a896e33150e80","pinned_image":"ghcr.io/github/github-mcp-server:v1.3.0@sha256:5c83359327a0bacc3d34db730bea6557d39d341cee0bf6c58c9a896e33150e80"}]}
 # This file was automatically generated by gh-aw. DO NOT EDIT. To debug this workflow, load the skill at https://github.com/github/gh-aw/blob/main/debug.md
 #
 #    ___                   _   _      
@@ -39,12 +39,12 @@
 #   - actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
 #   - actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
 #   - actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-#   - github/gh-aw/actions/setup@05ac29e99662afa716f68e62c0d93f49f22cc511
+#   - github/gh-aw/actions/setup@af93fe222eef4e92e88ea7624d5342f3c0c48723
 #
 # Container images used:
-#   - ghcr.io/github/gh-aw-firewall/agent:0.27.6@sha256:5b778c712a25397a38a47cee3467a9cbc726b16320cc133a0758c0592a6f0792
-#   - ghcr.io/github/gh-aw-firewall/api-proxy:0.27.6@sha256:7b14e481f3a9898f1e9be50acc4e58541d9fcd85b49b1e4945b708f1bf1bf68e
-#   - ghcr.io/github/gh-aw-firewall/squid:0.27.6@sha256:730985e67931b9774545bce76b3ac5a354aa1dc11f19ee8f2d9cbf3211d73c3a
+#   - ghcr.io/github/gh-aw-firewall/agent:0.27.7
+#   - ghcr.io/github/gh-aw-firewall/api-proxy:0.27.7
+#   - ghcr.io/github/gh-aw-firewall/squid:0.27.7
 #   - ghcr.io/github/gh-aw-mcpg:v0.3.27@sha256:fe984bddde4ec05d756d9043edb0a32912e6b7b72f6a121b1082f29221421cc7
 #   - ghcr.io/github/gh-aw-node@sha256:529d02eb970b1161aa25c593a9c3df57fdfad5a8add328cb3b6eccef66f3183b
 #   - ghcr.io/github/github-mcp-server:v1.3.0@sha256:5c83359327a0bacc3d34db730bea6557d39d341cee0bf6c58c9a896e33150e80
@@ -93,7 +93,7 @@ jobs:
     steps:
       - name: Setup Scripts
         id: setup
-        uses: github/gh-aw/actions/setup@05ac29e99662afa716f68e62c0d93f49f22cc511
+        uses: github/gh-aw/actions/setup@af93fe222eef4e92e88ea7624d5342f3c0c48723
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
           job-name: ${{ github.job }}
@@ -102,7 +102,7 @@ jobs:
           GH_AW_SETUP_WORKFLOW_NAME: "Test Claude Create Discussion"
           GH_AW_CURRENT_WORKFLOW_REF: ${{ github.repository }}/.github/workflows/test-claude-create-discussion.lock.yml@${{ github.ref }}
           GH_AW_INFO_VERSION: "2.1.179"
-          GH_AW_INFO_AWF_VERSION: "v0.27.6"
+          GH_AW_INFO_AWF_VERSION: "v0.27.7"
           GH_AW_INFO_ENGINE_ID: "claude"
       - name: Generate agentic run info
         id: generate_aw_info
@@ -118,7 +118,7 @@ jobs:
           GH_AW_INFO_STAGED: "false"
           GH_AW_INFO_ALLOWED_DOMAINS: '["defaults"]'
           GH_AW_INFO_FIREWALL_ENABLED: "true"
-          GH_AW_INFO_AWF_VERSION: "v0.27.6"
+          GH_AW_INFO_AWF_VERSION: "v0.27.7"
           GH_AW_INFO_AWMG_VERSION: ""
           GH_AW_INFO_FIREWALL_TYPE: "squid"
           GH_AW_COMPILED_STRICT: "true"
@@ -386,7 +386,7 @@ jobs:
     steps:
       - name: Setup Scripts
         id: setup
-        uses: github/gh-aw/actions/setup@05ac29e99662afa716f68e62c0d93f49f22cc511
+        uses: github/gh-aw/actions/setup@af93fe222eef4e92e88ea7624d5342f3c0c48723
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
           job-name: ${{ github.job }}
@@ -396,7 +396,7 @@ jobs:
           GH_AW_SETUP_WORKFLOW_NAME: "Test Claude Create Discussion"
           GH_AW_CURRENT_WORKFLOW_REF: ${{ github.repository }}/.github/workflows/test-claude-create-discussion.lock.yml@${{ github.ref }}
           GH_AW_INFO_VERSION: "2.1.179"
-          GH_AW_INFO_AWF_VERSION: "v0.27.6"
+          GH_AW_INFO_AWF_VERSION: "v0.27.7"
           GH_AW_INFO_ENGINE_ID: "claude"
       - name: Set runtime paths
         id: set-runtime-paths
@@ -442,7 +442,7 @@ jobs:
           node-version: '24'
           package-manager-cache: false
       - name: Install AWF binary
-        run: bash "${RUNNER_TEMP}/gh-aw/actions/install_awf_binary.sh" v0.27.6
+        run: bash "${RUNNER_TEMP}/gh-aw/actions/install_awf_binary.sh" v0.27.7
       - name: Install Claude Code CLI
         run: npm install -g @anthropic-ai/claude-code@2.1.179
       - name: Determine automatic lockdown mode for GitHub MCP Server
@@ -476,7 +476,7 @@ jobs:
           GH_AW_SKILL_DIR: ".claude/skills"
         run: bash "${RUNNER_TEMP}/gh-aw/actions/restore_inline_skills.sh"
       - name: Download container images
-        run: bash "${RUNNER_TEMP}/gh-aw/actions/download_docker_images.sh" ghcr.io/github/gh-aw-firewall/agent:0.27.6@sha256:5b778c712a25397a38a47cee3467a9cbc726b16320cc133a0758c0592a6f0792 ghcr.io/github/gh-aw-firewall/api-proxy:0.27.6@sha256:7b14e481f3a9898f1e9be50acc4e58541d9fcd85b49b1e4945b708f1bf1bf68e ghcr.io/github/gh-aw-firewall/squid:0.27.6@sha256:730985e67931b9774545bce76b3ac5a354aa1dc11f19ee8f2d9cbf3211d73c3a ghcr.io/github/gh-aw-mcpg:v0.3.27@sha256:fe984bddde4ec05d756d9043edb0a32912e6b7b72f6a121b1082f29221421cc7 ghcr.io/github/gh-aw-node@sha256:529d02eb970b1161aa25c593a9c3df57fdfad5a8add328cb3b6eccef66f3183b ghcr.io/github/github-mcp-server:v1.3.0@sha256:5c83359327a0bacc3d34db730bea6557d39d341cee0bf6c58c9a896e33150e80
+        run: bash "${RUNNER_TEMP}/gh-aw/actions/download_docker_images.sh" ghcr.io/github/gh-aw-firewall/agent:0.27.7 ghcr.io/github/gh-aw-firewall/api-proxy:0.27.7 ghcr.io/github/gh-aw-firewall/squid:0.27.7 ghcr.io/github/gh-aw-mcpg:v0.3.27@sha256:fe984bddde4ec05d756d9043edb0a32912e6b7b72f6a121b1082f29221421cc7 ghcr.io/github/gh-aw-node@sha256:529d02eb970b1161aa25c593a9c3df57fdfad5a8add328cb3b6eccef66f3183b ghcr.io/github/github-mcp-server:v1.3.0@sha256:5c83359327a0bacc3d34db730bea6557d39d341cee0bf6c58c9a896e33150e80
       - name: Generate Safe Outputs Config
         run: |
           mkdir -p "${RUNNER_TEMP}/gh-aw/safeoutputs"
@@ -720,19 +720,152 @@ jobs:
         id: pre_agent_audit
         continue-on-error: true
         run: bash "${RUNNER_TEMP}/gh-aw/actions/audit_pre_agent_workspace.sh"
-      - name: Replay safe-outputs samples (deterministic)
+      - name: Execute Claude Code CLI
         id: agentic_execution
-        env:
-          GH_AW_SAMPLES: |
-            [{"tool":"create_discussion","arguments":{"body":"World Discussion\n\nA haiku for the test:\n  replay drives the thread\n  no model awakens here\n  outputs flow at last\n","title":"Hello from Claude Discussion"}}]
-          GH_AW_AGENT_STDIO_LOG: /tmp/gh-aw/agent-stdio.log
-          GH_AW_SAFE_OUTPUTS_CONFIG_PATH: ${{ runner.temp }}/gh-aw/safeoutputs/config.json
-          GH_AW_SAFE_OUTPUTS: ${{ runner.temp }}/gh-aw/safeoutputs/outputs.jsonl
-          GITHUB_TOKEN: ${{ github.token }}
+        # Allowed tools (sorted):
+        # - Bash
+        # - BashOutput
+        # - Edit
+        # - Edit(/tmp/*)
+        # - Edit(/tmp/gh-aw/agent/*)
+        # - ExitPlanMode
+        # - Glob
+        # - Grep
+        # - KillBash
+        # - LS
+        # - MultiEdit
+        # - MultiEdit(/tmp/*)
+        # - MultiEdit(/tmp/gh-aw/agent/*)
+        # - NotebookEdit
+        # - NotebookRead
+        # - Read
+        # - Read(/tmp/*)
+        # - Read(/tmp/gh-aw/agent/*)
+        # - Task
+        # - TodoWrite
+        # - Write
+        # - Write(/tmp/*)
+        # - Write(/tmp/gh-aw/agent/*)
+        # - mcp__github__download_workflow_run_artifact
+        # - mcp__github__get_code_scanning_alert
+        # - mcp__github__get_commit
+        # - mcp__github__get_dependabot_alert
+        # - mcp__github__get_discussion
+        # - mcp__github__get_discussion_comments
+        # - mcp__github__get_file_contents
+        # - mcp__github__get_job_logs
+        # - mcp__github__get_label
+        # - mcp__github__get_latest_release
+        # - mcp__github__get_me
+        # - mcp__github__get_notification_details
+        # - mcp__github__get_pull_request
+        # - mcp__github__get_pull_request_comments
+        # - mcp__github__get_pull_request_diff
+        # - mcp__github__get_pull_request_files
+        # - mcp__github__get_pull_request_review_comments
+        # - mcp__github__get_pull_request_reviews
+        # - mcp__github__get_pull_request_status
+        # - mcp__github__get_release_by_tag
+        # - mcp__github__get_secret_scanning_alert
+        # - mcp__github__get_tag
+        # - mcp__github__get_workflow_run
+        # - mcp__github__get_workflow_run_logs
+        # - mcp__github__get_workflow_run_usage
+        # - mcp__github__issue_read
+        # - mcp__github__list_branches
+        # - mcp__github__list_code_scanning_alerts
+        # - mcp__github__list_commits
+        # - mcp__github__list_dependabot_alerts
+        # - mcp__github__list_discussion_categories
+        # - mcp__github__list_discussions
+        # - mcp__github__list_issue_types
+        # - mcp__github__list_issues
+        # - mcp__github__list_label
+        # - mcp__github__list_notifications
+        # - mcp__github__list_pull_requests
+        # - mcp__github__list_releases
+        # - mcp__github__list_secret_scanning_alerts
+        # - mcp__github__list_starred_repositories
+        # - mcp__github__list_tags
+        # - mcp__github__list_workflow_jobs
+        # - mcp__github__list_workflow_run_artifacts
+        # - mcp__github__list_workflow_runs
+        # - mcp__github__list_workflows
+        # - mcp__github__pull_request_read
+        # - mcp__github__search_code
+        # - mcp__github__search_issues
+        # - mcp__github__search_orgs
+        # - mcp__github__search_pull_requests
+        # - mcp__github__search_repositories
+        # - mcp__github__search_users
+        # - mcp__safeoutputs
+        timeout-minutes: 20
         run: |
-          set -euo pipefail
-          mkdir -p "$(dirname "$GH_AW_AGENT_STDIO_LOG")"
-          node "${{ runner.temp }}/gh-aw/actions/apply_samples.cjs"
+          set -o pipefail
+          printf '%s' "$(date +%s%3N)" > /tmp/gh-aw/agent_cli_start_ms.txt
+          touch /tmp/gh-aw/agent-step-summary.md
+          (umask 177 && touch /tmp/gh-aw/agent-stdio.log)
+          GH_AW_MAX_AI_CREDITS="${{ vars.GH_AW_DEFAULT_MAX_AI_CREDITS || '1000' }}"
+          printf '%s\n' "{\"\$schema\":\"https://github.com/github/gh-aw-firewall/releases/download/v0.27.7/awf-config.schema.json\",\"network\":{\"allowDomains\":[\"*.githubusercontent.com\",\"anthropic.com\",\"api.anthropic.com\",\"api.github.com\",\"api.snapcraft.io\",\"archive.ubuntu.com\",\"azure.archive.ubuntu.com\",\"cdn.playwright.dev\",\"codeload.github.com\",\"crl.geotrust.com\",\"crl.globalsign.com\",\"crl.identrust.com\",\"crl.sectigo.com\",\"crl.thawte.com\",\"crl.usertrust.com\",\"crl.verisign.com\",\"crl3.digicert.com\",\"crl4.digicert.com\",\"crls.ssl.com\",\"files.pythonhosted.org\",\"ghcr.io\",\"github-cloud.githubusercontent.com\",\"github-cloud.s3.amazonaws.com\",\"github.com\",\"host.docker.internal\",\"json-schema.org\",\"json.schemastore.org\",\"keyserver.ubuntu.com\",\"lfs.github.com\",\"objects.githubusercontent.com\",\"ocsp.digicert.com\",\"ocsp.geotrust.com\",\"ocsp.globalsign.com\",\"ocsp.identrust.com\",\"ocsp.sectigo.com\",\"ocsp.ssl.com\",\"ocsp.thawte.com\",\"ocsp.usertrust.com\",\"ocsp.verisign.com\",\"packagecloud.io\",\"packages.cloud.google.com\",\"packages.microsoft.com\",\"playwright.download.prss.microsoft.com\",\"ppa.launchpad.net\",\"pypi.org\",\"raw.githubusercontent.com\",\"registry.npmjs.org\",\"s.symcb.com\",\"s.symcd.com\",\"security.ubuntu.com\",\"sentry.io\",\"statsig.anthropic.com\",\"ts-crl.ws.symantec.com\",\"ts-ocsp.ws.symantec.com\",\"www.googleapis.com\"]},\"apiProxy\":{\"enabled\":true,\"enableTokenSteering\":true,\"maxRuns\":500,\"maxAiCredits\":${GH_AW_MAX_AI_CREDITS},\"models\":{\"agent\":[\"sonnet-6x\",\"gpt-5.4\",\"gpt-5.3\",\"gemini-pro\",\"any\"],\"antigravity\":[\"copilot/antigravity*\",\"google/antigravity*\",\"gemini/antigravity*\"],\"any\":[\"copilot/*\",\"anthropic/*\",\"openai/*\",\"google/*\",\"gemini/*\"],\"claude\":[\"agent\"],\"codex\":[\"agent\"],\"coding\":[\"copilot/gpt-5*codex*\",\"openai/gpt-5*codex*\",\"gpt-5-codex\"],\"computer-use\":[\"copilot/*computer-use*\",\"google/*computer-use*\",\"gemini/*computer-use*\",\"openai/*computer-use*\"],\"copilot\":[\"agent\"],\"deep-research\":[\"copilot/deep-research*\",\"copilot/o3-deep-research*\",\"copilot/o4-mini-deep-research*\",\"google/deep-research*\",\"gemini/deep-research*\",\"openai/o3-deep-research*\",\"openai/o4-mini-deep-research*\"],\"gemini\":[\"agent\"],\"gemini-3-flash\":[\"copilot/gemini-3*flash*\",\"google/gemini-3*flash*\",\"gemini/gemini-3*flash*\"],\"gemini-3-pro\":[\"copilot/gemini-3*pro*\",\"google/gemini-3*pro*\",\"google/nano-banana*\",\"gemini/gemini-3*pro*\"],\"gemini-3.1-flash\":[\"copilot/gemini-3.1*flash*\",\"google/gemini-3.1*flash*\",\"gemini/gemini-3.1*flash*\"],\"gemini-3.1-pro\":[\"copilot/gemini-3.1*pro*\",\"google/gemini-3.1*pro*\",\"gemini/gemini-3.1*pro*\"],\"gemini-3.5-flash\":[\"copilot/gemini-3.5*flash*\",\"google/gemini-3.5*flash*\",\"gemini/gemini-3.5*flash*\"],\"gemini-flash\":[\"copilot/gemini-*flash*\",\"google/gemini-*flash*\",\"gemini/gemini-*flash*\"],\"gemini-flash-lite\":[\"copilot/gemini-*flash*lite*\",\"google/gemini-*flash*lite*\",\"gemini/gemini-*flash*lite*\"],\"gemini-pro\":[\"copilot/gemini-*pro*\",\"google/gemini-*pro*\",\"gemini/gemini-*pro*\"],\"gemma\":[\"copilot/gemma*\",\"google/gemma*\",\"gemini/gemma*\"],\"gpt-5\":[\"copilot/gpt-5*\",\"openai/gpt-5*\"],\"gpt-5-codex\":[\"copilot/gpt-5*codex*\",\"openai/gpt-5*codex*\"],\"gpt-5-mini\":[\"copilot/gpt-5*mini*\",\"openai/gpt-5*mini*\"],\"gpt-5-nano\":[\"copilot/gpt-5*nano*\",\"openai/gpt-5*nano*\"],\"gpt-5-pro\":[\"copilot/gpt-5*pro*\",\"openai/gpt-5*pro*\"],\"gpt-5.2\":[\"copilot/gpt-5.2*\",\"openai/gpt-5.2*\"],\"gpt-5.3\":[\"copilot/gpt-5.3*\",\"openai/gpt-5.3*\"],\"gpt-5.4\":[\"copilot/gpt-5.4*\",\"openai/gpt-5.4*\"],\"gpt-5.5\":[\"copilot/gpt-5.5*\",\"openai/gpt-5.5*\"],\"haiku\":[\"copilot/*haiku*\",\"anthropic/*haiku*\"],\"large\":[\"sonnet\",\"gpt-5-pro\",\"gpt-5\",\"gemini-pro\"],\"mai-code\":[\"copilot/MAI-Code*\",\"copilot/mai-code*\",\"openai/MAI-Code*\"],\"mini\":[\"haiku\",\"gpt-5-mini\",\"gpt-5-nano\",\"gemini-flash-lite\"],\"nano-banana\":[\"copilot/nano-banana*\",\"google/nano-banana*\",\"gemini/nano-banana*\"],\"opus\":[\"copilot/*opus*\",\"anthropic/*opus*\"],\"opusplan\":[\"opus?effort=high\"],\"reasoning\":[\"copilot/o1*\",\"copilot/o3*\",\"copilot/o4*\",\"openai/o1*\",\"openai/o3*\",\"openai/o4*\"],\"robotics\":[\"copilot/*robotics*\",\"google/*robotics*\",\"gemini/*robotics*\"],\"small\":[\"mini\"],\"small-agent\":[\"haiku\",\"gpt-5-mini\",\"gemini-flash\"],\"sonnet\":[\"copilot/*sonnet*\",\"anthropic/*sonnet*\"],\"sonnet-6x\":[\"copilot/*sonnet-4.5*\",\"copilot/*sonnet-4.6*\",\"copilot/*sonnet-4-5-*\",\"anthropic/*sonnet-4-5-*\",\"copilot/*sonnet-4-6*\",\"anthropic/*sonnet-4-6*\"],\"summarization\":[\"haiku\",\"gpt-5-mini\",\"gemini-flash-lite\",\"mini\"],\"vision\":[\"copilot/gemini-*image*\",\"gemini/gemini-*image*\",\"copilot/gemini-*flash*\",\"gemini/gemini-*flash*\"]}},\"container\":{\"imageTag\":\"0.27.7\"}}" > "${RUNNER_TEMP}/gh-aw/awf-config.json"
+          cp "${RUNNER_TEMP}/gh-aw/awf-config.json" /tmp/gh-aw/awf-config.json
+          export GH_AW_MODELS_JSON_PATH="/tmp/gh-aw/models.json"
+          GH_AW_DOCKER_HOST=""
+          if [[ "${DOCKER_HOST:-}" =~ ^tcp:// ]]; then
+            GH_AW_DOCKER_HOST="${DOCKER_HOST}"
+          fi
+          GH_AW_DOCKER_HOST_PATH_PREFIX_ARGS=""
+          if [[ "${DOCKER_HOST:-}" =~ ^tcp:// ]]; then
+            GH_AW_DOCKER_HOST_PATH_PREFIX_ARGS="--docker-host-path-prefix /tmp/gh-aw"
+            python3 - <<'PY'
+          import json,os,subprocess as sp
+          from pathlib import Path
+          try:
+           p=Path(os.environ["RUNNER_TEMP"])/"gh-aw"/"awf-config.json"
+           c=json.loads(p.read_text())
+           c["chroot"]={"binariesSourcePath":"/tmp/gh-aw","identity":{"user":sp.check_output(["id","-un"],text=True).strip(),"uid":int(sp.check_output(["id","-u"],text=True)),"gid":int(sp.check_output(["id","-g"],text=True)),"home":"/tmp/gh-aw/home"}}
+           out=json.dumps(c,separators=(",",":"),ensure_ascii=False)+"\n"
+           p.write_text(out)
+           Path("/tmp/gh-aw/awf-config.json").write_text(out)
+          except Exception as e:
+           raise SystemExit(f"chroot config patch failed: {e}") from e
+          PY
+          fi
+          GH_AW_TOOL_CACHE_MOUNT=""
+          GH_AW_TOOL_CACHE="${RUNNER_TOOL_CACHE:?RUNNER_TOOL_CACHE must be set}"
+          if [ -d "$GH_AW_TOOL_CACHE" ]; then
+            if [[ "$GH_AW_TOOL_CACHE" != /opt/* ]]; then
+              GH_AW_TOOL_CACHE_MOUNT="$GH_AW_TOOL_CACHE:$GH_AW_TOOL_CACHE:ro"
+            fi
+          fi
+          # shellcheck disable=SC1003
+          sudo -E awf --config "${RUNNER_TEMP}/gh-aw/awf-config.json" --container-workdir "${GITHUB_WORKSPACE}" --mount "${RUNNER_TEMP}/gh-aw:${RUNNER_TEMP}/gh-aw:ro" --mount "${RUNNER_TEMP}/gh-aw:/host${RUNNER_TEMP}/gh-aw:ro" ${GH_AW_TOOL_CACHE_MOUNT:+--mount "$GH_AW_TOOL_CACHE_MOUNT"} ${GH_AW_DOCKER_HOST:+--docker-host "$GH_AW_DOCKER_HOST"} ${GH_AW_DOCKER_HOST_PATH_PREFIX_ARGS} --tty --env-all --exclude-env ANTHROPIC_API_KEY --exclude-env GITHUB_MCP_SERVER_TOKEN --exclude-env MCP_GATEWAY_API_KEY --log-level info --proxy-logs-dir /tmp/gh-aw/sandbox/firewall/logs --audit-dir /tmp/gh-aw/sandbox/firewall/audit --enable-host-access --allow-host-ports 80,443,8080 --skip-pull \
+            -- /bin/bash -c 'set +o histexpand; export PATH="${RUNNER_TEMP}/gh-aw/mcp-cli/bin:$PATH" && : "${RUNNER_TOOL_CACHE:?RUNNER_TOOL_CACHE must be set}"; GH_AW_TOOL_CACHE="$RUNNER_TOOL_CACHE"; export PATH="$(find "$GH_AW_TOOL_CACHE" -maxdepth 5 -type d -name bin 2>/dev/null | tr '\''\n'\'' '\'':'\'')$PATH"; [ -n "$GOROOT" ] && export PATH="$GOROOT/bin:$PATH" || true && GH_AW_NODE_EXEC="${GH_AW_NODE_BIN:-}"; if [ -z "$GH_AW_NODE_EXEC" ] || [ ! -x "$GH_AW_NODE_EXEC" ]; then GH_AW_NODE_EXEC="$(command -v node 2>/dev/null || true)"; fi; if [ -z "$GH_AW_NODE_EXEC" ]; then echo "node runtime missing on this runner — check runtimes.node in workflow YAML" >&2; exit 127; fi; GH_AW_NPM_GLOBAL_ROOT="$(npm root -g 2>/dev/null || true)"; if [ -n "$GH_AW_NPM_GLOBAL_ROOT" ]; then export NODE_PATH="${GH_AW_NPM_GLOBAL_ROOT}${NODE_PATH:+:${NODE_PATH}}"; fi; "$GH_AW_NODE_EXEC" ${RUNNER_TEMP}/gh-aw/actions/claude_harness.cjs claude --print --no-chrome --allowed-tools '\''Bash,BashOutput,Edit,Edit(/tmp/*),Edit(/tmp/gh-aw/agent/*),ExitPlanMode,Glob,Grep,KillBash,LS,MultiEdit,MultiEdit(/tmp/*),MultiEdit(/tmp/gh-aw/agent/*),NotebookEdit,NotebookRead,Read,Read(/tmp/*),Read(/tmp/gh-aw/agent/*),Task,TodoWrite,Write,Write(/tmp/*),Write(/tmp/gh-aw/agent/*),mcp__github__download_workflow_run_artifact,mcp__github__get_code_scanning_alert,mcp__github__get_commit,mcp__github__get_dependabot_alert,mcp__github__get_discussion,mcp__github__get_discussion_comments,mcp__github__get_file_contents,mcp__github__get_job_logs,mcp__github__get_label,mcp__github__get_latest_release,mcp__github__get_me,mcp__github__get_notification_details,mcp__github__get_pull_request,mcp__github__get_pull_request_comments,mcp__github__get_pull_request_diff,mcp__github__get_pull_request_files,mcp__github__get_pull_request_review_comments,mcp__github__get_pull_request_reviews,mcp__github__get_pull_request_status,mcp__github__get_release_by_tag,mcp__github__get_secret_scanning_alert,mcp__github__get_tag,mcp__github__get_workflow_run,mcp__github__get_workflow_run_logs,mcp__github__get_workflow_run_usage,mcp__github__issue_read,mcp__github__list_branches,mcp__github__list_code_scanning_alerts,mcp__github__list_commits,mcp__github__list_dependabot_alerts,mcp__github__list_discussion_categories,mcp__github__list_discussions,mcp__github__list_issue_types,mcp__github__list_issues,mcp__github__list_label,mcp__github__list_notifications,mcp__github__list_pull_requests,mcp__github__list_releases,mcp__github__list_secret_scanning_alerts,mcp__github__list_starred_repositories,mcp__github__list_tags,mcp__github__list_workflow_jobs,mcp__github__list_workflow_run_artifacts,mcp__github__list_workflow_runs,mcp__github__list_workflows,mcp__github__pull_request_read,mcp__github__search_code,mcp__github__search_issues,mcp__github__search_orgs,mcp__github__search_pull_requests,mcp__github__search_repositories,mcp__github__search_users,mcp__safeoutputs'\'' --debug-file /tmp/gh-aw/agent-stdio.log --verbose --permission-mode acceptEdits --output-format stream-json --mcp-config "${RUNNER_TEMP}/gh-aw/mcp-config/mcp-servers.json" --prompt-file /tmp/gh-aw/aw-prompts/prompt.txt${GH_AW_MODEL_AGENT_CLAUDE:+ --model "$GH_AW_MODEL_AGENT_CLAUDE"}' 2>&1 | tee -a /tmp/gh-aw/agent-stdio.log
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          BASH_DEFAULT_TIMEOUT_MS: 60000
+          BASH_MAX_TIMEOUT_MS: 60000
+          CLAUDE_CODE_DISABLE_FAST_MODE: 1
+          DISABLE_BUG_COMMAND: 1
+          DISABLE_ERROR_REPORTING: 1
+          DISABLE_TELEMETRY: 1
+          GH_AW_MAX_TURNS: ${{ vars.GH_AW_DEFAULT_MAX_TURNS || '' }}
+          GH_AW_MCP_CONFIG: ${{ runner.temp }}/gh-aw/mcp-config/mcp-servers.json
+          GH_AW_MODEL_AGENT_CLAUDE: ${{ vars.GH_AW_MODEL_AGENT_CLAUDE || vars.GH_AW_DEFAULT_MODEL_CLAUDE || '' }}
+          GH_AW_PHASE: agent
+          GH_AW_PROMPT: /tmp/gh-aw/aw-prompts/prompt.txt
+          GH_AW_SAFE_OUTPUTS: ${{ steps.set-runtime-paths.outputs.GH_AW_SAFE_OUTPUTS }}
+          GH_AW_VERSION: dev
+          GITHUB_AW: true
+          GITHUB_STEP_SUMMARY: /tmp/gh-aw/agent-step-summary.md
+          GITHUB_WORKSPACE: ${{ github.workspace }}
+          GIT_AUTHOR_EMAIL: github-actions[bot]@users.noreply.github.com
+          GIT_AUTHOR_NAME: github-actions[bot]
+          GIT_COMMITTER_EMAIL: github-actions[bot]@users.noreply.github.com
+          GIT_COMMITTER_NAME: github-actions[bot]
+          MCP_TIMEOUT: 120000
+          MCP_TOOL_TIMEOUT: 60000
+          RUNNER_TEMP: ${{ runner.temp }}
+          TRACEPARENT: ${{ env.GITHUB_AW_OTEL_TRACE_ID != '' && env.GITHUB_AW_OTEL_PARENT_SPAN_ID != '' && format('00-{0}-{1}-01', env.GITHUB_AW_OTEL_TRACE_ID, env.GITHUB_AW_OTEL_PARENT_SPAN_ID) || '' }}
       - name: Detect agent errors
         if: always()
         id: detect-agent-errors
@@ -763,7 +896,8 @@ jobs:
             const { main } = require('${{ runner.temp }}/gh-aw/actions/redact_secrets.cjs');
             await main();
         env:
-          GH_AW_SECRET_NAMES: 'GH_AW_GITHUB_MCP_SERVER_TOKEN,GH_AW_GITHUB_TOKEN,GITHUB_TOKEN'
+          GH_AW_SECRET_NAMES: 'ANTHROPIC_API_KEY,GH_AW_GITHUB_MCP_SERVER_TOKEN,GH_AW_GITHUB_TOKEN,GITHUB_TOKEN'
+          SECRET_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           SECRET_GH_AW_GITHUB_MCP_SERVER_TOKEN: ${{ secrets.GH_AW_GITHUB_MCP_SERVER_TOKEN }}
           SECRET_GH_AW_GITHUB_TOKEN: ${{ secrets.GH_AW_GITHUB_TOKEN }}
           SECRET_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -870,6 +1004,8 @@ jobs:
             /tmp/gh-aw/github_rate_limits.jsonl
             /tmp/gh-aw/safeoutputs.jsonl
             /tmp/gh-aw/agent_output.json
+            /tmp/gh-aw/aw-*.patch
+            /tmp/gh-aw/aw-*.bundle
             /tmp/gh-aw/awf-config.json
             /tmp/gh-aw/sandbox/firewall/logs/
             /tmp/gh-aw/sandbox/firewall/audit/
@@ -880,6 +1016,7 @@ jobs:
     needs:
       - activation
       - agent
+      - detection
       - safe_outputs
     if: >
       always() && (needs.agent.result != 'skipped' || needs.activation.outputs.lockdown_check_failed == 'true' ||
@@ -901,7 +1038,7 @@ jobs:
     steps:
       - name: Setup Scripts
         id: setup
-        uses: github/gh-aw/actions/setup@05ac29e99662afa716f68e62c0d93f49f22cc511
+        uses: github/gh-aw/actions/setup@af93fe222eef4e92e88ea7624d5342f3c0c48723
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
           job-name: ${{ github.job }}
@@ -911,7 +1048,7 @@ jobs:
           GH_AW_SETUP_WORKFLOW_NAME: "Test Claude Create Discussion"
           GH_AW_CURRENT_WORKFLOW_REF: ${{ github.repository }}/.github/workflows/test-claude-create-discussion.lock.yml@${{ github.ref }}
           GH_AW_INFO_VERSION: "2.1.179"
-          GH_AW_INFO_AWF_VERSION: "v0.27.6"
+          GH_AW_INFO_AWF_VERSION: "v0.27.7"
           GH_AW_INFO_ENGINE_ID: "claude"
       - name: Download agent output artifact
         id: download-agent-output
@@ -1012,6 +1149,7 @@ jobs:
           GH_AW_AGENT_CONCLUSION: ${{ needs.agent.result }}
           GH_AW_NOOP_REPORT_AS_ISSUE: "true"
           GH_AW_AIC: ${{ needs.agent.outputs.aic }}
+          GH_AW_THREAT_DETECTION_AIC: ${{ needs.detection.outputs.aic }}
           GH_AW_AMBIENT_CONTEXT: ${{ needs.agent.outputs.ambient_context }}
           GH_AW_WORKFLOW_ID: "test-claude-create-discussion"
         with:
@@ -1020,6 +1158,23 @@ jobs:
             const { setupGlobals } = require('${{ runner.temp }}/gh-aw/actions/setup_globals.cjs');
             setupGlobals(core, github, context, exec, io, getOctokit);
             const { main } = require('${{ runner.temp }}/gh-aw/actions/handle_noop_message.cjs');
+            await main();
+      - name: Log detection run
+        id: detection_runs
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          GH_AW_AGENT_OUTPUT: ${{ steps.setup-agent-output-env.outputs.GH_AW_AGENT_OUTPUT }}
+          GH_AW_WORKFLOW_NAME: "Test Claude Create Discussion"
+          GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref_name }}/.github/workflows/test-claude-create-discussion.md"
+          GH_AW_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          GH_AW_DETECTION_CONCLUSION: ${{ needs.detection.outputs.detection_conclusion }}
+          GH_AW_DETECTION_REASON: ${{ needs.detection.outputs.detection_reason }}
+        with:
+          github-token: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
+          script: |
+            const { setupGlobals } = require('${{ runner.temp }}/gh-aw/actions/setup_globals.cjs');
+            setupGlobals(core, github, context, exec, io, getOctokit);
+            const { main } = require('${{ runner.temp }}/gh-aw/actions/handle_detection_runs.cjs');
             await main();
       - name: Record missing tool
         id: missing_tool
@@ -1070,6 +1225,7 @@ jobs:
           GH_AW_AI_CREDITS_RATE_LIMIT_ERROR: ${{ needs.agent.outputs.ai_credits_rate_limit_error || 'false' }}
           GH_AW_UNKNOWN_MODEL_AI_CREDITS: ${{ needs.agent.outputs.unknown_model_ai_credits || 'false' }}
           GH_AW_AIC: ${{ needs.agent.outputs.aic }}
+          GH_AW_THREAT_DETECTION_AIC: ${{ needs.detection.outputs.aic }}
           GH_AW_MAX_AI_CREDITS: ${{ vars.GH_AW_DEFAULT_MAX_AI_CREDITS || '1000' }}
           GH_AW_INFERENCE_ACCESS_ERROR: ${{ needs.agent.outputs.inference_access_error }}
           GH_AW_MCP_POLICY_ERROR: ${{ needs.agent.outputs.mcp_policy_error }}
@@ -1096,11 +1252,270 @@ jobs:
             const { main } = require('${{ runner.temp }}/gh-aw/actions/handle_agent_failure.cjs');
             await main();
 
+  detection:
+    needs:
+      - activation
+      - agent
+    if: >
+      always() && needs.agent.result != 'skipped' && (needs.agent.outputs.output_types != '' || needs.agent.outputs.has_patch == 'true')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      aic: ${{ steps.parse_detection_token_usage.outputs.aic }}
+      detection_conclusion: ${{ steps.detection_conclusion.outputs.conclusion }}
+      detection_reason: ${{ steps.detection_conclusion.outputs.reason }}
+      detection_success: ${{ steps.detection_conclusion.outputs.success }}
+    steps:
+      - name: Setup Scripts
+        id: setup
+        uses: github/gh-aw/actions/setup@af93fe222eef4e92e88ea7624d5342f3c0c48723
+        with:
+          destination: ${{ runner.temp }}/gh-aw/actions
+          job-name: ${{ github.job }}
+          trace-id: ${{ needs.activation.outputs.setup-trace-id }}
+          parent-span-id: ${{ needs.activation.outputs.setup-parent-span-id || needs.activation.outputs.setup-span-id }}
+        env:
+          GH_AW_SETUP_WORKFLOW_NAME: "Test Claude Create Discussion"
+          GH_AW_CURRENT_WORKFLOW_REF: ${{ github.repository }}/.github/workflows/test-claude-create-discussion.lock.yml@${{ github.ref }}
+          GH_AW_INFO_VERSION: "2.1.179"
+          GH_AW_INFO_AWF_VERSION: "v0.27.7"
+          GH_AW_INFO_ENGINE_ID: "claude"
+      - name: Download agent output artifact
+        id: download-agent-output
+        continue-on-error: true
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: agent
+          path: /tmp/gh-aw/
+      - name: Setup agent output environment variable
+        id: setup-agent-output-env
+        if: steps.download-agent-output.outcome == 'success'
+        run: |
+          mkdir -p /tmp/gh-aw/
+          find "/tmp/gh-aw/" -type f -print
+          echo "GH_AW_AGENT_OUTPUT=/tmp/gh-aw/agent_output.json" >> "$GITHUB_OUTPUT"
+      - name: Checkout repository for patch context
+        if: needs.agent.outputs.has_patch == 'true'
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+      # --- Threat Detection ---
+      - name: Clean stale firewall files from agent artifact
+        run: |
+          rm -rf /tmp/gh-aw/sandbox/firewall/logs
+          rm -rf /tmp/gh-aw/sandbox/firewall/audit
+      - name: Download container images
+        run: bash "${RUNNER_TEMP}/gh-aw/actions/download_docker_images.sh" ghcr.io/github/gh-aw-firewall/agent:0.27.7 ghcr.io/github/gh-aw-firewall/api-proxy:0.27.7 ghcr.io/github/gh-aw-firewall/squid:0.27.7
+      - name: Check if detection needed
+        id: detection_guard
+        if: always()
+        env:
+          OUTPUT_TYPES: ${{ needs.agent.outputs.output_types }}
+          HAS_PATCH: ${{ needs.agent.outputs.has_patch }}
+        run: |
+          if [[ -n "$OUTPUT_TYPES" || "$HAS_PATCH" == "true" ]]; then
+            echo "run_detection=true" >> "$GITHUB_OUTPUT"
+            echo "Detection will run: output_types=$OUTPUT_TYPES, has_patch=$HAS_PATCH"
+          else
+            echo "run_detection=false" >> "$GITHUB_OUTPUT"
+            echo "Detection skipped: no agent outputs or patches to analyze"
+          fi
+      - name: Clear MCP Config for detection
+        if: always() && steps.detection_guard.outputs.run_detection == 'true'
+        run: |
+          rm -f "${RUNNER_TEMP}/gh-aw/mcp-config/mcp-servers.json"
+          rm -f "$HOME/.copilot/mcp-config.json"
+          rm -f "$GITHUB_WORKSPACE/.gemini/settings.json"
+      - name: Prepare threat detection files
+        if: always() && steps.detection_guard.outputs.run_detection == 'true'
+        run: |
+          mkdir -p /tmp/gh-aw/threat-detection/aw-prompts
+          rm -f /tmp/gh-aw/agent_usage.json
+          cp /tmp/gh-aw/aw-prompts/prompt.txt /tmp/gh-aw/threat-detection/aw-prompts/prompt.txt 2>/dev/null || true
+          if [ ! -s /tmp/gh-aw/threat-detection/aw-prompts/prompt.txt ]; then
+            echo "::warning::ERR_VALIDATION: Missing or empty detection context prompt at /tmp/gh-aw/threat-detection/aw-prompts/prompt.txt. Ensure the agent artifact includes /tmp/gh-aw/aw-prompts/prompt.txt. Detection will continue with fallback workflow context."
+          fi
+          cp /tmp/gh-aw/agent_output.json /tmp/gh-aw/threat-detection/agent_output.json 2>/dev/null || true
+          for f in /tmp/gh-aw/aw-*.patch; do
+            [ -f "$f" ] && cp "$f" /tmp/gh-aw/threat-detection/ 2>/dev/null || true
+          done
+          for f in /tmp/gh-aw/aw-*.bundle; do
+            [ -f "$f" ] && cp "$f" /tmp/gh-aw/threat-detection/ 2>/dev/null || true
+          done
+          echo "Prepared threat detection files:"
+          ls -la /tmp/gh-aw/threat-detection/ 2>/dev/null || true
+      - name: Setup threat detection
+        if: always() && steps.detection_guard.outputs.run_detection == 'true'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          WORKFLOW_NAME: "Test Claude Create Discussion"
+          WORKFLOW_DESCRIPTION: "No description provided"
+          HAS_PATCH: ${{ needs.agent.outputs.has_patch }}
+        with:
+          script: |
+            const { setupGlobals } = require('${{ runner.temp }}/gh-aw/actions/setup_globals.cjs');
+            setupGlobals(core, github, context, exec, io, getOctokit);
+            const { main } = require('${{ runner.temp }}/gh-aw/actions/setup_threat_detection.cjs');
+            await main();
+      - name: Ensure threat-detection directory and log
+        if: always() && steps.detection_guard.outputs.run_detection == 'true'
+        run: |
+          mkdir -p /tmp/gh-aw/threat-detection
+          touch /tmp/gh-aw/threat-detection/detection.log
+      - name: Setup Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Install AWF binary
+        run: bash "${RUNNER_TEMP}/gh-aw/actions/install_awf_binary.sh" v0.27.7
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code@2.1.179
+      - name: Execute Claude Code CLI
+        if: always() && steps.detection_guard.outputs.run_detection == 'true'
+        continue-on-error: true
+        id: detection_agentic_execution
+        # Allowed tools (sorted):
+        # - Bash
+        # - BashOutput
+        # - Edit(/tmp/*)
+        # - ExitPlanMode
+        # - Glob
+        # - Grep
+        # - KillBash
+        # - LS
+        # - MultiEdit(/tmp/*)
+        # - NotebookRead
+        # - Read
+        # - Read(/tmp/*)
+        # - Task
+        # - TodoWrite
+        # - Write(/tmp/*)
+        timeout-minutes: 20
+        run: |
+          set -o pipefail
+          printf '%s' "$(date +%s%3N)" > /tmp/gh-aw/agent_cli_start_ms.txt
+          touch /tmp/gh-aw/agent-step-summary.md
+          (umask 177 && touch /tmp/gh-aw/threat-detection/detection.log)
+          GH_AW_MAX_AI_CREDITS="${{ vars.GH_AW_DEFAULT_DETECTION_MAX_AI_CREDITS || '400' }}"
+          printf '%s\n' "{\"\$schema\":\"https://github.com/github/gh-aw-firewall/releases/download/v0.27.7/awf-config.schema.json\",\"network\":{\"allowDomains\":[\"*.githubusercontent.com\",\"anthropic.com\",\"api.anthropic.com\",\"api.github.com\",\"api.snapcraft.io\",\"archive.ubuntu.com\",\"azure.archive.ubuntu.com\",\"cdn.playwright.dev\",\"codeload.github.com\",\"crl.geotrust.com\",\"crl.globalsign.com\",\"crl.identrust.com\",\"crl.sectigo.com\",\"crl.thawte.com\",\"crl.usertrust.com\",\"crl.verisign.com\",\"crl3.digicert.com\",\"crl4.digicert.com\",\"crls.ssl.com\",\"files.pythonhosted.org\",\"ghcr.io\",\"github-cloud.githubusercontent.com\",\"github-cloud.s3.amazonaws.com\",\"github.com\",\"host.docker.internal\",\"json-schema.org\",\"json.schemastore.org\",\"keyserver.ubuntu.com\",\"lfs.github.com\",\"objects.githubusercontent.com\",\"ocsp.digicert.com\",\"ocsp.geotrust.com\",\"ocsp.globalsign.com\",\"ocsp.identrust.com\",\"ocsp.sectigo.com\",\"ocsp.ssl.com\",\"ocsp.thawte.com\",\"ocsp.usertrust.com\",\"ocsp.verisign.com\",\"packagecloud.io\",\"packages.cloud.google.com\",\"packages.microsoft.com\",\"playwright.download.prss.microsoft.com\",\"ppa.launchpad.net\",\"pypi.org\",\"raw.githubusercontent.com\",\"registry.npmjs.org\",\"s.symcb.com\",\"s.symcd.com\",\"security.ubuntu.com\",\"sentry.io\",\"statsig.anthropic.com\",\"ts-crl.ws.symantec.com\",\"ts-ocsp.ws.symantec.com\"]},\"apiProxy\":{\"enabled\":true,\"enableTokenSteering\":true,\"maxRuns\":500,\"maxAiCredits\":${GH_AW_MAX_AI_CREDITS}},\"container\":{\"imageTag\":\"0.27.7\"}}" > "${RUNNER_TEMP}/gh-aw/awf-config.json"
+          cp "${RUNNER_TEMP}/gh-aw/awf-config.json" /tmp/gh-aw/awf-config.json
+          export GH_AW_MODELS_JSON_PATH="/tmp/gh-aw/models.json"
+          GH_AW_DOCKER_HOST=""
+          if [[ "${DOCKER_HOST:-}" =~ ^tcp:// ]]; then
+            GH_AW_DOCKER_HOST="${DOCKER_HOST}"
+          fi
+          GH_AW_DOCKER_HOST_PATH_PREFIX_ARGS=""
+          if [[ "${DOCKER_HOST:-}" =~ ^tcp:// ]]; then
+            GH_AW_DOCKER_HOST_PATH_PREFIX_ARGS="--docker-host-path-prefix /tmp/gh-aw"
+            python3 - <<'PY'
+          import json,os,subprocess as sp
+          from pathlib import Path
+          try:
+           p=Path(os.environ["RUNNER_TEMP"])/"gh-aw"/"awf-config.json"
+           c=json.loads(p.read_text())
+           c["chroot"]={"binariesSourcePath":"/tmp/gh-aw","identity":{"user":sp.check_output(["id","-un"],text=True).strip(),"uid":int(sp.check_output(["id","-u"],text=True)),"gid":int(sp.check_output(["id","-g"],text=True)),"home":"/tmp/gh-aw/home"}}
+           out=json.dumps(c,separators=(",",":"),ensure_ascii=False)+"\n"
+           p.write_text(out)
+           Path("/tmp/gh-aw/awf-config.json").write_text(out)
+          except Exception as e:
+           raise SystemExit(f"chroot config patch failed: {e}") from e
+          PY
+          fi
+          GH_AW_TOOL_CACHE_MOUNT=""
+          GH_AW_TOOL_CACHE="${RUNNER_TOOL_CACHE:?RUNNER_TOOL_CACHE must be set}"
+          if [ -d "$GH_AW_TOOL_CACHE" ]; then
+            if [[ "$GH_AW_TOOL_CACHE" != /opt/* ]]; then
+              GH_AW_TOOL_CACHE_MOUNT="$GH_AW_TOOL_CACHE:$GH_AW_TOOL_CACHE:ro"
+            fi
+          fi
+          # shellcheck disable=SC1003
+          sudo -E awf --config "${RUNNER_TEMP}/gh-aw/awf-config.json" --container-workdir "${GITHUB_WORKSPACE}" --mount "${RUNNER_TEMP}/gh-aw:${RUNNER_TEMP}/gh-aw:ro" --mount "${RUNNER_TEMP}/gh-aw:/host${RUNNER_TEMP}/gh-aw:ro" ${GH_AW_TOOL_CACHE_MOUNT:+--mount "$GH_AW_TOOL_CACHE_MOUNT"} ${GH_AW_DOCKER_HOST:+--docker-host "$GH_AW_DOCKER_HOST"} ${GH_AW_DOCKER_HOST_PATH_PREFIX_ARGS} --tty --env-all --exclude-env ANTHROPIC_API_KEY --log-level info --proxy-logs-dir /tmp/gh-aw/sandbox/firewall/logs --audit-dir /tmp/gh-aw/sandbox/firewall/audit --enable-host-access --allow-host-ports 80,443,8080 --skip-pull \
+            -- /bin/bash -c 'set +o histexpand; : "${RUNNER_TOOL_CACHE:?RUNNER_TOOL_CACHE must be set}"; GH_AW_TOOL_CACHE="$RUNNER_TOOL_CACHE"; export PATH="$(find "$GH_AW_TOOL_CACHE" -maxdepth 5 -type d -name bin 2>/dev/null | tr '\''\n'\'' '\'':'\'')$PATH"; [ -n "$GOROOT" ] && export PATH="$GOROOT/bin:$PATH" || true && GH_AW_NODE_EXEC="${GH_AW_NODE_BIN:-}"; if [ -z "$GH_AW_NODE_EXEC" ] || [ ! -x "$GH_AW_NODE_EXEC" ]; then GH_AW_NODE_EXEC="$(command -v node 2>/dev/null || true)"; fi; if [ -z "$GH_AW_NODE_EXEC" ]; then echo "node runtime missing on this runner — check runtimes.node in workflow YAML" >&2; exit 127; fi; GH_AW_NPM_GLOBAL_ROOT="$(npm root -g 2>/dev/null || true)"; if [ -n "$GH_AW_NPM_GLOBAL_ROOT" ]; then export NODE_PATH="${GH_AW_NPM_GLOBAL_ROOT}${NODE_PATH:+:${NODE_PATH}}"; fi; "$GH_AW_NODE_EXEC" ${RUNNER_TEMP}/gh-aw/actions/claude_harness.cjs claude --print --no-chrome --allowed-tools '\''Bash,BashOutput,Edit(/tmp/*),ExitPlanMode,Glob,Grep,KillBash,LS,MultiEdit(/tmp/*),NotebookRead,Read,Read(/tmp/*),Task,TodoWrite,Write(/tmp/*)'\'' --debug-file /tmp/gh-aw/threat-detection/detection.log --verbose --permission-mode acceptEdits --output-format stream-json --prompt-file /tmp/gh-aw/aw-prompts/prompt.txt${GH_AW_MODEL_DETECTION_CLAUDE:+ --model "$GH_AW_MODEL_DETECTION_CLAUDE"}' 2>&1 | tee -a /tmp/gh-aw/threat-detection/detection.log
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          BASH_DEFAULT_TIMEOUT_MS: 60000
+          BASH_MAX_TIMEOUT_MS: 60000
+          CLAUDE_CODE_DISABLE_FAST_MODE: 1
+          DISABLE_BUG_COMMAND: 1
+          DISABLE_ERROR_REPORTING: 1
+          DISABLE_TELEMETRY: 1
+          GH_AW_MAX_TURNS: ${{ vars.GH_AW_DEFAULT_MAX_TURNS || '' }}
+          GH_AW_MODEL_DETECTION_CLAUDE: ${{ vars.GH_AW_MODEL_DETECTION_CLAUDE || vars.GH_AW_DEFAULT_MODEL_CLAUDE || '' }}
+          GH_AW_PHASE: detection
+          GH_AW_PROMPT: /tmp/gh-aw/aw-prompts/prompt.txt
+          GH_AW_VERSION: dev
+          GITHUB_AW: true
+          GITHUB_STEP_SUMMARY: /tmp/gh-aw/agent-step-summary.md
+          GITHUB_WORKSPACE: ${{ github.workspace }}
+          GIT_AUTHOR_EMAIL: github-actions[bot]@users.noreply.github.com
+          GIT_AUTHOR_NAME: github-actions[bot]
+          GIT_COMMITTER_EMAIL: github-actions[bot]@users.noreply.github.com
+          GIT_COMMITTER_NAME: github-actions[bot]
+          MCP_TIMEOUT: 120000
+          MCP_TOOL_TIMEOUT: 60000
+          RUNNER_TEMP: ${{ runner.temp }}
+          TRACEPARENT: ${{ env.GITHUB_AW_OTEL_TRACE_ID != '' && env.GITHUB_AW_OTEL_PARENT_SPAN_ID != '' && format('00-{0}-{1}-01', env.GITHUB_AW_OTEL_TRACE_ID, env.GITHUB_AW_OTEL_PARENT_SPAN_ID) || '' }}
+      - name: Parse threat detection token usage for step summary
+        id: parse_detection_token_usage
+        if: always()
+        continue-on-error: true
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          GH_AW_TOKEN_USAGE_SUMMARY_TITLE: Threat Detection Token Usage
+        with:
+          script: |
+            const { setupGlobals } = require('${{ runner.temp }}/gh-aw/actions/setup_globals.cjs');
+            setupGlobals(core, github, context, exec, io, getOctokit);
+            const { main } = require('${{ runner.temp }}/gh-aw/actions/parse_token_usage.cjs');
+            await main();
+      - name: Upload threat detection log
+        if: always() && steps.detection_guard.outputs.run_detection == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: detection
+          path: /tmp/gh-aw/threat-detection/detection.log
+          if-no-files-found: ignore
+      - name: Parse and conclude threat detection
+        id: detection_conclusion
+        if: always()
+        continue-on-error: true
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          RUN_DETECTION: ${{ steps.detection_guard.outputs.run_detection }}
+          DETECTION_AGENTIC_EXECUTION_OUTCOME: ${{ steps.detection_agentic_execution.outcome }}
+          GH_AW_DETECTION_CONTINUE_ON_ERROR: "true"
+        with:
+          script: |
+            try {
+              const { setupGlobals } = require('${{ runner.temp }}/gh-aw/actions/setup_globals.cjs');
+              setupGlobals(core, github, context, exec, io, getOctokit);
+              const { main } = require('${{ runner.temp }}/gh-aw/actions/parse_threat_detection_results.cjs');
+              await main();
+            } catch (loadErr) {
+              const continueOnError = process.env.GH_AW_DETECTION_CONTINUE_ON_ERROR !== 'false';
+              const detectionExecutionFailed = process.env.DETECTION_AGENTIC_EXECUTION_OUTCOME === 'failure';
+              const msg = 'ERR_SYSTEM: \u274C Unexpected error loading threat detection module: ' + (loadErr && loadErr.message ? loadErr.message : String(loadErr));
+              core.error(msg);
+              core.setOutput('reason', 'parse_error');
+              if (continueOnError && !detectionExecutionFailed) {
+                core.warning('\u26A0\uFE0F ' + msg);
+                core.setOutput('conclusion', 'warning');
+                core.setOutput('success', 'false');
+              } else {
+                core.setOutput('conclusion', 'failure');
+                core.setOutput('success', 'false');
+                core.setFailed(msg);
+              }
+            }
+
   safe_outputs:
     needs:
       - activation
       - agent
-    if: (!cancelled()) && needs.agent.result != 'skipped'
+      - detection
+    if: (!cancelled()) && needs.agent.result != 'skipped' && needs.detection.result == 'success'
     runs-on: ubuntu-slim
     permissions:
       contents: read
@@ -1112,9 +1527,12 @@ jobs:
       GH_AW_AIC: ${{ needs.agent.outputs.aic }}
       GH_AW_AMBIENT_CONTEXT: ${{ needs.agent.outputs.ambient_context }}
       GH_AW_CALLER_WORKFLOW_ID: "${{ github.repository }}/test-claude-create-discussion"
+      GH_AW_DETECTION_CONCLUSION: ${{ needs.detection.outputs.detection_conclusion }}
+      GH_AW_DETECTION_REASON: ${{ needs.detection.outputs.detection_reason }}
       GH_AW_EFFECTIVE_TOKENS: ${{ needs.agent.outputs.effective_tokens }}
       GH_AW_ENGINE_ID: "claude"
       GH_AW_ENGINE_MODEL: ${{ needs.agent.outputs.model }}
+      GH_AW_THREAT_DETECTION_AIC: ${{ needs.detection.outputs.aic }}
       GH_AW_WORKFLOW_ID: "test-claude-create-discussion"
       GH_AW_WORKFLOW_NAME: "Test Claude Create Discussion"
       GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref_name }}/.github/workflows/test-claude-create-discussion.md"
@@ -1128,7 +1546,7 @@ jobs:
     steps:
       - name: Setup Scripts
         id: setup
-        uses: github/gh-aw/actions/setup@05ac29e99662afa716f68e62c0d93f49f22cc511
+        uses: github/gh-aw/actions/setup@af93fe222eef4e92e88ea7624d5342f3c0c48723
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
           job-name: ${{ github.job }}
@@ -1138,7 +1556,7 @@ jobs:
           GH_AW_SETUP_WORKFLOW_NAME: "Test Claude Create Discussion"
           GH_AW_CURRENT_WORKFLOW_REF: ${{ github.repository }}/.github/workflows/test-claude-create-discussion.lock.yml@${{ github.ref }}
           GH_AW_INFO_VERSION: "2.1.179"
-          GH_AW_INFO_AWF_VERSION: "v0.27.6"
+          GH_AW_INFO_AWF_VERSION: "v0.27.7"
           GH_AW_INFO_ENGINE_ID: "claude"
       - name: Download agent output artifact
         id: download-agent-output
