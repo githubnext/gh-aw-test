@@ -1,7 +1,7 @@
 ---
 on:
   slash_command:
-    name: test-copilot-push-to-pull-request-branch
+    name: test-copilot-push-to-pull-request-branch-using-slash-command
   reaction: eyes
 
 permissions: read-all

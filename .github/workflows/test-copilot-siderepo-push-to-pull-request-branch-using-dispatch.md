@@ -26,8 +26,9 @@ tools:
 safe-outputs:
   github-token: ${{ secrets.TEMP_USER_PAT }}
   push-to-pull-request-branch:
-    # target-repo: 'githubnext/gh-aw-side-repo'
-    # allowed-repos: ['githubnext/gh-aw-side-repo']
+    target: ${{ inputs.pull_request_number }}
+    target-repo: 'githubnext/gh-aw-side-repo'
+    allowed-repos: ['githubnext/gh-aw-side-repo']
     samples:
       - message: "Multi-commit test push from Copilot in side repo"
         patch: |

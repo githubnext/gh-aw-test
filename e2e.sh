@@ -543,7 +543,8 @@ get_all_tests() {
     echo "test-copilot-command"
     echo "test-claude-push-to-pull-request-branch"
     echo "test-codex-push-to-pull-request-branch"
-    echo "test-copilot-push-to-pull-request-branch"
+    echo "test-copilot-push-to-pull-request-branch-using-slash-command"
+    echo "test-copilot-push-to-pull-request-branch-using-dispatch"
     echo "test-claude-create-pull-request-review-comment"
     echo "test-codex-create-pull-request-review-comment"
     echo "test-copilot-create-pull-request-review-comment"
@@ -577,6 +578,7 @@ get_all_tests() {
     echo "test-copilot-siderepo-create-issue"
     echo "test-copilot-siderepo-create-discussion"
     echo "test-copilot-siderepo-create-pull-request"
+    echo "test-copilot-siderepo-sparse-create-pull-request"
     echo "test-copilot-siderepo-subdir-create-pull-request"
     echo "test-copilot-siderepo-create-two-pull-requests"
     # echo "test-copilot-siderepo-create-repository-code-scanning-alert"  # Disabled: doesn't support target-repo
@@ -586,7 +588,8 @@ get_all_tests() {
     echo "test-copilot-siderepo-add-labels"
     echo "test-copilot-siderepo-add-discussion-comment"
     echo "test-copilot-siderepo-update-issue"
-    # echo "test-copilot-siderepo-push-to-pull-request-branch"  # Disabled: doesn't support target-repo
+    echo "test-copilot-siderepo-push-to-pull-request-branch-using-dispatch"
+    echo "test-copilot-siderepo-sparse-push-to-pull-request-branch-using-dispatch"
     echo "test-copilot-siderepo-create-pull-request-review-comment"
 }
 
@@ -3397,6 +3400,35 @@ run_single_test() {
                                     success "Created draft test PR #$pr_num for $workflow: https://github.com/$repo_url/pull/$pr_num"
                                     sleep 10
                                     if wait_for_pr_ready_for_review "$pr_num" "$workflow" "$target_repo"; then
+                                        test_result="PASS"
+                                    fi
+                                fi
+                                ;;
+                            *"push-to-pull-request-branch-using-dispatch")
+                                info "Creating test pull request to trigger $workflow..."
+                                local pr_info=$(create_test_pr_with_branch "Test PR for $ai_display_name Push-to-Branch (Dispatch)" "This PR is for testing $workflow" "$target_repo")
+                                if [[ -n "$pr_info" ]]; then
+                                    IFS=',' read -r pr_num branch_name after_commit_sha repo_from_info <<< "$pr_info"
+                                    local repo_url="$REPO_OWNER/$REPO_NAME"
+                                    [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                    success "Created test PR #$pr_num for $workflow with branch '$branch_name': https://github.com/$repo_url/pull/$pr_num"
+                                    if trigger_workflow_with_inputs "$workflow" "pull_request_number=$pr_num"; then
+                                        if wait_for_branch_update "$branch_name" "$after_commit_sha" "$workflow" "$target_repo"; then
+                                            test_result="PASS"
+                                        fi
+                                    fi
+                                fi
+                                ;;
+                            *"push-to-pull-request-branch-using-slash-command")
+                                info "Creating test pull request to trigger $workflow..."
+                                local pr_info=$(create_test_pr_with_branch "Test PR for $ai_display_name Push-to-Branch (Slash)" "This PR is for testing $workflow" "$target_repo")
+                                if [[ -n "$pr_info" ]]; then
+                                    IFS=',' read -r pr_num branch_name after_commit_sha repo_from_info <<< "$pr_info"
+                                    local repo_url="$REPO_OWNER/$REPO_NAME"
+                                    [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                    success "Created test PR #$pr_num for $workflow with branch '$branch_name': https://github.com/$repo_url/pull/$pr_num"
+                                    post_pr_command "$pr_num" "/test-${ai_type}-push-to-pull-request-branch-using-slash-command" "$target_repo"
+                                    if wait_for_branch_update "$branch_name" "$after_commit_sha" "$workflow" "$target_repo"; then
                                         test_result="PASS"
                                     fi
                                 fi

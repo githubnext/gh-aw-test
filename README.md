@@ -52,6 +52,7 @@ Tracking the full matrix of [safe outputs](https://github.com/github/gh-aw/blob/
 - [x] `create-discussion` — test-copilot-create-discussion
 - [x] `create-pull-request` — test-copilot-create-pull-request
 - [x] `create-pull-request` (max:2) — test-copilot-create-two-pull-requests
+- [x] `create-pull-request` (side-repo, depth-1 sparse checkout `src/` + `docs/`) — test-copilot-siderepo-sparse-create-pull-request
 - [x] `create-code-scanning-alert` — test-copilot-create-repository-code-scanning-alert
 - [x] `mcp` — test-copilot-mcp
 - [x] `custom safe output jobs` — test-copilot-custom-safe-outputs
@@ -61,7 +62,10 @@ Tracking the full matrix of [safe outputs](https://github.com/github/gh-aw/blob/
 - [x] `add-labels` — test-copilot-add-labels
 - [x] `update-issue` — test-copilot-update-issue
 - [x] `update-pull-request` — test-copilot-update-pull-request
-- [x] `push-to-pull-request-branch` — test-copilot-push-to-pull-request-branch
+- [x] `push-to-pull-request-branch` (slash-command) — test-copilot-push-to-pull-request-branch-using-slash-command
+- [x] `push-to-pull-request-branch` (dispatch, local repo) — test-copilot-push-to-pull-request-branch-using-dispatch
+- [x] `push-to-pull-request-branch` (dispatch, side-repo) — test-copilot-siderepo-push-to-pull-request-branch-using-dispatch
+- [x] `push-to-pull-request-branch` (dispatch, side-repo, depth-1 sparse checkout `src/` + `docs/`) — test-copilot-siderepo-sparse-push-to-pull-request-branch-using-dispatch
 - [x] `create-pull-request-review-comment` — test-copilot-create-pull-request-review-comment
 - [x] `slash_command` + `add-comment` — test-copilot-command
 
