@@ -316,13 +316,13 @@ jobs:
             # --verbose streams the gh-aw build/compile/version diagnostics to
             # the job log (otherwise they'd only land in the e2e-test-*.log
             # artifact, making build failures opaque in CI).
-            ./e2e.sh --gh-aw-ref "$E2E_REF" --workflow-dispatch-only --verbose $SAMPLES_FLAG 2>&1 | tee e2e-output.log
+            ./e2e.sh --gh-aw-ref "$E2E_REF" --workflow-dispatch-only --verbose --batch-size 10 $SAMPLES_FLAG 2>&1 | tee e2e-output.log
           else
             # extension mode: rely on the installed `gh aw` (pinned to $E2E_REF),
             # no --gh-aw-ref override — lockfiles will reference the published
             # gh-aw-actions release that ships with that gh-aw version, which is
             # exactly what end users get.
-            ./e2e.sh --workflow-dispatch-only --verbose $SAMPLES_FLAG 2>&1 | tee e2e-output.log
+            ./e2e.sh --workflow-dispatch-only --verbose --batch-size 10 $SAMPLES_FLAG 2>&1 | tee e2e-output.log
           fi
           rc=${PIPESTATUS[0]}
           echo "exit_code=$rc" >> "$GITHUB_OUTPUT"

@@ -37,6 +37,7 @@ safe-outputs:
     samples:
       - message: "Shallow sparse-checkout push test from Copilot"
         pull_request_number: "${{ github.event.inputs.pull_request_number }}"
+        repo: "githubnext/gh-aw-side-repo"
         patch: |
           diff --git a/src/sparse-test.py b/src/sparse-test.py
           new file mode 100644

@@ -6,9 +6,13 @@ on:
         description: "Sentinel value for the worker-created issue title"
         required: true
         type: string
-permissions: read-all
+
+permissions:
+  issues: read
+
 engine:
   id: copilot
+
 safe-outputs:
   create-issue:
     title-prefix: "[call-worker] "

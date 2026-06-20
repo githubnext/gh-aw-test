@@ -8,7 +8,8 @@ on:
         type: string
   reaction: eyes
 
-permissions: read-all
+permissions:
+  issues: read
 
 engine:
   id: copilot
