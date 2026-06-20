@@ -10,11 +10,11 @@ engine:
 tools:
   github:
     # The GitHub tools must be authorized to read across-repo 
-    github-token: ${{ secrets.TEMP_USER_PAT }}
+    github-token: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
 
 checkout:
   - repository: githubnext/gh-aw-side-repo
-    token: ${{ secrets.TEMP_USER_PAT }}
+    token: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
     fetch: ["*"]
     fetch-depth: 0
 
@@ -24,7 +24,7 @@ safe-outputs:
     labels: [copilot, automation, bot]
     target-repo: 'githubnext/gh-aw-side-repo'
     allowed-repos: ['githubnext/gh-aw-side-repo']
-    github-token: ${{ secrets.TEMP_USER_PAT }}
+    github-token: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
     max: 2
     samples:
       - title: "Feature A from Copilot"

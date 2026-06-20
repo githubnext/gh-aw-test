@@ -10,7 +10,7 @@ engine:
 tools:
   github:
     # The GitHub tools must be authorized to read across-repo 
-    github-token: ${{ secrets.TEMP_USER_PAT }}
+    github-token: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
 
 # Regression test for gh-aw "Failed to pin branch ''" / git "dubious ownership":
 # check out the cross-repository side repo into a SUBDIRECTORY ("github") instead
@@ -19,7 +19,7 @@ tools:
 # branch, otherwise pinning aborts with an empty SHA.
 checkout:
   - repository: githubnext/gh-aw-side-repo
-    token: ${{ secrets.TEMP_USER_PAT }}
+    token: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
     path: github                 # cross-repo checkout into ${GITHUB_WORKSPACE}/github
     fetch: ["*"]                 # fetch all open PR refs after checkout
     fetch-depth: 0               # fetch full history to ensure we can see all commits and PR details
@@ -30,7 +30,7 @@ safe-outputs:
     labels: [copilot, automation, bot]
     target-repo: 'githubnext/gh-aw-side-repo'
     allowed-repos: ['githubnext/gh-aw-side-repo']
-    github-token: ${{ secrets.TEMP_USER_PAT }}
+    github-token: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
     samples:
       - title: "Subdirectory checkout PR test from Copilot"
         body: "This pull request was created by Copilot in the side repository that was checked out into the 'github' subdirectory, to test branch pinning under a cross-repository subdirectory checkout."

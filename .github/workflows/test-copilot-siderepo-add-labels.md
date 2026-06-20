@@ -15,13 +15,13 @@ engine:
 tools:
   github:
     # The GitHub tools must be authorized to read across-repo 
-    github-token: ${{ secrets.TEMP_USER_PAT }}
+    github-token: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
 
 safe-outputs:
   add-labels:
     target-repo: 'githubnext/gh-aw-side-repo'
     allowed-repos: ['githubnext/gh-aw-side-repo']
-    github-token: ${{ secrets.TEMP_USER_PAT }}
+    github-token: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
     # min: 1
     samples:
       - item_number: ${{ github.event.inputs.issue_number }}

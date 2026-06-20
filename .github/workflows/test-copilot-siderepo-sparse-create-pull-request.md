@@ -10,11 +10,11 @@ engine:
 tools:
   github:
     # The GitHub tools must be authorized to read across-repo 
-    github-token: ${{ secrets.TEMP_USER_PAT }}
+    github-token: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
 
 checkout:
   - repository: githubnext/gh-aw-side-repo
-    token: ${{ secrets.TEMP_USER_PAT }}
+    token: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
     fetch-depth: 1                # shallow clone — only the tip commit
     sparse-checkout: |
       src/
@@ -28,7 +28,7 @@ safe-outputs:
     labels: [copilot, automation, bot]
     target-repo: 'githubnext/gh-aw-side-repo'
     allowed-repos: ['githubnext/gh-aw-side-repo']
-    github-token: ${{ secrets.TEMP_USER_PAT }}
+    github-token: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
     samples:
       - title: "Shallow sparse-checkout PR test from Copilot"
         body: "This pull request was created by Copilot using a depth-1 sparse checkout of src/ and docs/ in the side repository."

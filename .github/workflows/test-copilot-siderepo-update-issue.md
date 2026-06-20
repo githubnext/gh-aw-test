@@ -15,10 +15,10 @@ engine:
 tools:
   github:
     # The GitHub tools must be authorized to read across-repo 
-    github-token: ${{ secrets.TEMP_USER_PAT }}
+    github-token: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
 
 safe-outputs:
-  github-token: ${{ secrets.TEMP_USER_PAT }}
+  github-token: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
   update-issue:
     status:
     title:

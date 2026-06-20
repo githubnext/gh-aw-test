@@ -11,7 +11,7 @@ permissions: read-all
 
 checkout:
   - repository: githubnext/gh-aw-side-repo
-    token: ${{ secrets.TEMP_USER_PAT }}
+    token: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
     fetch: ["*"]      # fetch all open PR refs after checkout
     fetch-depth: 1                # shallow clone — only the tip commit
     sparse-checkout: |
@@ -26,16 +26,17 @@ engine:
 tools:
   github:
     # The GitHub tools must be authorized to read across-repo 
-    github-token: ${{ secrets.TEMP_USER_PAT }}
+    github-token: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
 
 safe-outputs:
-  github-token: ${{ secrets.TEMP_USER_PAT }}
+  github-token: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
   push-to-pull-request-branch:
     target: ${{ inputs.pull_request_number }}
     target-repo: 'githubnext/gh-aw-side-repo'
     allowed-repos: ['githubnext/gh-aw-side-repo']
     samples:
       - message: "Shallow sparse-checkout push test from Copilot"
+        pull_request_number: "${{ github.event.inputs.pull_request_number }}"
         patch: |
           diff --git a/src/sparse-test.py b/src/sparse-test.py
           new file mode 100644

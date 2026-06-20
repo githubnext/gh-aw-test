@@ -17,6 +17,7 @@ safe-outputs:
     target: ${{ inputs.pull_request_number }}
     samples:
       - message: "Dispatch-triggered push test from Copilot"
+        pull_request_number: "${{ github.event.inputs.pull_request_number }}"
         patch: |
           diff --git a/README-copilot-dispatch-test.md b/README-copilot-dispatch-test.md
           new file mode 100644

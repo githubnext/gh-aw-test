@@ -15,7 +15,7 @@ engine:
 tools:
   github:
     # The GitHub tools must be authorized to read across-repo 
-    github-token: ${{ secrets.TEMP_USER_PAT }}
+    github-token: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
 
 safe-outputs:
   # Set workflow-level github-token so global.github in the safe_outputs step
@@ -23,13 +23,13 @@ safe-outputs:
   # pr_review_buffer.cjs calls github.rest.pulls.listReviews on the side repo
   # (the per-handler github-token only sets a separate octokit client; it does
   # not update global.github which the review buffer uses).
-  github-token: ${{ secrets.TEMP_USER_PAT }}
+  github-token: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
   create-pull-request-review-comment:
     max: 3
     target: "*"
     target-repo: 'githubnext/gh-aw-side-repo'
     allowed-repos: ['githubnext/gh-aw-side-repo']
-    github-token: ${{ secrets.TEMP_USER_PAT }}
+    github-token: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
     # min: 1
     samples:
       - pull_request_number: "${{ github.event.inputs.pull_request_number }}"

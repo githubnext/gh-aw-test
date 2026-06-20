@@ -10,11 +10,11 @@ engine:
 tools:
   github:
     # The GitHub tools must be authorized to read across-repo 
-    github-token: ${{ secrets.TEMP_USER_PAT }}
+    github-token: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
 
 checkout:
   - repository: githubnext/gh-aw-side-repo
-    token: ${{ secrets.TEMP_USER_PAT }}
+    token: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
     fetch: ["*"]      # fetch all open PR refs after checkout
     fetch-depth: 0               # fetch full history to ensure we can see all commits and PR details
 
@@ -24,7 +24,7 @@ safe-outputs:
     labels: [copilot, automation, bot]
     target-repo: 'githubnext/gh-aw-side-repo'
     allowed-repos: ['githubnext/gh-aw-side-repo']
-    github-token: ${{ secrets.TEMP_USER_PAT }}
+    github-token: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
     samples:
       - title: "Multi-commit test from Copilot"
         body: "This pull request was created by Copilot in the side repository to test multi-commit functionality."
