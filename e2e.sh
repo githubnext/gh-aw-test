@@ -69,6 +69,10 @@ NO_PARALLEL=false
 # Lock file for synchronized result tracking across parallel processes
 RESULTS_LOCK="/tmp/e2e-results-$$.lock"
 
+# File listing workflows that failed to compile (set in check_prerequisites).
+# Subprocesses read this to skip dispatch and immediately record FAIL.
+COMPILE_FAILED_FILE=""
+
 # Global tracking of workflows that need to be disabled
 # This is used by the trap handler to ensure cleanup on early exit
 declare -a GLOBAL_WORKFLOWS_TO_DISABLE=()
@@ -95,10 +99,21 @@ is_protected_workflow() {
     return 1
 }
 
-# Record a test pass: update arrays and remove from fails.txt
+# Record a test pass: update arrays, write to passes.txt, and remove from fails.txt
 record_test_pass() {
     local test_name="$1"
     PASSED_TESTS+=("$test_name")
+    # Write to passes.txt with run ID (same format as fails.txt)
+    local _url="${TEST_RUN_URLS[$test_name]:-}"
+    local _run_id=""
+    if [[ -n "$_url" ]]; then
+        _run_id="${_url##*/}"
+    fi
+    if [[ -n "$_run_id" ]]; then
+        echo "$test_name $_run_id" >> "passes.txt"
+    else
+        echo "$test_name" >> "passes.txt"
+    fi
     # Remove the test from fails.txt if present
     if [[ -f "fails.txt" ]]; then
         local _tmp
@@ -339,7 +354,7 @@ cleanup_on_exit() {
     delete_temp_user_pat
     
     # Clean up lock files
-    rm -f "$RESULTS_LOCK" "$GLOBAL_WORKFLOWS_LOCK" "$RESULTS_FILE" "/tmp/e2e-workflows-list-$$.txt" 2>/dev/null || true
+    rm -f "$RESULTS_LOCK" "$GLOBAL_WORKFLOWS_LOCK" "$RESULTS_FILE" "/tmp/e2e-workflows-list-$$.txt" ${COMPILE_FAILED_FILE:+"$COMPILE_FAILED_FILE"} 2>/dev/null || true
 }
 
 
@@ -711,11 +726,17 @@ check_prerequisites() {
     else
         info "Checking gh-aw extension..."
         if gh extension list | grep -q "github/gh-aw"; then
-            info "gh-aw extension already installed, upgrading to latest version..."
-            if gh extension upgrade github/gh-aw &>> "$LOG_FILE"; then
-                success "gh-aw extension upgraded successfully"
+            if [[ "${CI:-}" == "true" ]]; then
+                # In CI the job step already installed the correct pinned version;
+                # do NOT upgrade, or we would override the pinned version with latest.
+                info "Running in CI mode; using pre-installed gh-aw extension (skipping upgrade)"
             else
-                warning "Failed to upgrade gh-aw extension, continuing with existing version"
+                info "gh-aw extension already installed, upgrading to latest version..."
+                if gh extension upgrade github/gh-aw &>> "$LOG_FILE"; then
+                    success "gh-aw extension upgraded successfully"
+                else
+                    warning "Failed to upgrade gh-aw extension, continuing with existing version"
+                fi
             fi
         else
             info "Installing gh-aw extension..."
@@ -750,10 +771,38 @@ check_prerequisites() {
     if [[ "$USE_SAMPLES" == true ]]; then
         compile_cmd+=(--use-samples)
     fi
+    compile_cmd+=(--json)
     info "Running: ${compile_cmd[*]}"
-    if ! "${compile_cmd[@]}" 2>&1 | tee -a "$LOG_FILE"; then
-        error "'${compile_cmd[*]}' failed. Check $LOG_FILE for details"
-        exit 1
+    local _compile_out
+    _compile_out=$(mktemp)
+    "${compile_cmd[@]}" 2>&1 | tee -a "$LOG_FILE" > "$_compile_out"
+    local _compile_rc=${PIPESTATUS[0]}
+    if [[ $_compile_rc -ne 0 ]]; then
+        local _failed_wfs
+        _failed_wfs=$(python3 -c "
+import sys, json, re, os
+data = open(sys.argv[1]).read()
+m = re.search(r'\\[\\s*\\{.*\\}\\s*\\]', data, re.DOTALL)
+if not m: sys.exit(0)
+for item in json.loads(m.group(0)):
+    if not item.get('valid', True):
+        wf = os.path.basename(item.get('workflow', '')).replace('.md', '')
+        if wf: print(wf)
+" "$_compile_out" 2>/dev/null || true)
+        rm -f "$_compile_out"
+        if [[ -n "$_failed_wfs" ]]; then
+            COMPILE_FAILED_FILE="/tmp/e2e-compile-failed-$$.txt"
+            printf '%s\n' "$_failed_wfs" > "$COMPILE_FAILED_FILE"
+            warning "Some workflows failed to compile; those tests will be marked failed:"
+            while IFS= read -r _wf; do
+                warning "  ✗ compile failed: $_wf"
+            done <<< "$_failed_wfs"
+        else
+            error "'${compile_cmd[*]}' failed. Check $LOG_FILE for details"
+            exit 1
+        fi
+    else
+        rm -f "$_compile_out"
     fi
 
     # If there are any updates from the compile, commit them and push them so the
@@ -2941,6 +2990,18 @@ run_single_test() {
     
     # Redirect all output to test-specific log
     exec 1>"$test_log" 2>&1
+
+    # If this workflow failed to compile, record failure immediately and return
+    if [[ -n "${COMPILE_FAILED_FILE:-}" && -f "$COMPILE_FAILED_FILE" ]] && grep -qxF "$workflow" "$COMPILE_FAILED_FILE"; then
+        error "Skipping '$workflow': failed to compile — see main log for details"
+        (
+            flock -x 200
+            echo "$workflow|FAIL" >> "$RESULTS_FILE"
+        ) 200>"$RESULTS_LOCK"
+        cat "$test_log"
+        rm -f "$test_log"
+        return 0
+    fi
 
     # Marker injected into any issue/discussion/PR body this test creates so each
     # workflow's `if: contains(github.event.<event>.body, 'e2e-marker:<workflow>')`

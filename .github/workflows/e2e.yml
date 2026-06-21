@@ -333,6 +333,11 @@ jobs:
           else
             : > "../report/fails-${slug}.txt"
           fi
+          if [[ -s passes.txt ]]; then
+            cp passes.txt "../report/passes-${slug}.txt"
+          else
+            : > "../report/passes-${slug}.txt"
+          fi
           printf '%s' "$E2E_REF"  > "../report/ref-${slug}.txt"
           printf '%s' "$E2E_MODE" > "../report/mode-${slug}.txt"
           printf '%s' "$rc"               > "../report/rc-${slug}.txt"
@@ -369,6 +374,7 @@ jobs:
             gh-aw-test/e2e-test-*.log
             gh-aw-test/e2e-output.log
             gh-aw-test/fails.txt
+            gh-aw-test/passes.txt
             report/
 
   report:
@@ -404,6 +410,7 @@ jobs:
           # ---------------------------------------------------------------
           entries_tsv=$(mktemp)     # label \t ref \t mode \t samples \t rc \t count \t status
           failed_tests_tsv=$(mktemp)  # test \t label \t ref \t mode \t samples \t run_url
+          passed_tests_tsv=$(mktemp)  # test \t label \t ref \t mode \t samples \t run_url
 
           total_entries=0
           entries_passed=0
@@ -443,6 +450,22 @@ jobs:
               done < "$fails_file"
             fi
 
+            # Collect each passed test + a link to its run.
+            passes_file="${art}/report/passes-${slug}.txt"
+            if [[ -s "$passes_file" ]]; then
+              while IFS= read -r fline; do
+                [[ -z "$fline" ]] && continue
+                tname="${fline%% *}"
+                run_url=""
+                if [[ "$fline" == *" "* ]]; then
+                  last_id="${fline##* }"
+                  run_url="${SERVER_URL}/${REPO}/actions/runs/${last_id}"
+                fi
+                printf '%s\t%s\t%s\t%s\t%s\t%s\n' \
+                  "$tname" "$label" "$ref" "$mode" "$samples" "$run_url" >> "$passed_tests_tsv"
+              done < "$passes_file"
+            fi
+
             # Determine entry status.
             if [[ "$rc" == "?" ]]; then
               status="⚪ unknown"
@@ -467,6 +490,111 @@ jobs:
           else
             headline="❌ ${entries_failed} of ${total_entries} matrix entr$([[ $total_entries -eq 1 ]] && echo y || echo ies) failed (${total_failed_tests} failed test run(s))"
           fi
+
+          # ---------------------------------------------------------------
+          # Build lookup tables for the per-test matrix view.
+          # ---------------------------------------------------------------
+          declare -A _ref_for_label=()   # label -> ref
+          declare -A _cell_status=()     # "samples:test:label" -> "pass" or "fail"
+          declare -A _cell_url=()        # "samples:test:label" -> run URL
+          while IFS=$'\t' read -r label ref mode samples rc count status; do
+            [[ -z "$label" ]] && continue
+            _ref_for_label["$label"]="$ref"
+          done < "$entries_tsv"
+          while IFS=$'\t' read -r tname label ref mode samples run_url; do
+            [[ -z "$tname" ]] && continue
+            _cell_status["${samples}:${tname}:${label}"]="fail"
+            _cell_url["${samples}:${tname}:${label}"]="$run_url"
+          done < <(sort -f "$failed_tests_tsv")
+          while IFS=$'\t' read -r tname label ref mode samples run_url; do
+            [[ -z "$tname" ]] && continue
+            _cell_status["${samples}:${tname}:${label}"]="pass"
+            _cell_url["${samples}:${tname}:${label}"]="$run_url"
+          done < <(sort -f "$passed_tests_tsv")
+
+          # Helper: format a ref value as a markdown link.
+          _make_ref_link() {
+            local _r="$1"
+            if [[ "$_r" == "main" ]]; then
+              echo "[main](${SERVER_URL}/github/gh-aw/commit/${MAIN_SHA})"
+            else
+              echo "[${_r}](${SERVER_URL}/github/gh-aw/releases/tag/${_r})"
+            fi
+          }
+
+          # Render a test × ref matrix table for a given samples value.
+          _render_matrix_table() {
+            local _sv="$1"   # "true" or "false"
+            local _hdg="$2"  # section heading text
+            # Ordered columns: release → pre-release → main, then any others.
+            local _cols=()
+            for _lbl in "release" "pre-release" "main"; do
+              [[ -n "${_ref_for_label[$_lbl]:-}" ]] && _cols+=("$_lbl")
+            done
+            for _lbl in "${!_ref_for_label[@]}"; do
+              case "$_lbl" in release|pre-release|main) ;; *)
+                _cols+=("$_lbl") ;;
+              esac
+            done
+            [[ "${#_cols[@]}" -eq 0 ]] && return 0
+            # Collect all unique test names for this samples value.
+            local _tests
+            _tests=$(
+              {
+                awk -F'\t' -v sv="$_sv" '$5==sv{print $1}' "$failed_tests_tsv"
+                awk -F'\t' -v sv="$_sv" '$5==sv{print $1}' "$passed_tests_tsv"
+              } | sort -u
+            )
+            [[ -z "$_tests" ]] && return 0
+            # Split into two groups: tests with any failure first (alphabetical),
+            # then tests that are all passing (alphabetical).
+            local _failing_tests="" _passing_tests=""
+            while IFS= read -r _tname; do
+              [[ -z "$_tname" ]] && continue
+              local _any_fail=false
+              for _lbl in "${_cols[@]}"; do
+                [[ "${_cell_status[${_sv}:${_tname}:${_lbl}]:-}" == "fail" ]] && { _any_fail=true; break; }
+              done
+              [[ "$_any_fail" == "true" ]] && _failing_tests+="${_tname}"$'\n' || _passing_tests+="${_tname}"$'\n'
+            done <<< "$_tests"
+            local _ordered_tests="${_failing_tests}${_passing_tests}"
+            echo "## ${_hdg}"
+            echo
+            # Header
+            local _hdr="| test |"
+            local _sep="| :--- |"
+            for _lbl in "${_cols[@]}"; do
+              local _ref="${_ref_for_label[$_lbl]}"
+              local _rlink
+              _rlink=$(_make_ref_link "$_ref")
+              _hdr+=" ${_rlink} |"
+              _sep+=" :---: |"
+            done
+            echo "$_hdr"
+            echo "$_sep"
+            # Rows: failing tests first, then passing tests.
+            while IFS= read -r _tname; do
+              [[ -z "$_tname" ]] && continue
+              local _test_url="${SERVER_URL}/${REPO}/blob/main/.github/workflows/${_tname}.md"
+              local _row="| [${_tname}](${_test_url}) |"
+              for _lbl in "${_cols[@]}"; do
+                local _key="${_sv}:${_tname}:${_lbl}"
+                local _st="${_cell_status[$_key]:-}"
+                local _ru="${_cell_url[$_key]:-}"
+                local _cell
+                if [[ "$_st" == "pass" ]]; then
+                  [[ -n "$_ru" ]] && _cell="[✅]($_ru)" || _cell="✅"
+                elif [[ "$_st" == "fail" ]]; then
+                  [[ -n "$_ru" ]] && _cell="[❌]($_ru)" || _cell="❌"
+                else
+                  _cell="—"
+                fi
+                _row+=" ${_cell} |"
+              done
+              echo "$_row"
+            done <<< "$_ordered_tests"
+            echo
+          }
 
           # ---------------------------------------------------------------
           # Pass 2: render the markdown report.
@@ -500,6 +628,10 @@ jobs:
               echo
             fi
 
+            # -------- Per-test matrix tables --------
+            _render_matrix_table "true"  "📊 Test results — samples mode"
+            _render_matrix_table "false" "📊 Test results — inference mode"
+
             # -------- Failures first --------
             if [[ -s "$failed_tests_tsv" ]]; then
               echo "## ❌ Failures"
@@ -516,7 +648,8 @@ jobs:
                 else
                   link="_n/a_"
                 fi
-                echo "| \`$tname\` | $label | \`$ref\` | $mode | $samples | $link |"
+                _rl=$(_make_ref_link "$ref")
+                echo "| \`$tname\` | $label | $_rl | $mode | $samples | $link |"
               done
               echo
             else
@@ -533,7 +666,8 @@ jobs:
             echo "|:--:|---|---|---|:--:|:--:|--:|"
             while IFS=$'\t' read -r label ref mode samples rc count status; do
               [[ -z "$label" ]] && continue
-              echo "| $status | $label | \`$ref\` | $mode | $samples | \`$rc\` | $count |"
+              _rl=$(_make_ref_link "$ref")
+              echo "| $status | $label | $_rl | $mode | $samples | \`$rc\` | $count |"
             done < "$entries_tsv"
             echo
 
@@ -542,9 +676,9 @@ jobs:
             echo
             echo "| label              | ref                       | mode      |"
             echo "|--------------------|---------------------------|-----------|"
-            echo "| main               | \`main\` (\`$MAIN_SHA\`)    | source    |"
-            echo "| latest release     | \`$LATEST_RELEASE\`        | extension |"
-            echo "| latest pre-release | \`$LATEST_PRERELEASE\`     | extension |"
+            echo "| main               | [main](${SERVER_URL}/github/gh-aw/commit/${MAIN_SHA}) | source    |"
+            echo "| latest release     | [${LATEST_RELEASE}](${SERVER_URL}/github/gh-aw/releases/tag/${LATEST_RELEASE}) | extension |"
+            echo "| latest pre-release | [${LATEST_PRERELEASE}](${SERVER_URL}/github/gh-aw/releases/tag/${LATEST_PRERELEASE}) | extension |"
             echo
             echo "---"
             echo
@@ -601,7 +735,7 @@ jobs:
             echo "$overall_failed" > /tmp/overall_failed
           } > report.md
 
-          rm -f "$entries_tsv" "$failed_tests_tsv"
+          rm -f "$entries_tsv" "$failed_tests_tsv" "$passed_tests_tsv"
           cat report.md
 
       - name: Ensure status-report label exists
