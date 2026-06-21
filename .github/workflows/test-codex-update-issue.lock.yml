@@ -1,5 +1,5 @@
-# gh-aw-metadata: {"schema_version":"v4","frontmatter_hash":"191b9f83caea79447eb74f5effc9fbbccca77cdf5b6de2064fbcb52b4a5aebe5","body_hash":"8bb8ddcf3f674437da74aeeaa98a6236fe89a77e495d52246e3c4b555e55fe3f","strict":true,"agent_id":"codex","engine_versions":{"codex":"0.140.0"}}
-# gh-aw-manifest: {"version":1,"secrets":["CODEX_API_KEY","GH_AW_GITHUB_MCP_SERVER_TOKEN","GH_AW_GITHUB_TOKEN","GITHUB_TOKEN","OPENAI_API_KEY"],"actions":[{"repo":"actions/cache/restore","sha":"27d5ce7f107fe9357f9df03efb73ab90386fccae","version":"v5.0.5"},{"repo":"actions/cache/save","sha":"27d5ce7f107fe9357f9df03efb73ab90386fccae","version":"v5.0.5"},{"repo":"actions/checkout","sha":"9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0","version":"v7.0.0"},{"repo":"actions/download-artifact","sha":"3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c","version":"v8.0.1"},{"repo":"actions/github-script","sha":"373c709c69115d41ff229c7e5df9f8788daa9553","version":"v9"},{"repo":"actions/github-script","sha":"3a2844b7e9c422d3c10d287c895573f7108da1b3","version":"v9.0.0"},{"repo":"actions/setup-node","sha":"48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e","version":"v6.4.0"},{"repo":"actions/upload-artifact","sha":"043fb46d1a93c77aae656e7c1c64a875d1fc6a0a","version":"v7.0.1"}],"containers":[{"image":"ghcr.io/github/gh-aw-firewall/agent:0.27.7","digest":"sha256:aae231e4635c8999d039c132f1602d3df850fe9b84a00aa2b5ac981179b5661c","pinned_image":"ghcr.io/github/gh-aw-firewall/agent:0.27.7@sha256:aae231e4635c8999d039c132f1602d3df850fe9b84a00aa2b5ac981179b5661c"},{"image":"ghcr.io/github/gh-aw-firewall/api-proxy:0.27.7","digest":"sha256:009caf2e3d88fa77b64e9a03a95a228fc58db0f1701c6d324b29ba5a3c7c79b6","pinned_image":"ghcr.io/github/gh-aw-firewall/api-proxy:0.27.7@sha256:009caf2e3d88fa77b64e9a03a95a228fc58db0f1701c6d324b29ba5a3c7c79b6"},{"image":"ghcr.io/github/gh-aw-firewall/squid:0.27.7","digest":"sha256:deb1d4e19de62d51cee0508057a596a19315c3423ada4d675cad136dc8037c96","pinned_image":"ghcr.io/github/gh-aw-firewall/squid:0.27.7@sha256:deb1d4e19de62d51cee0508057a596a19315c3423ada4d675cad136dc8037c96"},{"image":"ghcr.io/github/gh-aw-mcpg:v0.3.27","digest":"sha256:fe984bddde4ec05d756d9043edb0a32912e6b7b72f6a121b1082f29221421cc7","pinned_image":"ghcr.io/github/gh-aw-mcpg:v0.3.27@sha256:fe984bddde4ec05d756d9043edb0a32912e6b7b72f6a121b1082f29221421cc7"},{"image":"ghcr.io/github/gh-aw-node","digest":"sha256:529d02eb970b1161aa25c593a9c3df57fdfad5a8add328cb3b6eccef66f3183b","pinned_image":"ghcr.io/github/gh-aw-node@sha256:529d02eb970b1161aa25c593a9c3df57fdfad5a8add328cb3b6eccef66f3183b"},{"image":"ghcr.io/github/github-mcp-server:v1.3.0","digest":"sha256:5c83359327a0bacc3d34db730bea6557d39d341cee0bf6c58c9a896e33150e80","pinned_image":"ghcr.io/github/github-mcp-server:v1.3.0@sha256:5c83359327a0bacc3d34db730bea6557d39d341cee0bf6c58c9a896e33150e80"}]}
+# gh-aw-metadata: {"schema_version":"v4","frontmatter_hash":"191b9f83caea79447eb74f5effc9fbbccca77cdf5b6de2064fbcb52b4a5aebe5","body_hash":"8bb8ddcf3f674437da74aeeaa98a6236fe89a77e495d52246e3c4b555e55fe3f","compiler_version":"11621ebf85","strict":true,"agent_id":"codex","engine_versions":{"codex":"0.140.0"}}
+# gh-aw-manifest: {"version":1,"secrets":["CODEX_API_KEY","GH_AW_GITHUB_MCP_SERVER_TOKEN","GH_AW_GITHUB_TOKEN","GITHUB_TOKEN","OPENAI_API_KEY"],"actions":[{"repo":"actions/cache/restore","sha":"27d5ce7f107fe9357f9df03efb73ab90386fccae","version":"v5.0.5"},{"repo":"actions/cache/save","sha":"27d5ce7f107fe9357f9df03efb73ab90386fccae","version":"v5.0.5"},{"repo":"actions/checkout","sha":"9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0","version":"v7.0.0"},{"repo":"actions/download-artifact","sha":"3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c","version":"v8.0.1"},{"repo":"actions/github-script","sha":"373c709c69115d41ff229c7e5df9f8788daa9553","version":"v9"},{"repo":"actions/github-script","sha":"3a2844b7e9c422d3c10d287c895573f7108da1b3","version":"v9.0.0"},{"repo":"actions/setup-node","sha":"48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e","version":"v6.4.0"},{"repo":"actions/upload-artifact","sha":"043fb46d1a93c77aae656e7c1c64a875d1fc6a0a","version":"v7.0.1"},{"repo":"github/gh-aw/actions/setup","sha":"11621ebf85863108936f4fd301e576086acf6847","version":"11621ebf85863108936f4fd301e576086acf6847"}],"containers":[{"image":"ghcr.io/github/gh-aw-firewall/agent:0.27.7","digest":"sha256:aae231e4635c8999d039c132f1602d3df850fe9b84a00aa2b5ac981179b5661c","pinned_image":"ghcr.io/github/gh-aw-firewall/agent:0.27.7@sha256:aae231e4635c8999d039c132f1602d3df850fe9b84a00aa2b5ac981179b5661c"},{"image":"ghcr.io/github/gh-aw-firewall/api-proxy:0.27.7","digest":"sha256:009caf2e3d88fa77b64e9a03a95a228fc58db0f1701c6d324b29ba5a3c7c79b6","pinned_image":"ghcr.io/github/gh-aw-firewall/api-proxy:0.27.7@sha256:009caf2e3d88fa77b64e9a03a95a228fc58db0f1701c6d324b29ba5a3c7c79b6"},{"image":"ghcr.io/github/gh-aw-firewall/squid:0.27.7","digest":"sha256:deb1d4e19de62d51cee0508057a596a19315c3423ada4d675cad136dc8037c96","pinned_image":"ghcr.io/github/gh-aw-firewall/squid:0.27.7@sha256:deb1d4e19de62d51cee0508057a596a19315c3423ada4d675cad136dc8037c96"},{"image":"ghcr.io/github/gh-aw-mcpg:v0.3.27","digest":"sha256:fe984bddde4ec05d756d9043edb0a32912e6b7b72f6a121b1082f29221421cc7","pinned_image":"ghcr.io/github/gh-aw-mcpg:v0.3.27@sha256:fe984bddde4ec05d756d9043edb0a32912e6b7b72f6a121b1082f29221421cc7"},{"image":"ghcr.io/github/gh-aw-node","digest":"sha256:529d02eb970b1161aa25c593a9c3df57fdfad5a8add328cb3b6eccef66f3183b","pinned_image":"ghcr.io/github/gh-aw-node@sha256:529d02eb970b1161aa25c593a9c3df57fdfad5a8add328cb3b6eccef66f3183b"},{"image":"ghcr.io/github/github-mcp-server:v1.3.0","digest":"sha256:5c83359327a0bacc3d34db730bea6557d39d341cee0bf6c58c9a896e33150e80","pinned_image":"ghcr.io/github/github-mcp-server:v1.3.0@sha256:5c83359327a0bacc3d34db730bea6557d39d341cee0bf6c58c9a896e33150e80"}]}
 # This file was automatically generated by gh-aw. DO NOT EDIT. To debug this workflow, load the skill at https://github.com/github/gh-aw/blob/main/debug.md
 #
 #    ___                   _   _      
@@ -40,6 +40,7 @@
 #   - actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
 #   - actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
 #   - actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+#   - github/gh-aw/actions/setup@11621ebf85863108936f4fd301e576086acf6847
 #
 # Container images used:
 #   - ghcr.io/github/gh-aw-firewall/agent:0.27.7@sha256:aae231e4635c8999d039c132f1602d3df850fe9b84a00aa2b5ac981179b5661c
@@ -93,16 +94,9 @@ jobs:
       text: ${{ steps.sanitized.outputs.text }}
       title: ${{ steps.sanitized.outputs.title }}
     steps:
-      - name: Checkout actions folder
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-        with:
-          repository: github/gh-aw
-          sparse-checkout: |
-            actions
-          persist-credentials: false
       - name: Setup Scripts
         id: setup
-        uses: ./actions/setup
+        uses: github/gh-aw/actions/setup@11621ebf85863108936f4fd301e576086acf6847
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
           job-name: ${{ github.job }}
@@ -210,7 +204,6 @@ jobs:
           sparse-checkout: |
             .github
             .agents
-            actions/setup
             .antigravity
             .claude
             .codex
@@ -426,16 +419,9 @@ jobs:
       setup-trace-id: ${{ steps.setup.outputs.trace-id }}
       unknown_model_ai_credits: ${{ steps.parse-mcp-gateway.outputs.unknown_model_ai_credits || 'false' }}
     steps:
-      - name: Checkout actions folder
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-        with:
-          repository: github/gh-aw
-          sparse-checkout: |
-            actions
-          persist-credentials: false
       - name: Setup Scripts
         id: setup
-        uses: ./actions/setup
+        uses: github/gh-aw/actions/setup@11621ebf85863108936f4fd301e576086acf6847
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
           job-name: ${{ github.job }}
@@ -1089,16 +1075,9 @@ jobs:
       tools_reported: ${{ steps.missing_tool.outputs.tools_reported }}
       total_count: ${{ steps.missing_tool.outputs.total_count }}
     steps:
-      - name: Checkout actions folder
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-        with:
-          repository: github/gh-aw
-          sparse-checkout: |
-            actions
-          persist-credentials: false
       - name: Setup Scripts
         id: setup
-        uses: ./actions/setup
+        uses: github/gh-aw/actions/setup@11621ebf85863108936f4fd301e576086acf6847
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
           job-name: ${{ github.job }}
@@ -1330,16 +1309,9 @@ jobs:
       detection_reason: ${{ steps.detection_conclusion.outputs.reason }}
       detection_success: ${{ steps.detection_conclusion.outputs.success }}
     steps:
-      - name: Checkout actions folder
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-        with:
-          repository: github/gh-aw
-          sparse-checkout: |
-            actions
-          persist-credentials: false
       - name: Setup Scripts
         id: setup
-        uses: ./actions/setup
+        uses: github/gh-aw/actions/setup@11621ebf85863108936f4fd301e576086acf6847
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
           job-name: ${{ github.job }}
@@ -1630,8 +1602,6 @@ jobs:
   pre_activation:
     if: contains(github.event.issue.body, 'e2e-marker:test-codex-update-issue')
     runs-on: ubuntu-slim
-    permissions:
-      contents: read
     outputs:
       activated: ${{ steps.check_membership.outputs.is_team_member == 'true' }}
       matched_command: ''
@@ -1639,16 +1609,9 @@ jobs:
       setup-span-id: ${{ steps.setup.outputs.span-id }}
       setup-trace-id: ${{ steps.setup.outputs.trace-id }}
     steps:
-      - name: Checkout actions folder
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-        with:
-          repository: github/gh-aw
-          sparse-checkout: |
-            actions
-          persist-credentials: false
       - name: Setup Scripts
         id: setup
-        uses: ./actions/setup
+        uses: github/gh-aw/actions/setup@11621ebf85863108936f4fd301e576086acf6847
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
           job-name: ${{ github.job }}
@@ -1704,16 +1667,9 @@ jobs:
       process_safe_outputs_processed_count: ${{ steps.process_safe_outputs.outputs.processed_count }}
       process_safe_outputs_temporary_id_map: ${{ steps.process_safe_outputs.outputs.temporary_id_map }}
     steps:
-      - name: Checkout actions folder
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-        with:
-          repository: github/gh-aw
-          sparse-checkout: |
-            actions
-          persist-credentials: false
       - name: Setup Scripts
         id: setup
-        uses: ./actions/setup
+        uses: github/gh-aw/actions/setup@11621ebf85863108936f4fd301e576086acf6847
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
           job-name: ${{ github.job }}
