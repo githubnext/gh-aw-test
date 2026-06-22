@@ -180,7 +180,12 @@ safe_run() {
 REPO_OWNER="githubnext"
 REPO_NAME="gh-aw-test"
 TIMEOUT_MINUTES=10
+# In CI, poll 10x less frequently (50s vs 5s) to conserve GitHub API rate limits.
+# The human isn't watching for fast feedback, so the extra latency is fine.
 POLL_INTERVAL=5
+if [[ "${CI:-false}" == "true" ]]; then
+    POLL_INTERVAL=50
+fi
 LOG_FILE="e2e-test-$(date +%Y%m%d-%H%M%S).log"
 TEMP_USER_PAT_SET=false
 USE_SAMPLES=false
