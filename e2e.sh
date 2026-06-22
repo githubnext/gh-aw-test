@@ -762,6 +762,17 @@ check_prerequisites() {
         exit 1
     fi
 
+    # For the main-branch push path: sync to the latest origin/main BEFORE
+    # compiling. Lock files are auto-generated; the only conflict-free way to
+    # push a new compilation is to start from whatever is already on main, run
+    # compile, and push the result as a clean fast-forward.  This avoids the
+    # need for any rebase/merge of generated files.
+    # (E2E_BRANCH uses force-push, so no pre-sync is needed for that path.)
+    if [[ -z "$E2E_BRANCH" ]]; then
+        git fetch origin main &>> "$LOG_FILE"
+        git reset --hard origin/main &>> "$LOG_FILE"
+    fi
+
     # Compile workflows. When --gh-aw-ref is set, pass it through so compiled
     # workflows reference github/gh-aw/actions/setup@<ref> at runtime.
     local compile_cmd=($GH_AW_BIN compile)
@@ -854,12 +865,6 @@ for item in json.loads(m.group(0)):
             info "Detected changes after compile; committing and pushing to main branch"
             git add . &>> "$LOG_FILE"
             git commit -m "$commit_msg" &>> "$LOG_FILE"
-            # Another matrix entry (or the e2e bot) may have pushed to main
-            # between our checkout and now. Rebase onto the latest origin/main
-            # so our push is always a fast-forward. Use -X theirs so our freshly
-            # compiled lock files always win in any conflict.
-            git fetch origin main &>> "$LOG_FILE"
-            git rebase -X theirs origin/main &>> "$LOG_FILE"
             if git push origin main &>> "$LOG_FILE"; then
                 success "Changes pushed to main branch"
             else
