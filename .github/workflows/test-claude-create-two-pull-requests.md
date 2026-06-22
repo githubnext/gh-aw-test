@@ -47,7 +47,7 @@ This test workflow specifically tests creating two independent pull requests.
 
 ## First Pull Request
 
-1. **First commit**: Create a file "feature-a/README.md" with content:
+1. **First commit**: Create a file "feature-a/notes.md" with content:
    ```markdown
    # Feature A
    
@@ -70,7 +70,7 @@ Create the first pull request with title "Feature A: Multi-PR test" and body "Th
 
 ## Second Pull Request
 
-1. **First commit**: Create a file "feature-b/README.md" with content:
+1. **First commit**: Create a file "feature-b/notes.md" with content:
    ```markdown
    # Feature B
    
