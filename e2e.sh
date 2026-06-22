@@ -564,6 +564,7 @@ get_all_tests() {
     echo "test-copilot-resolve-pull-request-review-thread"
     echo "test-copilot-submit-pull-request-review"
     echo "test-copilot-set-issue-type"
+    echo "test-copilot-set-issue-field"
     # Workflow_dispatch tests with inputs (dispatch-workflow needs a sentinel)
     echo "test-copilot-dispatch-workflow"
     echo "test-copilot-call-workflow"

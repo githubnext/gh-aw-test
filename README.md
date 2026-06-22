@@ -94,7 +94,7 @@ Tracking the full matrix of [safe outputs](https://github.com/github/gh-aw/blob/
 - [x] `assign-to-user` — test-copilot-assign-to-user
 - [x] `unassign-from-user` — test-copilot-unassign-from-user
 - [x] `set-issue-type` — test-copilot-set-issue-type
-- [ ] `set-issue-field` — test-copilot-set-issue-field (requires repo-configured issue fields)
+- [x] `set-issue-field` — test-copilot-set-issue-field
 
 ### Security & Agent Tasks — Remaining
 
