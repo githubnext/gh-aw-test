@@ -92,6 +92,7 @@ Tracking the full matrix of [safe outputs](https://github.com/github/gh-aw/blob/
 - [x] `remove-labels` — test-copilot-remove-labels
 - [x] `hide-comment` — test-copilot-hide-comment
 - [x] `assign-milestone` — test-copilot-assign-milestone
+- [x] `assign-to-agent` — test-copilot-assign-to-agent
 - [x] `assign-to-user` — test-copilot-assign-to-user
 - [x] `unassign-from-user` — test-copilot-unassign-from-user
 - [x] `set-issue-type` — test-copilot-set-issue-type
@@ -110,7 +111,6 @@ Tracking the full matrix of [safe outputs](https://github.com/github/gh-aw/blob/
 
 ### Deferred (require special infrastructure)
 
-- [ ] `assign-to-agent` — requires Copilot coding agent access
 - [ ] `create-agent-session` — requires Copilot coding agent access
 - [ ] `create-project` / `update-project` / `create-project-status-update` — requires PAT with Projects permissions
 - [ ] `upload-artifact` — needs a staged fixture file plus artifact-specific assertions in the harness
