@@ -216,6 +216,13 @@ jobs:
       - name: Checkout gh-aw-test
         uses: actions/checkout@v4
         with:
+          # Always checkout the latest HEAD of main, not the trigger SHA.
+          # When e2e.yml is triggered by a push, `github.sha` is the pushed
+          # commit, but by the time the job runs (serial matrix, queued), a
+          # prior matrix entry may have pushed a recompile commit on top of
+          # it. Without `ref: main`, the checkout is behind origin/main and
+          # `git push` fails with non-fast-forward.
+          ref: main
           path: gh-aw-test
           fetch-depth: 0
           # Use the PAT so e2e.sh can push the recompiled workflows to main
@@ -327,13 +334,13 @@ jobs:
             # --verbose streams the gh-aw build/compile/version diagnostics to
             # the job log (otherwise they'd only land in the e2e-test-*.log
             # artifact, making build failures opaque in CI).
-            ./e2e.sh --gh-aw-ref "$E2E_REF" --verbose --batch-size 3 $SAMPLES_FLAG 2>&1 | tee e2e-output.log
+            ./e2e.sh --gh-aw-ref "$E2E_REF" --verbose --batch-size 5 $SAMPLES_FLAG 2>&1 | tee e2e-output.log
           else
             # extension mode: rely on the installed `gh aw` (pinned to $E2E_REF),
             # no --gh-aw-ref override — lockfiles will reference the published
             # gh-aw-actions release that ships with that gh-aw version, which is
             # exactly what end users get.
-            ./e2e.sh --verbose --batch-size 3 $SAMPLES_FLAG 2>&1 | tee e2e-output.log
+            ./e2e.sh --verbose --batch-size 5 $SAMPLES_FLAG 2>&1 | tee e2e-output.log
           fi
           rc=${PIPESTATUS[0]}
           echo "exit_code=$rc" >> "$GITHUB_OUTPUT"

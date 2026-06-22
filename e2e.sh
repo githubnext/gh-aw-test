@@ -854,6 +854,12 @@ for item in json.loads(m.group(0)):
             info "Detected changes after compile; committing and pushing to main branch"
             git add . &>> "$LOG_FILE"
             git commit -m "$commit_msg" &>> "$LOG_FILE"
+            # Another matrix entry (or the e2e bot) may have pushed to main
+            # between our checkout and now. Rebase onto the latest origin/main
+            # so our push is always a fast-forward. Use -X theirs so our freshly
+            # compiled lock files always win in any conflict.
+            git fetch origin main &>> "$LOG_FILE"
+            git rebase -X theirs origin/main &>> "$LOG_FILE"
             if git push origin main &>> "$LOG_FILE"; then
                 success "Changes pushed to main branch"
             else
