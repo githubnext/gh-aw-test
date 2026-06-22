@@ -1220,6 +1220,65 @@ trigger_workflow_with_inputs() {
     fi
 }
 
+# Close open issues and pull requests left over from previous runs.
+# Issues labelled "e2e-status-report" or "suggested new test" are kept.
+# Everything else older than 6 hours is closed.  Called once at the start
+# of each run so the live repository stays clean between executions.
+cleanup_stale_resources() {
+    local cutoff
+    cutoff=$(date -u -d '6 hours ago' '+%Y-%m-%dT%H:%M:%SZ' 2>/dev/null) \
+        || cutoff=$(date -u -v-6H '+%Y-%m-%dT%H:%M:%SZ' 2>/dev/null) \
+        || { warning "Could not calculate 6h cutoff; skipping stale cleanup"; return 0; }
+    info "Closing stale test issues/PRs older than 6h (before $cutoff)..."
+
+    # ---- Issues (skip protected labels) ----
+    local _stale_issues _count=0
+    _stale_issues=$(gh issue list \
+        --repo "$REPO_OWNER/$REPO_NAME" \
+        --state open --limit 500 \
+        --json number,createdAt,labels 2>/dev/null \
+        | jq -r --arg c "$cutoff" '
+            .[] | select(.createdAt < $c)
+            | select(
+                (.labels | map(.name) |
+                 (contains(["e2e-status-report"]) or contains(["suggested new test"])))
+                | not)
+            | .number' 2>/dev/null || true)
+    if [[ -n "$_stale_issues" ]]; then
+        while IFS= read -r _n; do
+            [[ -z "$_n" ]] && continue
+            gh issue close "$_n" --repo "$REPO_OWNER/$REPO_NAME" \
+                --comment "Closed by e2e cleanup (stale, older than 6h)" \
+                &>> "$LOG_FILE" 2>/dev/null || true
+            _count=$((_count + 1))
+        done <<< "$_stale_issues"
+    fi
+    local _issue_count=$_count
+
+    # ---- Pull requests ----
+    _count=0
+    local _stale_prs
+    _stale_prs=$(gh pr list \
+        --repo "$REPO_OWNER/$REPO_NAME" \
+        --state open --limit 500 \
+        --json number,createdAt 2>/dev/null \
+        | jq -r --arg c "$cutoff" \
+            '.[] | select(.createdAt < $c) | .number' 2>/dev/null || true)
+    if [[ -n "$_stale_prs" ]]; then
+        while IFS= read -r _n; do
+            [[ -z "$_n" ]] && continue
+            gh pr close "$_n" --repo "$REPO_OWNER/$REPO_NAME" \
+                &>> "$LOG_FILE" 2>/dev/null || true
+            _count=$((_count + 1))
+        done <<< "$_stale_prs"
+    fi
+
+    if [[ $_issue_count -gt 0 || $_count -gt 0 ]]; then
+        success "Stale cleanup: closed $_issue_count issue(s) and $_count PR(s) older than 6h"
+    else
+        info "No stale issues or PRs found older than 6h"
+    fi
+}
 
 create_test_issue() {
     local title="$1"
@@ -1246,6 +1305,10 @@ create_test_issue() {
     
     if [[ -n "$issue_url" ]]; then
         local issue_number=$(echo "$issue_url" | grep -o '[0-9]\+$')
+        # Track for per-test cleanup
+        if [[ -n "${E2E_TEST_RESOURCE_FILE:-}" && -n "$issue_number" ]]; then
+            echo "issue|$issue_number|${4:-}" >> "$E2E_TEST_RESOURCE_FILE" 2>/dev/null || true
+        fi
         echo "$issue_number"
     else
         echo ""
@@ -1373,6 +1436,11 @@ create_test_pr() {
         
         if [[ -n "$pr_url" ]]; then
             local pr_number=$(echo "$pr_url" | grep -o '[0-9]\+$')
+            # Track for per-test cleanup
+            if [[ -n "${E2E_TEST_RESOURCE_FILE:-}" && -n "$pr_number" ]]; then
+                echo "pr|$pr_number|${repo:-}" >> "$E2E_TEST_RESOURCE_FILE" 2>/dev/null || true
+                echo "branch|$branch|${api_repo}" >> "$E2E_TEST_RESOURCE_FILE" 2>/dev/null || true
+            fi
             echo "$pr_number"
         else
             echo ""
@@ -1437,6 +1505,11 @@ create_test_pr_with_branch() {
 
         if [[ -n "$pr_url" ]]; then
             local pr_number=$(echo "$pr_url" | grep -o '[0-9]\+$')
+            # Track for per-test cleanup
+            if [[ -n "${E2E_TEST_RESOURCE_FILE:-}" && -n "$pr_number" ]]; then
+                echo "pr|$pr_number|${repo:-}" >> "$E2E_TEST_RESOURCE_FILE" 2>/dev/null || true
+                echo "branch|$branch|${api_repo}" >> "$E2E_TEST_RESOURCE_FILE" 2>/dev/null || true
+            fi
             echo "$pr_number,$branch,$after_commit_sha,$repo"
         else
             echo ""
@@ -1498,6 +1571,10 @@ validate_issue_created() {
             done
         fi
         success "Issue #$issue_number created successfully with expected properties, URL: https://github.com/$repo_url/issues/$issue_number"
+        # Track for per-test cleanup
+        if [[ -n "${E2E_TEST_RESOURCE_FILE:-}" ]]; then
+            echo "issue|$issue_number|${3:-}" >> "$E2E_TEST_RESOURCE_FILE" 2>/dev/null || true
+        fi
         return 0
     else
         error "No issue found with title prefix: $title_prefix"
@@ -1624,6 +1701,10 @@ validate_pr_created() {
     
     if [[ -n "$pr_number" ]]; then
         success "PR #$pr_number created successfully, https://github.com/$repo_url/pull/$pr_number"
+        # Track for per-test cleanup
+        if [[ -n "${E2E_TEST_RESOURCE_FILE:-}" ]]; then
+            echo "pr|$pr_number|${2:-}" >> "$E2E_TEST_RESOURCE_FILE" 2>/dev/null || true
+        fi
         return 0
     else
         error "No PR found with title prefix: $title_prefix"
@@ -1651,6 +1732,10 @@ validate_two_prs_created() {
         success "Two PRs created successfully: #$pr_list"
         echo "$pr_numbers" | head -2 | while read -r pr_num; do
             success "  - PR #$pr_num: https://github.com/$repo_url/pull/$pr_num"
+            # Track for per-test cleanup
+            if [[ -n "${E2E_TEST_RESOURCE_FILE:-}" ]]; then
+                echo "pr|$pr_num|${2:-}" >> "$E2E_TEST_RESOURCE_FILE" 2>/dev/null || true
+            fi
         done
         return 0
     else
@@ -2926,6 +3011,10 @@ create_test_release() {
         --target main \
         --title "$title" \
         --notes "Original release body for update-release test." &>/dev/null; then
+        # Track for per-test cleanup
+        if [[ -n "${E2E_TEST_RESOURCE_FILE:-}" ]]; then
+            echo "release|$tag|${repo:-}" >> "$E2E_TEST_RESOURCE_FILE" 2>/dev/null || true
+        fi
         echo "$tag"
     else
         echo ""
@@ -3013,6 +3102,10 @@ wait_for_asset_published() {
 run_single_test() {
     local workflow="$1"
     local test_log="/tmp/e2e-test-${workflow}-$$.log"
+    # Per-test resource tracking file: create_test_issue / create_test_pr /
+    # validate_issue_created etc. append entries here so we can close them
+    # after the test regardless of pass/fail.
+    export E2E_TEST_RESOURCE_FILE="/tmp/e2e-resources-${workflow}-$$.txt"
     
     # Redirect all output to test-specific log
     exec 1>"$test_log" 2>&1
@@ -3728,6 +3821,42 @@ run_single_test() {
             ;;
     esac
     
+    # Per-test cleanup: close issues/PRs/branches created as test fixtures.
+    # Some tests (close-issue, close-pull-request, update-issue) expect the
+    # workflow to close/update these; for those the close is a no-op here.
+    if [[ -f "${E2E_TEST_RESOURCE_FILE:-}" ]]; then
+        info "Cleaning up test fixtures for '$workflow'..."
+        while IFS='|' read -r _rtype _rid _rrepo; do
+            [[ -z "$_rid" ]] && continue
+            local _rflag=""
+            [[ -n "$_rrepo" ]] && _rflag="--repo $_rrepo"
+            case "$_rtype" in
+                issue)
+                    gh issue close $_rflag "$_rid" \
+                        --comment "Closed by e2e cleanup after test '$workflow'" \
+                        &>> "$LOG_FILE" 2>/dev/null || true
+                    ;;
+                pr)
+                    gh pr close $_rflag "$_rid" \
+                        &>> "$LOG_FILE" 2>/dev/null || true
+                    ;;
+                branch)
+                    local _brepo="${_rrepo:-$REPO_OWNER/$REPO_NAME}"
+                    gh api -X DELETE \
+                        "repos/${_brepo}/git/refs/heads/${_rid}" \
+                        &>> "$LOG_FILE" 2>/dev/null || true
+                    ;;
+                release)
+                    local _rflag2=""
+                    [[ -n "$_rrepo" ]] && _rflag2="--repo $_rrepo"
+                    gh release delete $_rflag2 "$_rid" --yes \
+                        &>> "$LOG_FILE" 2>/dev/null || true
+                    ;;
+            esac
+        done < "$E2E_TEST_RESOURCE_FILE"
+        rm -f "$E2E_TEST_RESOURCE_FILE"
+    fi
+
     # Write result to shared file atomically
     (
         flock -x 200
@@ -4471,7 +4600,10 @@ main() {
     fi
     
     log "Starting e2e tests at $(date)"
-    
+
+    # Close any open issues/PRs older than 6h left from previous runs
+    cleanup_stale_resources
+
     check_prerequisites
     
     disable_all_workflows_before_testing
