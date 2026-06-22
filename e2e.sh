@@ -520,6 +520,7 @@ get_all_tests() {
     echo "test-claude-mcp"
     echo "test-codex-mcp"
     echo "test-copilot-mcp"
+    echo "test-copilot-mcp-code-quality"
     echo "test-claude-custom-safe-outputs"
     echo "test-codex-custom-safe-outputs"
     echo "test-copilot-custom-safe-outputs"
@@ -1729,11 +1730,26 @@ validate_mcp_workflow() {
         repo_flag="--repo $repo"
     fi
     
+    if [[ "$workflow_name" == *"code-quality"* ]]; then
+        local code_quality_issues=$(gh issue list $repo_flag --limit 10 --json title,body \
+            --jq '.[] | select((.title | contains("Code quality finding")) and
+                              ((.body | contains("get_code_quality_finding")) or
+                               (.body | contains("code quality finding")))) | .title' | head -1)
+
+        if [[ -n "$code_quality_issues" ]]; then
+            success "MCP workflow '$workflow_name' appears to have used code quality MCP tools successfully: $code_quality_issues"
+            return 0
+        else
+            error "MCP workflow '$workflow_name' completed but no clear evidence of code quality MCP tool usage found"
+            return 1
+        fi
+    fi
+
     # MCP workflows create issues with specific patterns indicating MCP tool usage
     # Search for BOTH title pattern AND MCP-specific content for more specificity
     local recent_issues=$(gh issue list $repo_flag --limit 10 --json title,body \
-        --jq '.[] | select((.title | contains("Hello from")) and 
-                          ((.body | contains("MCP time tool")) or 
+        --jq '.[] | select((.title | contains("Hello from")) and
+                          ((.body | contains("MCP time tool")) or
                            (.body | contains("get_current_time")) or
                            (.body | contains("current time is")))) | .title' | head -1)
     
