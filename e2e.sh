@@ -544,6 +544,7 @@ get_all_tests() {
     echo "test-copilot-assign-to-user"
     echo "test-copilot-unassign-from-user"
     echo "test-copilot-assign-milestone"
+    echo "test-copilot-assign-to-agent"
     echo "test-copilot-link-sub-issue"
     echo "test-copilot-hide-comment"
     # PR-triggered tests
