@@ -1,0 +1,7 @@
+{
+    "test": true,
+    "engine": "copilot",
+    "sandbox": false,
+    "purpose": "multi-commit-test-nosandbox",
+    "timestamp": "2026-06-22T05:04:50Z"
+}
