@@ -69,6 +69,7 @@ safe-outputs:
     allowed-files:
       - ".github/workflows/test-*.md"
     max: 2
+    draft: false
 ---
 
 # Suggest New E2E Tests
