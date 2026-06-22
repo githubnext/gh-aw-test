@@ -180,8 +180,10 @@ jobs:
                   # de-dupe by ref so pre-release==release does not run twice
                   | unique_by(.ref)')
               fi
-              # Expand each base entry across samples=false and samples=true.
-              matrix=$(echo "$base" | jq -c '[ .[] as $e | (false, true) | $e + { samples: . } ]')
+              # Expand each base entry across samples modes:
+              #   main        → samples=false AND samples=true (inference + deterministic)
+              #   pre-release/release → samples=true only (skip inference runs for speed)
+              matrix=$(echo "$base" | jq -c '[ .[] as $e | if $e.label == "main" then (false, true) else true end | $e + { samples: . } ]')
               ;;
           esac
 
@@ -325,6 +327,10 @@ jobs:
             SAMPLES_FLAG="--use-samples"
           fi
 
+          # Tests to run in every matrix entry.
+          # Copilot suite in full; one create-issue test for Claude and Codex.
+          TESTS=('test-copilot-*' 'test-claude-create-issue' 'test-codex-create-issue')
+
           if [[ "$E2E_MODE" == "source" ]]; then
             # source mode: locally-built binary + --gh-aw-ref so lockfiles
             # reference github/gh-aw/actions/setup@<ref>.
@@ -334,13 +340,13 @@ jobs:
             # --verbose streams the gh-aw build/compile/version diagnostics to
             # the job log (otherwise they'd only land in the e2e-test-*.log
             # artifact, making build failures opaque in CI).
-            ./e2e.sh --gh-aw-ref "$E2E_REF" --verbose --batch-size 5 $SAMPLES_FLAG 2>&1 | tee e2e-output.log
+            ./e2e.sh --gh-aw-ref "$E2E_REF" --verbose --batch-size 7 $SAMPLES_FLAG "${TESTS[@]}" 2>&1 | tee e2e-output.log
           else
             # extension mode: rely on the installed `gh aw` (pinned to $E2E_REF),
             # no --gh-aw-ref override — lockfiles will reference the published
             # gh-aw-actions release that ships with that gh-aw version, which is
             # exactly what end users get.
-            ./e2e.sh --verbose --batch-size 5 $SAMPLES_FLAG 2>&1 | tee e2e-output.log
+            ./e2e.sh --verbose --batch-size 7 $SAMPLES_FLAG "${TESTS[@]}" 2>&1 | tee e2e-output.log
           fi
           rc=${PIPESTATUS[0]}
           echo "exit_code=$rc" >> "$GITHUB_OUTPUT"
