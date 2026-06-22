@@ -14,6 +14,8 @@ permissions:
 
 steps:
   - name: Fetch recent gh-aw activity and inventory
+    env:
+      GH_TOKEN: ${{ github.token }}
     run: |
       set -euo pipefail
       mkdir -p /tmp/gh-aw
