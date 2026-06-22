@@ -87,6 +87,7 @@ GLOBAL_WORKFLOWS_LOCK="/tmp/e2e-workflows-$$.lock"
 # `gh workflow list`.
 declare -a NEVER_DISABLE_WORKFLOWS=(
     "e2e"
+    "Suggest New E2E Tests"
 )
 
 # Returns 0 (true) if the given workflow name is on the never-disable list.
