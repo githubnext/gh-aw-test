@@ -14,11 +14,9 @@ name: e2e
 #   Actions. Entries are therefore queued one at a time (`fail-fast: false` so a
 #   single entry's failure doesn't cancel the rest).
 # * RUNS FROM MAIN: each entry recompiles its workflows, pushes them to `main`,
-#   and dispatches every test from `main`. Because the matrix is serial, entries
-#   cannot clobber each other, so the dedicated-branch isolation used previously
-#   is unnecessary. Running from `main` exercises the common case users
-#   experience and keeps create-pull-request's fetch-depth:1 merge-base against
-#   origin/main trivially resolvable (no divergent test branch).
+#   and dispatches every test from `main`. Event-triggered tests (add-comment,
+#   add-labels, update-issue, etc.) create their own fixtures and wait for the
+#   GitHub event to fire, exactly as they do when run locally.
 #
 # Manual dispatch
 # ---------------
@@ -255,7 +253,20 @@ jobs:
           set -euo pipefail
           # Remove any pre-existing install so --pin actually wins
           gh extension remove github/gh-aw 2>/dev/null || true
-          gh extension install github/gh-aw --pin "${{ matrix.entry.ref }}"
+          # Retry up to 3 times with backoff. Prior matrix entries (especially
+          # the 45-minute source-mode run) can exhaust the API rate limit,
+          # causing a transient 403 on the release-asset download.
+          for _attempt in 1 2 3; do
+            if gh extension install github/gh-aw --pin "${{ matrix.entry.ref }}"; then
+              break
+            fi
+            if [[ "$_attempt" -eq 3 ]]; then
+              echo "::error::Failed to install gh-aw extension after 3 attempts"
+              exit 1
+            fi
+            echo "Install attempt $_attempt failed; waiting 90s for rate limit to recover..."
+            sleep 90
+          done
           gh aw --version
 
       # --- shared steps -------------------------------------------------------
@@ -316,13 +327,13 @@ jobs:
             # --verbose streams the gh-aw build/compile/version diagnostics to
             # the job log (otherwise they'd only land in the e2e-test-*.log
             # artifact, making build failures opaque in CI).
-            ./e2e.sh --gh-aw-ref "$E2E_REF" --workflow-dispatch-only --verbose --batch-size 10 $SAMPLES_FLAG 2>&1 | tee e2e-output.log
+            ./e2e.sh --gh-aw-ref "$E2E_REF" --verbose --batch-size 3 $SAMPLES_FLAG 2>&1 | tee e2e-output.log
           else
             # extension mode: rely on the installed `gh aw` (pinned to $E2E_REF),
             # no --gh-aw-ref override — lockfiles will reference the published
             # gh-aw-actions release that ships with that gh-aw version, which is
             # exactly what end users get.
-            ./e2e.sh --workflow-dispatch-only --verbose --batch-size 10 $SAMPLES_FLAG 2>&1 | tee e2e-output.log
+            ./e2e.sh --verbose --batch-size 3 $SAMPLES_FLAG 2>&1 | tee e2e-output.log
           fi
           rc=${PIPESTATUS[0]}
           echo "exit_code=$rc" >> "$GITHUB_OUTPUT"
@@ -522,10 +533,12 @@ jobs:
             fi
           }
 
-          # Render a test × ref matrix table for a given samples value.
+          # Render a test × ref matrix table.
+          # Args: samples_value ("true"|"false"), type ("errors"|"successes"), heading
           _render_matrix_table() {
-            local _sv="$1"   # "true" or "false"
-            local _hdg="$2"  # section heading text
+            local _sv="$1"    # "true" or "false"
+            local _type="$2"  # "errors" or "successes"
+            local _hdg="$3"
             # Ordered columns: release → pre-release → main, then any others.
             local _cols=()
             for _lbl in "release" "pre-release" "main"; do
@@ -537,30 +550,24 @@ jobs:
               esac
             done
             [[ "${#_cols[@]}" -eq 0 ]] && return 0
-            # Collect all unique test names for this samples value.
             local _tests
-            _tests=$(
-              {
-                awk -F'\t' -v sv="$_sv" '$5==sv{print $1}' "$failed_tests_tsv"
-                awk -F'\t' -v sv="$_sv" '$5==sv{print $1}' "$passed_tests_tsv"
-              } | sort -u
-            )
+            if [[ "$_type" == "errors" ]]; then
+              _tests=$(awk -F'\t' -v sv="$_sv" '$5==sv{print $1}' "$failed_tests_tsv" | sort -u)
+            else
+              local _fp _ff
+              _fp=$(awk -F'\t' -v sv="$_sv" '$5==sv{print $1}' "$passed_tests_tsv" | sort -u)
+              _ff=$(awk -F'\t' -v sv="$_sv" '$5==sv{print $1}' "$failed_tests_tsv" | sort -u)
+              if [[ -z "$_fp" ]]; then
+                _tests=""
+              elif [[ -z "$_ff" ]]; then
+                _tests="$_fp"
+              else
+                _tests=$(comm -23 <(echo "$_fp") <(echo "$_ff"))
+              fi
+            fi
             [[ -z "$_tests" ]] && return 0
-            # Split into two groups: tests with any failure first (alphabetical),
-            # then tests that are all passing (alphabetical).
-            local _failing_tests="" _passing_tests=""
-            while IFS= read -r _tname; do
-              [[ -z "$_tname" ]] && continue
-              local _any_fail=false
-              for _lbl in "${_cols[@]}"; do
-                [[ "${_cell_status[${_sv}:${_tname}:${_lbl}]:-}" == "fail" ]] && { _any_fail=true; break; }
-              done
-              [[ "$_any_fail" == "true" ]] && _failing_tests+="${_tname}"$'\n' || _passing_tests+="${_tname}"$'\n'
-            done <<< "$_tests"
-            local _ordered_tests="${_failing_tests}${_passing_tests}"
             echo "## ${_hdg}"
             echo
-            # Header
             local _hdr="| test |"
             local _sep="| :--- |"
             for _lbl in "${_cols[@]}"; do
@@ -572,7 +579,6 @@ jobs:
             done
             echo "$_hdr"
             echo "$_sep"
-            # Rows: failing tests first, then passing tests.
             while IFS= read -r _tname; do
               [[ -z "$_tname" ]] && continue
               local _test_url="${SERVER_URL}/${REPO}/blob/main/.github/workflows/${_tname}.md"
@@ -592,7 +598,7 @@ jobs:
                 _row+=" ${_cell} |"
               done
               echo "$_row"
-            done <<< "$_ordered_tests"
+            done <<< "$_tests"
             echo
           }
 
@@ -600,102 +606,17 @@ jobs:
           # Pass 2: render the markdown report.
           # ---------------------------------------------------------------
           {
-            echo "# E2E status report (gh-aw matrix)"
-            echo
-            echo "## ${headline}"
-            echo
-            echo "| | |"
-            echo "|---|---|"
-            echo "| Run | [$RUN_URL]($RUN_URL) |"
-            echo "| Trigger | \`${{ github.event_name }}\` |"
-            echo "| Generated | \`$(date -u +%FT%TZ)\` |"
-            echo "| Matrix outcome | \`$E2E_RESULT\` |"
+            echo "**Run:** [$RUN_URL]($RUN_URL) &nbsp;·&nbsp; **Trigger:** \`${{ github.event_name }}\` &nbsp;·&nbsp; **Generated:** \`$(date -u +%FT%TZ)\` &nbsp;·&nbsp; **Outcome:** \`$E2E_RESULT\`"
             echo
 
-            # Aggregate roll-up across all jobs (most useful when >1 entry).
-            if [[ "$total_entries" -gt 1 ]]; then
-              echo "## 📊 Overall summary (all jobs)"
-              echo
-              echo "| metric | count |"
-              echo "|---|--:|"
-              echo "| Matrix entries | $total_entries |"
-              echo "| ✅ Entries passed | $entries_passed |"
-              echo "| ❌ Entries failed | $entries_failed |"
-              if [[ "$entries_unknown" -gt 0 ]]; then
-                echo "| ⚪ Entries unknown | $entries_unknown |"
-              fi
-              echo "| 🧪 Failed test runs (total) | $total_failed_tests |"
-              echo
-            fi
-
-            # -------- Per-test matrix tables --------
-            _render_matrix_table "true"  "📊 Test results — samples mode"
-            _render_matrix_table "false" "📊 Test results — inference mode"
-
-            # -------- Failures first --------
-            if [[ -s "$failed_tests_tsv" ]]; then
-              echo "## ❌ Failures"
-              echo
-              echo "All failing test runs across every matrix entry, most actionable first:"
-              echo
-              echo "| test | entry | ref | mode | samples | run |"
-              echo "|---|---|---|---|:--:|---|"
-              # Sort by test name so the same test across entries groups together.
-              sort -f "$failed_tests_tsv" | while IFS=$'\t' read -r tname label ref mode samples run_url; do
-                [[ -z "$tname" ]] && continue
-                if [[ -n "$run_url" ]]; then
-                  link="[logs]($run_url)"
-                else
-                  link="_n/a_"
-                fi
-                _rl=$(_make_ref_link "$ref")
-                echo "| \`$tname\` | $label | $_rl | $mode | $samples | $link |"
-              done
-              echo
-            else
-              echo "## ✅ No failing tests"
-              echo
-              echo "Every matrix entry completed without recording a failed test."
-              echo
-            fi
-
-            # -------- Per-entry results --------
-            echo "## Per-entry results"
-            echo
-            echo "| status | label | gh-aw ref | mode | samples | exit code | failed tests |"
-            echo "|:--:|---|---|---|:--:|:--:|--:|"
-            while IFS=$'\t' read -r label ref mode samples rc count status; do
-              [[ -z "$label" ]] && continue
-              _rl=$(_make_ref_link "$ref")
-              echo "| $status | $label | $_rl | $mode | $samples | \`$rc\` | $count |"
-            done < "$entries_tsv"
-            echo
-
-            # -------- Resolved refs (reference) --------
-            echo "## Resolved gh-aw refs"
-            echo
-            echo "| label              | ref                       | mode      |"
-            echo "|--------------------|---------------------------|-----------|"
-            echo "| main               | [main](${SERVER_URL}/github/gh-aw/commit/${MAIN_SHA}) | source    |"
-            echo "| latest release     | [${LATEST_RELEASE}](${SERVER_URL}/github/gh-aw/releases/tag/${LATEST_RELEASE}) | extension |"
-            echo "| latest pre-release | [${LATEST_PRERELEASE}](${SERVER_URL}/github/gh-aw/releases/tag/${LATEST_PRERELEASE}) | extension |"
-            echo
-            echo "---"
-            echo
-            echo "_The \`main\` entry runs \`e2e.sh --gh-aw-ref main --workflow-dispatch-only\` against a"
-            echo "locally-built \`gh-aw\` from the github/gh-aw checkout. The release / pre-release entries"
-            echo "install the published \`gh aw\` extension at the pinned tag (\`gh extension install\`"
-            echo "--pin <tag>\`) and run \`e2e.sh --workflow-dispatch-only\` against that, so they"
-            echo "exercise exactly the artifact users see. Each entry recompiles its workflows, pushes"
-            echo "them to \`main\`, and dispatches every test from \`main\`. The matrix is serial"
-            echo "(\`max-parallel: 1\`), so entries can't clobber each other; GitHub Actions sets"
-            echo "\`CI=true\`, which puts \`e2e.sh\` into no-secret-mutation mode automatically. See"
-            echo "\`.github/workflows/e2e.yml\` for the design rationale._"
+            _render_matrix_table "true"  "errors"    "❌ Test errors — samples mode"
+            _render_matrix_table "false" "errors"    "❌ Test errors — inference mode"
+            _render_matrix_table "true"  "successes" "✅ Test successes — samples mode"
+            _render_matrix_table "false" "successes" "✅ Test successes — inference mode"
 
             # When anything failed, append a ready-to-paste prompt for a coding
             # agent to triage the failures from the run logs.
             if [[ "$overall_failed" != "0" ]]; then
-              echo
               echo "## 🤖 Agent triage prompt"
               echo
               echo "Copy the block below into a coding agent (e.g. Copilot) to investigate the failures:"

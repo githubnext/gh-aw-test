@@ -22,8 +22,6 @@
 #
 # Options:
 #   --dry-run                  Show what would be tested without running
-#   --workflow-dispatch-only   Only run tests that use workflow_dispatch trigger
-#                              (skip issue/comment/PR-triggered tests)
 #   --use-samples              Use declared samples for more deterministic testing
 #   --verbose, -v              Stream build/compile/version diagnostics to stdout
 #   --help, -h                 Show help message
@@ -31,7 +29,6 @@
 # Examples:
 #   ./e2e.sh                               # Run all tests
 #   ./e2e.sh --dry-run                     # See what would be tested
-#   ./e2e.sh test-copilot-* --workflow-dispatch-only  # Only workflow_dispatch tests
 #
 # Prerequisites:
 #   - GitHub CLI (gh) installed and authenticated
@@ -186,7 +183,6 @@ TIMEOUT_MINUTES=10
 POLL_INTERVAL=5
 LOG_FILE="e2e-test-$(date +%Y%m%d-%H%M%S).log"
 TEMP_USER_PAT_SET=false
-WORKFLOW_DISPATCH_ONLY=false
 USE_SAMPLES=false
 
 # --verbose: when true, build/compile/version diagnostics that normally go only
@@ -3302,11 +3298,7 @@ run_single_test() {
         
         # Issue-triggered and command-triggered tests - need to enable, create trigger, wait
         *)
-            if [[ "$WORKFLOW_DISPATCH_ONLY" == true ]]; then
-                info "Skipping '$workflow' (not a workflow_dispatch test; --workflow-dispatch-only is set)"
-                test_result="SKIP"
-            else
-                local workflow_file_path=".github/workflows/${workflow}.lock.yml"
+            local workflow_file_path=".github/workflows/${workflow}.lock.yml"
                 if [[ ! -f "$workflow_file_path" ]]; then
                     error "Workflow file not found for '$workflow' at $workflow_file_path; marking as failed"
                     test_result="FAIL"
@@ -3704,7 +3696,6 @@ run_single_test() {
                         esac
                     fi
                 fi
-            fi
             ;;
     esac
     
@@ -4178,10 +4169,6 @@ run_rerun() {
     # rerun subcommand (e.g. './e2e.sh rerun --gh-aw-ref main').
     while [[ $# -gt 0 ]]; do
         case $1 in
-            --workflow-dispatch-only)
-                WORKFLOW_DISPATCH_ONLY=true
-                shift
-                ;;
             --use-samples)
                 USE_SAMPLES=true
                 shift
@@ -4317,10 +4304,6 @@ main() {
                 dry_run=true
                 shift
                 ;;
-            --workflow-dispatch-only)
-                WORKFLOW_DISPATCH_ONLY=true
-                shift
-                ;;
             --use-samples)
                 USE_SAMPLES=true
                 shift
@@ -4394,8 +4377,6 @@ main() {
                 echo ""
                 echo "Options:"
                 echo "  --dry-run, -n              Show what would be tested without running"
-                echo "  --workflow-dispatch-only   Only run tests that use workflow_dispatch trigger"
-                echo "                             (skip issue/comment/PR-triggered tests)"
                 echo "  --use-samples              Use declared samples for more deterministic testing"
                 echo "  --verbose, -v              Stream build/compile/version diagnostics to stdout"
                 echo "                             (otherwise they only go to the run's log file)."
