@@ -610,6 +610,7 @@ get_all_tests() {
     echo "test-copilot-siderepo-add-labels"
     echo "test-copilot-siderepo-add-discussion-comment"
     echo "test-copilot-siderepo-update-issue"
+    echo "test-copilot-siderepo-link-sub-issue"
     echo "test-copilot-siderepo-push-to-pull-request-branch-using-dispatch"
     echo "test-copilot-siderepo-sparse-push-to-pull-request-branch-using-dispatch"
     echo "test-copilot-siderepo-create-pull-request-review-comment"
