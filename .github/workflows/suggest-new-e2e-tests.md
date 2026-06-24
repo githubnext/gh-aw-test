@@ -18,24 +18,24 @@ steps:
       GH_TOKEN: ${{ github.token }}
     run: |
       set -euo pipefail
-      mkdir -p /tmp/gh-aw
+      mkdir -p /tmp/gh-aw/agent
 
       # Recently merged PRs in github/gh-aw (last 48 h, up to 40)
       gh pr list --repo github/gh-aw --state merged \
         --json number,title,body,mergedAt,labels \
         --limit 40 \
-        > /tmp/gh-aw/recent-prs.json
+        > /tmp/gh-aw/agent/recent-prs.json
 
       # Recently closed issues in github/gh-aw (last 48 h, up to 40)
       gh issue list --repo github/gh-aw --state closed \
         --json number,title,body,closedAt,labels \
         --limit 40 \
-        > /tmp/gh-aw/recent-issues.json
+        > /tmp/gh-aw/agent/recent-issues.json
 
       # Existing test source files in githubnext/gh-aw-test
       gh api "repos/githubnext/gh-aw-test/git/trees/main?recursive=1" \
         --jq '[.tree[].path | select(test("^\\.github/workflows/test-[^/]+\\.md$"))]' \
-        > /tmp/gh-aw/existing-tests.json
+        > /tmp/gh-aw/agent/existing-tests.json
 
       # Open issues already filed under the triage label (avoid duplicates)
       gh issue list \
@@ -44,17 +44,17 @@ steps:
         --state open \
         --json number,title \
         --limit 50 \
-        > /tmp/gh-aw/open-suggestions.json
+        > /tmp/gh-aw/agent/open-suggestions.json
 
       # Current failing tests
       gh api "repos/githubnext/gh-aw-test/contents/fails.txt" \
-        --jq '.content' | base64 -d > /tmp/gh-aw/fails.txt 2>/dev/null \
-        || echo "" > /tmp/gh-aw/fails.txt
+        --jq '.content' | base64 -d > /tmp/gh-aw/agent/fails.txt 2>/dev/null \
+        || echo "" > /tmp/gh-aw/agent/fails.txt
 
       echo "Prefetch complete."
-      echo "PRs:   $(jq length /tmp/gh-aw/recent-prs.json)"
-      echo "Issues: $(jq length /tmp/gh-aw/recent-issues.json)"
-      echo "Tests: $(jq length /tmp/gh-aw/existing-tests.json)"
+      echo "PRs:   $(jq length /tmp/gh-aw/agent/recent-prs.json)"
+      echo "Issues: $(jq length /tmp/gh-aw/agent/recent-issues.json)"
+      echo "Tests: $(jq length /tmp/gh-aw/agent/existing-tests.json)"
 
 tools:
   github:
@@ -76,15 +76,15 @@ safe-outputs:
 
 You are an expert on the `githubnext/gh-aw-test` E2E harness for the `github/gh-aw` CLI extension.
 
-A previous step has already prefetched all the context you need into `/tmp/gh-aw/`. Read those files — do not re-fetch them with `gh` commands.
+A previous step has already prefetched all the context you need into `/tmp/gh-aw/agent/`. Read those files — do not re-fetch them with `gh` commands.
 
 ## Files available
 
-- `/tmp/gh-aw/recent-prs.json` — PRs merged in github/gh-aw (recent, up to 40)
-- `/tmp/gh-aw/recent-issues.json` — Issues closed in github/gh-aw (recent, up to 40)
-- `/tmp/gh-aw/existing-tests.json` — Current test source files in githubnext/gh-aw-test (array of paths like `.github/workflows/test-copilot-create-issue.md`)
-- `/tmp/gh-aw/open-suggestions.json` — Issues already open under the "suggested new test" label
-- `/tmp/gh-aw/fails.txt` — Tests currently failing in githubnext/gh-aw-test (one per line)
+- `/tmp/gh-aw/agent/recent-prs.json` — PRs merged in github/gh-aw (recent, up to 40)
+- `/tmp/gh-aw/agent/recent-issues.json` — Issues closed in github/gh-aw (recent, up to 40)
+- `/tmp/gh-aw/agent/existing-tests.json` — Current test source files in githubnext/gh-aw-test (array of paths like `.github/workflows/test-copilot-create-issue.md`)
+- `/tmp/gh-aw/agent/open-suggestions.json` — Issues already open under the "suggested new test" label
+- `/tmp/gh-aw/agent/fails.txt` — Tests currently failing in githubnext/gh-aw-test (one per line)
 
 ## What to look for in github/gh-aw activity
 
@@ -101,9 +101,9 @@ Focus on changes that suggest a scenario not yet covered by existing tests:
 
 Before proposing a test, verify:
 
-1. **Not already covered** — Check `/tmp/gh-aw/existing-tests.json`. The test naming convention is `test-<engine>-[<variant>-]<feature>.md`. Variants are `nosandbox` and `siderepo`. Infer coverage from names.
-2. **Not a duplicate suggestion** — Check `/tmp/gh-aw/open-suggestions.json` for existing open proposals.
-3. **Not a failing test** — Check `/tmp/gh-aw/fails.txt`. Do not propose scenarios already represented by a failing test.
+1. **Not already covered** — Check `/tmp/gh-aw/agent/existing-tests.json`. The test naming convention is `test-<engine>-[<variant>-]<feature>.md`. Variants are `nosandbox` and `siderepo`. Infer coverage from names.
+2. **Not a duplicate suggestion** — Check `/tmp/gh-aw/agent/open-suggestions.json` for existing open proposals.
+3. **Not a failing test** — Check `/tmp/gh-aw/agent/fails.txt`. Do not propose scenarios already represented by a failing test.
 4. **Testable via workflow_dispatch** — The E2E harness uses `workflow_dispatch` to trigger tests. The scenario must be exercisable without real human interaction.
 5. **Uses existing fixtures** — The existing fixtures are `githubnext/gh-aw-test` (main repo) and `githubnext/gh-aw-side-repo` (side repo for `siderepo` variants). Note explicitly if new fixtures are needed.
 6. **Minimal** — A new test should exercise one new capability, not reproduce a large end-to-end scenario.
@@ -159,5 +159,5 @@ Use `create-issue` when there are open questions about feasibility, required fix
 ## When to call noop
 
 Call `noop` with a brief explanation if:
-- There are no recent changes in `/tmp/gh-aw/recent-prs.json` and `/tmp/gh-aw/recent-issues.json`, or
+- There are no recent changes in `/tmp/gh-aw/agent/recent-prs.json` and `/tmp/gh-aw/agent/recent-issues.json`, or
 - All relevant changes are already covered by existing tests or open suggestions.
