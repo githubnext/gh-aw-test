@@ -577,6 +577,7 @@ get_all_tests() {
     # Workflow_dispatch tests with inputs (dispatch-workflow needs a sentinel)
     echo "test-copilot-dispatch-workflow"
     echo "test-copilot-call-workflow"
+    echo "test-copilot-network-isolation"
     echo "test-copilot-noop"
     echo "test-copilot-report-incomplete"
     echo "test-copilot-update-release"
