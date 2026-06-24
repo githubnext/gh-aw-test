@@ -83,6 +83,7 @@ Tracking the full matrix of [safe outputs](https://github.com/github/gh-aw/blob/
 - [x] `reply-to-pull-request-review-comment` — test-copilot-reply-to-pull-request-review-comment
 - [x] `resolve-pull-request-review-thread` — test-copilot-resolve-pull-request-review-thread
 - [x] `submit-pull-request-review` — test-copilot-submit-pull-request-review
+- [x] `submit-pull-request-review` (locked PR soft-skip) — test-copilot-submit-pull-request-review-locked
 - [x] `add-reviewer` — test-copilot-add-reviewer
 - [x] `mark-pull-request-as-ready-for-review` — test-copilot-mark-pull-request-as-ready-for-review
 - [ ] `merge-pull-request` — cannot yet be sample-tested because the current workflow schema rejects `samples:` for `merge-pull-request`
