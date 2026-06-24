@@ -471,6 +471,8 @@ get_title_prefix() {
         echo "[${ai_type}-test-two-prs] "
     elif [[ "$workflow_name" == *"subdir-create-pull-request"* ]]; then
         echo "[${ai_type}-test-subdir-pr] "
+    elif [[ "$workflow_name" == *"sparse-create-pull-request"* ]]; then
+        echo "[${ai_type}-test-sparse-pr] "
     elif [[ "$workflow_name" == *"create-pull-request"* ]]; then
         echo "[${ai_type}-test-single-pr] "
     elif [[ "$workflow_name" == *"gh-steps"* ]]; then
@@ -3336,7 +3338,7 @@ run_single_test() {
             fi
             ;;
         # Workflow dispatch tests - triggered with gh aw run
-        *"create-issue"|*"create-discussion"|*"create-pull-request"|*"create-two-pull-requests"|*"code-scanning-alert"|*"create-check-run"|*"mcp"|*"safe-jobs"|*"gh-steps"|*"custom-safe-outputs"|*"noop"|*"report-incomplete")
+        *"create-issue"|*"create-discussion"|*"create-pull-request"|*"create-two-pull-requests"|*"code-scanning-alert"|*"create-check-run"|*"mcp"*|*"safe-jobs"|*"gh-steps"|*"custom-safe-outputs"|*"noop"|*"report-incomplete"|*"assign-to-agent"|*"set-issue-field")
             local workflow_success=false
             if trigger_workflow_dispatch_and_await_completion "$workflow"; then
                 workflow_success=true
@@ -3386,7 +3388,7 @@ run_single_test() {
                             validation_success=true
                         fi
                         ;;
-                    *"mcp")
+                    *"mcp"*)
                         if validate_mcp_workflow "$workflow" "$target_repo"; then
                             validation_success=true
                         fi
@@ -3409,6 +3411,13 @@ run_single_test() {
                             else
                                 error "Issue title does not contain expected pattern 'Test <run_id>: The number of issues is' or sample title 'Issue count report': $issue_title"
                             fi
+                        fi
+                        ;;
+                    *"assign-to-agent"|*"set-issue-field")
+                        local title_prefix=$(get_title_prefix "$workflow" "$ai_type")
+                        local expected_labels=$(get_expected_labels "$ai_type")
+                        if validate_issue_created "$title_prefix" "$expected_labels" "$target_repo"; then
+                            validation_success=true
                         fi
                         ;;
                     *)
