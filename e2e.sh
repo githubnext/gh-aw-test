@@ -823,6 +823,13 @@ for item in json.loads(m.group(0)):
         rm -f "$_compile_out"
     fi
 
+    # Always recompile suggest-new-e2e-tests.md without samples
+
+    if ! $GH_AW_BIN compile suggest-new-e2e-tests.md --json &>> "$LOG_FILE"; then
+        error "Failed to compile suggest-new-e2e-tests.md. Check $LOG_FILE for details"
+        exit 1
+    fi
+
     # If there are any updates from the compile, commit them and push them so the
     # workflows are up to date for testing.
     #
