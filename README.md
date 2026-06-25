@@ -74,6 +74,7 @@ Tracking the full matrix of [safe outputs](https://github.com/github/gh-aw/blob/
 
 - [x] `close-issue` — test-copilot-close-issue
 - [x] `link-sub-issue` — test-copilot-link-sub-issue
+- [x] `link-sub-issue` (side-repo, expression-based `allowed-repos`) — test-copilot-siderepo-link-sub-issue
 - [x] `update-discussion` — test-copilot-update-discussion
 - [x] `close-discussion` — test-copilot-close-discussion
 
