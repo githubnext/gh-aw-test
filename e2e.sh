@@ -576,6 +576,7 @@ get_all_tests() {
     echo "test-copilot-set-issue-field"
     echo "test-copilot-issue-intents"
     # Workflow_dispatch tests with inputs (dispatch-workflow needs a sentinel)
+    echo "test-copilot-submit-pull-request-review-locked"
     echo "test-copilot-dispatch-workflow"
     echo "test-copilot-call-workflow"
     echo "test-copilot-network-isolation"
@@ -3345,6 +3346,33 @@ run_single_test() {
                 fi
             else
                 error "Could not create test release for $workflow"
+            fi
+            ;;
+        # Dispatch test for submit-pull-request-review against a locked PR
+        # Validates that the workflow job exits 0 (soft skip) even though the review cannot be posted
+        *"submit-pull-request-review-locked")
+            echo ""
+            echo -e "${CYAN}━━━ Preparing test prerequisites ━━━${NC}"
+            info "Creating test pull request for $workflow (will be locked before trigger)..."
+            local pr_num=$(create_test_pr "Test PR for $ai_display_name Submit Review (Locked)" "This PR is for testing $workflow — it will be locked before the workflow is triggered." "$target_repo")
+            if [[ -n "$pr_num" ]]; then
+                local repo_url="$REPO_OWNER/$REPO_NAME"
+                [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                success "Created test PR #$pr_num for $workflow: https://github.com/$repo_url/pull/$pr_num"
+                # Lock the PR so the review submission hits the 422 "lock prevents review" path
+                info "Locking PR #$pr_num to exercise the locked-PR soft-skip path..."
+                if gh api -X PUT "repos/$repo_url/issues/$pr_num/lock" --field lock_reason="resolved" &>> "$LOG_FILE"; then
+                    # lock_reason "resolved" is arbitrary — any valid reason triggers the 422 code path
+                    success "Locked PR #$pr_num"
+                    echo -e "${CYAN}━━━ Running workflow test ━━━${NC}"
+                    echo ""
+                    # Test passes if the workflow job exits 0 — no review is expected to be posted
+                    if trigger_workflow_with_inputs "$workflow" "pull_request_number=$pr_num"; then
+                        test_result="PASS"
+                    fi
+                else
+                    error "Failed to lock PR #$pr_num for $workflow"
+                fi
             fi
             ;;
         # Workflow dispatch tests - triggered with gh aw run
