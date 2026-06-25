@@ -58,6 +58,7 @@ declare -a PASSED_TESTS=()
 declare -a FAILED_TESTS=()
 declare -a SKIPPED_TESTS=()
 declare -A TEST_RUN_URLS=()  # maps test name -> actions run URL (when available)
+declare -A FINAL_RUN_URLS=()  # populated in parent during batch result reading
 
 # Parallel execution settings
 BATCH_SIZE=25
@@ -183,8 +184,14 @@ TIMEOUT_MINUTES=10
 # In CI, poll 10x less frequently (50s vs 5s) to conserve GitHub API rate limits.
 # The human isn't watching for fast feedback, so the extra latency is fine.
 POLL_INTERVAL=5
+# Outcome poll: how often wait_for_* functions recheck the GitHub API for expected output.
+# Kept faster than POLL_INTERVAL because each check is cheap, but still CI-aware.
+OUTCOME_POLL_INTERVAL=5
+# Throttle before launching a new batch if GitHub REST API remaining calls drops below this.
+RATE_LIMIT_THRESHOLD=400
 if [[ "${CI:-false}" == "true" ]]; then
     POLL_INTERVAL=50
+    OUTCOME_POLL_INTERVAL=20
 fi
 LOG_FILE="e2e-test-$(date +%Y%m%d-%H%M%S).log"
 TEMP_USER_PAT_SET=false
@@ -1072,6 +1079,45 @@ wait_for_workflow() {
 get_latest_run_id() {
     local workflow_file="$1"
     gh run list --workflow="$workflow_file" --limit=1 --json databaseId -q '.[0].databaseId' 2>/dev/null || echo ""
+}
+
+# Print the current GitHub REST API rate limit status.
+# The /rate_limit endpoint does not itself consume any quota.
+check_api_rate_limit() {
+    local result
+    result=$(gh api rate_limit 2>/dev/null) || { warning "Could not read GitHub API rate limit"; return 0; }
+    local remaining limit reset_ts reset_time
+    remaining=$(echo "$result" | jq -r '.rate.remaining')
+    limit=$(echo "$result"     | jq -r '.rate.limit')
+    reset_ts=$(echo "$result"  | jq -r '.rate.reset')
+    reset_time=$(date -d "@$reset_ts" '+%H:%M:%S' 2>/dev/null \
+        || date -r "$reset_ts" '+%H:%M:%S' 2>/dev/null \
+        || echo "@${reset_ts}")
+    info "GitHub API rate limit: ${remaining}/${limit} remaining (resets ${reset_time} UTC)"
+}
+
+# If the GitHub REST API remaining quota is below RATE_LIMIT_THRESHOLD, sleep
+# until the window resets (plus a small buffer). Prints quota status either way.
+throttle_if_rate_limited() {
+    local result
+    result=$(gh api rate_limit 2>/dev/null) || return 0
+    local remaining limit reset_ts reset_time
+    remaining=$(echo "$result" | jq -r '.rate.remaining')
+    limit=$(echo "$result"     | jq -r '.rate.limit')
+    reset_ts=$(echo "$result"  | jq -r '.rate.reset')
+    reset_time=$(date -d "@$reset_ts" '+%H:%M:%S' 2>/dev/null \
+        || date -r "$reset_ts" '+%H:%M:%S' 2>/dev/null \
+        || echo "@${reset_ts}")
+    if (( remaining < RATE_LIMIT_THRESHOLD )); then
+        local now sleep_sec
+        now=$(date +%s)
+        sleep_sec=$(( reset_ts - now + 15 ))
+        warning "GitHub API rate limit low: ${remaining}/${limit} remaining (threshold=${RATE_LIMIT_THRESHOLD}). Sleeping ${sleep_sec}s until reset at ${reset_time} UTC..."
+        (( sleep_sec > 0 )) && sleep "$sleep_sec"
+        info "Rate limit window reset. Resuming."
+    else
+        info "GitHub API rate limit: ${remaining}/${limit} remaining (resets ${reset_time} UTC)"
+    fi
 }
 
 enable_workflow() {
@@ -1991,8 +2037,8 @@ wait_for_comment() {
             return 0
         fi
         info "..."
-        sleep 5
-        waited=$((waited + 5))
+        sleep "$OUTCOME_POLL_INTERVAL"
+        waited=$((waited + OUTCOME_POLL_INTERVAL))
     done
     
     record_test_fail "$test_name"
@@ -2013,8 +2059,8 @@ wait_for_labels() {
             return 0
         fi
         info "..."
-        sleep 5
-        waited=$((waited + 5))
+        sleep "$OUTCOME_POLL_INTERVAL"
+        waited=$((waited + OUTCOME_POLL_INTERVAL))
     done
     
     record_test_fail "$test_name"
@@ -2035,8 +2081,8 @@ wait_for_issue_update() {
             return 0
         fi
         info "..."
-        sleep 5
-        waited=$((waited + 5))
+        sleep "$OUTCOME_POLL_INTERVAL"
+        waited=$((waited + OUTCOME_POLL_INTERVAL))
     done
     
     record_test_fail "$test_name"
@@ -2096,8 +2142,8 @@ wait_for_issue_closed() {
             return 0
         fi
         info "..."
-        sleep 5
-        waited=$((waited + 5))
+        sleep "$OUTCOME_POLL_INTERVAL"
+        waited=$((waited + OUTCOME_POLL_INTERVAL))
     done
     
     record_test_fail "$test_name"
@@ -2139,8 +2185,8 @@ wait_for_label_removed() {
             return 0
         fi
         info "..."
-        sleep 5
-        waited=$((waited + 5))
+        sleep "$OUTCOME_POLL_INTERVAL"
+        waited=$((waited + OUTCOME_POLL_INTERVAL))
     done
     
     record_test_fail "$test_name"
@@ -2190,8 +2236,8 @@ wait_for_discussion_closed() {
             return 0
         fi
         info "..."
-        sleep 5
-        waited=$((waited + 5))
+        sleep "$OUTCOME_POLL_INTERVAL"
+        waited=$((waited + OUTCOME_POLL_INTERVAL))
     done
     
     record_test_fail "$test_name"
@@ -2232,8 +2278,8 @@ wait_for_pr_closed() {
             return 0
         fi
         info "..."
-        sleep 5
-        waited=$((waited + 5))
+        sleep "$OUTCOME_POLL_INTERVAL"
+        waited=$((waited + OUTCOME_POLL_INTERVAL))
     done
     
     record_test_fail "$test_name"
@@ -2261,8 +2307,8 @@ wait_for_command_comment() {
             fi
         done
         info "..."
-        sleep 5
-        waited=$((waited + 5))
+        sleep "$OUTCOME_POLL_INTERVAL"
+        waited=$((waited + OUTCOME_POLL_INTERVAL))
     done
     
     record_test_fail "$test_name"
@@ -2283,8 +2329,8 @@ wait_for_branch_update() {
             return 0
         fi
         info "..."
-        sleep 5
-        waited=$((waited + 5))
+        sleep "$OUTCOME_POLL_INTERVAL"
+        waited=$((waited + OUTCOME_POLL_INTERVAL))
     done
     
     record_test_fail "$test_name"
@@ -2305,8 +2351,8 @@ wait_for_pr_reviews() {
             return 0
         fi
         info "..."
-        sleep 5
-        waited=$((waited + 5))
+        sleep "$OUTCOME_POLL_INTERVAL"
+        waited=$((waited + OUTCOME_POLL_INTERVAL))
     done
     
     record_test_fail "$test_name"
@@ -2327,8 +2373,8 @@ wait_for_pr_update() {
             return 0
         fi
         info "..."
-        sleep 5
-        waited=$((waited + 5))
+        sleep "$OUTCOME_POLL_INTERVAL"
+        waited=$((waited + OUTCOME_POLL_INTERVAL))
     done
 
     record_test_fail "$test_name"
@@ -2371,8 +2417,8 @@ wait_for_discussion_comment() {
             return 0
         fi
         info "..."
-        sleep 5
-        waited=$((waited + 5))
+        sleep "$OUTCOME_POLL_INTERVAL"
+        waited=$((waited + OUTCOME_POLL_INTERVAL))
     done
     
     record_test_fail "$test_name"
@@ -2425,8 +2471,8 @@ wait_for_discussion_updated() {
             return 0
         fi
         info "..."
-        sleep 5
-        waited=$((waited + 5))
+        sleep "$OUTCOME_POLL_INTERVAL"
+        waited=$((waited + OUTCOME_POLL_INTERVAL))
     done
     record_test_fail "$test_name"
     return 1
@@ -2461,8 +2507,8 @@ wait_for_assignee_present() {
             return 0
         fi
         info "..."
-        sleep 5
-        waited=$((waited + 5))
+        sleep "$OUTCOME_POLL_INTERVAL"
+        waited=$((waited + OUTCOME_POLL_INTERVAL))
     done
     record_test_fail "$test_name"
     return 1
@@ -2497,8 +2543,8 @@ wait_for_assignee_absent() {
             return 0
         fi
         info "..."
-        sleep 5
-        waited=$((waited + 5))
+        sleep "$OUTCOME_POLL_INTERVAL"
+        waited=$((waited + OUTCOME_POLL_INTERVAL))
     done
     record_test_fail "$test_name"
     return 1
@@ -2555,8 +2601,8 @@ wait_for_milestone_assigned() {
             return 0
         fi
         info "..."
-        sleep 5
-        waited=$((waited + 5))
+        sleep "$OUTCOME_POLL_INTERVAL"
+        waited=$((waited + OUTCOME_POLL_INTERVAL))
     done
     record_test_fail "$test_name"
     return 1
@@ -2602,8 +2648,8 @@ wait_for_sub_issue_linked() {
             return 0
         fi
         info "..."
-        sleep 5
-        waited=$((waited + 5))
+        sleep "$OUTCOME_POLL_INTERVAL"
+        waited=$((waited + OUTCOME_POLL_INTERVAL))
     done
     record_test_fail "$test_name"
     return 1
@@ -2647,8 +2693,8 @@ wait_for_comment_hidden() {
             return 0
         fi
         info "..."
-        sleep 5
-        waited=$((waited + 5))
+        sleep "$OUTCOME_POLL_INTERVAL"
+        waited=$((waited + OUTCOME_POLL_INTERVAL))
     done
     record_test_fail "$test_name"
     return 1
@@ -2688,8 +2734,8 @@ wait_for_pr_reviewer_added() {
             return 0
         fi
         info "..."
-        sleep 5
-        waited=$((waited + 5))
+        sleep "$OUTCOME_POLL_INTERVAL"
+        waited=$((waited + OUTCOME_POLL_INTERVAL))
     done
     record_test_fail "$test_name"
     return 1
@@ -2725,8 +2771,8 @@ wait_for_pr_review_with_body() {
             return 0
         fi
         info "..."
-        sleep 5
-        waited=$((waited + 5))
+        sleep "$OUTCOME_POLL_INTERVAL"
+        waited=$((waited + OUTCOME_POLL_INTERVAL))
     done
     record_test_fail "$test_name"
     return 1
@@ -2759,8 +2805,8 @@ wait_for_dispatched_issue_created() {
             return 0
         fi
         info "..."
-        sleep 5
-        waited=$((waited + 5))
+        sleep "$OUTCOME_POLL_INTERVAL"
+        waited=$((waited + OUTCOME_POLL_INTERVAL))
     done
     record_test_fail "$test_name"
     return 1
@@ -2805,8 +2851,8 @@ wait_for_issue_type() {
             return 0
         fi
         info "..."
-        sleep 5
-        waited=$((waited + 5))
+        sleep "$OUTCOME_POLL_INTERVAL"
+        waited=$((waited + OUTCOME_POLL_INTERVAL))
     done
     record_test_fail "$test_name"
     return 1
@@ -2879,8 +2925,8 @@ wait_for_pr_ready_for_review() {
             return 0
         fi
         info "..."
-        sleep 5
-        waited=$((waited + 5))
+        sleep "$OUTCOME_POLL_INTERVAL"
+        waited=$((waited + OUTCOME_POLL_INTERVAL))
     done
     record_test_fail "$test_name"
     return 1
@@ -2977,8 +3023,8 @@ wait_for_review_comment_reply() {
             return 0
         fi
         info "..."
-        sleep 5
-        waited=$((waited + 5))
+        sleep "$OUTCOME_POLL_INTERVAL"
+        waited=$((waited + OUTCOME_POLL_INTERVAL))
     done
     record_test_fail "$test_name"
     return 1
@@ -3008,8 +3054,8 @@ wait_for_review_thread_resolved() {
             return 0
         fi
         info "..."
-        sleep 5
-        waited=$((waited + 5))
+        sleep "$OUTCOME_POLL_INTERVAL"
+        waited=$((waited + OUTCOME_POLL_INTERVAL))
     done
     record_test_fail "$test_name"
     return 1
@@ -3069,8 +3115,8 @@ wait_for_release_body_updated() {
             return 0
         fi
         info "..."
-        sleep 5
-        waited=$((waited + 5))
+        sleep "$OUTCOME_POLL_INTERVAL"
+        waited=$((waited + OUTCOME_POLL_INTERVAL))
     done
     record_test_fail "$test_name"
     return 1
@@ -3108,8 +3154,8 @@ wait_for_asset_published() {
             return 0
         fi
         info "..."
-        sleep 5
-        waited=$((waited + 5))
+        sleep "$OUTCOME_POLL_INTERVAL"
+        waited=$((waited + OUTCOME_POLL_INTERVAL))
     done
     record_test_fail "$test_name"
     return 1
@@ -3912,7 +3958,7 @@ run_single_test() {
     # Write result to shared file atomically
     (
         flock -x 200
-        echo "$workflow|$test_result" >> "$RESULTS_FILE"
+        echo "$workflow|$test_result|${TEST_RUN_URLS[$workflow]:-}" >> "$RESULTS_FILE"
     ) 200>"$RESULTS_LOCK"
     
     # Output test log for aggregation
@@ -3979,6 +4025,7 @@ run_tests_parallel() {
     fi
     
     info "Total tests to run: $total_tests (in $total_batches batch(es) of size $BATCH_SIZE)"
+    check_api_rate_limit
     echo
     
     # Process tests in batches (with batch size 1 for sequential mode)
@@ -3990,6 +4037,7 @@ run_tests_parallel() {
         local batch_tests=("${workflows[@]:$i:$BATCH_SIZE}")
         
         show_batch_progress "$batch_num" "$total_batches" "$BATCH_SIZE" "$batch_start" "$batch_end" "$total_tests"
+        throttle_if_rate_limited
         
         # Launch tests in this batch
         local pids=()
@@ -4084,7 +4132,12 @@ run_tests_parallel() {
                 bar_printed=$can_inline
             fi
 
-            sleep 1
+            # In CI there is no tty so bar lines accumulate in the log; poll less often.
+            if [[ "${CI:-false}" == "true" ]]; then
+                sleep 30
+            else
+                sleep 1
+            fi
         done
         echo
         
@@ -4093,22 +4146,25 @@ run_tests_parallel() {
         local batch_failed=0
         local batch_skipped=0
         
-        while IFS='|' read -r test_name result; do
+        while IFS='|' read -r test_name result run_url; do
             for batch_test in "${batch_tests[@]}"; do
                 if [[ "$test_name" == "$batch_test" ]]; then
+                    [[ -n "$run_url" ]] && FINAL_RUN_URLS["$test_name"]="$run_url"
+                    local url_suffix=""
+                    [[ -n "$run_url" ]] && url_suffix=" $run_url"
                     case "$result" in
                         PASS)
-                            success "  ✓ $test_name"
+                            success "  ✓ $test_name${url_suffix}"
                             batch_passed=$((batch_passed + 1))
                             record_test_pass "$test_name"
                             ;;
                         FAIL)
-                            error "  ✗ $test_name"
+                            error "  ✗ $test_name${url_suffix}"
                             batch_failed=$((batch_failed + 1))
                             record_test_fail "$test_name"
                             ;;
                         SKIP)
-                            warning "  ⏭ $test_name"
+                            warning "  ⏭ $test_name${url_suffix}"
                             batch_skipped=$((batch_skipped + 1))
                             SKIPPED_TESTS+=("$test_name")
                             ;;
@@ -4155,14 +4211,18 @@ print_final_report() {
     
     echo -e "${GREEN}✅ PASSED (${#PASSED_TESTS[@]}/$total_tests):${NC}"
     for test in "${PASSED_TESTS[@]}"; do
-        echo -e "   ${GREEN}✓${NC} $test"
+        local _u="${FINAL_RUN_URLS[$test]:-}"
+        local _s=""; [[ -n "$_u" ]] && _s=" $_u"
+        echo -e "   ${GREEN}✓${NC} $test${_s}"
     done
     echo
     
     if [[ ${#FAILED_TESTS[@]} -gt 0 ]]; then
         echo -e "${RED}❌ FAILED (${#FAILED_TESTS[@]}/$total_tests):${NC}"
         for test in "${FAILED_TESTS[@]}"; do
-            echo -e "   ${RED}✗${NC} $test"
+            local _u="${FINAL_RUN_URLS[$test]:-}"
+            local _s=""; [[ -n "$_u" ]] && _s=" $_u"
+            echo -e "   ${RED}✗${NC} $test${_s}"
         done
         echo
     fi
