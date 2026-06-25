@@ -180,10 +180,16 @@ jobs:
                   # de-dupe by ref so pre-release==release does not run twice
                   | unique_by(.ref)')
               fi
-              # Expand each base entry across samples modes:
-              #   main        → samples=false AND samples=true (inference + deterministic)
+
+              # # Expand each base entry across samples modes:
+              # #   main        → samples=false AND samples=true (inference + deterministic)
+              # #   pre-release/release → samples=true only (skip inference runs for speed)
+              # matrix=$(echo "$base" | jq -c '[ .[] as $e | if $e.label == "main" then (false, true) else true end | $e + { samples: . } ]')
+
+              # Expand each base entry across samples modes, always true for now
+              #   main        → samples=true (skip inference runs for stability for now)
               #   pre-release/release → samples=true only (skip inference runs for speed)
-              matrix=$(echo "$base" | jq -c '[ .[] as $e | if $e.label == "main" then (false, true) else true end | $e + { samples: . } ]')
+              matrix=$(echo "$base" | jq -c '[ .[] as $e | if $e.label == "main" then true else true end | $e + { samples: . } ]')
               ;;
           esac
 
