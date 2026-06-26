@@ -111,8 +111,9 @@ done                                                  # without samples
 ```
 
 The only workflows intentionally without `samples:` are
-`test-copilot-custom-safe-outputs` and `test-copilot-dispatch-workflow`,
-because their purpose is to exercise the live engine path.
+`test-copilot-custom-safe-outputs`, `test-copilot-dispatch-workflow`, and
+`test-copilot-apm-skill-discovery`, because their purpose is to exercise the
+live engine path.
 
 ## 6. Running tests locally
 

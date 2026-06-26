@@ -514,6 +514,7 @@ get_all_tests() {
     echo "test-claude-create-issue"
     echo "test-codex-create-issue"
     echo "test-copilot-create-issue"
+    echo "test-copilot-apm-skill-discovery"
     echo "test-claude-create-discussion"
     echo "test-codex-create-discussion"
     echo "test-copilot-create-discussion"
@@ -1644,6 +1645,33 @@ validate_issue_created() {
         error "No issue found with title prefix: $title_prefix"
         return 1
     fi
+}
+
+validate_issue_body_contains() {
+    local title_prefix="$1"
+    local expected_body_text="$2"
+    local repo="${3:-}"
+    
+    local repo_flag=""
+    if [[ -n "$repo" ]]; then
+        repo_flag="--repo $repo"
+    fi
+    
+    local issue_number=$(gh issue list $repo_flag --limit 10 --json number,title --jq ".[] | select(.title | startswith(\"$title_prefix\")) | .number" | head -1)
+    
+    if [[ -z "$issue_number" ]]; then
+        error "No issue found with title prefix: $title_prefix"
+        return 1
+    fi
+    
+    local issue_body=$(gh issue view $repo_flag "$issue_number" --json body --jq '.body')
+    if echo "$issue_body" | grep -qF "$expected_body_text"; then
+        success "Issue #$issue_number body contains expected text: $expected_body_text"
+        return 0
+    fi
+    
+    error "Issue #$issue_number body missing expected text: $expected_body_text"
+    return 1
 }
 
 validate_comment() {
@@ -3422,7 +3450,7 @@ run_single_test() {
             fi
             ;;
         # Workflow dispatch tests - triggered with gh aw run
-        *"create-issue"|*"create-discussion"|*"create-pull-request"|*"create-two-pull-requests"|*"code-scanning-alert"|*"create-check-run"|*"mcp"*|*"safe-jobs"|*"gh-steps"|*"custom-safe-outputs"|*"noop"|*"report-incomplete"|*"assign-to-agent"|*"set-issue-field")
+        *"apm-skill-discovery"|*"create-issue"|*"create-discussion"|*"create-pull-request"|*"create-two-pull-requests"|*"code-scanning-alert"|*"create-check-run"|*"mcp"*|*"safe-jobs"|*"gh-steps"|*"custom-safe-outputs"|*"noop"|*"report-incomplete"|*"assign-to-agent"|*"set-issue-field")
             local workflow_success=false
             if trigger_workflow_dispatch_and_await_completion "$workflow"; then
                 workflow_success=true
@@ -3431,6 +3459,13 @@ run_single_test() {
             if [[ "$workflow_success" == true ]]; then
                 local validation_success=false
                 case "$workflow" in
+                    *"apm-skill-discovery")
+                        local title_prefix=$(get_title_prefix "$workflow" "$ai_type")
+                        local expected_labels=$(get_expected_labels "$ai_type")
+                        if validate_issue_created "$title_prefix" "$expected_labels" "$target_repo" && validate_issue_body_contains "$title_prefix" "APM_SKILL_DISCOVERY_TOKEN_9f12f2f4e8b34a16" "$target_repo"; then
+                            validation_success=true
+                        fi
+                        ;;
                     *"multi")
                         local title_prefix=$(get_title_prefix "$workflow" "$ai_type")
                         local expected_labels=$(get_expected_labels "$ai_type")
