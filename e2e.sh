@@ -573,6 +573,7 @@ get_all_tests() {
     echo "test-codex-push-to-pull-request-branch"
     echo "test-copilot-push-to-pull-request-branch-using-slash-command"
     echo "test-copilot-push-to-pull-request-branch-using-dispatch"
+    echo "test-copilot-push-to-pull-request-branch-multi-file-using-dispatch"
     echo "test-claude-create-pull-request-review-comment"
     echo "test-codex-create-pull-request-review-comment"
     echo "test-copilot-create-pull-request-review-comment"
@@ -3678,7 +3679,7 @@ run_single_test() {
                                     fi
                                 fi
                                 ;;
-                            *"push-to-pull-request-branch-using-dispatch")
+                            *"push-to-pull-request-branch-using-dispatch"|*"push-to-pull-request-branch-multi-file-using-dispatch")
                                 info "Creating test pull request to trigger $workflow..."
                                 local pr_info=$(create_test_pr_with_branch "Test PR for $ai_display_name Push-to-Branch (Dispatch)" "This PR is for testing $workflow" "$target_repo")
                                 if [[ -n "$pr_info" ]]; then

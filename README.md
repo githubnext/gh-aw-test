@@ -65,6 +65,7 @@ Tracking the full matrix of [safe outputs](https://github.com/github/gh-aw/blob/
 - [x] `update-pull-request` — test-copilot-update-pull-request
 - [x] `push-to-pull-request-branch` (slash-command) — test-copilot-push-to-pull-request-branch-using-slash-command
 - [x] `push-to-pull-request-branch` (dispatch, local repo) — test-copilot-push-to-pull-request-branch-using-dispatch
+- [x] `push-to-pull-request-branch` (dispatch, local repo, multi-file) — test-copilot-push-to-pull-request-branch-multi-file-using-dispatch
 - [x] `push-to-pull-request-branch` (dispatch, side-repo) — test-copilot-siderepo-push-to-pull-request-branch-using-dispatch
 - [x] `push-to-pull-request-branch` (dispatch, side-repo, depth-1 sparse checkout `src/` + `docs/`) — test-copilot-siderepo-sparse-push-to-pull-request-branch-using-dispatch
 - [x] `create-pull-request-review-comment` — test-copilot-create-pull-request-review-comment
