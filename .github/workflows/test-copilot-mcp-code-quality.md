@@ -6,6 +6,7 @@ on:
 permissions:
   contents: read
   security-events: read
+  copilot-requests: write
 
 engine:
   id: copilot

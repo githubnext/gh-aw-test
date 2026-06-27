@@ -7,7 +7,13 @@ on:
         required: true
         type: number
 
-permissions: read-all
+permissions:
+  issues: read
+  pull-requests: read
+  actions: read
+  contents: read
+  discussions: read
+  copilot-requests: write
 
 checkout:
   - repository: githubnext/gh-aw-side-repo

@@ -5,7 +5,13 @@ on:
 
 strict: false
 
-permissions: read-all
+permissions:
+  issues: read
+  pull-requests: read
+  actions: read
+  contents: read
+  discussions: read
+  copilot-requests: write
 
 network:
   allowed:

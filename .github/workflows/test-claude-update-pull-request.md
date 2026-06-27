@@ -6,7 +6,13 @@ on:
 
 if: contains(github.event.pull_request.body, 'e2e-marker:test-claude-update-pull-request')
 
-permissions: read-all
+permissions:
+  issues: read
+  pull-requests: read
+  actions: read
+  contents: read
+  discussions: read
+  copilot-requests: write
 
 engine: 
   id: claude

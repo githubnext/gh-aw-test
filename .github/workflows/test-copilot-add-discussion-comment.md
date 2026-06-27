@@ -6,7 +6,14 @@ on:
 
 if: contains(github.event.discussion.body, 'e2e-marker:test-copilot-add-discussion-comment')
 
-permissions: read-all
+permissions:
+  issues: read
+  pull-requests: read
+  actions: read
+  contents: read
+  discussions: read
+  security-events: read
+  copilot-requests: write
 
 engine: 
   id: copilot

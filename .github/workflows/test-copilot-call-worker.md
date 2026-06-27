@@ -9,6 +9,7 @@ on:
 
 permissions:
   issues: read
+  copilot-requests: write
 
 engine:
   id: copilot

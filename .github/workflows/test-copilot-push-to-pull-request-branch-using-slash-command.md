@@ -4,7 +4,13 @@ on:
     name: test-copilot-push-to-pull-request-branch-using-slash-command
   reaction: eyes
 
-permissions: read-all
+permissions:
+  issues: read
+  pull-requests: read
+  actions: read
+  contents: read
+  discussions: read
+  copilot-requests: write
 
 engine: 
   id: copilot

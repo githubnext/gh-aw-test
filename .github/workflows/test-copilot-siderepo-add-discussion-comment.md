@@ -7,7 +7,14 @@ on:
         required: true
         type: number
 
-permissions: read-all
+permissions:
+  issues: read
+  pull-requests: read
+  actions: read
+  contents: read
+  discussions: read
+  security-events: read
+  copilot-requests: write
 
 engine: 
   id: copilot

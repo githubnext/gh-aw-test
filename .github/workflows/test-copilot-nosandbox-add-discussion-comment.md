@@ -8,7 +8,14 @@ if: contains(github.event.discussion.body, 'e2e-marker:test-copilot-nosandbox-ad
 
 strict: false
 
-permissions: read-all
+permissions:
+  issues: read
+  pull-requests: read
+  actions: read
+  contents: read
+  discussions: read
+  security-events: read
+  copilot-requests: write
 
 engine: 
   id: copilot

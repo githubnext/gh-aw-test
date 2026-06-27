@@ -3,7 +3,13 @@ on:
   workflow_dispatch:
   roles: ["write"]
 
-permissions: read-all
+permissions:
+  issues: read
+  pull-requests: read
+  actions: read
+  contents: read
+  discussions: read
+  copilot-requests: write
 
 engine: 
   id: claude

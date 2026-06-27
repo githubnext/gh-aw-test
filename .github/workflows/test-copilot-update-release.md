@@ -8,7 +8,13 @@ on:
         type: string
   reaction: eyes
 
-permissions: read-all
+permissions:
+  issues: read
+  pull-requests: read
+  actions: read
+  contents: read
+  discussions: read
+  copilot-requests: write
 
 engine: 
   id: copilot
