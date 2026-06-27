@@ -44,7 +44,7 @@ on:
         default: quick
         options:
           - quick            # main / source / samples=true   (fast, deterministic)
-          - main-live        # main / source / samples=false  (live engine path)
+          - main-live        # main / source / samples=true   (live engine path — samples=false temporarily disabled)
           - release          # latest release / extension / samples=true
           - prerelease       # latest pre-release / extension / samples=true
           - full             # full matrix, run serially
@@ -141,8 +141,10 @@ jobs:
                 '[{ label: $label, ref: $ref, mode: "source", samples: true }]')
               ;;
             main-live)
+              # samples=false temporarily disabled — COPILOT_GITHUB_TOKEN needs rotation.
+              # Change `samples: false` back to re-enable live-engine runs.
               matrix=$(jq -nc --arg ref "$src_ref" --arg label "$src_label" \
-                '[{ label: $label, ref: $ref, mode: "source", samples: false }]')
+                '[{ label: $label, ref: $ref, mode: "source", samples: true }]')
               ;;
             release)
               matrix=$(jq -nc --arg rel "$latest_release" \
@@ -646,7 +648,25 @@ jobs:
               echo "Repository under test: github/gh-aw (the gh-aw CLI/compiler)."
               echo "Test harness repository: $GITHUB_REPOSITORY (this repo; runner is e2e.sh)."
               echo
-              echo "Goal: for EACH failed test listed in this status report, access the GitHub"
+              echo "Focus: gh-aw main (commit ${MAIN_SHA}), sampling = true (--use-samples; AI engine was NOT called)."
+              echo
+              # List every test that failed in the main/samples=true cell, with its run URL.
+              main_samples_failures=$(awk -F'\t' '$2=="main" && $5=="true" {print "  - " $1 "  run: " $6}' "$failed_tests_tsv")
+              if [[ -n "$main_samples_failures" ]]; then
+                echo "Failed tests (main, samples=true):"
+                echo "$main_samples_failures"
+              else
+                echo "No failures in the main/samples=true cell."
+              fi
+              # Also summarise failures in other cells if present.
+              other_failures=$(awk -F'\t' '!($2=="main" && $5=="true") {print "  - " $1 "  [" $2 ", samples=" $5 "]  run: " $6}' "$failed_tests_tsv")
+              if [[ -n "$other_failures" ]]; then
+                echo
+                echo "Other failing cells (non-main or samples=false) — lower priority:"
+                echo "$other_failures"
+              fi
+              echo
+              echo "Goal: for EACH failed test above, access the GitHub"
               echo "Actions logs for the run above (and the per-entry artifacts e2e-<label>-samples-<bool>,"
               echo "which contain e2e-test-*.log, e2e-output.log and fails.txt), determine the root"
               echo "cause, and categorize the failure as exactly one of:"

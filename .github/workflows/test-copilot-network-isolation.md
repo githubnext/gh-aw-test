@@ -9,7 +9,7 @@ engine:
 
 sandbox:
   agent:
-    network-isolation: true
+    sudo: false
 
 safe-outputs:
   create-issue:

@@ -69,6 +69,7 @@ safe-outputs:
     allowed-files:
       - ".github/workflows/test-*.md"
     max: 2
+    labels: ["suggested new test"]
     draft: false
 ---
 

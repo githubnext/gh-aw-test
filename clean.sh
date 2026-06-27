@@ -94,7 +94,7 @@ cleanup_test_resources() {
                 fi
             fi
         fi
-    done < <(gh pr list --limit 20 --json number --jq '.[].number' 2>/dev/null || true)
+    done < <(gh pr list --limit 20 --json number,labels --jq '[.[] | select(.labels | map(.name) | index("suggested new test") | not) | .number] | .[]' 2>/dev/null || true)
 
     # Close all discussions
     info "Checking for open discussions to close..."

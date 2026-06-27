@@ -212,6 +212,8 @@ RESULTS_FILE="/tmp/e2e-results-$$.txt"
 GH_AW_REF=""
 GH_AW_SRC_DIR="../gh-aw"
 GH_AW_BIN="gh aw"
+GH_AW_RESOLVED_SHA=""   # short commit SHA of the gh-aw binary actually used
+GH_AW_VERSION_STR=""    # output of gh-aw --version for the binary actually used
 
 # --branch / $E2E_BRANCH: when non-empty, e2e.sh pushes the recompiled
 # workflows to this branch (force-push) instead of committing to main, and
@@ -697,11 +699,13 @@ setup_local_gh_aw_binary() {
     fi
 
     GH_AW_BIN="$bin_path"
+    GH_AW_RESOLVED_SHA="$resolved_sha"
     # Capture version output (incl. stderr) for diagnostics. An empty version
     # usually means the build silently produced a binary without ldflags/version
     # info or that an old binary is being reused.
     local built_version
     built_version=$($GH_AW_BIN --version 2>&1 || echo "unknown")
+    GH_AW_VERSION_STR="$built_version"
     echo "gh-aw --version output: ${built_version:-<empty>}" >> "$LOG_FILE"
     success "Built gh-aw binary: $bin_path (commit $resolved_sha, version: ${built_version:-<empty>})"
 
@@ -3422,7 +3426,7 @@ run_single_test() {
             fi
             ;;
         # Workflow dispatch tests - triggered with gh aw run
-        *"create-issue"|*"create-discussion"|*"create-pull-request"|*"create-two-pull-requests"|*"code-scanning-alert"|*"create-check-run"|*"mcp"*|*"safe-jobs"|*"gh-steps"|*"custom-safe-outputs"|*"noop"|*"report-incomplete"|*"assign-to-agent"|*"set-issue-field")
+        *"create-issue"|*"create-discussion"|*"create-pull-request"|*"create-two-pull-requests"|*"code-scanning-alert"|*"create-check-run"|*"mcp"*|*"safe-jobs"|*"gh-steps"|*"custom-safe-outputs"|*"noop"|*"report-incomplete"|*"assign-to-agent"|*"set-issue-field"|*"issue-intents")
             local workflow_success=false
             if trigger_workflow_dispatch_and_await_completion "$workflow"; then
                 workflow_success=true
@@ -4266,11 +4270,60 @@ print_final_report() {
 # from the run logs and categorize each failure as transient / test-framework
 # bug / gh-aw bug (filing github/gh-aw issues for the latter).
 print_agent_triage_prompt() {
-    local failed_list=""
+    # Build a detailed failed-test list with run URLs from this session.
+    # Each line is: "  - <test-name>  run: <url-or-id>"
+    local failed_lines=()
     if [[ ${#FAILED_TESTS[@]} -gt 0 ]]; then
-        failed_list=$(printf '  - %s\n' "${FAILED_TESTS[@]}")
+        for _t in "${FAILED_TESTS[@]}"; do
+            local _url="${TEST_RUN_URLS[$_t]:-}"
+            if [[ -n "$_url" ]]; then
+                failed_lines+=("  - $_t  run: $_url")
+            else
+                failed_lines+=("  - $_t")
+            fi
+        done
     elif [[ -f "fails.txt" ]]; then
-        failed_list=$(sed 's/^/  - /' "fails.txt")
+        # Falls back to fails.txt (e.g. when only --rerun was used).
+        # Format: "<test-name> [<run-id> ...]" — convert run IDs to URLs.
+        while IFS= read -r _line || [[ -n "$_line" ]]; do
+            [[ -z "$_line" ]] && continue
+            local _tname="${_line%% *}"
+            local _ids_str=""
+            [[ "$_line" == *" "* ]] && _ids_str="${_line#* }"
+            if [[ -n "$_ids_str" ]]; then
+                # Use the last run ID on the line (most recent).
+                local _last_id="${_ids_str##* }"
+                failed_lines+=("  - $_tname  run: https://github.com/$REPO_OWNER/$REPO_NAME/actions/runs/$_last_id")
+            else
+                failed_lines+=("  - $_tname")
+            fi
+        done < "fails.txt"
+    fi
+    local failed_list
+    failed_list=$(printf '%s\n' "${failed_lines[@]}")
+
+    # Determine gh-aw ref / version / SHA for display.
+    local gh_aw_ref_display sampling_display gh_aw_version_display
+    if [[ -n "$GH_AW_REF" ]]; then
+        gh_aw_ref_display="$GH_AW_REF"
+        if [[ -n "$GH_AW_RESOLVED_SHA" ]]; then
+            gh_aw_ref_display+=" (commit $GH_AW_RESOLVED_SHA)"
+        fi
+    else
+        # Installed extension: get version on the fly.
+        local _ext_ver
+        _ext_ver=$(gh aw --version 2>&1 | head -1 || echo "unknown")
+        gh_aw_ref_display="installed extension — $_ext_ver"
+    fi
+    if [[ -n "$GH_AW_VERSION_STR" ]]; then
+        gh_aw_version_display="$GH_AW_VERSION_STR"
+    else
+        gh_aw_version_display=$(${GH_AW_BIN} --version 2>&1 | head -1 || echo "unknown")
+    fi
+    if [[ "$USE_SAMPLES" == true ]]; then
+        sampling_display="true (--use-samples; AI engine was NOT called)"
+    else
+        sampling_display="false (live AI engine calls)"
     fi
 
     echo
@@ -4285,13 +4338,17 @@ Test harness repository: $REPO_OWNER/$REPO_NAME (this repo; runner is e2e.sh).
 Repository under test: github/gh-aw (the gh-aw CLI/compiler).
 Local run log: $LOG_FILE
 
-Failed tests:
+gh-aw ref used:    $gh_aw_ref_display
+gh-aw version:     $gh_aw_version_display
+Sampling (--use-samples): $sampling_display
+
+Failed tests (${#failed_lines[@]}):
 $failed_list
 
-Goal: for EACH failed test, access the GitHub Actions logs for its run (the run
-IDs are recorded next to each test in fails.txt; use 'gh run view <run-id> --log'
-and 'gh run view <run-id> --log-failed'), plus the local log $LOG_FILE, determine
-the root cause, and categorize the failure as exactly one of:
+Goal: for EACH failed test above, access the GitHub Actions logs for its run
+(use 'gh run view <run-id> --log' and 'gh run view <run-id> --log-failed'),
+plus the local log $LOG_FILE, determine the root cause, and categorize the
+failure as exactly one of:
 
   1. TRANSIENT — flaky/infra/network/rate-limit/timing; not a real defect.
      Action: note it and recommend a re-run (./e2e.sh rerun <test>).
