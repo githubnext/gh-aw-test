@@ -1,5 +1,5 @@
-# gh-aw-metadata: {"schema_version":"v4","frontmatter_hash":"580febac055f84510304be77841fe7473f1bfb8980c557db1c0d8aaf05bf9b12","body_hash":"4c75d77b8bf012f26c8ffce6ba225c04e23305baae61b03bea626cd5fabddab5","compiler_version":"2d16c282d0","strict":true,"agent_id":"copilot","engine_versions":{"copilot":"1.0.65"}}
-# gh-aw-manifest: {"version":1,"secrets":["GH_AW_CI_TRIGGER_TOKEN","GH_AW_GITHUB_MCP_SERVER_TOKEN","GH_AW_GITHUB_TOKEN","GH_AW_TEST_PAT","GITHUB_TOKEN","TEMP_USER_PAT"],"actions":[{"repo":"actions/cache/restore","sha":"27d5ce7f107fe9357f9df03efb73ab90386fccae","version":"v5.0.5"},{"repo":"actions/cache/save","sha":"27d5ce7f107fe9357f9df03efb73ab90386fccae","version":"v5.0.5"},{"repo":"actions/checkout","sha":"9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0","version":"v7.0.0"},{"repo":"actions/download-artifact","sha":"3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c","version":"v8.0.1"},{"repo":"actions/github-script","sha":"373c709c69115d41ff229c7e5df9f8788daa9553","version":"v9"},{"repo":"actions/github-script","sha":"3a2844b7e9c422d3c10d287c895573f7108da1b3","version":"v9.0.0"},{"repo":"actions/upload-artifact","sha":"043fb46d1a93c77aae656e7c1c64a875d1fc6a0a","version":"v7.0.1"},{"repo":"github/gh-aw/actions/setup","sha":"2d16c282d0fa3e367972fb3383669a960621ad02","version":"2d16c282d0fa3e367972fb3383669a960621ad02"}],"containers":[{"image":"ghcr.io/github/gh-aw-firewall/agent:0.27.11","digest":"sha256:979723c628182da7729333f2208bb249fd25ddee579645cf9a3892d681a929c7","pinned_image":"ghcr.io/github/gh-aw-firewall/agent:0.27.11@sha256:979723c628182da7729333f2208bb249fd25ddee579645cf9a3892d681a929c7"},{"image":"ghcr.io/github/gh-aw-firewall/api-proxy:0.27.11","digest":"sha256:807e4831999b44513b0a66e5859d478dc4da7ae74ab1918cec967d513f95bf9d","pinned_image":"ghcr.io/github/gh-aw-firewall/api-proxy:0.27.11@sha256:807e4831999b44513b0a66e5859d478dc4da7ae74ab1918cec967d513f95bf9d"},{"image":"ghcr.io/github/gh-aw-firewall/squid:0.27.11","digest":"sha256:ff27ea0525ad953a6adee28a5fbe9d2e22be47dbec755c15767af4ea3f91df7d","pinned_image":"ghcr.io/github/gh-aw-firewall/squid:0.27.11@sha256:ff27ea0525ad953a6adee28a5fbe9d2e22be47dbec755c15767af4ea3f91df7d"},{"image":"ghcr.io/github/gh-aw-mcpg:v0.3.30","digest":"sha256:35625d1a2269b1238606078c879f59a91cffc4ac33eb54bf39c6418822c1a8be","pinned_image":"ghcr.io/github/gh-aw-mcpg:v0.3.30@sha256:35625d1a2269b1238606078c879f59a91cffc4ac33eb54bf39c6418822c1a8be"},{"image":"ghcr.io/github/gh-aw-node","digest":"sha256:529d02eb970b1161aa25c593a9c3df57fdfad5a8add328cb3b6eccef66f3183b","pinned_image":"ghcr.io/github/gh-aw-node@sha256:529d02eb970b1161aa25c593a9c3df57fdfad5a8add328cb3b6eccef66f3183b"},{"image":"ghcr.io/github/github-mcp-server:v1.4.0","digest":"sha256:2afb26356481d1a350e14544a6e160f7f7ec1561a1ea309b823665abf0309036","pinned_image":"ghcr.io/github/github-mcp-server:v1.4.0@sha256:2afb26356481d1a350e14544a6e160f7f7ec1561a1ea309b823665abf0309036"}]}
+# gh-aw-metadata: {"schema_version":"v4","frontmatter_hash":"3f542db049d6cffb63ec99ce335d70505869be2b1d680f0727efdb73cb241d75","body_hash":"718ce5bef45ee774d1a71b1d5f87f0c52c47d5d3a3c157cb9081bbaa22926b81","compiler_version":"2d16c282d0","strict":true,"agent_id":"copilot","engine_versions":{"copilot":"1.0.65"}}
+# gh-aw-manifest: {"version":1,"secrets":["GH_AW_GITHUB_MCP_SERVER_TOKEN","GH_AW_GITHUB_TOKEN","GITHUB_TOKEN"],"actions":[{"repo":"actions/cache/restore","sha":"27d5ce7f107fe9357f9df03efb73ab90386fccae","version":"v5.0.5"},{"repo":"actions/cache/save","sha":"27d5ce7f107fe9357f9df03efb73ab90386fccae","version":"v5.0.5"},{"repo":"actions/checkout","sha":"9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0","version":"v7.0.0"},{"repo":"actions/download-artifact","sha":"3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c","version":"v8.0.1"},{"repo":"actions/github-script","sha":"373c709c69115d41ff229c7e5df9f8788daa9553","version":"v9"},{"repo":"actions/github-script","sha":"3a2844b7e9c422d3c10d287c895573f7108da1b3","version":"v9.0.0"},{"repo":"actions/upload-artifact","sha":"043fb46d1a93c77aae656e7c1c64a875d1fc6a0a","version":"v7.0.1"},{"repo":"github/gh-aw/actions/setup","sha":"2d16c282d0fa3e367972fb3383669a960621ad02","version":"2d16c282d0fa3e367972fb3383669a960621ad02"}],"containers":[{"image":"ghcr.io/github/gh-aw-firewall/agent:0.27.11","digest":"sha256:979723c628182da7729333f2208bb249fd25ddee579645cf9a3892d681a929c7","pinned_image":"ghcr.io/github/gh-aw-firewall/agent:0.27.11@sha256:979723c628182da7729333f2208bb249fd25ddee579645cf9a3892d681a929c7"},{"image":"ghcr.io/github/gh-aw-firewall/api-proxy:0.27.11","digest":"sha256:807e4831999b44513b0a66e5859d478dc4da7ae74ab1918cec967d513f95bf9d","pinned_image":"ghcr.io/github/gh-aw-firewall/api-proxy:0.27.11@sha256:807e4831999b44513b0a66e5859d478dc4da7ae74ab1918cec967d513f95bf9d"},{"image":"ghcr.io/github/gh-aw-firewall/squid:0.27.11","digest":"sha256:ff27ea0525ad953a6adee28a5fbe9d2e22be47dbec755c15767af4ea3f91df7d","pinned_image":"ghcr.io/github/gh-aw-firewall/squid:0.27.11@sha256:ff27ea0525ad953a6adee28a5fbe9d2e22be47dbec755c15767af4ea3f91df7d"},{"image":"ghcr.io/github/gh-aw-mcpg:v0.3.30","digest":"sha256:35625d1a2269b1238606078c879f59a91cffc4ac33eb54bf39c6418822c1a8be","pinned_image":"ghcr.io/github/gh-aw-mcpg:v0.3.30@sha256:35625d1a2269b1238606078c879f59a91cffc4ac33eb54bf39c6418822c1a8be"},{"image":"ghcr.io/github/gh-aw-node","digest":"sha256:529d02eb970b1161aa25c593a9c3df57fdfad5a8add328cb3b6eccef66f3183b","pinned_image":"ghcr.io/github/gh-aw-node@sha256:529d02eb970b1161aa25c593a9c3df57fdfad5a8add328cb3b6eccef66f3183b"},{"image":"ghcr.io/github/github-mcp-server:v1.4.0","digest":"sha256:2afb26356481d1a350e14544a6e160f7f7ec1561a1ea309b823665abf0309036","pinned_image":"ghcr.io/github/github-mcp-server:v1.4.0@sha256:2afb26356481d1a350e14544a6e160f7f7ec1561a1ea309b823665abf0309036"}]}
 # This file was automatically generated by gh-aw. DO NOT EDIT. To debug this workflow, load the skill at https://github.com/github/gh-aw/blob/main/debug.md
 #
 #    ___                   _   _      
@@ -25,12 +25,9 @@
 #
 #
 # Secrets used:
-#   - GH_AW_CI_TRIGGER_TOKEN
 #   - GH_AW_GITHUB_MCP_SERVER_TOKEN
 #   - GH_AW_GITHUB_TOKEN
-#   - GH_AW_TEST_PAT
 #   - GITHUB_TOKEN
-#   - TEMP_USER_PAT
 #
 # Custom actions used:
 #   - actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
@@ -50,7 +47,7 @@
 #   - ghcr.io/github/gh-aw-node@sha256:529d02eb970b1161aa25c593a9c3df57fdfad5a8add328cb3b6eccef66f3183b
 #   - ghcr.io/github/github-mcp-server:v1.4.0@sha256:2afb26356481d1a350e14544a6e160f7f7ec1561a1ea309b823665abf0309036
 
-name: "Test: Shallow + Sparse Checkout — Push to Pull Request Branch (Side Repo)"
+name: "Test Copilot Network Isolation"
 on:
   workflow_dispatch:
     inputs:
@@ -59,18 +56,13 @@ on:
         description: "Agent caller context (used internally by Agentic Workflows)."
         required: false
         type: string
-      pull_request_number:
-        description: Pull request number
-        required: true
-        type: number
 
 permissions: {}
 
 concurrency:
-  group: "gh-aw-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref || github.run_id }}"
-  cancel-in-progress: true
+  group: "gh-aw-${{ github.workflow }}"
 
-run-name: "Test: Shallow + Sparse Checkout — Push to Pull Request Branch (Side Repo)"
+run-name: "Test Copilot Network Isolation"
 
 jobs:
   activation:
@@ -103,8 +95,8 @@ jobs:
           job-name: ${{ github.job }}
           safe-output-artifact-client: ${{ env.GH_AW_MAX_DAILY_AI_CREDITS != '' }}
         env:
-          GH_AW_SETUP_WORKFLOW_NAME: "Test: Shallow + Sparse Checkout — Push to Pull Request Branch (Side Repo)"
-          GH_AW_CURRENT_WORKFLOW_REF: ${{ github.repository }}/.github/workflows/test-copilot-siderepo-sparse-push-to-pull-request-branch-using-dispatch.lock.yml@${{ github.ref }}
+          GH_AW_SETUP_WORKFLOW_NAME: "Test Copilot Network Isolation"
+          GH_AW_CURRENT_WORKFLOW_REF: ${{ github.repository }}/.github/workflows/test-copilot-network-isolation.lock.yml@${{ github.ref }}
           GH_AW_INFO_VERSION: "1.0.65"
           GH_AW_INFO_AWF_VERSION: "v0.27.11"
           GH_AW_INFO_ENGINE_ID: "copilot"
@@ -116,7 +108,7 @@ jobs:
           GH_AW_INFO_MODEL: ${{ vars.GH_AW_MODEL_AGENT_COPILOT || vars.GH_AW_DEFAULT_MODEL_COPILOT || 'claude-sonnet-4.6' }}
           GH_AW_INFO_VERSION: "1.0.65"
           GH_AW_INFO_AGENT_VERSION: "1.0.65"
-          GH_AW_INFO_WORKFLOW_NAME: "Test: Shallow + Sparse Checkout — Push to Pull Request Branch (Side Repo)"
+          GH_AW_INFO_WORKFLOW_NAME: "Test Copilot Network Isolation"
           GH_AW_INFO_EXPERIMENTAL: "false"
           GH_AW_INFO_SUPPORTS_TOOLS_ALLOWLIST: "true"
           GH_AW_INFO_STAGED: "false"
@@ -139,8 +131,8 @@ jobs:
         continue-on-error: true
         uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
-          key: agentic-workflow-usage-testcopilotsidereposparsepushtopullrequestbranchusingdispatch-${{ github.run_id }}
-          restore-keys: agentic-workflow-usage-testcopilotsidereposparsepushtopullrequestbranchusingdispatch-
+          key: agentic-workflow-usage-testcopilotnetworkisolation-${{ github.run_id }}
+          restore-keys: agentic-workflow-usage-testcopilotnetworkisolation-
           path: /tmp/gh-aw/agentic-workflow-usage-cache.jsonl
       - name: Restore daily AIC usage cache (artifact fallback)
         id: restore-daily-aic-cache-fallback
@@ -162,8 +154,8 @@ jobs:
         if: ${{ env.GH_AW_MAX_DAILY_AI_CREDITS != '' }}
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
-          GH_AW_WORKFLOW_NAME: "Test: Shallow + Sparse Checkout — Push to Pull Request Branch (Side Repo)"
-          GH_AW_WORKFLOW_ID: "test-copilot-siderepo-sparse-push-to-pull-request-branch-using-dispatch"
+          GH_AW_WORKFLOW_NAME: "Test Copilot Network Isolation"
+          GH_AW_WORKFLOW_ID: "test-copilot-network-isolation"
           GH_AW_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           GH_AW_WORKFLOW_DISPATCH_AW_CONTEXT: ${{ github.event.inputs.aw_context || '' }}
           GH_AW_HAS_SLASH_COMMAND: "false"
@@ -203,7 +195,7 @@ jobs:
         id: check-lock-file
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
-          GH_AW_WORKFLOW_FILE: "test-copilot-siderepo-sparse-push-to-pull-request-branch-using-dispatch.lock.yml"
+          GH_AW_WORKFLOW_FILE: "test-copilot-network-isolation.lock.yml"
           GH_AW_CONTEXT_WORKFLOW_REF: "${{ github.workflow_ref }}"
         with:
           script: |
@@ -226,28 +218,24 @@ jobs:
           GH_AW_GITHUB_REPOSITORY: ${{ github.repository }}
           GH_AW_GITHUB_RUN_ID: ${{ github.run_id }}
           GH_AW_GITHUB_WORKSPACE: ${{ github.workspace }}
-          GH_AW_INPUTS_PULL_REQUEST_NUMBER: ${{ inputs.pull_request_number }}
         # poutine:ignore untrusted_checkout_exec
         run: |
           bash "${RUNNER_TEMP}/gh-aw/actions/create_prompt_first.sh"
           {
-          cat << 'GH_AW_PROMPT_398091c3b5ef9c9d_EOF'
+          cat << 'GH_AW_PROMPT_0685d671c9603202_EOF'
           <system>
-          GH_AW_PROMPT_398091c3b5ef9c9d_EOF
+          GH_AW_PROMPT_0685d671c9603202_EOF
           cat "${RUNNER_TEMP}/gh-aw/prompts/xpia.md"
           cat "${RUNNER_TEMP}/gh-aw/prompts/temp_folder_prompt.md"
           cat "${RUNNER_TEMP}/gh-aw/prompts/markdown.md"
           cat "${RUNNER_TEMP}/gh-aw/prompts/safe_outputs_prompt.md"
-          cat << 'GH_AW_PROMPT_398091c3b5ef9c9d_EOF'
+          cat << 'GH_AW_PROMPT_0685d671c9603202_EOF'
           <safe-output-tools>
-          Tools: push_to_pull_request_branch, missing_tool, missing_data, noop
-          GH_AW_PROMPT_398091c3b5ef9c9d_EOF
-          cat "${RUNNER_TEMP}/gh-aw/prompts/safe_outputs_push_to_pr_branch.md"
-          cat << 'GH_AW_PROMPT_398091c3b5ef9c9d_EOF'
+          Tools: create_issue, missing_tool, missing_data, noop
           </safe-output-tools>
-          GH_AW_PROMPT_398091c3b5ef9c9d_EOF
+          GH_AW_PROMPT_0685d671c9603202_EOF
           cat "${RUNNER_TEMP}/gh-aw/prompts/mcp_cli_tools_prompt.md"
-          cat << 'GH_AW_PROMPT_398091c3b5ef9c9d_EOF'
+          cat << 'GH_AW_PROMPT_0685d671c9603202_EOF'
           <github-context>
           The following GitHub context information is available for this workflow:
           {{#if github.actor}}
@@ -274,34 +262,21 @@ jobs:
           {{#if github.run_id}}
           - **workflow-run-id**: __GH_AW_GITHUB_RUN_ID__
           {{/if}}
-          - **checkouts**: The following repositories have been checked out and are available in the workspace:
-            - repo `githubnext/gh-aw-side-repo` → `$GITHUB_WORKSPACE` (cwd) [shallow clone, fetch-depth=1] [additional refs fetched: *] [sparse checkout enabled]
-            - **Note**: If a branch you need is not in the list above and is not listed as an additional fetched ref, it has NOT been checked out. For private repositories you cannot fetch it. If the branch is required and not available, exit with an error and ask the user to add it to the `fetch:` option of the `checkout:` configuration (e.g., `fetch: ["refs/pulls/open/*"]` for all open PR refs, or `fetch: ["main", "feature/my-branch"]` for specific branches).
-            - **Warning: No git credentials are available to the agent.** Credentials are
-              intentionally removed after the checkout step for security. This means any git
-              operation that needs to authenticate to the remote will fail. In private repositories, that includes:
-              - `git fetch`, `git pull`, `git clone`, and `git push` (direct push, not via safe-output tools)
-              - Checking out or switching to a remote branch that is not already fetched
-              - Deepening a shallow clone (`git fetch --unshallow`)
-              - On-demand blob fetches in partial/blobless clones (operations on files not in the initial checkout)
-              Do NOT attempt to configure credentials, run `git credential fill`, or modify `.gitconfig` —
-              authentication will not succeed. If you encounter credential prompts or authentication errors,
-              stop immediately and report the limitation rather than spending turns trying to work around it.
           </github-context>
           
-          GH_AW_PROMPT_398091c3b5ef9c9d_EOF
+          GH_AW_PROMPT_0685d671c9603202_EOF
           cat "${RUNNER_TEMP}/gh-aw/prompts/github_mcp_tools_with_safeoutputs_prompt.md"
-          cat << 'GH_AW_PROMPT_398091c3b5ef9c9d_EOF'
+          cat << 'GH_AW_PROMPT_0685d671c9603202_EOF'
           </system>
-          {{#runtime-import .github/workflows/test-copilot-siderepo-sparse-push-to-pull-request-branch-using-dispatch.md}}
-          GH_AW_PROMPT_398091c3b5ef9c9d_EOF
+          {{#runtime-import .github/workflows/test-copilot-network-isolation.md}}
+          GH_AW_PROMPT_0685d671c9603202_EOF
           } > "$GH_AW_PROMPT"
       - name: Interpolate variables and render templates
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           GH_AW_PROMPT: /tmp/gh-aw/aw-prompts/prompt.txt
           GH_AW_ENGINE_ID: "copilot"
-          GH_AW_INPUTS_PULL_REQUEST_NUMBER: ${{ inputs.pull_request_number }}
+          GH_AW_GITHUB_REPOSITORY: ${{ github.repository }}
         with:
           script: |
             const { setupGlobals } = require('${{ runner.temp }}/gh-aw/actions/setup_globals.cjs');
@@ -320,7 +295,6 @@ jobs:
           GH_AW_GITHUB_REPOSITORY: ${{ github.repository }}
           GH_AW_GITHUB_RUN_ID: ${{ github.run_id }}
           GH_AW_GITHUB_WORKSPACE: ${{ github.workspace }}
-          GH_AW_INPUTS_PULL_REQUEST_NUMBER: ${{ inputs.pull_request_number }}
           GH_AW_MCP_CLI_SERVERS_LIST: '- `safeoutputs` — run `safeoutputs --help` to see available tools'
         with:
           script: |
@@ -341,7 +315,6 @@ jobs:
                 GH_AW_GITHUB_REPOSITORY: process.env.GH_AW_GITHUB_REPOSITORY,
                 GH_AW_GITHUB_RUN_ID: process.env.GH_AW_GITHUB_RUN_ID,
                 GH_AW_GITHUB_WORKSPACE: process.env.GH_AW_GITHUB_WORKSPACE,
-                GH_AW_INPUTS_PULL_REQUEST_NUMBER: process.env.GH_AW_INPUTS_PULL_REQUEST_NUMBER,
                 GH_AW_MCP_CLI_SERVERS_LIST: process.env.GH_AW_MCP_CLI_SERVERS_LIST
               }
             });
@@ -392,7 +365,7 @@ jobs:
       GH_AW_ASSETS_MAX_SIZE_KB: 0
       GH_AW_MCP_LOG_DIR: /tmp/gh-aw/mcp-logs/safeoutputs
       GH_AW_RUNTIME_FEATURES: ${{ vars.GH_AW_RUNTIME_FEATURES }}
-      GH_AW_WORKFLOW_ID_SANITIZED: testcopilotsidereposparsepushtopullrequestbranchusingdispatch
+      GH_AW_WORKFLOW_ID_SANITIZED: testcopilotnetworkisolation
     outputs:
       agentic_engine_timeout: ${{ steps.detect-agent-errors.outputs.agentic_engine_timeout || 'false' }}
       ai_credits_rate_limit_error: ${{ steps.parse-mcp-gateway.outputs.ai_credits_rate_limit_error || 'false' }}
@@ -421,8 +394,8 @@ jobs:
           trace-id: ${{ needs.activation.outputs.setup-trace-id }}
           parent-span-id: ${{ needs.activation.outputs.setup-parent-span-id || needs.activation.outputs.setup-span-id }}
         env:
-          GH_AW_SETUP_WORKFLOW_NAME: "Test: Shallow + Sparse Checkout — Push to Pull Request Branch (Side Repo)"
-          GH_AW_CURRENT_WORKFLOW_REF: ${{ github.repository }}/.github/workflows/test-copilot-siderepo-sparse-push-to-pull-request-branch-using-dispatch.lock.yml@${{ github.ref }}
+          GH_AW_SETUP_WORKFLOW_NAME: "Test Copilot Network Isolation"
+          GH_AW_CURRENT_WORKFLOW_REF: ${{ github.repository }}/.github/workflows/test-copilot-network-isolation.lock.yml@${{ github.ref }}
           GH_AW_INFO_VERSION: "1.0.65"
           GH_AW_INFO_AWF_VERSION: "v0.27.11"
           GH_AW_INFO_ENGINE_ID: "copilot"
@@ -438,40 +411,6 @@ jobs:
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
-      - name: Checkout githubnext/gh-aw-side-repo
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-        with:
-          persist-credentials: false
-          repository: githubnext/gh-aw-side-repo
-          token: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
-          fetch-depth: 1
-          sparse-checkout: |
-            src/
-            docs/
-          filter: 'blob:limit=1073741824'
-      - name: Clear partial clone markers after sparse checkout
-        continue-on-error: true
-        run: |
-          git config --local --unset-all remote.origin.promisor || true
-          git config --local --unset-all remote.origin.partialclonefilter || true
-      - name: Fetch additional refs for githubnext/gh-aw-side-repo
-        env:
-          GH_AW_FETCH_TOKEN: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
-        run: |
-          header=$(printf "x-access-token:%s" "${GH_AW_FETCH_TOKEN}" | base64 -w 0)
-          git -c "http.extraheader=Authorization: Basic ${header}" fetch origin --depth=1 '+refs/heads/*:refs/remotes/origin/*'
-      - name: Build checkout manifest for safe-outputs handlers
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        env:
-          GH_TOKEN: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
-          GH_AW_CHECKOUT_MANIFEST_COUNT: "1"
-          GH_AW_CHECKOUT_REPO_0: "githubnext/gh-aw-side-repo"
-          GH_AW_CHECKOUT_PATH_0: ""
-          GH_AW_CHECKOUT_TOKEN_0: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
-        with:
-          script: |
-            const { main } = require('${{ runner.temp }}/gh-aw/actions/build_checkout_manifest.cjs');
-            await main();
       - name: Create gh-aw temp directory
         run: bash "${RUNNER_TEMP}/gh-aw/actions/create_gh_aw_tmp_dir.sh"
       - name: Configure gh CLI for GitHub Enterprise
@@ -490,9 +429,9 @@ jobs:
           github.event.pull_request || github.event.issue.pull_request || github.event_name == 'workflow_dispatch' && fromJSON(github.event.inputs.aw_context || '{}').item_type == 'pull_request'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
-          GH_TOKEN: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
+          GH_TOKEN: ${{ secrets.GH_AW_GITHUB_MCP_SERVER_TOKEN || secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
         with:
-          github-token: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
+          github-token: ${{ secrets.GH_AW_GITHUB_MCP_SERVER_TOKEN || secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           script: |
             const { setupGlobals } = require('${{ runner.temp }}/gh-aw/actions/setup_globals.cjs');
             setupGlobals(core, github, context, exec, io, getOctokit);
@@ -503,7 +442,7 @@ jobs:
         env:
           GH_HOST: github.com
       - name: Install AWF binary
-        run: bash "${RUNNER_TEMP}/gh-aw/actions/install_awf_binary.sh" v0.27.11
+        run: bash "${RUNNER_TEMP}/gh-aw/actions/install_awf_binary.sh" v0.27.11 --rootless
       - name: Determine automatic lockdown mode for GitHub MCP Server
         id: determine-automatic-lockdown
         uses: actions/github-script@373c709c69115d41ff229c7e5df9f8788daa9553 # v9
@@ -537,25 +476,62 @@ jobs:
       - name: Download container images
         run: bash "${RUNNER_TEMP}/gh-aw/actions/download_docker_images.sh" ghcr.io/github/gh-aw-firewall/agent:0.27.11@sha256:979723c628182da7729333f2208bb249fd25ddee579645cf9a3892d681a929c7 ghcr.io/github/gh-aw-firewall/api-proxy:0.27.11@sha256:807e4831999b44513b0a66e5859d478dc4da7ae74ab1918cec967d513f95bf9d ghcr.io/github/gh-aw-firewall/squid:0.27.11@sha256:ff27ea0525ad953a6adee28a5fbe9d2e22be47dbec755c15767af4ea3f91df7d ghcr.io/github/gh-aw-mcpg:v0.3.30@sha256:35625d1a2269b1238606078c879f59a91cffc4ac33eb54bf39c6418822c1a8be ghcr.io/github/gh-aw-node@sha256:529d02eb970b1161aa25c593a9c3df57fdfad5a8add328cb3b6eccef66f3183b ghcr.io/github/github-mcp-server:v1.4.0@sha256:2afb26356481d1a350e14544a6e160f7f7ec1561a1ea309b823665abf0309036
       - name: Generate Safe Outputs Config
-        env:
-          GH_AW_INPUT_PULL_REQUEST_NUMBER: ${{ inputs.pull_request_number }}
         run: |
           mkdir -p "${RUNNER_TEMP}/gh-aw/safeoutputs"
           mkdir -p /tmp/gh-aw/safeoutputs
           mkdir -p /tmp/gh-aw/mcp-logs/safeoutputs
-          cat > "${RUNNER_TEMP}/gh-aw/safeoutputs/config.json" << 'GH_AW_SAFE_OUTPUTS_CONFIG_fa06b91900d496a6_EOF'
-          {"create_report_incomplete_issue":{},"missing_data":{},"missing_tool":{},"noop":{"max":1,"report-as-issue":"true"},"push_to_pull_request_branch":{"allowed_repos":["githubnext/gh-aw-side-repo"],"if_no_changes":"warn","max_patch_size":4096,"protect_top_level_dot_folders":true,"protected_files":["package.json","bun.lockb","bunfig.toml","deno.json","deno.jsonc","deno.lock","global.json","NuGet.Config","Directory.Packages.props","mix.exs","mix.lock","go.mod","go.sum","stack.yaml","stack.yaml.lock","pom.xml","build.gradle","build.gradle.kts","settings.gradle","settings.gradle.kts","gradle.properties","package-lock.json","yarn.lock","pnpm-lock.yaml","npm-shrinkwrap.json","requirements.txt","Pipfile","Pipfile.lock","pyproject.toml","setup.py","setup.cfg","Gemfile","Gemfile.lock","uv.lock","CODEOWNERS","DESIGN.md","README.md","CONTRIBUTING.md","CHANGELOG.md","SECURITY.md","CODE_OF_CONDUCT.md","AGENTS.md","CLAUDE.md","GEMINI.md"],"target":"${GH_AW_INPUT_PULL_REQUEST_NUMBER}","target-repo":"githubnext/gh-aw-side-repo"},"report_incomplete":{}}
-          GH_AW_SAFE_OUTPUTS_CONFIG_fa06b91900d496a6_EOF
+          cat > "${RUNNER_TEMP}/gh-aw/safeoutputs/config.json" << 'GH_AW_SAFE_OUTPUTS_CONFIG_a771e2504e0eb84c_EOF'
+          {"create_issue":{"labels":["copilot","automation","haiku"],"max":1,"title_prefix":"[copilot-network-isolation-test] "},"create_report_incomplete_issue":{},"missing_data":{},"missing_tool":{},"noop":{"max":1,"report-as-issue":"true"},"report_incomplete":{}}
+          GH_AW_SAFE_OUTPUTS_CONFIG_a771e2504e0eb84c_EOF
       - name: Generate Safe Outputs Tools
         env:
           GH_AW_TOOLS_META_JSON: |
             {
-              "description_suffixes": {},
+              "description_suffixes": {
+                "create_issue": " CONSTRAINTS: Maximum 1 issue(s) can be created. Title will be prefixed with \"[copilot-network-isolation-test] \". Labels [\"copilot\" \"automation\" \"haiku\"] will be automatically added."
+              },
               "repo_params": {},
               "dynamic_tools": []
             }
           GH_AW_VALIDATION_JSON: |
             {
+              "create_issue": {
+                "defaultMax": 1,
+                "fields": {
+                  "body": {
+                    "required": true,
+                    "type": "string",
+                    "sanitize": true,
+                    "maxLength": 65000,
+                    "minLength": 20
+                  },
+                  "fields": {
+                    "type": "array"
+                  },
+                  "labels": {
+                    "type": "array",
+                    "itemType": "string",
+                    "itemSanitize": true,
+                    "itemMaxLength": 128
+                  },
+                  "parent": {
+                    "issueOrPRNumber": true
+                  },
+                  "repo": {
+                    "type": "string",
+                    "maxLength": 256
+                  },
+                  "temporary_id": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "required": true,
+                    "type": "string",
+                    "sanitize": true,
+                    "maxLength": 128
+                  }
+                }
+              },
               "missing_data": {
                 "defaultMax": 20,
                 "fields": {
@@ -613,25 +589,6 @@ jobs:
                   }
                 }
               },
-              "push_to_pull_request_branch": {
-                "defaultMax": 1,
-                "fields": {
-                  "branch": {
-                    "type": "string",
-                    "sanitize": true,
-                    "maxLength": 256
-                  },
-                  "message": {
-                    "required": true,
-                    "type": "string",
-                    "sanitize": true,
-                    "maxLength": 65000
-                  },
-                  "pull_request_number": {
-                    "issueOrPRNumber": true
-                  }
-                }
-              },
               "report_incomplete": {
                 "defaultMax": 5,
                 "fields": {
@@ -665,7 +622,7 @@ jobs:
           GH_AW_SAFE_OUTPUTS_TOOLS_PATH: ${{ steps.set-runtime-paths.outputs.GH_AW_SAFE_OUTPUTS_TOOLS_PATH }}
           GITHUB_MCP_GUARD_MIN_INTEGRITY: ${{ steps.determine-automatic-lockdown.outputs.min_integrity }}
           GITHUB_MCP_GUARD_REPOS: ${{ steps.determine-automatic-lockdown.outputs.repos }}
-          GITHUB_MCP_SERVER_TOKEN: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
+          GITHUB_MCP_SERVER_TOKEN: ${{ secrets.GH_AW_GITHUB_MCP_SERVER_TOKEN || secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -eo pipefail
@@ -673,7 +630,7 @@ jobs:
           
           # Export gateway environment variables for MCP config and gateway script
           export MCP_GATEWAY_PORT="8080"
-          export MCP_GATEWAY_DOMAIN="host.docker.internal"
+          export MCP_GATEWAY_DOMAIN="awmg-mcpg"
           export MCP_GATEWAY_HOST_DOMAIN="localhost"
           MCP_GATEWAY_API_KEY=$(openssl rand -base64 45 | tr -d '/+=')
           echo "::add-mask::${MCP_GATEWAY_API_KEY}"
@@ -692,7 +649,7 @@ jobs:
             * ) DOCKER_SOCK_PATH=/var/run/docker.sock ;;
           esac
           DOCKER_SOCK_GID=$(stat -c '%g' "$DOCKER_SOCK_PATH" 2>/dev/null || echo '0')
-          export MCP_GATEWAY_DOCKER_COMMAND='docker run -i --rm --network host --name awmg-mcpg --add-host host.docker.internal:127.0.0.1 --user '"${MCP_GATEWAY_UID}"':'"${MCP_GATEWAY_GID}"' --group-add '"${DOCKER_SOCK_GID}"' -v '"${DOCKER_SOCK_PATH}"':/var/run/docker.sock -e MCP_GATEWAY_PORT -e MCP_GATEWAY_DOMAIN -e MCP_GATEWAY_API_KEY -e MCP_GATEWAY_PAYLOAD_DIR -e MCP_GATEWAY_PAYLOAD_SIZE_THRESHOLD -e DOCKER_HOST=unix:///var/run/docker.sock -e DEBUG -e MCP_GATEWAY_LOG_DIR -e GH_AW_MCP_LOG_DIR -e GH_AW_SAFE_OUTPUTS -e GH_AW_SAFE_OUTPUTS_CONFIG_PATH -e GH_AW_SAFE_OUTPUTS_TOOLS_PATH -e GH_AW_POLICY_ALLOW_CREATE_PULL_REQUEST -e GH_AW_ASSETS_BRANCH -e GH_AW_ASSETS_MAX_SIZE_KB -e GH_AW_ASSETS_ALLOWED_EXTS -e DEFAULT_BRANCH -e GITHUB_MCP_SERVER_TOKEN -e GITHUB_MCP_GUARD_MIN_INTEGRITY -e GITHUB_MCP_GUARD_REPOS -e GITHUB_REPOSITORY -e GITHUB_SERVER_URL -e GITHUB_SHA -e GITHUB_WORKSPACE -e GITHUB_TOKEN -e GITHUB_RUN_ID -e GITHUB_RUN_NUMBER -e GITHUB_RUN_ATTEMPT -e GITHUB_JOB -e GITHUB_ACTION -e GITHUB_EVENT_NAME -e GITHUB_EVENT_PATH -e GITHUB_ACTOR -e GITHUB_ACTOR_ID -e GITHUB_TRIGGERING_ACTOR -e GITHUB_WORKFLOW -e GITHUB_WORKFLOW_REF -e GITHUB_WORKFLOW_SHA -e GITHUB_REF -e GITHUB_REF_NAME -e GITHUB_REF_TYPE -e GITHUB_HEAD_REF -e GITHUB_BASE_REF -e RUNNER_TEMP -v /tmp/gh-aw/mcp-payloads:/tmp/gh-aw/mcp-payloads:rw -v /opt:/opt:ro -v /tmp:/tmp:rw -v '"${GITHUB_WORKSPACE}"':'"${GITHUB_WORKSPACE}"':rw -v '"${RUNNER_TEMP}"'/gh-aw/safeoutputs:'"${RUNNER_TEMP}"'/gh-aw/safeoutputs:rw ghcr.io/github/gh-aw-mcpg:v0.3.30'
+          export MCP_GATEWAY_DOCKER_COMMAND='docker run -i --rm --network bridge -p 127.0.0.1:'"${MCP_GATEWAY_PORT}"':'"${MCP_GATEWAY_PORT}"' --name awmg-mcpg --user '"${MCP_GATEWAY_UID}"':'"${MCP_GATEWAY_GID}"' --group-add '"${DOCKER_SOCK_GID}"' -v '"${DOCKER_SOCK_PATH}"':/var/run/docker.sock -e MCP_GATEWAY_PORT -e MCP_GATEWAY_DOMAIN -e MCP_GATEWAY_API_KEY -e MCP_GATEWAY_PAYLOAD_DIR -e MCP_GATEWAY_PAYLOAD_SIZE_THRESHOLD -e DOCKER_HOST=unix:///var/run/docker.sock -e DEBUG -e MCP_GATEWAY_LOG_DIR -e GH_AW_MCP_LOG_DIR -e GH_AW_SAFE_OUTPUTS -e GH_AW_SAFE_OUTPUTS_CONFIG_PATH -e GH_AW_SAFE_OUTPUTS_TOOLS_PATH -e GH_AW_POLICY_ALLOW_CREATE_PULL_REQUEST -e GH_AW_ASSETS_BRANCH -e GH_AW_ASSETS_MAX_SIZE_KB -e GH_AW_ASSETS_ALLOWED_EXTS -e DEFAULT_BRANCH -e GITHUB_MCP_SERVER_TOKEN -e GITHUB_MCP_GUARD_MIN_INTEGRITY -e GITHUB_MCP_GUARD_REPOS -e GITHUB_REPOSITORY -e GITHUB_SERVER_URL -e GITHUB_SHA -e GITHUB_WORKSPACE -e GITHUB_TOKEN -e GITHUB_RUN_ID -e GITHUB_RUN_NUMBER -e GITHUB_RUN_ATTEMPT -e GITHUB_JOB -e GITHUB_ACTION -e GITHUB_EVENT_NAME -e GITHUB_EVENT_PATH -e GITHUB_ACTOR -e GITHUB_ACTOR_ID -e GITHUB_TRIGGERING_ACTOR -e GITHUB_WORKFLOW -e GITHUB_WORKFLOW_REF -e GITHUB_WORKFLOW_SHA -e GITHUB_REF -e GITHUB_REF_NAME -e GITHUB_REF_TYPE -e GITHUB_HEAD_REF -e GITHUB_BASE_REF -e RUNNER_TEMP -v /tmp/gh-aw/mcp-payloads:/tmp/gh-aw/mcp-payloads:rw -v /opt:/opt:ro -v /tmp:/tmp:rw -v '"${GITHUB_WORKSPACE}"':'"${GITHUB_WORKSPACE}"':rw -v '"${RUNNER_TEMP}"'/gh-aw/safeoutputs:'"${RUNNER_TEMP}"'/gh-aw/safeoutputs:rw ghcr.io/github/gh-aw-mcpg:v0.3.30'
           
           mkdir -p "$HOME/.copilot"
           GH_AW_NODE=$(which node 2>/dev/null || command -v node 2>/dev/null || echo node)
@@ -780,13 +737,11 @@ jobs:
         id: agentic_execution
         env:
           GH_AW_SAMPLES: |
-            [{"tool":"push_to_pull_request_branch","arguments":{"message":"Shallow sparse-checkout push test from Copilot","pull_request_number":"${{ github.event.inputs.pull_request_number }}"},"sidecars":{"patch":"diff --git a/src/sparse-test.py b/src/sparse-test.py\nnew file mode 100644\n--- /dev/null\n+++ b/src/sparse-test.py\n@@ -0,0 +1,3 @@\n+# Added by Copilot via shallow sparse-checkout push test\n+\n+print(\"sparse checkout push test\")\n"}}]
+            [{"tool":"create_issue","arguments":{"body":"World\n\nA haiku for the test:\n  containers hold fast\n  network paths stay isolated\n  workflows still succeed\n","title":"Hello from Copilot (Network Isolation)"}}]
           GH_AW_AGENT_STDIO_LOG: /tmp/gh-aw/agent-stdio.log
           GH_AW_SAFE_OUTPUTS_CONFIG_PATH: ${{ runner.temp }}/gh-aw/safeoutputs/config.json
           GH_AW_SAFE_OUTPUTS: ${{ runner.temp }}/gh-aw/safeoutputs/outputs.jsonl
           GITHUB_TOKEN: ${{ github.token }}
-          GH_AW_REPO_TOKENS: |
-            {"githubnext/gh-aw-side-repo":"${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}"}
         run: |
           set -euo pipefail
           mkdir -p "$(dirname "$GH_AW_AGENT_STDIO_LOG")"
@@ -825,12 +780,10 @@ jobs:
             const { main } = require('${{ runner.temp }}/gh-aw/actions/redact_secrets.cjs');
             await main();
         env:
-          GH_AW_SECRET_NAMES: 'GH_AW_GITHUB_MCP_SERVER_TOKEN,GH_AW_GITHUB_TOKEN,GH_AW_TEST_PAT,GITHUB_TOKEN,TEMP_USER_PAT'
+          GH_AW_SECRET_NAMES: 'GH_AW_GITHUB_MCP_SERVER_TOKEN,GH_AW_GITHUB_TOKEN,GITHUB_TOKEN'
           SECRET_GH_AW_GITHUB_MCP_SERVER_TOKEN: ${{ secrets.GH_AW_GITHUB_MCP_SERVER_TOKEN }}
           SECRET_GH_AW_GITHUB_TOKEN: ${{ secrets.GH_AW_GITHUB_TOKEN }}
-          SECRET_GH_AW_TEST_PAT: ${{ secrets.GH_AW_TEST_PAT }}
           SECRET_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SECRET_TEMP_USER_PAT: ${{ secrets.TEMP_USER_PAT }}
       - name: Append agent step summary
         if: always()
         run: bash "${RUNNER_TEMP}/gh-aw/actions/append_agent_step_summary.sh"
@@ -883,9 +836,6 @@ jobs:
         env:
           AWF_LOGS_DIR: /tmp/gh-aw/sandbox/firewall/logs
         run: |
-          # Fix permissions on firewall logs/audit dirs so they can be uploaded as artifacts
-          # AWF runs with sudo, creating files owned by root
-          sudo chmod -R a+rX /tmp/gh-aw/sandbox/firewall 2>/dev/null || true
           # Only run awf logs summary if awf command exists (it may not be installed if workflow failed before install step)
           if command -v awf &> /dev/null; then
             awf logs summary | tee -a "$GITHUB_STEP_SUMMARY"
@@ -936,8 +886,6 @@ jobs:
             /tmp/gh-aw/github_rate_limits.jsonl
             /tmp/gh-aw/safeoutputs.jsonl
             /tmp/gh-aw/agent_output.json
-            /tmp/gh-aw/aw-*.patch
-            /tmp/gh-aw/aw-*.bundle
             /tmp/gh-aw/awf-config.json
             /tmp/gh-aw/sandbox/firewall/logs/
             /tmp/gh-aw/sandbox/firewall/audit/
@@ -954,10 +902,10 @@ jobs:
       needs.activation.outputs.stale_lock_file_failed == 'true' || needs.activation.outputs.daily_ai_credits_exceeded == 'true')
     runs-on: ubuntu-slim
     permissions:
-      contents: write
-      pull-requests: write
+      contents: read
+      issues: write
     concurrency:
-      group: "gh-aw-conclusion-test-copilot-siderepo-sparse-push-to-pull-request-branch-using-dispatch"
+      group: "gh-aw-conclusion-test-copilot-network-isolation"
       cancel-in-progress: false
       queue: max
     env:
@@ -977,8 +925,8 @@ jobs:
           trace-id: ${{ needs.activation.outputs.setup-trace-id }}
           parent-span-id: ${{ needs.activation.outputs.setup-parent-span-id || needs.activation.outputs.setup-span-id }}
         env:
-          GH_AW_SETUP_WORKFLOW_NAME: "Test: Shallow + Sparse Checkout — Push to Pull Request Branch (Side Repo)"
-          GH_AW_CURRENT_WORKFLOW_REF: ${{ github.repository }}/.github/workflows/test-copilot-siderepo-sparse-push-to-pull-request-branch-using-dispatch.lock.yml@${{ github.ref }}
+          GH_AW_SETUP_WORKFLOW_NAME: "Test Copilot Network Isolation"
+          GH_AW_CURRENT_WORKFLOW_REF: ${{ github.repository }}/.github/workflows/test-copilot-network-isolation.lock.yml@${{ github.ref }}
           GH_AW_INFO_VERSION: "1.0.65"
           GH_AW_INFO_AWF_VERSION: "v0.27.11"
           GH_AW_INFO_ENGINE_ID: "copilot"
@@ -1045,8 +993,8 @@ jobs:
         continue-on-error: true
         uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
-          key: agentic-workflow-usage-testcopilotsidereposparsepushtopullrequestbranchusingdispatch-${{ github.run_id }}
-          restore-keys: agentic-workflow-usage-testcopilotsidereposparsepushtopullrequestbranchusingdispatch-
+          key: agentic-workflow-usage-testcopilotnetworkisolation-${{ github.run_id }}
+          restore-keys: agentic-workflow-usage-testcopilotnetworkisolation-
           path: /tmp/gh-aw/agentic-workflow-usage-cache.jsonl
       - name: Write daily AIC usage cache entry
         id: write-daily-aic-cache
@@ -1066,7 +1014,7 @@ jobs:
         continue-on-error: true
         uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
-          key: agentic-workflow-usage-testcopilotsidereposparsepushtopullrequestbranchusingdispatch-${{ github.run_id }}
+          key: agentic-workflow-usage-testcopilotnetworkisolation-${{ github.run_id }}
           path: /tmp/gh-aw/agentic-workflow-usage-cache.jsonl
       - name: Upload daily AIC usage cache artifact
         id: upload-daily-aic-cache
@@ -1084,16 +1032,16 @@ jobs:
         env:
           GH_AW_AGENT_OUTPUT: ${{ steps.setup-agent-output-env.outputs.GH_AW_AGENT_OUTPUT }}
           GH_AW_NOOP_MAX: "1"
-          GH_AW_WORKFLOW_NAME: "Test: Shallow + Sparse Checkout — Push to Pull Request Branch (Side Repo)"
-          GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref_name }}/.github/workflows/test-copilot-siderepo-sparse-push-to-pull-request-branch-using-dispatch.md"
+          GH_AW_WORKFLOW_NAME: "Test Copilot Network Isolation"
+          GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref_name }}/.github/workflows/test-copilot-network-isolation.md"
           GH_AW_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           GH_AW_AGENT_CONCLUSION: ${{ needs.agent.result }}
           GH_AW_NOOP_REPORT_AS_ISSUE: "true"
           GH_AW_AIC: ${{ needs.agent.outputs.aic }}
           GH_AW_AMBIENT_CONTEXT: ${{ needs.agent.outputs.ambient_context }}
-          GH_AW_WORKFLOW_ID: "test-copilot-siderepo-sparse-push-to-pull-request-branch-using-dispatch"
+          GH_AW_WORKFLOW_ID: "test-copilot-network-isolation"
         with:
-          github-token: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
+          github-token: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           script: |
             const { setupGlobals } = require('${{ runner.temp }}/gh-aw/actions/setup_globals.cjs');
             setupGlobals(core, github, context, exec, io, getOctokit);
@@ -1105,10 +1053,10 @@ jobs:
         env:
           GH_AW_AGENT_OUTPUT: ${{ steps.setup-agent-output-env.outputs.GH_AW_AGENT_OUTPUT }}
           GH_AW_MISSING_TOOL_CREATE_ISSUE: "true"
-          GH_AW_WORKFLOW_NAME: "Test: Shallow + Sparse Checkout — Push to Pull Request Branch (Side Repo)"
-          GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref_name }}/.github/workflows/test-copilot-siderepo-sparse-push-to-pull-request-branch-using-dispatch.md"
+          GH_AW_WORKFLOW_NAME: "Test Copilot Network Isolation"
+          GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref_name }}/.github/workflows/test-copilot-network-isolation.md"
         with:
-          github-token: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
+          github-token: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           script: |
             const { setupGlobals } = require('${{ runner.temp }}/gh-aw/actions/setup_globals.cjs');
             setupGlobals(core, github, context, exec, io, getOctokit);
@@ -1120,10 +1068,10 @@ jobs:
         env:
           GH_AW_AGENT_OUTPUT: ${{ steps.setup-agent-output-env.outputs.GH_AW_AGENT_OUTPUT }}
           GH_AW_REPORT_INCOMPLETE_CREATE_ISSUE: "true"
-          GH_AW_WORKFLOW_NAME: "Test: Shallow + Sparse Checkout — Push to Pull Request Branch (Side Repo)"
-          GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref_name }}/.github/workflows/test-copilot-siderepo-sparse-push-to-pull-request-branch-using-dispatch.md"
+          GH_AW_WORKFLOW_NAME: "Test Copilot Network Isolation"
+          GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref_name }}/.github/workflows/test-copilot-network-isolation.md"
         with:
-          github-token: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
+          github-token: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           script: |
             const { setupGlobals } = require('${{ runner.temp }}/gh-aw/actions/setup_globals.cjs');
             setupGlobals(core, github, context, exec, io, getOctokit);
@@ -1135,11 +1083,11 @@ jobs:
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           GH_AW_AGENT_OUTPUT: ${{ steps.setup-agent-output-env.outputs.GH_AW_AGENT_OUTPUT }}
-          GH_AW_WORKFLOW_NAME: "Test: Shallow + Sparse Checkout — Push to Pull Request Branch (Side Repo)"
-          GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref_name }}/.github/workflows/test-copilot-siderepo-sparse-push-to-pull-request-branch-using-dispatch.md"
+          GH_AW_WORKFLOW_NAME: "Test Copilot Network Isolation"
+          GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref_name }}/.github/workflows/test-copilot-network-isolation.md"
           GH_AW_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           GH_AW_AGENT_CONCLUSION: ${{ needs.agent.result }}
-          GH_AW_WORKFLOW_ID: "test-copilot-siderepo-sparse-push-to-pull-request-branch-using-dispatch"
+          GH_AW_WORKFLOW_ID: "test-copilot-network-isolation"
           GH_AW_ACTION_FAILURE_ISSUE_EXPIRES_HOURS: "168"
           GH_AW_ENGINE_ID: "copilot"
           GH_AW_CHECKOUT_PR_SUCCESS: ${{ needs.agent.outputs.checkout_pr_success }}
@@ -1153,8 +1101,6 @@ jobs:
           GH_AW_AGENTIC_ENGINE_TIMEOUT: ${{ needs.agent.outputs.agentic_engine_timeout }}
           GH_AW_MODEL_NOT_SUPPORTED_ERROR: ${{ needs.agent.outputs.model_not_supported_error }}
           GH_AW_ENGINE_API_HOSTS: "api.enterprise.githubcopilot.com,api.githubcopilot.com,api.business.githubcopilot.com,api.individual.githubcopilot.com"
-          GH_AW_CODE_PUSH_FAILURE_ERRORS: ${{ needs.safe_outputs.outputs.code_push_failure_errors }}
-          GH_AW_CODE_PUSH_FAILURE_COUNT: ${{ needs.safe_outputs.outputs.code_push_failure_count }}
           GH_AW_LOCKDOWN_CHECK_FAILED: ${{ needs.activation.outputs.lockdown_check_failed }}
           GH_AW_STALE_LOCK_FILE_FAILED: ${{ needs.activation.outputs.stale_lock_file_failed }}
           GH_AW_DAILY_AI_CREDITS_EXCEEDED: ${{ needs.activation.outputs.daily_ai_credits_exceeded }}
@@ -1166,7 +1112,7 @@ jobs:
           GH_AW_MISSING_DATA_REPORT_AS_FAILURE: "true"
           GH_AW_TIMEOUT_MINUTES: "20"
         with:
-          github-token: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
+          github-token: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           script: |
             const { setupGlobals } = require('${{ runner.temp }}/gh-aw/actions/setup_globals.cjs');
             setupGlobals(core, github, context, exec, io, getOctokit);
@@ -1180,31 +1126,31 @@ jobs:
     if: (!cancelled()) && needs.agent.result != 'skipped'
     runs-on: ubuntu-slim
     permissions:
-      contents: write
-      pull-requests: write
+      contents: read
+      issues: write
     timeout-minutes: 45
     env:
       GH_AW_AGENT_AIC: ${{ needs.agent.outputs.aic }}
       GH_AW_AIC: ${{ needs.agent.outputs.aic }}
       GH_AW_AMBIENT_CONTEXT: ${{ needs.agent.outputs.ambient_context }}
-      GH_AW_CALLER_WORKFLOW_ID: "${{ github.repository }}/test-copilot-siderepo-sparse-push-to-pull-request-branch-using-dispatch"
+      GH_AW_CALLER_WORKFLOW_ID: "${{ github.repository }}/test-copilot-network-isolation"
       GH_AW_EFFECTIVE_TOKENS: ${{ needs.agent.outputs.effective_tokens }}
       GH_AW_ENGINE_ID: "copilot"
       GH_AW_ENGINE_MODEL: ${{ needs.agent.outputs.model }}
       GH_AW_ENGINE_VERSION: "1.0.65"
       GH_AW_RUNTIME_FEATURES: ${{ vars.GH_AW_RUNTIME_FEATURES }}
-      GH_AW_WORKFLOW_ID: "test-copilot-siderepo-sparse-push-to-pull-request-branch-using-dispatch"
-      GH_AW_WORKFLOW_NAME: "Test: Shallow + Sparse Checkout — Push to Pull Request Branch (Side Repo)"
-      GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref_name }}/.github/workflows/test-copilot-siderepo-sparse-push-to-pull-request-branch-using-dispatch.md"
+      GH_AW_WORKFLOW_ID: "test-copilot-network-isolation"
+      GH_AW_WORKFLOW_NAME: "Test Copilot Network Isolation"
+      GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref_name }}/.github/workflows/test-copilot-network-isolation.md"
     outputs:
       code_push_failure_count: ${{ steps.process_safe_outputs.outputs.code_push_failure_count }}
       code_push_failure_errors: ${{ steps.process_safe_outputs.outputs.code_push_failure_errors }}
       create_discussion_error_count: ${{ steps.process_safe_outputs.outputs.create_discussion_error_count }}
       create_discussion_errors: ${{ steps.process_safe_outputs.outputs.create_discussion_errors }}
+      created_issue_number: ${{ steps.process_safe_outputs.outputs.created_issue_number }}
+      created_issue_url: ${{ steps.process_safe_outputs.outputs.created_issue_url }}
       process_safe_outputs_processed_count: ${{ steps.process_safe_outputs.outputs.processed_count }}
       process_safe_outputs_temporary_id_map: ${{ steps.process_safe_outputs.outputs.temporary_id_map }}
-      push_commit_sha: ${{ steps.process_safe_outputs.outputs.push_commit_sha }}
-      push_commit_url: ${{ steps.process_safe_outputs.outputs.push_commit_url }}
     steps:
       - name: Setup Scripts
         id: setup
@@ -1215,8 +1161,8 @@ jobs:
           trace-id: ${{ needs.activation.outputs.setup-trace-id }}
           parent-span-id: ${{ needs.activation.outputs.setup-parent-span-id || needs.activation.outputs.setup-span-id }}
         env:
-          GH_AW_SETUP_WORKFLOW_NAME: "Test: Shallow + Sparse Checkout — Push to Pull Request Branch (Side Repo)"
-          GH_AW_CURRENT_WORKFLOW_REF: ${{ github.repository }}/.github/workflows/test-copilot-siderepo-sparse-push-to-pull-request-branch-using-dispatch.lock.yml@${{ github.ref }}
+          GH_AW_SETUP_WORKFLOW_NAME: "Test Copilot Network Isolation"
+          GH_AW_CURRENT_WORKFLOW_REF: ${{ github.repository }}/.github/workflows/test-copilot-network-isolation.lock.yml@${{ github.ref }}
           GH_AW_INFO_VERSION: "1.0.65"
           GH_AW_INFO_AWF_VERSION: "v0.27.11"
           GH_AW_INFO_ENGINE_ID: "copilot"
@@ -1234,50 +1180,6 @@ jobs:
           mkdir -p /tmp/gh-aw/
           find "/tmp/gh-aw/" -type f -print
           echo "GH_AW_AGENT_OUTPUT=/tmp/gh-aw/agent_output.json" >> "$GITHUB_OUTPUT"
-      - name: Download patch artifact
-        continue-on-error: true
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: agent
-          path: /tmp/gh-aw/
-      - name: Checkout repository
-        if: (!cancelled()) && needs.agent.result != 'skipped' && contains(needs.agent.outputs.output_types, 'push_to_pull_request_branch')
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-        with:
-          persist-credentials: true
-          token: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
-      - name: Checkout githubnext/gh-aw-side-repo
-        if: (!cancelled()) && needs.agent.result != 'skipped' && contains(needs.agent.outputs.output_types, 'push_to_pull_request_branch')
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-        with:
-          persist-credentials: true
-          repository: githubnext/gh-aw-side-repo
-          token: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
-          fetch-depth: 1
-          sparse-checkout: |
-            src/
-            docs/
-          filter: 'blob:limit=1073741824'
-      - name: Clear partial clone markers after sparse checkout
-        if: (!cancelled()) && needs.agent.result != 'skipped' && contains(needs.agent.outputs.output_types, 'push_to_pull_request_branch')
-        continue-on-error: true
-        run: |
-          git config --local --unset-all remote.origin.promisor || true
-          git config --local --unset-all remote.origin.partialclonefilter || true
-      - name: Fetch additional refs for githubnext/gh-aw-side-repo
-        if: (!cancelled()) && needs.agent.result != 'skipped' && contains(needs.agent.outputs.output_types, 'push_to_pull_request_branch')
-        env:
-          GH_AW_FETCH_TOKEN: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
-        run: |
-          header=$(printf "x-access-token:%s" "${GH_AW_FETCH_TOKEN}" | base64 -w 0)
-          git -c "http.extraheader=Authorization: Basic ${header}" fetch origin --depth=1 '+refs/heads/*:refs/remotes/origin/*'
-      - name: Configure Git credentials
-        if: (!cancelled()) && needs.agent.result != 'skipped' && contains(needs.agent.outputs.output_types, 'push_to_pull_request_branch')
-        env:
-          GITHUB_REPOSITORY: githubnext/gh-aw-side-repo
-          GITHUB_SERVER_URL: ${{ github.server_url }}
-          GIT_TOKEN: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
-        run: bash "${RUNNER_TEMP}/gh-aw/actions/configure_git_credentials.sh"
       - name: Configure GH_HOST for enterprise compatibility
         id: ghes-host-config
         shell: bash
@@ -1296,11 +1198,9 @@ jobs:
           GH_AW_ALLOWED_DOMAINS: "api.business.githubcopilot.com,api.enterprise.githubcopilot.com,api.github.com,api.githubcopilot.com,api.individual.githubcopilot.com,api.snapcraft.io,archive.ubuntu.com,azure.archive.ubuntu.com,crl.geotrust.com,crl.globalsign.com,crl.identrust.com,crl.sectigo.com,crl.thawte.com,crl.usertrust.com,crl.verisign.com,crl3.digicert.com,crl4.digicert.com,crls.ssl.com,github.com,host.docker.internal,json-schema.org,json.schemastore.org,keyserver.ubuntu.com,ocsp.digicert.com,ocsp.geotrust.com,ocsp.globalsign.com,ocsp.identrust.com,ocsp.sectigo.com,ocsp.ssl.com,ocsp.thawte.com,ocsp.usertrust.com,ocsp.verisign.com,packagecloud.io,packages.cloud.google.com,packages.microsoft.com,ppa.launchpad.net,raw.githubusercontent.com,registry.npmjs.org,s.symcb.com,s.symcd.com,security.ubuntu.com,telemetry.enterprise.githubcopilot.com,ts-crl.ws.symantec.com,ts-ocsp.ws.symantec.com,www.googleapis.com"
           GITHUB_SERVER_URL: ${{ github.server_url }}
           GITHUB_API_URL: ${{ github.api_url }}
-          GH_AW_SAFE_OUTPUTS_HANDLER_CONFIG: "{\"create_report_incomplete_issue\":{},\"missing_data\":{},\"missing_tool\":{},\"noop\":{\"max\":1,\"report-as-issue\":\"true\"},\"push_to_pull_request_branch\":{\"allowed_repos\":[\"githubnext/gh-aw-side-repo\"],\"if_no_changes\":\"warn\",\"max_patch_size\":4096,\"protect_top_level_dot_folders\":true,\"protected_files\":[\"package.json\",\"bun.lockb\",\"bunfig.toml\",\"deno.json\",\"deno.jsonc\",\"deno.lock\",\"global.json\",\"NuGet.Config\",\"Directory.Packages.props\",\"mix.exs\",\"mix.lock\",\"go.mod\",\"go.sum\",\"stack.yaml\",\"stack.yaml.lock\",\"pom.xml\",\"build.gradle\",\"build.gradle.kts\",\"settings.gradle\",\"settings.gradle.kts\",\"gradle.properties\",\"package-lock.json\",\"yarn.lock\",\"pnpm-lock.yaml\",\"npm-shrinkwrap.json\",\"requirements.txt\",\"Pipfile\",\"Pipfile.lock\",\"pyproject.toml\",\"setup.py\",\"setup.cfg\",\"Gemfile\",\"Gemfile.lock\",\"uv.lock\",\"CODEOWNERS\",\"DESIGN.md\",\"README.md\",\"CONTRIBUTING.md\",\"CHANGELOG.md\",\"SECURITY.md\",\"CODE_OF_CONDUCT.md\",\"AGENTS.md\",\"CLAUDE.md\",\"GEMINI.md\"],\"target\":\"${{ inputs.pull_request_number }}\",\"target-repo\":\"githubnext/gh-aw-side-repo\"},\"report_incomplete\":{}}"
-          GH_AW_CI_TRIGGER_TOKEN: ${{ secrets.GH_AW_CI_TRIGGER_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
+          GH_AW_SAFE_OUTPUTS_HANDLER_CONFIG: "{\"create_issue\":{\"labels\":[\"copilot\",\"automation\",\"haiku\"],\"max\":1,\"title_prefix\":\"[copilot-network-isolation-test] \"},\"create_report_incomplete_issue\":{},\"missing_data\":{},\"missing_tool\":{},\"noop\":{\"max\":1,\"report-as-issue\":\"true\"},\"report_incomplete\":{}}"
         with:
-          github-token: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
+          github-token: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           script: |
             const { setupGlobals } = require('${{ runner.temp }}/gh-aw/actions/setup_globals.cjs');
             setupGlobals(core, github, context, exec, io, getOctokit);
