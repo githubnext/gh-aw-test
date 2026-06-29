@@ -18,6 +18,7 @@ permissions:
 checkout:
   - repository: githubnext/gh-aw-side-repo
     token: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
+    path: gh-aw-side-repo        # cross-repo checkout into ${GITHUB_WORKSPACE}/gh-aw-side-repo
     fetch: ["*"]      # fetch all open PR refs after checkout
     fetch-depth: 1                # shallow clone — only the tip commit
     sparse-checkout: |
