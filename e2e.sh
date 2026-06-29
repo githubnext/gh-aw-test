@@ -3769,6 +3769,8 @@ run_single_test() {
                                     fi
                                 fi
                                 ;;
+                            # NOTE: *"label-command" must appear before *"command" to prevent
+                            # test-*-label-command workflows from matching the broader *"command" pattern.
                             *"label-command")
                                 info "Creating test issue to trigger $workflow..."
                                 local issue_num=$(create_test_issue "Test Issue for $ai_display_name Label Command" "This issue is for testing $workflow" "" "$target_repo")
@@ -3778,9 +3780,10 @@ run_single_test() {
                                     success "Created test issue #$issue_num for $workflow: https://github.com/$repo_url/issues/$issue_num"
                                     local label_repo_flag=""
                                     [[ -n "$target_repo" ]] && label_repo_flag="--repo $target_repo"
-                                    # Ensure the trigger label exists, then add it to the issue to fire the label_command workflow
-                                    gh label create "test-copilot-label-command" --force $label_repo_flag &>> "$LOG_FILE" || true
-                                    gh issue edit $label_repo_flag "$issue_num" --add-label "test-copilot-label-command" &>> "$LOG_FILE"
+                                    # The label_command trigger fires when the label matching the workflow name is
+                                    # added to an issue. Ensure the label exists, then add it to trigger the workflow.
+                                    gh label create "$workflow" --force $label_repo_flag &>> "$LOG_FILE" || true
+                                    gh issue edit $label_repo_flag "$issue_num" --add-label "$workflow" &>> "$LOG_FILE"
                                     if wait_for_command_comment "$issue_num" "I'm $ai_display_name" "$workflow" "$target_repo"; then
                                         test_result="PASS"
                                     fi
