@@ -571,6 +571,7 @@ get_all_tests() {
     echo "test-claude-command"
     echo "test-codex-command"
     echo "test-copilot-command"
+    echo "test-copilot-label-command"
     echo "test-claude-push-to-pull-request-branch"
     echo "test-codex-push-to-pull-request-branch"
     echo "test-copilot-push-to-pull-request-branch-using-slash-command"
@@ -3764,6 +3765,23 @@ run_single_test() {
                                     success "Created test PR #$pr_num for $workflow: https://github.com/$repo_url/pull/$pr_num"
                                     post_pr_command "$pr_num" "/test-${ai_type}-create-pull-request-review-comment" "$target_repo"
                                     if wait_for_pr_reviews "$pr_num" "$ai_display_name" "$workflow" "$target_repo"; then
+                                        test_result="PASS"
+                                    fi
+                                fi
+                                ;;
+                            *"label-command")
+                                info "Creating test issue to trigger $workflow..."
+                                local issue_num=$(create_test_issue "Test Issue for $ai_display_name Label Command" "This issue is for testing $workflow" "" "$target_repo")
+                                if [[ -n "$issue_num" ]]; then
+                                    local repo_url="$REPO_OWNER/$REPO_NAME"
+                                    [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                    success "Created test issue #$issue_num for $workflow: https://github.com/$repo_url/issues/$issue_num"
+                                    local label_repo_flag=""
+                                    [[ -n "$target_repo" ]] && label_repo_flag="--repo $target_repo"
+                                    # Ensure the trigger label exists, then add it to the issue to fire the label_command workflow
+                                    gh label create "test-copilot-label-command" --force $label_repo_flag &>> "$LOG_FILE" || true
+                                    gh issue edit $label_repo_flag "$issue_num" --add-label "test-copilot-label-command" &>> "$LOG_FILE"
+                                    if wait_for_command_comment "$issue_num" "I'm $ai_display_name" "$workflow" "$target_repo"; then
                                         test_result="PASS"
                                     fi
                                 fi
