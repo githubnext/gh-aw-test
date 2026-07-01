@@ -660,11 +660,6 @@ jobs:
               fi
               # Also summarise failures in other cells if present.
               other_failures=$(awk -F'\t' '!($2=="main" && $5=="true") {print "  - " $1 "  [" $2 ", samples=" $5 "]  run: " $6}' "$failed_tests_tsv")
-              if [[ -n "$other_failures" ]]; then
-                echo
-                echo "Other failing cells (non-main or samples=false) — lower priority:"
-                echo "$other_failures"
-              fi
               echo
               echo "Goal: for EACH failed test above, access the GitHub"
               echo "Actions logs for the run above (and the per-entry artifacts e2e-<label>-samples-<bool>,"
