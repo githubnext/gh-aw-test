@@ -20,7 +20,7 @@ checkout:
     token: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
     path: gh-aw-side-repo        # cross-repo checkout into ${GITHUB_WORKSPACE}/gh-aw-side-repo
     fetch: ["*"]      # fetch all open PR refs after checkout
-    fetch-depth: 1                # shallow clone — only the tip commit
+    fetch-depth: 10                # shallow clone — fetch the last 10 commits to ensure we can see the PR branch and its history
     sparse-checkout: |
       src/
       docs/
