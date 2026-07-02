@@ -56,6 +56,7 @@ Tracking the full matrix of [safe outputs](https://github.com/github/gh-aw/blob/
 - [x] `create-code-scanning-alert` — test-copilot-create-repository-code-scanning-alert
 - [x] `mcp` — test-copilot-mcp
 - [x] `mcp` (`code_quality` toolset) — test-copilot-mcp-code-quality
+- [x] frontmatter `skills:` install + invocation — test-copilot-skills-frontmatter
 - [x] `custom safe output jobs` — test-copilot-custom-safe-outputs
 - [x] `gh-steps` — test-copilot-gh-steps
 - [x] `add-comment` — test-copilot-add-comment
