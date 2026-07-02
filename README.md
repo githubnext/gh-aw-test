@@ -105,6 +105,7 @@ Tracking the full matrix of [safe outputs](https://github.com/github/gh-aw/blob/
 
 - [x] `dispatch-workflow` — test-copilot-dispatch-workflow
 - [x] `call-workflow` — test-copilot-call-workflow (worker: test-copilot-call-worker)
+- [x] `inline sub-agents` — test-copilot-inline-sub-agents
 - [x] `upload-asset` — test-copilot-upload-asset (auto-creates orphaned `assets/` branch)
 - [ ] `upload-artifact` — test-copilot-upload-artifact
 - [x] `noop` — test-copilot-noop

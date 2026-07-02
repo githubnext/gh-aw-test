@@ -588,6 +588,7 @@ get_all_tests() {
     echo "test-copilot-submit-pull-request-review-locked"
     echo "test-copilot-dispatch-workflow"
     echo "test-copilot-call-workflow"
+    echo "test-copilot-inline-sub-agents"
     echo "test-copilot-network-isolation"
     echo "test-copilot-noop"
     echo "test-copilot-report-incomplete"
