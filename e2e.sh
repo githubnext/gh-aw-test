@@ -584,6 +584,7 @@ get_all_tests() {
     echo "test-copilot-submit-pull-request-review"
     echo "test-copilot-set-issue-type"
     echo "test-copilot-set-issue-field"
+    echo "test-copilot-set-issue-field-builtin-rejection"
     echo "test-copilot-issue-intents"
     # Workflow_dispatch tests with inputs (dispatch-workflow needs a sentinel)
     echo "test-copilot-submit-pull-request-review-locked"
@@ -3428,7 +3429,7 @@ run_single_test() {
             fi
             ;;
         # Workflow dispatch tests - triggered with gh aw run
-        *"create-issue"|*"create-discussion"|*"create-pull-request"|*"create-two-pull-requests"|*"code-scanning-alert"|*"create-check-run"|*"mcp"*|*"safe-jobs"|*"gh-steps"|*"custom-safe-outputs"|*"noop"|*"report-incomplete"|*"assign-to-agent"|*"set-issue-field"|*"issue-intents"|*"skills-frontmatter")
+        *"create-issue"|*"create-discussion"|*"create-pull-request"|*"create-two-pull-requests"|*"code-scanning-alert"|*"create-check-run"|*"mcp"*|*"safe-jobs"|*"gh-steps"|*"custom-safe-outputs"|*"noop"|*"report-incomplete"|*"assign-to-agent"|*"set-issue-field"|*"set-issue-field-builtin-rejection"|*"issue-intents"|*"skills-frontmatter")
             local workflow_success=false
             if trigger_workflow_dispatch_and_await_completion "$workflow"; then
                 workflow_success=true

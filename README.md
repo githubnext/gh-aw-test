@@ -100,6 +100,7 @@ Tracking the full matrix of [safe outputs](https://github.com/github/gh-aw/blob/
 - [x] `unassign-from-user` — test-copilot-unassign-from-user
 - [x] `set-issue-type` — test-copilot-set-issue-type
 - [x] `set-issue-field` — test-copilot-set-issue-field
+- [x] `set-issue-field` (builtin-field rejection) — test-copilot-set-issue-field-builtin-rejection
 - [x] `issue-intents` feature flag (`create-issue` with `features.issue-intents: true`) — test-copilot-issue-intents
 
 ### Security & Agent Tasks — Remaining
