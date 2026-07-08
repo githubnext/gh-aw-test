@@ -482,6 +482,8 @@ get_title_prefix() {
         echo "[${ai_type}-test-subdir-pr] "
     elif [[ "$workflow_name" == *"sparse-create-pull-request"* ]]; then
         echo "[${ai_type}-test-sparse-pr] "
+    elif [[ "$workflow_name" == *"update-pull-request-required-labels"* ]]; then
+        echo "[${ai_type}-rltpr] "
     elif [[ "$workflow_name" == *"create-pull-request"* ]]; then
         echo "[${ai_type}-test-single-pr] "
     elif [[ "$workflow_name" == *"gh-steps"* ]]; then
@@ -565,6 +567,7 @@ get_all_tests() {
     echo "test-claude-update-pull-request"
     echo "test-codex-update-pull-request"
     echo "test-copilot-update-pull-request"
+    echo "test-copilot-update-pull-request-required-labels"
     echo "test-copilot-close-pull-request"
     echo "test-copilot-add-reviewer"
     echo "test-copilot-mark-pull-request-as-ready-for-review"
@@ -3428,7 +3431,7 @@ run_single_test() {
             fi
             ;;
         # Workflow dispatch tests - triggered with gh aw run
-        *"create-issue"|*"create-discussion"|*"create-pull-request"|*"create-two-pull-requests"|*"code-scanning-alert"|*"create-check-run"|*"mcp"*|*"safe-jobs"|*"gh-steps"|*"custom-safe-outputs"|*"noop"|*"report-incomplete"|*"assign-to-agent"|*"set-issue-field"|*"issue-intents"|*"skills-frontmatter")
+        *"create-issue"|*"create-discussion"|*"create-pull-request"|*"create-two-pull-requests"|*"code-scanning-alert"|*"create-check-run"|*"mcp"*|*"safe-jobs"|*"gh-steps"|*"custom-safe-outputs"|*"noop"|*"report-incomplete"|*"assign-to-agent"|*"set-issue-field"|*"issue-intents"|*"skills-frontmatter"|*"update-pull-request-required-labels")
             local workflow_success=false
             if trigger_workflow_dispatch_and_await_completion "$workflow"; then
                 workflow_success=true
@@ -3508,6 +3511,24 @@ run_single_test() {
                         local expected_labels=$(get_expected_labels "$ai_type")
                         if validate_issue_created "$title_prefix" "$expected_labels" "$target_repo"; then
                             validation_success=true
+                        fi
+                        ;;
+                    *"update-pull-request-required-labels")
+                        local title_prefix=$(get_title_prefix "$workflow" "$ai_type")
+                        local repo_flag=""
+                        [[ -n "$target_repo" ]] && repo_flag="--repo $target_repo"
+                        local pr_number=$(gh pr list $repo_flag --limit 10 --json number,title \
+                            --jq ".[] | select(.title | startswith(\"$title_prefix\")) | .number" | head -1)
+                        if [[ -n "$pr_number" ]]; then
+                            local pr_body=$(gh pr view $repo_flag "$pr_number" --json body --jq '.body')
+                            if [[ "$pr_body" == *"automatically updated by"* ]]; then
+                                success "PR #$pr_number created and updated by $ai_display_name (required-labels filter validated)"
+                                validation_success=true
+                            else
+                                warning "PR #$pr_number found but not yet updated. Body: ${pr_body:0:200}"
+                            fi
+                        else
+                            error "No PR found with title prefix '$title_prefix'"
                         fi
                         ;;
                     *)
