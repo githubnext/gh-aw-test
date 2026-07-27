@@ -3298,7 +3298,7 @@ run_single_test() {
                 echo ""
                 
                 local workflow_success=false
-                if trigger_workflow_with_inputs "$workflow" "pull_request_number=$pr_num"; then
+                if trigger_workflow_with_inputs "$workflow" "pull_request_number=$pr_num" "branch_name=$branch_name"; then
                     workflow_success=true
                 fi
                 
@@ -3421,7 +3421,7 @@ run_single_test() {
                     echo -e "${CYAN}━━━ Running workflow test ━━━${NC}"
                     echo ""
                     # Test passes if the workflow job exits 0 — no review is expected to be posted
-                    if trigger_workflow_with_inputs "$workflow" "pull_request_number=$pr_num"; then
+                    if trigger_workflow_with_inputs "$workflow" "pull_request_number=$pr_num" "branch_name=$branch_name"; then
                         test_result="PASS"
                     fi
                 else

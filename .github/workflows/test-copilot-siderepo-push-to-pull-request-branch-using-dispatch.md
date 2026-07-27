@@ -2,6 +2,10 @@
 on:
   workflow_dispatch:
     inputs:
+      branch_name:
+        description: 'Pull request branch name'
+        required: true
+        type: string
       pull_request_number:
         description: 'Pull request number'
         required: true
@@ -33,6 +37,7 @@ tools:
 safe-outputs:
   github-token: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
   push-to-pull-request-branch:
+    branch: ${{ inputs.branch_name }}
     target: ${{ inputs.pull_request_number }}
     target-repo: 'githubnext/gh-aw-side-repo'
     allowed-repos: ['githubnext/gh-aw-side-repo']
@@ -49,7 +54,7 @@ safe-outputs:
           +This file was created by Copilot in the side repository.
 ---
 
-1. Checkout the pull request branch for PR #${{ inputs.pull_request_number }} in repository githubnext/gh-aw-side-repo
+1. Checkout branch "${{ inputs.branch_name }}" for PR #${{ inputs.pull_request_number }} in repository githubnext/gh-aw-side-repo
 2. Create a file "README-copilot-test.md" with content:
    ```markdown
    # Copilot Push Test
@@ -61,4 +66,4 @@ safe-outputs:
    print("Hello from Copilot push test")
    ```
 4. Commit both files in separate commits
-5. Push the commits to the pull request branch for PR #${{ inputs.pull_request_number }}
+5. Push the commits to branch "${{ inputs.branch_name }}" for PR #${{ inputs.pull_request_number }}

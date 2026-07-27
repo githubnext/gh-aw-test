@@ -2,6 +2,10 @@
 on:
   workflow_dispatch:
     inputs:
+      branch_name:
+        description: 'Pull request branch name'
+        required: true
+        type: string
       pull_request_number:
         description: 'Pull request number'
         required: true
@@ -20,6 +24,7 @@ engine:
 
 safe-outputs:
   push-to-pull-request-branch:
+    branch: ${{ inputs.branch_name }}
     target: ${{ inputs.pull_request_number }}
     samples:
       - message: "Dispatch-triggered push test from Copilot"
@@ -39,7 +44,7 @@ safe-outputs:
 This test exercises `push-to-pull-request-branch` triggered via `workflow_dispatch`
 rather than a slash command, using the `target:` field to identify the pull request.
 
-1. Checkout the branch for PR #${{ inputs.pull_request_number }}
+1. Checkout the branch "${{ inputs.branch_name }}" for PR #${{ inputs.pull_request_number }}
 2. Create a file "README-copilot-dispatch-test.md" with content:
    ```markdown
    # Copilot Push-to-Branch Test (Dispatch)
@@ -47,4 +52,4 @@ rather than a slash command, using the `target:` field to identify the pull requ
    This file was created by the Copilot agentic workflow via workflow_dispatch.
    ```
 3. Commit the file
-4. Push the commit to the pull request branch for PR #${{ inputs.pull_request_number }}
+4. Push the commit to branch "${{ inputs.branch_name }}" for PR #${{ inputs.pull_request_number }}
