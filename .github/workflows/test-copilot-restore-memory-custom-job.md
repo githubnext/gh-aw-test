@@ -13,10 +13,12 @@ permissions:
 engine:
   id: copilot
 
+tools:
+  cache-memory: true
+
 jobs:
   setup:
-    restore-memory:
-      cache-memory: true
+    restore-memory: true
     steps:
       - name: Verify cache-memory restore step was injected
         run: echo "cache-memory restore step injection verified"

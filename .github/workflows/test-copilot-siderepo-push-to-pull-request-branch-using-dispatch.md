@@ -38,7 +38,6 @@ safe-outputs:
     allowed-repos: ['githubnext/gh-aw-side-repo']
     samples:
       - message: "Multi-commit test push from Copilot in side repo"
-        pull_request_number: "${{ github.event.inputs.pull_request_number }}"
         patch: |
           diff --git a/README-copilot-siderepo-test.md b/README-copilot-siderepo-test.md
           new file mode 100644
