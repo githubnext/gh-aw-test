@@ -3298,7 +3298,7 @@ run_single_test() {
                 echo ""
                 
                 local workflow_success=false
-                if trigger_workflow_with_inputs "$workflow" "pull_request_number=$pr_num" "branch_name=$branch_name"; then
+                if trigger_workflow_with_inputs "$workflow" "pull_request_number=$pr_num"; then
                     workflow_success=true
                 fi
                 
@@ -3421,7 +3421,7 @@ run_single_test() {
                     echo -e "${CYAN}━━━ Running workflow test ━━━${NC}"
                     echo ""
                     # Test passes if the workflow job exits 0 — no review is expected to be posted
-                    if trigger_workflow_with_inputs "$workflow" "pull_request_number=$pr_num" "branch_name=$branch_name"; then
+                    if trigger_workflow_with_inputs "$workflow" "pull_request_number=$pr_num"; then
                         test_result="PASS"
                     fi
                 else
@@ -3694,7 +3694,7 @@ run_single_test() {
                                     local repo_url="$REPO_OWNER/$REPO_NAME"
                                     [[ -n "$target_repo" ]] && repo_url="$target_repo"
                                     success "Created test PR #$pr_num for $workflow with branch '$branch_name': https://github.com/$repo_url/pull/$pr_num"
-                                    if trigger_workflow_with_inputs "$workflow" "pull_request_number=$pr_num"; then
+                                    if trigger_workflow_with_inputs "$workflow" "pull_request_number=$pr_num" "branch_name=$branch_name"; then
                                         if wait_for_branch_update "$branch_name" "$after_commit_sha" "$workflow" "$target_repo"; then
                                             test_result="PASS"
                                         fi
