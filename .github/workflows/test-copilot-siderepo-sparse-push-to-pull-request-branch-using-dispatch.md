@@ -2,6 +2,10 @@
 on:
   workflow_dispatch:
     inputs:
+      branch_name:
+        description: 'Pull request branch name'
+        required: true
+        type: string
       pull_request_number:
         description: 'Pull request number'
         required: true
@@ -38,6 +42,7 @@ tools:
 safe-outputs:
   github-token: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
   push-to-pull-request-branch:
+    branch: ${{ inputs.branch_name }}
     target: ${{ inputs.pull_request_number }}
     target-repo: 'githubnext/gh-aw-side-repo'
     allowed-repos: ['githubnext/gh-aw-side-repo']
@@ -62,7 +67,7 @@ checked out with:
 - `sparse-checkout: src/ docs/` — only the `src/` and `docs/` subtrees are
   present on disk (`data/`, `scripts/`, `tests/` are excluded)
 
-1. Checkout the pull request branch for PR #${{ inputs.pull_request_number }} in repository githubnext/gh-aw-side-repo
+1. Checkout branch "${{ inputs.branch_name }}" for PR #${{ inputs.pull_request_number }} in repository githubnext/gh-aw-side-repo
 2. Create a file "src/sparse-test.py" with content:
    ```python
    # Added by Copilot via shallow sparse-checkout push test
@@ -70,4 +75,4 @@ checked out with:
    print("sparse checkout push test")
    ```
 3. Commit the file
-4. Push the commit to the pull request branch for PR #${{ inputs.pull_request_number }}
+4. Push the commit to branch "${{ inputs.branch_name }}" for PR #${{ inputs.pull_request_number }}
