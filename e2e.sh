@@ -3430,7 +3430,7 @@ run_single_test() {
             fi
             ;;
         # Workflow dispatch tests - triggered with gh aw run
-        *"create-issue"|*"create-discussion"|*"create-pull-request"|*"create-two-pull-requests"|*"code-scanning-alert"|*"create-check-run"|*"mcp"*|*"safe-jobs"|*"gh-steps"|*"restore-memory-custom-job"|*"custom-safe-outputs"|*"noop"|*"report-incomplete"|*"assign-to-agent"|*"set-issue-field"|*"set-issue-field-builtin-rejection"|*"issue-intents"|*"skills-frontmatter")
+        *"create-issue"|*"create-discussion"|*"create-pull-request"|*"create-two-pull-requests"|*"code-scanning-alert"|*"create-check-run"|*"mcp"*|*"safe-jobs"|*"gh-steps"|*"restore-memory-custom-job"|*"custom-safe-outputs"|*"noop"|*"report-incomplete"|*"assign-to-agent"|*"set-issue-field"|*"set-issue-field-builtin-rejection"|*"issue-intents"|*"skills-frontmatter"|*"inline-sub-agents"|*"network-isolation")
             local workflow_success=false
             if trigger_workflow_dispatch_and_await_completion "$workflow"; then
                 workflow_success=true
@@ -3449,7 +3449,7 @@ run_single_test() {
                             validation_success=true
                         fi
                         ;;
-                    *"create-issue"|*"skills-frontmatter"|*"restore-memory-custom-job")
+                    *"create-issue"|*"skills-frontmatter"|*"restore-memory-custom-job"|*"inline-sub-agents"|*"network-isolation")
                         local title_prefix=$(get_title_prefix "$workflow" "$ai_type")
                         local expected_labels=$(get_expected_labels "$ai_type")
                         if validate_issue_created "$title_prefix" "$expected_labels" "$target_repo"; then
