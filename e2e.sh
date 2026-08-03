@@ -569,6 +569,7 @@ get_all_tests() {
     echo "test-copilot-close-pull-request"
     echo "test-copilot-add-reviewer"
     echo "test-copilot-mark-pull-request-as-ready-for-review"
+    echo "test-copilot-pull-request-target-ready-for-review"
     # Command-triggered tests
     echo "test-claude-command"
     echo "test-codex-command"
@@ -3917,6 +3918,19 @@ run_single_test() {
                                     success "Created test PR #$pr_num for $workflow: https://github.com/$repo_url/pull/$pr_num"
                                     post_pr_command "$pr_num" "/test-${ai_type}-submit-pull-request-review" "$target_repo"
                                     if wait_for_pr_review_with_body "$pr_num" "Reviewed by $ai_display_name submit-pull-request-review safe output" "$workflow" "$target_repo"; then
+                                        test_result="PASS"
+                                    fi
+                                fi
+                                ;;
+                            *"pull-request-target-ready-for-review")
+                                info "Creating test pull request to trigger $workflow..."
+                                local pr_num=$(create_test_pr "Test PR for $ai_display_name pull-request-target-ready-for-review" "This PR is for testing $workflow." "$target_repo")
+                                if [[ -n "$pr_num" ]]; then
+                                    local repo_url="$REPO_OWNER/$REPO_NAME"
+                                    [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                    success "Created test PR #$pr_num for $workflow: https://github.com/$repo_url/pull/$pr_num"
+                                    sleep 10
+                                    if wait_for_comment "$pr_num" "Reply from $ai_display_name" "$workflow" "$target_repo"; then
                                         test_result="PASS"
                                     fi
                                 fi

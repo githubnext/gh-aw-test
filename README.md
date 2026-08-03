@@ -89,6 +89,7 @@ Tracking the full matrix of [safe outputs](https://github.com/github/gh-aw/blob/
 - [x] `submit-pull-request-review` (locked PR soft-skip) — test-copilot-submit-pull-request-review-locked
 - [x] `add-reviewer` — test-copilot-add-reviewer
 - [x] `mark-pull-request-as-ready-for-review` — test-copilot-mark-pull-request-as-ready-for-review
+- [x] `pull_request_target` with `ready_for_review` activity type (schema regression) — test-copilot-pull-request-target-ready-for-review
 - [ ] `merge-pull-request` — cannot yet be sample-tested because the current workflow schema rejects `samples:` for `merge-pull-request`
 
 ### Labels, Assignments & Reviews — Remaining
