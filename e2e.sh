@@ -180,7 +180,7 @@ safe_run() {
 # Configuration
 REPO_OWNER="githubnext"
 REPO_NAME="gh-aw-test"
-TIMEOUT_MINUTES=10
+TIMEOUT_MINUTES=15
 # In CI, poll 10x less frequently (50s vs 5s) to conserve GitHub API rate limits.
 # The human isn't watching for fast feedback, so the extra latency is fine.
 POLL_INTERVAL=5
@@ -4064,8 +4064,8 @@ run_tests_parallel() {
         # Wait for batch to complete with live status
         local completed=0
         local total_in_batch=${#batch_tests[@]}
-        # Hard ceiling per test — PR-triggered tests + validation polling can take ~5–8 min in parallel
-        local per_test_kill_seconds=600
+        # Hard ceiling per test — the call-workflow test (nested workflow_call) can take ~10–12 min
+        local per_test_kill_seconds=900
         echo
         info "  ⏳ Waiting for $total_in_batch tests to complete (per-test kill after ${per_test_kill_seconds}s)..."
 
