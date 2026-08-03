@@ -60,6 +60,7 @@ Tracking the full matrix of [safe outputs](https://github.com/github/gh-aw/blob/
 - [x] `custom safe output jobs` — test-copilot-custom-safe-outputs
 - [x] `gh-steps` — test-copilot-gh-steps
 - [ ] `restore-memory` in custom job (`jobs.<id>.restore-memory`) — test-copilot-restore-memory-custom-job
+- [ ] `jobs.agent.if`/`jobs.agent.needs` gating — test-copilot-agent-job-if-gating
 - [x] `add-comment` — test-copilot-add-comment
 - [x] `add-comment` (discussions) — test-copilot-add-discussion-comment
 - [x] `add-labels` — test-copilot-add-labels
