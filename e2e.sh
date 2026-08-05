@@ -2987,6 +2987,15 @@ create_test_pr_with_review_comment() {
         --field line=1 \
         --field side="RIGHT" --jq '.id' 2>/dev/null)
 
+    # A failed review-comment POST (e.g. HTTP 422 when the line is not yet part of
+    # the PR diff) leaves comment_id empty. Bail out with an empty fixture so the
+    # caller's `[[ -n "$comment_id" ]]` / `[[ -n "$thread_id" ]]` guards skip the
+    # dispatch instead of triggering the workflow with a bogus identifier.
+    if [[ -z "$comment_id" || ! "$comment_id" =~ ^[0-9]+$ ]]; then
+        echo ""
+        return
+    fi
+
     # Resolve the thread node id via GraphQL
     local owner="$REPO_OWNER"
     local name="$REPO_NAME"
@@ -2997,6 +3006,14 @@ create_test_pr_with_review_comment() {
     local thread_id
     thread_id=$(gh api graphql -f query="{ repository(owner: \"$owner\", name: \"$name\") { pullRequest(number: $pr_number) { reviewThreads(first: 20) { nodes { id comments(first: 1) { nodes { databaseId } } } } } } }" \
         --jq ".data.repository.pullRequest.reviewThreads.nodes[] | select(.comments.nodes[0].databaseId == $comment_id) | .id" 2>/dev/null | head -1)
+
+    # Only emit a thread_id that looks like a real GraphQL node id. GitHub error
+    # payloads or partial responses must never be forwarded as a dispatch input,
+    # otherwise resolve_pull_request_review_thread fails with "Could not resolve
+    # to a node with the global id" in the safe_outputs job.
+    if [[ -n "$thread_id" && ! "$thread_id" =~ ^[A-Za-z0-9_=-]+$ ]]; then
+        thread_id=""
+    fi
 
     echo "$pr_number,$comment_id,$thread_id"
 }
