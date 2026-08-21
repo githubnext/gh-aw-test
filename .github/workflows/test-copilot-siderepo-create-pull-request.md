@@ -20,6 +20,7 @@ tools:
 
 checkout:
   - repository: githubnext/gh-aw-side-repo
+    path: gh-aw-side-repo
     token: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
     fetch: ["*"]      # fetch all open PR refs after checkout
     fetch-depth: 0               # fetch full history to ensure we can see all commits and PR details

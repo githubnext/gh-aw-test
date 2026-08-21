@@ -20,6 +20,7 @@ tools:
 
 checkout:
   - repository: githubnext/gh-aw-side-repo
+    path: gh-aw-side-repo
     token: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
     fetch-depth: 1                # shallow clone — only the tip commit
     sparse-checkout: |
