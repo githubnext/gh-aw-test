@@ -87,6 +87,7 @@ Tracking the full matrix of [safe outputs](https://github.com/github/gh-aw/blob/
 - [x] `resolve-pull-request-review-thread` — test-copilot-resolve-pull-request-review-thread
 - [x] `submit-pull-request-review` — test-copilot-submit-pull-request-review
 - [x] `submit-pull-request-review` (locked PR soft-skip) — test-copilot-submit-pull-request-review-locked
+- [x] `dismiss-pull-request-review` — test-copilot-dismiss-pull-request-review
 - [x] `add-reviewer` — test-copilot-add-reviewer
 - [x] `mark-pull-request-as-ready-for-review` — test-copilot-mark-pull-request-as-ready-for-review
 - [ ] `merge-pull-request` — cannot yet be sample-tested because the current workflow schema rejects `samples:` for `merge-pull-request`
@@ -94,6 +95,7 @@ Tracking the full matrix of [safe outputs](https://github.com/github/gh-aw/blob/
 ### Labels, Assignments & Reviews — Remaining
 
 - [x] `remove-labels` — test-copilot-remove-labels
+- [x] `replace-label` — test-copilot-replace-label
 - [x] `hide-comment` — test-copilot-hide-comment
 - [x] `assign-milestone` — test-copilot-assign-milestone
 - [x] `assign-to-agent` — test-copilot-assign-to-agent
@@ -113,6 +115,8 @@ Tracking the full matrix of [safe outputs](https://github.com/github/gh-aw/blob/
 - [ ] `upload-artifact` — test-copilot-upload-artifact
 - [x] `noop` — test-copilot-noop
 - [x] `report-incomplete` — test-copilot-report-incomplete
+- [x] `missing-data` — test-copilot-missing-data
+- [x] `missing-tool` — test-copilot-missing-tool
 - [x] `create-check-run` — test-copilot-create-check-run
 - [x] `update-release` — test-copilot-update-release
 
@@ -123,5 +127,4 @@ Tracking the full matrix of [safe outputs](https://github.com/github/gh-aw/blob/
 - [ ] `upload-artifact` — needs a staged fixture file plus artifact-specific assertions in the harness
 - [ ] `autofix-code-scanning-alert` — requires existing code scanning alerts
 - [ ] `dispatch_repository` — experimental, requires cross-repo setup
-- [ ] `missing-data` — system type, auto-enabled
 - [ ] `merge-pull-request` — verified against `github/gh-aw@origin/main`: the workflow JSON schema still rejects `samples:` on `merge-pull-request` (the Go struct accepts it, but schema validation fails compile), so it cannot be sample-tested yet
