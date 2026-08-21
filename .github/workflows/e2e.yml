@@ -322,6 +322,11 @@ jobs:
           # Slug uniquely identifies this (ref × samples) combination and is used
           # for the per-entry report files.
           slug=$(echo "${E2E_REF}-samples-${E2E_USE_SAMPLES}" | tr '/' '_' | tr -cd 'A-Za-z0-9._-')
+          mkdir -p ../report
+          export E2E_RUN_FAILURES_FILE="$PWD/../report/fails-${slug}.txt"
+          export E2E_RUN_PASSES_FILE="$PWD/../report/passes-${slug}.txt"
+          : > "$E2E_RUN_FAILURES_FILE"
+          : > "$E2E_RUN_PASSES_FILE"
 
           # The matrix is serial (max-parallel: 1), so each entry can safely
           # recompile, push to main, and dispatch every test from main without
@@ -359,17 +364,6 @@ jobs:
           rc=${PIPESTATUS[0]}
           echo "exit_code=$rc" >> "$GITHUB_OUTPUT"
 
-          mkdir -p ../report
-          if [[ -s fails.txt ]]; then
-            cp fails.txt "../report/fails-${slug}.txt"
-          else
-            : > "../report/fails-${slug}.txt"
-          fi
-          if [[ -s passes.txt ]]; then
-            cp passes.txt "../report/passes-${slug}.txt"
-          else
-            : > "../report/passes-${slug}.txt"
-          fi
           printf '%s' "$E2E_REF"  > "../report/ref-${slug}.txt"
           printf '%s' "$E2E_MODE" > "../report/mode-${slug}.txt"
           printf '%s' "$rc"               > "../report/rc-${slug}.txt"
@@ -382,16 +376,27 @@ jobs:
         if: always()
         working-directory: gh-aw-test
         run: |
+          slug=$(echo "${{ matrix.entry.ref }}-samples-${{ matrix.entry.samples }}" | tr '/' '_' | tr -cd 'A-Za-z0-9._-')
+          passes_file="../report/passes-${slug}.txt"
+          fails_file="../report/fails-${slug}.txt"
           {
             echo "## E2E: ${{ matrix.entry.label }} — gh-aw@${{ matrix.entry.ref }} (${{ matrix.entry.mode }} mode, samples=${{ matrix.entry.samples }})"
             echo
             echo "Exit code: \`${{ steps.run.outputs.exit_code }}\`"
             echo
-            if [[ -s fails.txt ]]; then
+            if [[ -s "$passes_file" ]]; then
+              echo "### Passed tests"
+              echo '```'
+              cat "$passes_file"
+              echo '```'
+            fi
+            if [[ -s "$fails_file" ]]; then
               echo "### Failed tests"
               echo '```'
-              cat fails.txt
+              cat "$fails_file"
               echo '```'
+            elif [[ ! -s "$passes_file" ]]; then
+              echo "_No tests executed._"
             else
               echo "_No failed tests recorded._"
             fi
@@ -406,7 +411,6 @@ jobs:
             gh-aw-test/e2e-test-*.log
             gh-aw-test/e2e-output.log
             gh-aw-test/fails.txt
-            gh-aw-test/passes.txt
             report/
 
   report:
@@ -432,7 +436,6 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           SERVER_URL: ${{ github.server_url }}
           REPO: ${{ github.repository }}
-          E2E_RESULT: ${{ needs.e2e.result }}
         run: |
           set -euo pipefail
 
@@ -440,13 +443,15 @@ jobs:
           # Pass 1: gather per-entry data into TSV accumulators so we can
           # render an aggregate summary and a failures-first report.
           # ---------------------------------------------------------------
-          entries_tsv=$(mktemp)     # label \t ref \t mode \t samples \t rc \t count \t status
+          entries_tsv=$(mktemp)     # label \t ref \t mode \t samples \t rc \t failed \t passed \t status
           failed_tests_tsv=$(mktemp)  # test \t label \t ref \t mode \t samples \t run_url
           passed_tests_tsv=$(mktemp)  # test \t label \t ref \t mode \t samples \t run_url
 
           total_entries=0
           entries_passed=0
           entries_failed=0
+          entries_infrastructure=0
+          entries_no_tests=0
           entries_unknown=0
           total_failed_tests=0
           overall_failed=0
@@ -484,7 +489,9 @@ jobs:
 
             # Collect each passed test + a link to its run.
             passes_file="${art}/report/passes-${slug}.txt"
+            passed_count=0
             if [[ -s "$passes_file" ]]; then
+              passed_count=$(grep -c . "$passes_file" || true)
               while IFS= read -r fline; do
                 [[ -z "$fline" ]] && continue
                 tname="${fline%% *}"
@@ -503,6 +510,14 @@ jobs:
               status="⚪ unknown"
               entries_unknown=$((entries_unknown + 1))
               overall_failed=1
+            elif [[ "$count" -eq 0 && "$passed_count" -eq 0 && "$rc" != "0" ]]; then
+              status="🛑 infrastructure error"
+              entries_infrastructure=$((entries_infrastructure + 1))
+              overall_failed=1
+            elif [[ "$count" -eq 0 && "$passed_count" -eq 0 ]]; then
+              status="⚠️ no tests executed"
+              entries_no_tests=$((entries_no_tests + 1))
+              overall_failed=1
             elif [[ "$rc" == "0" && "$count" -eq 0 ]]; then
               status="✅ pass"
               entries_passed=$((entries_passed + 1))
@@ -513,14 +528,16 @@ jobs:
             fi
 
             total_failed_tests=$((total_failed_tests + count))
-            printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
-              "$label" "$ref" "$mode" "$samples" "$rc" "$count" "$status" >> "$entries_tsv"
+            printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+              "$label" "$ref" "$mode" "$samples" "$rc" "$count" "$passed_count" "$status" >> "$entries_tsv"
           done < <(echo "$MATRIX_JSON" | jq -r '.[] | [.label, .ref, .mode, (.samples|tostring)] | @tsv')
 
           if [[ "$overall_failed" == "0" ]]; then
             headline="✅ All ${total_entries} matrix entr$([[ $total_entries -eq 1 ]] && echo y || echo ies) passed"
+            report_outcome="success"
           else
-            headline="❌ ${entries_failed} of ${total_entries} matrix entr$([[ $total_entries -eq 1 ]] && echo y || echo ies) failed (${total_failed_tests} failed test run(s))"
+            headline="❌ Matrix incomplete: ${entries_failed} failing test entr$([[ $entries_failed -eq 1 ]] && echo y || echo ies) (${total_failed_tests} failed test run(s)), ${entries_infrastructure} infrastructure error(s), ${entries_no_tests} entr$([[ $entries_no_tests -eq 1 ]] && echo y || echo ies) with no tests executed"
+            report_outcome="failure"
           fi
 
           # ---------------------------------------------------------------
@@ -529,7 +546,7 @@ jobs:
           declare -A _ref_for_label=()   # label -> ref
           declare -A _cell_status=()     # "samples:test:label" -> "pass" or "fail"
           declare -A _cell_url=()        # "samples:test:label" -> run URL
-          while IFS=$'\t' read -r label ref mode samples rc count status; do
+          while IFS=$'\t' read -r label ref mode samples rc count passed status; do
             [[ -z "$label" ]] && continue
             _ref_for_label["$label"]="$ref"
           done < "$entries_tsv"
@@ -627,7 +644,17 @@ jobs:
           # Pass 2: render the markdown report.
           # ---------------------------------------------------------------
           {
-            echo "**Run:** [$RUN_URL]($RUN_URL) &nbsp;·&nbsp; **Trigger:** \`${{ github.event_name }}\` &nbsp;·&nbsp; **Generated:** \`$(date -u +%FT%TZ)\` &nbsp;·&nbsp; **Outcome:** \`$E2E_RESULT\`"
+            echo "**Run:** [$RUN_URL]($RUN_URL) &nbsp;·&nbsp; **Trigger:** \`${{ github.event_name }}\` &nbsp;·&nbsp; **Generated:** \`$(date -u +%FT%TZ)\` &nbsp;·&nbsp; **Outcome:** \`$report_outcome\`"
+            echo
+            echo "## Matrix summary"
+            echo
+            echo "**${headline}**"
+            echo
+            echo "| entry | ref | mode | samples | exit code | passed | failed | status |"
+            echo "| :--- | :--- | :--- | :---: | :---: | ---: | ---: | :--- |"
+            while IFS=$'\t' read -r label ref mode samples rc failed passed status; do
+              echo "| ${label} | $(_make_ref_link "$ref") | ${mode} | ${samples} | ${rc} | ${passed} | ${failed} | ${status} |"
+            done < "$entries_tsv"
             echo
 
             _render_matrix_table "true"  "errors"    "❌ Test errors — samples mode"
@@ -637,7 +664,7 @@ jobs:
 
             # When anything failed, append a ready-to-paste prompt for a coding
             # agent to triage the failures from the run logs.
-            if [[ "$overall_failed" != "0" ]]; then
+            if [[ "$total_failed_tests" -gt 0 ]]; then
               echo "## 🤖 Agent triage prompt"
               echo
               echo "Copy the block below into a coding agent (e.g. Copilot) to investigate the failures:"

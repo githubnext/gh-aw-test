@@ -59,6 +59,8 @@ declare -a FAILED_TESTS=()
 declare -a SKIPPED_TESTS=()
 declare -A TEST_RUN_URLS=()  # maps test name -> actions run URL (when available)
 declare -A FINAL_RUN_URLS=()  # populated in parent during batch result reading
+RUN_PASSES_FILE="${E2E_RUN_PASSES_FILE:-passes.txt}"
+RUN_FAILURES_FILE="${E2E_RUN_FAILURES_FILE:-}"
 
 # Parallel execution settings
 BATCH_SIZE=25
@@ -98,20 +100,20 @@ is_protected_workflow() {
     return 1
 }
 
-# Record a test pass: update arrays, write to passes.txt, and remove from fails.txt
+# Record a test pass: update arrays, write the current-run result, and remove from fails.txt
 record_test_pass() {
     local test_name="$1"
     PASSED_TESTS+=("$test_name")
-    # Write to passes.txt with run ID (same format as fails.txt)
+    # Write the current-run result with run ID (same format as fails.txt)
     local _url="${TEST_RUN_URLS[$test_name]:-}"
     local _run_id=""
     if [[ -n "$_url" ]]; then
         _run_id="${_url##*/}"
     fi
     if [[ -n "$_run_id" ]]; then
-        echo "$test_name $_run_id" >> "passes.txt"
+        echo "$test_name $_run_id" >> "$RUN_PASSES_FILE"
     else
-        echo "$test_name" >> "passes.txt"
+        echo "$test_name" >> "$RUN_PASSES_FILE"
     fi
     # Remove the test from fails.txt if present
     if [[ -f "fails.txt" ]]; then
@@ -143,6 +145,13 @@ record_test_fail() {
             --limit=1 \
             --json databaseId \
             --jq '.[0].databaseId' 2>/dev/null || echo "")
+    fi
+    if [[ -n "$RUN_FAILURES_FILE" ]]; then
+        if [[ -n "$_run_id" ]]; then
+            echo "$test_name $_run_id" >> "$RUN_FAILURES_FILE"
+        else
+            echo "$test_name" >> "$RUN_FAILURES_FILE"
+        fi
     fi
     # Update fails.txt: append run ID to existing line or add new entry
     if [[ -f "fails.txt" ]] && grep -q "^${test_name} \|^${test_name}$" "fails.txt" 2>/dev/null; then
