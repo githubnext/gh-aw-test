@@ -563,6 +563,7 @@ get_all_tests() {
     echo "test-copilot-update-issue"
     echo "test-copilot-close-issue"
     echo "test-copilot-remove-labels"
+    echo "test-copilot-replace-label"
     echo "test-copilot-close-discussion"
     echo "test-copilot-update-discussion"
     echo "test-copilot-assign-to-user"
@@ -598,12 +599,15 @@ get_all_tests() {
     echo "test-copilot-issue-intents"
     # Workflow_dispatch tests with inputs (dispatch-workflow needs a sentinel)
     echo "test-copilot-submit-pull-request-review-locked"
+    echo "test-copilot-dismiss-pull-request-review"
     echo "test-copilot-dispatch-workflow"
     echo "test-copilot-call-workflow"
     echo "test-copilot-inline-sub-agents"
     echo "test-copilot-network-isolation"
     echo "test-copilot-noop"
     echo "test-copilot-report-incomplete"
+    echo "test-copilot-missing-data"
+    echo "test-copilot-missing-tool"
     echo "test-copilot-update-release"
     echo "test-copilot-upload-asset"
     # Nosandbox tests - limited set for claude/codex, full matrix for copilot
@@ -2210,6 +2214,47 @@ wait_for_label_removed() {
     return 1
 }
 
+validate_label_replaced() {
+    local issue_number="$1"
+    local removed_label="$2"
+    local added_label="$3"
+    local repo="${4:-}"
+    local repo_flag=""
+    [[ -n "$repo" ]] && repo_flag="--repo $repo"
+
+    local labels
+    labels=$(gh issue view $repo_flag "$issue_number" --json labels --jq '.labels[].name' | tr '\n' ',')
+    if [[ "$labels" != *"$removed_label"* && "$labels" == *"$added_label"* ]]; then
+        success "Issue #$issue_number replaced label '$removed_label' with '$added_label'"
+        return 0
+    fi
+    warning "(polling) Issue #$issue_number has not completed label replacement. Current labels: '$labels'"
+    return 1
+}
+
+wait_for_label_replaced() {
+    local issue_number="$1"
+    local removed_label="$2"
+    local added_label="$3"
+    local test_name="$4"
+    local repo="${5:-}"
+    local max_wait=480
+    local waited=0
+
+    while [[ $waited -lt $max_wait ]]; do
+        if validate_label_replaced "$issue_number" "$removed_label" "$added_label" "$repo"; then
+            record_test_pass "$test_name"
+            return 0
+        fi
+        info "..."
+        sleep "$OUTCOME_POLL_INTERVAL"
+        waited=$((waited + OUTCOME_POLL_INTERVAL))
+    done
+
+    record_test_fail "$test_name"
+    return 1
+}
+
 validate_discussion_closed() {
     local discussion_number="$1"
     local repo="${2:-}"
@@ -2784,6 +2829,43 @@ wait_for_pr_review_with_body() {
     local waited=0
     while [[ $waited -lt $max_wait ]]; do
         if validate_pr_review_with_body "$pr_number" "$expected_body_substring" "$repo"; then
+            record_test_pass "$test_name"
+            return 0
+        fi
+        info "..."
+        sleep "$OUTCOME_POLL_INTERVAL"
+        waited=$((waited + OUTCOME_POLL_INTERVAL))
+    done
+    record_test_fail "$test_name"
+    return 1
+}
+
+validate_pr_review_dismissed() {
+    local pr_number="$1"
+    local expected_body_substring="$2"
+    local repo="${3:-}"
+    local api_repo=":owner/:repo"
+    [[ -n "$repo" ]] && api_repo="$repo"
+    local matched
+    matched=$(gh api "repos/$api_repo/pulls/$pr_number/reviews" \
+        --jq "[.[] | select(.state == \"DISMISSED\") | select(.body != null) | select(.body | contains(\"$expected_body_substring\"))] | length" 2>/dev/null)
+    if [[ "$matched" -gt 0 ]] 2>/dev/null; then
+        success "PR #$pr_number has the expected dismissed review"
+        return 0
+    fi
+    warning "(polling) PR #$pr_number is missing the expected dismissed review"
+    return 1
+}
+
+wait_for_pr_review_dismissed() {
+    local pr_number="$1"
+    local expected_body_substring="$2"
+    local test_name="$3"
+    local repo="${4:-}"
+    local max_wait=480
+    local waited=0
+    while [[ $waited -lt $max_wait ]]; do
+        if validate_pr_review_dismissed "$pr_number" "$expected_body_substring" "$repo"; then
             record_test_pass "$test_name"
             return 0
         fi
@@ -3455,8 +3537,25 @@ run_single_test() {
                 fi
             fi
             ;;
+        # Dispatch test that creates and then dismisses a bot-authored PR review.
+        *"dismiss-pull-request-review")
+            echo ""
+            echo -e "${CYAN}━━━ Preparing test prerequisites ━━━${NC}"
+            info "Creating test pull request for $workflow..."
+            local pr_num=$(create_test_pr "Test PR for $ai_display_name Dismiss Review" "This PR is for testing $workflow." "$target_repo")
+            if [[ -n "$pr_num" ]]; then
+                local repo_url="$REPO_OWNER/$REPO_NAME"
+                [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                success "Created test PR #$pr_num for $workflow: https://github.com/$repo_url/pull/$pr_num"
+                if trigger_workflow_with_inputs "$workflow" "pull_request_number=$pr_num"; then
+                    if wait_for_pr_review_dismissed "$pr_num" "Review created for the dismiss-pull-request-review E2E test." "$workflow" "$target_repo"; then
+                        test_result="PASS"
+                    fi
+                fi
+            fi
+            ;;
         # Workflow dispatch tests - triggered with gh aw run
-        *"create-issue"|*"create-discussion"|*"create-pull-request"|*"create-two-pull-requests"|*"code-scanning-alert"|*"create-check-run"|*"mcp"*|*"safe-jobs"|*"gh-steps"|*"restore-memory-custom-job"|*"custom-safe-outputs"|*"noop"|*"report-incomplete"|*"assign-to-agent"|*"set-issue-field"|*"set-issue-field-builtin-rejection"|*"issue-intents"|*"skills-frontmatter"|*"inline-sub-agents"|*"network-isolation")
+        *"create-issue"|*"create-discussion"|*"create-pull-request"|*"create-two-pull-requests"|*"code-scanning-alert"|*"create-check-run"|*"mcp"*|*"safe-jobs"|*"gh-steps"|*"restore-memory-custom-job"|*"custom-safe-outputs"|*"noop"|*"report-incomplete"|*"missing-data"|*"missing-tool"|*"assign-to-agent"|*"set-issue-field"|*"set-issue-field-builtin-rejection"|*"issue-intents"|*"skills-frontmatter"|*"inline-sub-agents"|*"network-isolation")
             local workflow_success=false
             if trigger_workflow_dispatch_and_await_completion "$workflow"; then
                 workflow_success=true
@@ -3669,6 +3768,20 @@ run_single_test() {
                                     success "Created test issue #$issue_num with label for $workflow: https://github.com/$repo_url/issues/$issue_num"
                                     sleep 10
                                     if wait_for_label_removed "$issue_num" "copilot-remove-label-test" "$workflow" "$target_repo"; then
+                                        test_result="PASS"
+                                    fi
+                                fi
+                                ;;
+                            *"replace-label")
+                                info "Creating test issue with source label to trigger $workflow..."
+                                local issue_title="Test replace label from $ai_display_name"
+                                local issue_num=$(create_test_issue "$issue_title" "This is a test issue to trigger $workflow" "copilot-remove-label-test" "$target_repo")
+                                if [[ -n "$issue_num" ]]; then
+                                    local repo_url="$REPO_OWNER/$REPO_NAME"
+                                    [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                    success "Created test issue #$issue_num with source label for $workflow: https://github.com/$repo_url/issues/$issue_num"
+                                    sleep 10
+                                    if wait_for_label_replaced "$issue_num" "copilot-remove-label-test" "copilot-safe-output-label-test" "$workflow" "$target_repo"; then
                                         test_result="PASS"
                                     fi
                                 fi
