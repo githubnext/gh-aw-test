@@ -1,0 +1,143 @@
+name: One-off Copilot Create Issue History Backfill
+
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: copilot-create-issue-history-backfill
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    name: ${{ matrix.date }} / gh-aw@${{ matrix.sha }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      # e2e.sh enables/disables one shared workflow, and that workflow has a
+      # global concurrency group. Serial execution avoids cross-run races.
+      max-parallel: 1
+      matrix:
+        include:
+          - { date: "2026-06-26", sha: "42b108eaae3ac36f6ab5ecb1ea5bcb664cfbb784" }
+          - { date: "2026-06-27", sha: "95b5cd98a9b94d9eee85349ffca3ebf35d76aad2" }
+          - { date: "2026-06-28", sha: "9b8946c72eac79ab9d1c7656df083b69921f4e37" }
+          - { date: "2026-06-29", sha: "59d4d3b44afaba2865a921d99a6d30510fb5b793" }
+          - { date: "2026-06-30", sha: "663ad7b5aa7cbf4c5d56f4a73d99c8d95f09e466" }
+          - { date: "2026-07-01", sha: "b5fdd698c629c91b387d059628db059bcda73980" }
+          - { date: "2026-07-02", sha: "e8b9dc7132e3b86282d093daf64f9550046af3c8" }
+          - { date: "2026-07-03", sha: "98d108e4959308a8fe548ac14136a112c339fcfb" }
+          - { date: "2026-07-04", sha: "332d5e24d2c6c47b0cd58f8694911c6591c6de8a" }
+          - { date: "2026-07-05", sha: "117370b507e5c712b8d981e5b7d6601a078821d9" }
+          - { date: "2026-07-06", sha: "927a689cee61cfdc4a6787079dca356192b70bec" }
+          - { date: "2026-07-07", sha: "9babb63b39217bf2fd0e3809240d691f3155f623" }
+          - { date: "2026-07-08", sha: "da168b8262ffd5707c04c77a2fdbadc70aac6309" }
+          - { date: "2026-07-09", sha: "bd5467ff4106fd4970e359c1569acfc96209bf04" }
+          - { date: "2026-07-10", sha: "f2bff5d554593da959dfba86c5bce06ff7703dce" }
+          - { date: "2026-07-11", sha: "ed454002d35dffe2a6f8e46f6bc1f89639ef9099" }
+          - { date: "2026-07-12", sha: "b3b6881333d82b7c02de90f2f21799cd1929223b" }
+          - { date: "2026-07-13", sha: "e0a0e5d23d0e2b9f065b71469a1a75578d8a7047" }
+          - { date: "2026-07-14", sha: "072256746c0a33d54890f6f431b5c90314c23c4e" }
+          - { date: "2026-07-15", sha: "df13f08917192b95bda8aa6c9ab53ffd6684f788" }
+          - { date: "2026-07-16", sha: "f0a3dd21c6e5fc1eff595e0a62becf6b4c5d553f" }
+          - { date: "2026-07-17", sha: "c19fd53189742da810b717d538f0d88cb13c2d3f" }
+          - { date: "2026-07-18", sha: "c096ffebd27fa7dbfb278a87d87fbb00c5187239" }
+          - { date: "2026-07-19", sha: "dc63b6bdafd1e29ba7a35b20ce2a3aab40663659" }
+          - { date: "2026-07-20", sha: "5c93e1de4d27c06bdfcbf490b7cc55f356a61978" }
+          - { date: "2026-07-21", sha: "e3306490fd32fadaacb15b5d3f4f3335647ff120" }
+          - { date: "2026-07-22", sha: "2a7ac3d34e2d1795112b2e8d6703b17cc42dfe73" }
+          - { date: "2026-07-23", sha: "0629ee44cffe1469e74bbe9e1baac3a76f3ae8fe" }
+          - { date: "2026-07-24", sha: "c834b3749df802e481fffde5a2a6fcad5fb4b8d0" }
+          - { date: "2026-07-25", sha: "44b56e18b3fe95160e13e3678858853c65c8dff9" }
+          - { date: "2026-07-26", sha: "11d9ea9de7295df89744ca14894e26ade76c58e3" }
+          - { date: "2026-07-27", sha: "d4872c27ea33f4d3b7684430020195e804ade106" }
+          - { date: "2026-07-28", sha: "f427a5ea1f3c00d83d3582fa204a2c6c1efa6704" }
+          - { date: "2026-07-29", sha: "acc797bbab36245a25a108b1597789d08b0d3d90" }
+          - { date: "2026-07-30", sha: "8d982baa62cdac36cac6386f1c986f3edbbbef67" }
+          - { date: "2026-07-31", sha: "5adcdb6d4ec153409feab88c1688a9929fa07008" }
+          - { date: "2026-08-01", sha: "a4a8ff866757cbae7225c978a1ae9e1183e852b6" }
+          - { date: "2026-08-02", sha: "05bc7f1378e1dcb1707d52ea6a33c2b65398a188" }
+          - { date: "2026-08-03", sha: "f5bd99245e402c9d87b4cf5bec6b037e055aa86f" }
+          - { date: "2026-08-04", sha: "53baccde5390bbd2f062b7528266e9dd8edfcda9" }
+          - { date: "2026-08-05", sha: "9aa5938b0bb56a1813f4c8f566dfe38bfc1458d3" }
+          - { date: "2026-08-06", sha: "32c363e664fc5896127cab246f88cb96103ccaed" }
+          - { date: "2026-08-07", sha: "782af6ae3b59acf0e0f59498cacbf2abc17b29c9" }
+          - { date: "2026-08-08", sha: "e1e298d64bfa9f0d6d2cfd8da3b70c0a2528e1a6" }
+          - { date: "2026-08-09", sha: "ba0a9f958976c1d8d1baf3d2fc5a6aade16d01f2" }
+          - { date: "2026-08-10", sha: "2b4a6df88d5ea6216b577a0af184f9cecff96771" }
+          - { date: "2026-08-11", sha: "965f4a3e9be4ce24e1b95a58e5146de5381c0713" }
+          - { date: "2026-08-12", sha: "11b9b2a51a0ae7eb9bfd49486c652ddb8e7fa350" }
+          - { date: "2026-08-13", sha: "cccc09ad0907430c5307578c485c51f1877dab95" }
+          - { date: "2026-08-14", sha: "903f16a9eba25a03cc4cdad5c45d43e72ddd4b37" }
+          - { date: "2026-08-15", sha: "c35faf436c798d9535df6b69a6c6f3708c5ec021" }
+          - { date: "2026-08-16", sha: "f36a578e2dd1f55bd995e46f36f61bb4a4b098e2" }
+          - { date: "2026-08-17", sha: "356ceb8bdf7cab30485661ca4bebe7318d744af7" }
+          - { date: "2026-08-18", sha: "2b2cf3fb01eefb3e5bda06f3dc21ab2d961492bb" }
+          - { date: "2026-08-19", sha: "4845f00caf4609afc9cd34cbb45ad4b8ae621a20" }
+          - { date: "2026-08-20", sha: "5d5e0af5c46ca0d7a29a30fd135e40f29bfe2412" }
+          - { date: "2026-08-21", sha: "45d4273aa518769fcdcc1a1592305f90ec56d6ae" }
+
+    steps:
+      - name: Checkout gh-aw-test main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: gh-aw-test
+          fetch-depth: 0
+          token: ${{ secrets.GH_AW_TEST_PAT }}
+
+      - name: Checkout github/gh-aw at ${{ matrix.sha }}
+        uses: actions/checkout@v4
+        with:
+          repository: github/gh-aw
+          ref: ${{ matrix.sha }}
+          path: gh-aw
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: gh-aw/go.mod
+          cache-dependency-path: gh-aw/go.sum
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+
+      - name: Run live Copilot create-issue test
+        working-directory: gh-aw-test
+        timeout-minutes: 80
+        env:
+          GH_TOKEN: ${{ secrets.GH_AW_TEST_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GH_AW_TEST_PAT }}
+          GH_AW_TEST_PAT: ${{ secrets.GH_AW_TEST_PAT }}
+          GH_AW_SHA: ${{ matrix.sha }}
+          HISTORY_DATE: ${{ matrix.date }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${GH_AW_TEST_PAT:-}" ]]; then
+            echo "::error::GH_AW_TEST_PAT is required"
+            exit 1
+          fi
+
+          git config user.name "gh-aw-test history backfill"
+          git config user.email "gh-aw-test-e2e@users.noreply.github.com"
+          branch="history-copilot-create-issue-${HISTORY_DATE//-/}"
+
+          # Deliberately omit --use-samples: every entry must call Copilot.
+          ./e2e.sh \
+            --gh-aw-ref "$GH_AW_SHA" \
+            --branch "$branch" \
+            --verbose \
+            test-copilot-create-issue
+
+      - name: Upload per-day harness log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: copilot-create-issue-${{ matrix.date }}
+          path: gh-aw-test/e2e-test-*.log
+          if-no-files-found: warn
