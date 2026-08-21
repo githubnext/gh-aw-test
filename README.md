@@ -83,6 +83,7 @@ Tracking the full matrix of [safe outputs](https://github.com/github/gh-aw/blob/
 ### Pull Requests — Remaining
 
 - [x] `close-pull-request` — test-copilot-close-pull-request
+- [x] `approve-workflow-run` (staged workflow_dispatch smoke test, default `comment: true`) — test-copilot-approve-workflow-run
 - [x] `reply-to-pull-request-review-comment` — test-copilot-reply-to-pull-request-review-comment
 - [x] `resolve-pull-request-review-thread` — test-copilot-resolve-pull-request-review-thread
 - [x] `submit-pull-request-review` — test-copilot-submit-pull-request-review
