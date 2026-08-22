@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="575" viewBox="0 0 1200 575">
+<rect width="100%" height="100%" fill="white"/>
+<style>text{font-family:ui-monospace,monospace;font-size:13px}.axis{stroke:#57606a;stroke-width:1}.grid{stroke:#d8dee4;stroke-width:1}</style>
+<text x="65" y="30" font-size="20">Major step timing: detection job (released, using samples)</text>
+<text x="65" y="52">Steps with a sustained cost, recent slowdown, or recent regression</text>
+<line class="grid" x1="65" y1="465.0" x2="1135" y2="465.0"/>
+<text x="8" y="470.0">0s</text>
+<line class="grid" x1="65" y1="387.0" x2="1135" y2="387.0"/>
+<text x="8" y="392.0">0s</text>
+<line class="grid" x1="65" y1="309.0" x2="1135" y2="309.0"/>
+<text x="8" y="314.0">0s</text>
+<line class="grid" x1="65" y1="231.0" x2="1135" y2="231.0"/>
+<text x="8" y="236.0">1s</text>
+<line class="grid" x1="65" y1="153.0" x2="1135" y2="153.0"/>
+<text x="8" y="158.0">1s</text>
+<line class="grid" x1="65" y1="75.0" x2="1135" y2="75.0"/>
+<text x="8" y="80.0">1s</text>
+<line class="grid" x1="65.0" y1="75" x2="65.0" y2="465"/>
+<line class="grid" x1="198.8" y1="75" x2="198.8" y2="465"/>
+<line class="grid" x1="332.5" y1="75" x2="332.5" y2="465"/>
+<line class="grid" x1="466.2" y1="75" x2="466.2" y2="465"/>
+<line class="grid" x1="600.0" y1="75" x2="600.0" y2="465"/>
+<line class="grid" x1="733.8" y1="75" x2="733.8" y2="465"/>
+<line class="grid" x1="867.5" y1="75" x2="867.5" y2="465"/>
+<line class="grid" x1="1001.2" y1="75" x2="1001.2" y2="465"/>
+<line class="grid" x1="1135.0" y1="75" x2="1135.0" y2="465"/>
+<text x="65.0" y="490" text-anchor="start">2026-06-12</text>
+<text x="198.8" y="490" text-anchor="middle">2026-06-19</text>
+<text x="332.5" y="490" text-anchor="middle">2026-06-26</text>
+<text x="466.2" y="490" text-anchor="middle">2026-07-02</text>
+<text x="600.0" y="490" text-anchor="middle">2026-07-09</text>
+<text x="733.8" y="490" text-anchor="middle">2026-07-16</text>
+<text x="867.5" y="490" text-anchor="middle">2026-07-22</text>
+<text x="1001.2" y="490" text-anchor="middle">2026-07-29</text>
+<text x="1135.0" y="490" text-anchor="end">2026-08-04</text>
+<line class="axis" x1="65" y1="465" x2="1135" y2="465"/>
+</svg>

@@ -1,0 +1,139 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="957" viewBox="0 0 1200 957">
+<rect width="100%" height="100%" fill="white"/>
+<style>text{font-family:ui-monospace,monospace;font-size:13px}.axis{stroke:#57606a;stroke-width:1}.grid{stroke:#d8dee4;stroke-width:1}</style>
+<text x="65" y="30" font-size="20">Run and job timing: main, using inference</text>
+<text x="65" y="52">First proxy is measured from workflow start to first reasoning or sample completion</text>
+<line class="grid" x1="65" y1="505.0" x2="1135" y2="505.0"/>
+<text x="8" y="510.0">0s</text>
+<line class="grid" x1="65" y1="427.0" x2="1135" y2="427.0"/>
+<text x="8" y="432.0">114s</text>
+<line class="grid" x1="65" y1="349.0" x2="1135" y2="349.0"/>
+<text x="8" y="354.0">227s</text>
+<line class="grid" x1="65" y1="271.0" x2="1135" y2="271.0"/>
+<text x="8" y="276.0">341s</text>
+<line class="grid" x1="65" y1="193.0" x2="1135" y2="193.0"/>
+<text x="8" y="198.0">455s</text>
+<line class="grid" x1="65" y1="115.0" x2="1135" y2="115.0"/>
+<text x="8" y="120.0">569s</text>
+<line class="grid" x1="65.0" y1="115" x2="65.0" y2="505"/>
+<line class="grid" x1="198.8" y1="115" x2="198.8" y2="505"/>
+<line class="grid" x1="332.5" y1="115" x2="332.5" y2="505"/>
+<line class="grid" x1="466.2" y1="115" x2="466.2" y2="505"/>
+<line class="grid" x1="600.0" y1="115" x2="600.0" y2="505"/>
+<line class="grid" x1="733.8" y1="115" x2="733.8" y2="505"/>
+<line class="grid" x1="867.5" y1="115" x2="867.5" y2="505"/>
+<line class="grid" x1="1001.2" y1="115" x2="1001.2" y2="505"/>
+<line class="grid" x1="1135.0" y1="115" x2="1135.0" y2="505"/>
+<polyline points="65.0,312.3 84.1,304.8 99.6,302.7 121.5,308.9 132.4,299.3 140.5,248.5 142.1,289.0 149.8,282.1 195.9,271.2 211.9,310.2 229.0,295.8 245.3,293.1 261.3,202.6 293.2,233.4 311.1,248.5 322.2,230.7 340.0,258.8 359.2,240.3 390.2,256.7 407.3,216.3 422.2,209.4 440.5,235.5 454.8,248.5 472.8,185.4 490.1,217.7 507.7,193.0 523.5,195.7 540.1,201.2 551.5,164.9 573.5,169.0 589.3,288.3 603.2,315.0 616.7,267.7 639.4,293.1 650.8,304.1 670.9,280.1 688.2,260.9 703.4,289.0 719.9,288.3 737.1,310.2 753.8,293.1 768.6,289.7 786.3,285.6 803.2,255.4 820.6,261.6 836.8,150.5 853.3,296.5 886.2,278.0 901.9,304.1 917.1,249.9 932.6,311.6 968.2,248.5 981.2,279.4 998.7,270.5 1014.5,244.4 1034.1,276.6 1050.0,273.2 1067.0,260.2 1081.7,282.1 1099.8,264.3 1116.1,305.4 1135.0,286.2" fill="none" stroke="#0969da" stroke-width="2"><title>Complete</title></polyline>
+<line x1="836.8" y1="150.5" x2="818.8" y2="130.5" stroke="#0969da" stroke-width="1"/>
+<circle cx="818.8" cy="130.5" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R13: Complete, 517.0s</title></circle>
+<text x="818.8" y="134.5" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R13</text>
+<polyline points="65.0,409.6 84.1,424.7 99.6,426.3 121.5,428.7 132.4,426.4 140.5,379.7 142.1,416.9 149.8,399.6 195.9,388.6 211.9,424.9 229.0,411.4 245.3,404.5 261.3,416.9 293.2,416.8 311.1,429.5 322.2,426.7 340.0,436.0 359.2,426.5 390.2,419.0 407.3,389.9 422.2,402.9 440.5,429.2 454.8,416.4 472.8,392.5 490.1,404.3 507.7,369.6 523.5,408.5 540.1,427.6 551.5,433.0 573.5,406.0 589.3,408.1 603.2,419.5 616.7,418.2 639.4,408.3 650.8,423.7 670.9,417.1 688.2,389.4 703.4,399.5 719.9,406.2 737.1,425.1 753.8,417.5 768.6,410.1 786.3,415.8 803.2,408.3 820.6,412.4 836.8,385.6 853.3,421.2 886.2,421.2 901.9,400.9 917.1,370.6 932.6,425.4 968.2,380.9 981.2,405.3 998.7,413.8 1014.5,392.0 1034.1,392.7 1050.0,417.3 1067.0,402.4 1081.7,423.3 1099.8,417.9 1116.1,423.3 1135.0,418.4" fill="none" stroke="#cf222e" stroke-width="2"><title>First proxy</title></polyline>
+<line x1="507.7" y1="369.6" x2="489.7" y2="389.6" stroke="#cf222e" stroke-width="1"/>
+<circle cx="489.7" cy="389.6" r="11" fill="white" stroke="#cf222e" stroke-width="2"><title>R3: First proxy, 197.4s</title></circle>
+<text x="489.7" y="393.6" fill="#cf222e" font-size="10" font-weight="bold" text-anchor="middle">R3</text>
+<polyline points="65.0,470.7 84.1,481.7 99.6,478.9 121.5,480.3 132.4,480.3 140.5,449.5 142.1,476.9 149.8,458.4 195.9,455.6 211.9,481.0 229.0,478.9 245.3,469.3 261.3,474.1 293.2,472.1 311.1,479.6 322.2,474.8 340.0,479.6 359.2,478.9 390.2,470.0 407.3,441.2 422.2,453.6 440.5,478.3 454.8,463.2 472.8,462.5 490.1,470.7 507.7,433.7 523.5,472.8 540.1,478.3 551.5,480.3 573.5,459.1 589.3,460.4 603.2,473.5 616.7,474.8 639.4,464.5 650.8,475.5 670.9,476.2 688.2,441.9 703.4,454.3 719.9,463.9 737.1,479.6 753.8,467.3 768.6,465.9 786.3,474.1 803.2,458.4 820.6,470.7 836.8,445.3 853.3,470.7 886.2,472.8 901.9,480.3 917.1,435.1 932.6,474.1 968.2,463.9 981.2,476.2 998.7,474.1 1014.5,474.1 1034.1,463.9 1050.0,478.3 1067.0,458.4 1081.7,475.5 1099.8,474.8 1116.1,475.5 1135.0,476.2" fill="none" stroke="#bf8700" stroke-width="2"><title>Activation</title></polyline>
+<line x1="507.7" y1="433.7" x2="525.7" y2="413.7" stroke="#bf8700" stroke-width="1"/>
+<circle cx="525.7" cy="413.7" r="11" fill="white" stroke="#bf8700" stroke-width="2"><title>R2: Activation, 104.0s</title></circle>
+<text x="525.7" y="417.7" fill="#bf8700" font-size="10" font-weight="bold" text-anchor="middle">R2</text>
+<line x1="688.2" y1="441.9" x2="670.2" y2="421.9" stroke="#bf8700" stroke-width="1"/>
+<circle cx="670.2" cy="421.9" r="11" fill="white" stroke="#bf8700" stroke-width="2"><title>R7: Activation, 92.0s</title></circle>
+<text x="670.2" y="425.9" fill="#bf8700" font-size="10" font-weight="bold" text-anchor="middle">R7</text>
+<line x1="836.8" y1="445.3" x2="836.8" y2="473.3" stroke="#bf8700" stroke-width="1"/>
+<circle cx="836.8" cy="473.3" r="11" fill="white" stroke="#bf8700" stroke-width="2"><title>R12: Activation, 87.0s</title></circle>
+<text x="836.8" y="477.3" fill="#bf8700" font-size="10" font-weight="bold" text-anchor="middle">R12</text>
+<line x1="917.1" y1="435.1" x2="935.1" y2="415.1" stroke="#bf8700" stroke-width="1"/>
+<circle cx="935.1" cy="415.1" r="11" fill="white" stroke="#bf8700" stroke-width="2"><title>R14: Activation, 102.0s</title></circle>
+<text x="935.1" y="419.1" fill="#bf8700" font-size="10" font-weight="bold" text-anchor="middle">R14</text>
+<line x1="1067.0" y1="458.4" x2="1085.0" y2="478.4" stroke="#bf8700" stroke-width="1"/>
+<circle cx="1085.0" cy="478.4" r="11" fill="white" stroke="#bf8700" stroke-width="2"><title>R16: Activation, 68.0s</title></circle>
+<text x="1085.0" y="482.4" fill="#bf8700" font-size="10" font-weight="bold" text-anchor="middle">R16</text>
+<polyline points="65.0,444.0 84.1,449.5 99.6,454.3 121.5,456.3 132.4,450.8 140.5,444.0 142.1,452.2 149.8,447.4 195.9,439.9 211.9,445.3 229.0,433.7 245.3,438.5 261.3,383.6 293.2,381.6 311.1,389.1 322.2,391.8 340.0,396.6 359.2,386.4 390.2,390.5 407.3,389.1 422.2,389.8 440.5,389.8 454.8,396.0 472.8,367.8 490.1,372.6 507.7,378.8 523.5,373.3 540.1,387.0 551.5,392.5 573.5,389.8 589.3,449.5 603.2,448.1 616.7,446.0 639.4,451.5 650.8,451.5 670.9,441.9 688.2,446.7 703.4,446.7 719.9,444.0 737.1,445.3 753.8,453.6 768.6,448.1 786.3,441.2 803.2,452.9 820.6,441.9 836.8,441.9 853.3,454.9 886.2,448.8 901.9,420.6 917.1,444.7 932.6,454.9 968.2,418.6 981.2,430.9 998.7,444.0 1014.5,421.3 1034.1,431.6 1050.0,441.9 1067.0,448.8 1081.7,450.8 1099.8,442.6 1116.1,450.8 1135.0,444.0" fill="none" stroke="#0550ae" stroke-width="2"><title>Agent</title></polyline>
+<polyline points="65.0,470.7 84.1,461.8 99.6,466.6 121.5,459.7 132.4,458.4 140.5,448.8 142.1,461.8 149.8,461.8 195.9,459.1 211.9,449.5 229.0,455.6 245.3,462.5 261.3,457.7 293.2,454.3 311.1,464.5 322.2,458.4 340.0,459.1 359.2,451.5 390.2,459.1 407.3,464.5 422.2,443.3 440.5,457.0 454.8,461.8 472.8,459.1 490.1,459.1 507.7,446.7 523.5,458.4 540.1,404.2 551.5,389.1 573.5,394.6 589.3,454.3 603.2,466.6 616.7,435.7 639.4,455.6 650.8,453.6 670.9,448.1 688.2,465.9 703.4,466.6 719.9,454.9 737.1,463.2 753.8,460.4 768.6,475.5 786.3,454.9 803.2,458.4 820.6,451.5 836.8,457.0 853.3,453.6 886.2,457.7 901.9,468.7 917.1,446.7 932.6,452.2 968.2,452.9 981.2,449.5 998.7,439.2 1014.5,459.1 1034.1,448.8 1050.0,453.6 1067.0,457.0 1081.7,435.7 1099.8,454.3 1116.1,448.8 1135.0,444.7" fill="none" stroke="#1a7f37" stroke-width="2"><title>Detection</title></polyline>
+<line x1="551.5" y1="389.1" x2="551.5" y2="361.1" stroke="#1a7f37" stroke-width="1"/>
+<circle cx="551.5" cy="361.1" r="11" fill="white" stroke="#1a7f37" stroke-width="2"><title>R5: Detection, 169.0s</title></circle>
+<text x="551.5" y="365.1" fill="#1a7f37" font-size="10" font-weight="bold" text-anchor="middle">R5</text>
+<polyline points="65.0,489.2 84.1,483.7 99.6,481.0 121.5,479.6 132.4,488.5 140.5,486.5 142.1,485.8 149.8,487.9 195.9,470.0 211.9,482.4 229.0,477.6 245.3,478.9 261.3,452.9 293.2,482.4 311.1,482.4 322.2,476.2 340.0,472.8 359.2,481.7 390.2,487.9 407.3,482.4 422.2,483.1 440.5,472.1 454.8,485.1 472.8,463.9 490.1,478.9 507.7,491.3 523.5,477.6 540.1,479.6 551.5,485.1 573.5,474.8 589.3,482.4 603.2,481.0 616.7,459.1 639.4,485.1 650.8,480.3 670.9,474.1 688.2,453.6 703.4,479.6 719.9,472.8 737.1,472.1 753.8,473.5 768.6,469.3 786.3,476.9 803.2,455.6 820.6,473.5 836.8,407.6 853.3,475.5 886.2,479.6 901.9,490.6 917.1,489.2 932.6,482.4 968.2,478.9 981.2,478.9 998.7,483.1 1014.5,451.5 1034.1,480.3 1050.0,461.1 1067.0,462.5 1081.7,468.7 1099.8,478.9 1116.1,479.6 1135.0,478.3" fill="none" stroke="#953800" stroke-width="2"><title>Safe Outputs</title></polyline>
+<line x1="472.8" y1="463.9" x2="454.8" y2="443.9" stroke="#953800" stroke-width="1"/>
+<circle cx="454.8" cy="443.9" r="11" fill="white" stroke="#953800" stroke-width="2"><title>R1: Safe Outputs, 60.0s</title></circle>
+<text x="454.8" y="447.9" fill="#953800" font-size="10" font-weight="bold" text-anchor="middle">R1</text>
+<line x1="616.7" y1="459.1" x2="616.7" y2="487.1" stroke="#953800" stroke-width="1"/>
+<circle cx="616.7" cy="487.1" r="11" fill="white" stroke="#953800" stroke-width="2"><title>R6: Safe Outputs, 67.0s</title></circle>
+<text x="616.7" y="491.1" fill="#953800" font-size="10" font-weight="bold" text-anchor="middle">R6</text>
+<line x1="688.2" y1="453.6" x2="706.2" y2="433.6" stroke="#953800" stroke-width="1"/>
+<circle cx="706.2" cy="433.6" r="11" fill="white" stroke="#953800" stroke-width="2"><title>R8: Safe Outputs, 75.0s</title></circle>
+<text x="706.2" y="437.6" fill="#953800" font-size="10" font-weight="bold" text-anchor="middle">R8</text>
+<line x1="836.8" y1="407.6" x2="854.8" y2="427.6" stroke="#953800" stroke-width="1"/>
+<circle cx="854.8" cy="427.6" r="11" fill="white" stroke="#953800" stroke-width="2"><title>R10: Safe Outputs, 142.0s</title></circle>
+<text x="854.8" y="431.6" fill="#953800" font-size="10" font-weight="bold" text-anchor="middle">R10</text>
+<line x1="1014.5" y1="451.5" x2="996.5" y2="471.5" stroke="#953800" stroke-width="1"/>
+<circle cx="996.5" cy="471.5" r="11" fill="white" stroke="#953800" stroke-width="2"><title>R15: Safe Outputs, 78.0s</title></circle>
+<text x="996.5" y="475.5" fill="#953800" font-size="10" font-weight="bold" text-anchor="middle">R15</text>
+<polyline points="65.0,486.5 84.1,478.9 99.6,485.1 121.5,485.1 132.4,479.6 140.5,479.6 142.1,468.7 149.8,481.7 195.9,486.5 211.9,487.2 229.0,485.1 245.3,483.7 261.3,472.8 293.2,477.6 311.1,467.3 322.2,463.9 340.0,485.8 359.2,476.9 390.2,484.4 407.3,476.2 422.2,478.9 440.5,472.8 454.8,477.6 472.8,469.3 490.1,476.9 507.7,481.0 523.5,448.8 540.1,485.8 551.5,452.9 573.5,487.2 589.3,476.2 603.2,482.4 616.7,487.2 639.4,474.8 650.8,476.9 670.9,474.8 688.2,488.5 703.4,476.2 719.9,486.5 737.1,483.1 753.8,471.4 768.6,465.9 786.3,470.7 803.2,465.2 820.6,457.0 836.8,458.4 853.3,474.8 886.2,460.4 901.9,477.6 917.1,473.5 932.6,483.1 968.2,470.7 981.2,478.3 998.7,468.0 1014.5,474.1 1034.1,484.4 1050.0,473.5 1067.0,470.0 1081.7,483.1 1099.8,459.1 1116.1,483.7 1135.0,476.2" fill="none" stroke="#57606a" stroke-width="2"><title>Conclusion</title></polyline>
+<line x1="523.5" y1="448.8" x2="541.5" y2="468.8" stroke="#57606a" stroke-width="1"/>
+<circle cx="541.5" cy="468.8" r="11" fill="white" stroke="#57606a" stroke-width="2"><title>R4: Conclusion, 82.0s</title></circle>
+<text x="541.5" y="472.8" fill="#57606a" font-size="10" font-weight="bold" text-anchor="middle">R4</text>
+<line x1="768.6" y1="465.9" x2="750.6" y2="485.9" stroke="#57606a" stroke-width="1"/>
+<circle cx="750.6" cy="485.9" r="11" fill="white" stroke="#57606a" stroke-width="2"><title>R9: Conclusion, 57.0s</title></circle>
+<text x="750.6" y="489.9" fill="#57606a" font-size="10" font-weight="bold" text-anchor="middle">R9</text>
+<line x1="820.6" y1="457.0" x2="820.6" y2="429.0" stroke="#57606a" stroke-width="1"/>
+<circle cx="820.6" cy="429.0" r="11" fill="white" stroke="#57606a" stroke-width="2"><title>R11: Conclusion, 70.0s</title></circle>
+<text x="820.6" y="433.0" fill="#57606a" font-size="10" font-weight="bold" text-anchor="middle">R11</text>
+<text x="65.0" y="530" text-anchor="start">2026-06-18</text>
+<text x="198.8" y="530" text-anchor="middle">2026-06-26</text>
+<text x="332.5" y="530" text-anchor="middle">2026-07-04</text>
+<text x="466.2" y="530" text-anchor="middle">2026-07-12</text>
+<text x="600.0" y="530" text-anchor="middle">2026-07-20</text>
+<text x="733.8" y="530" text-anchor="middle">2026-07-28</text>
+<text x="867.5" y="530" text-anchor="middle">2026-08-05</text>
+<text x="1001.2" y="530" text-anchor="middle">2026-08-13</text>
+<text x="1135.0" y="530" text-anchor="end">2026-08-22</text>
+<line class="axis" x1="65" y1="505" x2="1135" y2="505"/>
+<line x1="560" y1="23" x2="590" y2="23" stroke="#0969da" stroke-width="3"/>
+<text x="598" y="28">Complete</text>
+<line x1="560" y1="46" x2="590" y2="46" stroke="#cf222e" stroke-width="3"/>
+<text x="598" y="51">First proxy</text>
+<line x1="715" y1="23" x2="745" y2="23" stroke="#bf8700" stroke-width="3"/>
+<text x="753" y="28">Activation</text>
+<line x1="715" y1="46" x2="745" y2="46" stroke="#0550ae" stroke-width="3"/>
+<text x="753" y="51">Agent</text>
+<line x1="870" y1="23" x2="900" y2="23" stroke="#1a7f37" stroke-width="3"/>
+<text x="908" y="28">Detection</text>
+<line x1="870" y1="46" x2="900" y2="46" stroke="#953800" stroke-width="3"/>
+<text x="908" y="51">Safe Outputs</text>
+<line x1="1025" y1="23" x2="1055" y2="23" stroke="#57606a" stroke-width="3"/>
+<text x="1063" y="28">Conclusion</text>
+<text x="65" y="570" font-size="16" font-weight="bold">Regression episodes</text>
+<text x="65" y="598" fill="#953800" font-weight="bold">R1</text>
+<text x="99" y="598">2026-07-12  Safe Outputs  +82%</text>
+<text x="65" y="620" fill="#bf8700" font-weight="bold">R2</text>
+<text x="99" y="620">2026-07-14  Activation  +106%</text>
+<text x="65" y="642" fill="#cf222e" font-weight="bold">R3</text>
+<text x="99" y="642">2026-07-14  First proxy  +55%</text>
+<text x="65" y="664" fill="#57606a" font-weight="bold">R4</text>
+<text x="99" y="664">2026-07-15 to 2026-07-17  Conclusion  +102%</text>
+<text x="65" y="686" fill="#1a7f37" font-weight="bold">R5</text>
+<text x="99" y="686">2026-07-16 to 2026-07-18  Detection  +150%</text>
+<text x="65" y="708" fill="#953800" font-weight="bold">R6</text>
+<text x="99" y="708">2026-07-21  Safe Outputs  +86%</text>
+<text x="65" y="730" fill="#bf8700" font-weight="bold">R7</text>
+<text x="99" y="730">2026-07-25 to 2026-07-26  Activation  +104%</text>
+<text x="65" y="752" fill="#953800" font-weight="bold">R8</text>
+<text x="99" y="752">2026-07-25  Safe Outputs  +105%</text>
+<text x="65" y="774" fill="#57606a" font-weight="bold">R9</text>
+<text x="99" y="774">2026-07-30  Conclusion  +54%</text>
+<text x="65" y="796" fill="#953800" font-weight="bold">R10</text>
+<text x="99" y="796">2026-08-01 to 2026-08-03  Safe Outputs  +205%</text>
+<text x="65" y="818" fill="#57606a" font-weight="bold">R11</text>
+<text x="99" y="818">2026-08-02  Conclusion  +63%</text>
+<text x="65" y="840" fill="#bf8700" font-weight="bold">R12</text>
+<text x="99" y="840">2026-08-03  Activation  +55%</text>
+<text x="65" y="862" fill="#0969da" font-weight="bold">R13</text>
+<text x="99" y="862">2026-08-03  Complete  +63%</text>
+<text x="65" y="884" fill="#bf8700" font-weight="bold">R14</text>
+<text x="99" y="884">2026-08-08  Activation  +104%</text>
+<text x="65" y="906" fill="#953800" font-weight="bold">R15</text>
+<text x="99" y="906">2026-08-14 to 2026-08-17  Safe Outputs  +108%</text>
+<text x="65" y="928" fill="#bf8700" font-weight="bold">R16</text>
+<text x="99" y="928">2026-08-17  Activation  +51%</text>
+</svg>

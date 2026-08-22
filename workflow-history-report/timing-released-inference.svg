@@ -1,7 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="693" viewBox="0 0 1200 693">
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620">
 <rect width="100%" height="100%" fill="white"/>
 <style>text{font-family:ui-monospace,monospace;font-size:13px}.axis{stroke:#57606a;stroke-width:1}.grid{stroke:#d8dee4;stroke-width:1}</style>
-<text x="65" y="30" font-size="20">Timing by gh-aw commit date: inference</text>
+<text x="65" y="30" font-size="20">Run and job timing: released, using inference</text>
 <text x="65" y="52">First proxy is measured from workflow start to first reasoning or sample completion</text>
 <line class="grid" x1="65" y1="505.0" x2="1135" y2="505.0"/>
 <text x="8" y="510.0">0s</text>
@@ -25,24 +25,12 @@
 <line class="grid" x1="1001.2" y1="115" x2="1001.2" y2="505"/>
 <line class="grid" x1="1135.0" y1="115" x2="1135.0" y2="505"/>
 <polyline points="65.0,328.2 119.8,353.7 237.9,304.6 1020.9,211.9 1045.6,217.6 1135.0,150.5" fill="none" stroke="#0969da" stroke-width="2"><title>Complete</title></polyline>
-<line x1="1135.0" y1="150.5" x2="1124.0" y2="170.5" stroke="#0969da" stroke-width="1"/>
-<circle cx="1124.0" cy="170.5" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R4: Complete, 375.0s</title></circle>
-<text x="1124.0" y="174.5" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R4</text>
 <polyline points="1020.9,386.4 1045.6,392.7 1135.0,370.6" fill="none" stroke="#cf222e" stroke-width="2"><title>First proxy</title></polyline>
 <polyline points="65.0,492.7 119.8,492.7 237.9,459.6 1020.9,460.6 1045.6,468.1 1135.0,460.6" fill="none" stroke="#bf8700" stroke-width="2"><title>Activation</title></polyline>
 <polyline points="65.0,449.2 119.8,453.0 237.9,442.6 1020.9,441.7 1045.6,431.3 1135.0,324.4" fill="none" stroke="#0550ae" stroke-width="2"><title>Agent</title></polyline>
-<line x1="1135.0" y1="324.4" x2="1117.0" y2="304.4" stroke="#0550ae" stroke-width="1"/>
-<circle cx="1117.0" cy="304.4" r="11" fill="white" stroke="#0550ae" stroke-width="2"><title>R1: Agent, 191.0s</title></circle>
-<text x="1117.0" y="308.4" fill="#0550ae" font-size="10" font-weight="bold" text-anchor="middle">R1</text>
 <polyline points="65.0,436.9 119.8,460.6 237.9,459.6 1020.9,439.8 1045.6,437.9 1135.0,446.4" fill="none" stroke="#1a7f37" stroke-width="2"><title>Detection</title></polyline>
 <polyline points="65.0,494.6 119.8,491.8 237.9,493.7 1020.9,474.7 1045.6,481.4 1135.0,473.8" fill="none" stroke="#953800" stroke-width="2"><title>Safe Outputs</title></polyline>
-<line x1="1135.0" y1="473.8" x2="1117.0" y2="493.8" stroke="#953800" stroke-width="1"/>
-<circle cx="1117.0" cy="493.8" r="11" fill="white" stroke="#953800" stroke-width="2"><title>R3: Safe Outputs, 33.0s</title></circle>
-<text x="1117.0" y="497.8" fill="#953800" font-size="10" font-weight="bold" text-anchor="middle">R3</text>
 <polyline points="65.0,496.5 119.8,496.5 237.9,497.4 1020.9,468.1 1045.6,465.3 1135.0,485.1" fill="none" stroke="#57606a" stroke-width="2"><title>Conclusion</title></polyline>
-<line x1="1135.0" y1="485.1" x2="1124.0" y2="465.1" stroke="#57606a" stroke-width="1"/>
-<circle cx="1124.0" cy="465.1" r="11" fill="white" stroke="#57606a" stroke-width="2"><title>R2: Conclusion, 21.0s</title></circle>
-<text x="1124.0" y="469.1" fill="#57606a" font-size="10" font-weight="bold" text-anchor="middle">R2</text>
 <text x="65.0" y="530" text-anchor="start">2026-04-10</text>
 <text x="198.8" y="530" text-anchor="middle">2026-04-20</text>
 <text x="332.5" y="530" text-anchor="middle">2026-05-01</text>
@@ -67,13 +55,4 @@
 <text x="908" y="51">Safe Outputs</text>
 <line x1="1025" y1="23" x2="1055" y2="23" stroke="#57606a" stroke-width="3"/>
 <text x="1063" y="28">Conclusion</text>
-<text x="65" y="570" font-size="16" font-weight="bold">Regression episodes</text>
-<text x="65" y="598" fill="#0550ae" font-weight="bold">R1</text>
-<text x="99" y="598">2026-06-30  Agent  +189%</text>
-<text x="65" y="620" fill="#57606a" font-weight="bold">R2</text>
-<text x="99" y="620">2026-06-30  Conclusion  +133%</text>
-<text x="65" y="642" fill="#953800" font-weight="bold">R3</text>
-<text x="99" y="642">2026-06-30  Safe Outputs  +136%</text>
-<text x="65" y="664" fill="#0969da" font-weight="bold">R4</text>
-<text x="99" y="664">2026-06-30  Complete  +77%</text>
 </svg>

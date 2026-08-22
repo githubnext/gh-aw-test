@@ -42,6 +42,8 @@ MAIN_METRICS = (
     ("job:safe_outputs", "Safe Outputs", "#953800"),
     ("job:conclusion", "Conclusion", "#57606a"),
 )
+REPORT_JOBS = ("activation", "agent", "detection", "safe_outputs", "conclusion")
+REGRESSION_WINDOW = dt.timedelta(weeks=6)
 
 
 def parse_time(value: str | None) -> dt.datetime | None:
@@ -352,7 +354,25 @@ def regression_episodes(regression_points: list[dict[str, object]], gap_days: in
     return sorted(episodes, key=lambda item: (item["episode_start"], item["metric"], item["mode"]))
 
 
-def write_svg(path: Path, records: list[dict[str, object]], mode: str, regression_legend: list[dict[str, object]]) -> None:
+def recent_regression_episodes(
+    regression_points: list[dict[str, object]],
+    now: dt.datetime | None = None,
+) -> list[dict[str, object]]:
+    cutoff = (now or dt.datetime.now(dt.timezone.utc)) - REGRESSION_WINDOW
+    return [
+        episode
+        for episode in regression_episodes(regression_points)
+        if parse_time(episode["episode_end"]) >= cutoff
+    ]
+
+
+def write_svg(
+    path: Path,
+    records: list[dict[str, object]],
+    ref_kind: str,
+    mode: str,
+    regression_legend: list[dict[str, object]],
+) -> None:
     width, margin = 1200, 65
     plot_top, plot_bottom = 115, 505
     mode_records = [record for record in records if record["mode"] == mode]
@@ -370,7 +390,7 @@ def write_svg(path: Path, records: list[dict[str, object]], mode: str, regressio
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
         '<rect width="100%" height="100%" fill="white"/>',
         '<style>text{font-family:ui-monospace,monospace;font-size:13px}.axis{stroke:#57606a;stroke-width:1}.grid{stroke:#d8dee4;stroke-width:1}</style>',
-        f'<text x="{margin}" y="30" font-size="20">Timing by gh-aw commit date: {mode}</text>',
+        f'<text x="{margin}" y="30" font-size="20">Run and job timing: {ref_kind}, using {mode}</text>',
         '<text x="65" y="52">First proxy is measured from workflow start to first reasoning or sample completion</text>',
     ]
     for tick in range(6):
@@ -481,10 +501,17 @@ def step_regression_episodes(step_series: dict[str, list[tuple[dict[str, object]
                     "baseline_seconds": baseline,
                     "increase_percent": (duration / baseline - 1) * 100,
                 })
-    return regression_episodes(points)
+    return recent_regression_episodes(points)
 
 
-def write_step_svg(path: Path, records: list[dict[str, object]], mode: str, job_name: str, step_series: dict[str, list[tuple[dict[str, object], float]]]) -> None:
+def write_step_svg(
+    path: Path,
+    records: list[dict[str, object]],
+    ref_kind: str,
+    mode: str,
+    job_name: str,
+    step_series: dict[str, list[tuple[dict[str, object], float]]],
+) -> None:
     width, margin = 1200, 65
     plot_top, plot_bottom = 75, 465
     colors = ("#0969da", "#cf222e", "#1a7f37", "#8250df", "#bf8700", "#0550ae", "#9a6700", "#116329")
@@ -504,7 +531,7 @@ def write_step_svg(path: Path, records: list[dict[str, object]], mode: str, job_
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
         '<rect width="100%" height="100%" fill="white"/>',
         '<style>text{font-family:ui-monospace,monospace;font-size:13px}.axis{stroke:#57606a;stroke-width:1}.grid{stroke:#d8dee4;stroke-width:1}</style>',
-        f'<text x="{margin}" y="30" font-size="20">Step timing: {html.escape(job_name)} job ({mode})</text>',
+        f'<text x="{margin}" y="30" font-size="20">Major step timing: {html.escape(job_name)} job ({ref_kind}, using {mode})</text>',
         '<text x="65" y="52">Steps with a sustained cost, recent slowdown, or recent regression</text>',
     ]
     for tick in range(6):
@@ -567,67 +594,120 @@ def write_step_svg(path: Path, records: list[dict[str, object]], mode: str, job_
     path.write_text("\n".join(lines))
 
 
-def graph_set(
-    output_dir: Path,
+def job_step_series(
     records: list[dict[str, object]],
-    file_suffix: str,
-) -> dict[str, dict[str, list[tuple[dict[str, object], float]]]]:
-    selected_steps_by_mode = {}
-    for mode, mode_suffix in (("inference", ""), ("samples", "-samples")):
-        mode_records = [record for record in records if record["mode"] == mode]
-        mode_points = [point for metric, _, _ in MAIN_METRICS for point in regressions(mode_records, metric)]
-        write_svg(
-            output_dir / f"timing{file_suffix}{mode_suffix}.svg",
-            mode_records,
-            mode,
-            regression_episodes(mode_points),
-        )
-        selected_steps_by_mode[mode] = qualifying_job_steps(mode_records)
-        for job_name, step_series in selected_steps_by_mode[mode].items():
-            write_step_svg(
-                output_dir / f"steps-{file_slug(job_name)}{file_suffix}{mode_suffix}.svg",
-                mode_records,
-                mode,
-                job_name,
-                step_series,
-            )
-    return selected_steps_by_mode
+    job_name: str,
+) -> dict[str, list[tuple[dict[str, object], float]]]:
+    return qualifying_job_steps(records).get(job_name, {})
 
 
-def append_graph_set(
+def all_job_step_series(
+    records: list[dict[str, object]],
+    job_name: str,
+) -> dict[str, list[tuple[dict[str, object], float]]]:
+    series: dict[str, list[tuple[dict[str, object], float]]] = {}
+    for record in records:
+        for step_name, duration in record["job_steps"].get(job_name, {}).items():
+            series.setdefault(step_name, []).append((record, duration))
+    return series
+
+
+def append_summary_table(lines: list[str], records: list[dict[str, object]]) -> None:
+    metrics = [
+        ("Workflow complete", [record["time_to_complete_seconds"] for record in records]),
+        ("Workflow start to proxy step", [record["time_to_proxy_step_seconds"] for record in records]),
+        ("Proxy step to first reasoning/sample", [record["proxy_step_to_first_reasoning_seconds"] for record in records]),
+    ]
+    for job_name in REPORT_JOBS:
+        metrics.append((f"Job `{job_name}`", [metric_value(record, f"job:{job_name}") for record in records]))
+    major_steps: dict[str, list[float]] = {}
+    for record in records:
+        for step_name, duration in record["major_steps"].items():
+            major_steps.setdefault(step_name, []).append(duration)
+    for step_name, values in sorted(major_steps.items(), key=lambda item: statistics.median(item[1]), reverse=True):
+        metrics.append((f"Major step `{step_name}`", values))
+    lines.extend(["", "| Run or job | Samples | Median | P90 |", "|---|---:|---:|---:|"])
+    for label, values in metrics:
+        summary = summarize([value for value in values if value is not None])
+        lines.append(f"| {label} | {summary['count']} | {fmt(summary['median'])} | {fmt(summary['p90'])} |")
+
+
+def append_job_regressions(
     lines: list[str],
-    heading: str,
-    records: list[dict[str, object]],
-    file_suffix: str,
-    selected_steps_by_mode: dict[str, dict[str, list[tuple[dict[str, object], float]]]],
+    step_series: dict[str, list[tuple[dict[str, object], float]]],
 ) -> None:
-    mode_counts = {mode: sum(record["mode"] == mode for record in records) for mode in ("inference", "samples")}
+    episodes = step_regression_episodes(step_series)
+    lines.extend(["", "#### Candidate regressions (last six weeks)"])
+    if not episodes:
+        lines.extend(["", "No candidate regressions in the last six weeks."])
+        return
     lines.extend([
         "",
-        f"## {heading}",
-        "",
-        f"**{len(records)} successful runs:** {mode_counts['inference']} inference and {mode_counts['samples']} samples.",
-        "",
-        f"![{heading} inference timing](timing{file_suffix}.svg)",
-        "",
-        f"![{heading} sample timing](timing{file_suffix}-samples.svg)",
+        "| Label | Episode | Step | Peak | Prior median | Increase | Run | gh-aw version / commit |",
+        "|---|---|---|---:|---:|---:|---|---|",
     ])
-    for mode, mode_suffix in (("inference", ""), ("samples", "-samples")):
-        for job_name in sorted(selected_steps_by_mode[mode]):
-            lines.extend([
-                "",
-                f"### {mode.title()} {job_name} steps",
-                "",
-                f"![{heading} {mode} {job_name} step timing](steps-{file_slug(job_name)}{file_suffix}{mode_suffix}.svg)",
-            ])
+    for index, item in enumerate(episodes, 1):
+        commit = item["gh_aw_commit"][:12] if item["gh_aw_commit"] else "unresolved"
+        start, end = item["episode_start"][:10], item["episode_end"][:10]
+        episode = start if start == end else f"{start} to {end}"
+        lines.append(
+            f"| R{index} | {episode} | {item['metric']} | {fmt(item['duration_seconds'])} | "
+            f"{fmt(item['baseline_seconds'])} | {item['increase_percent']:.0f}% | "
+            f"[#{item['run_number']}]({item['url']}) | `{item['gh_aw_version']}` / `{commit}` |"
+        )
+
+
+def append_report_cell(
+    lines: list[str],
+    output_dir: Path,
+    records: list[dict[str, object]],
+    ref_kind: str,
+    mode: str,
+) -> None:
+    cell_records = [
+        record
+        for record in records
+        if record.get("gh_aw_ref_kind") == ref_kind and record["mode"] == mode
+    ]
+    slug = f"{ref_kind}-{mode}"
+    run_points = [point for metric, _, _ in MAIN_METRICS for point in regressions(cell_records, metric)]
+    write_svg(
+        output_dir / f"timing-{slug}.svg",
+        cell_records,
+        ref_kind,
+        mode,
+        recent_regression_episodes(run_points),
+    )
+    lines.extend([
+        "",
+        f"## Run, job & step times (`{ref_kind}`, using {mode})",
+        "",
+        f"**{len(cell_records)} successful runs.** Regressions shown below are limited to the last six weeks.",
+        "",
+        f"![Run and job times for {ref_kind}, using {mode}](timing-{slug}.svg)",
+    ])
+    append_summary_table(lines, cell_records)
+    for job_name in REPORT_JOBS:
+        graph_series = job_step_series(cell_records, job_name)
+        write_step_svg(
+            output_dir / f"steps-{file_slug(job_name)}-{slug}.svg",
+            cell_records,
+            ref_kind,
+            mode,
+            job_name,
+            graph_series,
+        )
+        lines.extend([
+            "",
+            f"### Major step times for job `{job_name}` (`{ref_kind}`, using {mode})",
+            "",
+            f"![Major step times for {job_name}, {ref_kind}, using {mode}](steps-{file_slug(job_name)}-{slug}.svg)",
+        ])
+        append_job_regressions(lines, all_job_step_series(cell_records, job_name))
 
 
 def write_outputs(output_dir: Path, records: list[dict[str, object]]) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
-    primary_records = [record for record in records if record.get("gh_aw_ref_kind") == "main"]
-    released_records = [record for record in records if record.get("gh_aw_ref_kind") == "released"]
-    regression_points = [point for metric, _, _ in MAIN_METRICS for point in regressions(primary_records, metric)]
-    all_regressions = regression_episodes(regression_points)
     (output_dir / "runs.json").write_text(json.dumps(records, indent=2) + "\n")
     fields = ["run_id", "run_number", "date", "url", "workflow_sha", "mode", "gh_aw_version", "gh_aw_ref_kind", "gh_aw_commit", "gh_aw_committed_at", "time_to_complete_seconds", "agent_job_seconds", "copilot_step_seconds", "detection_job_seconds", "time_to_proxy_step_seconds", "proxy_step_to_first_reasoning_seconds", "time_to_first_reasoning_seconds"]
     with (output_dir / "runs.csv").open("w", newline="") as stream:
@@ -636,53 +716,15 @@ def write_outputs(output_dir: Path, records: list[dict[str, object]]) -> None:
         writer.writerows(records)
     for old_graph in output_dir.glob("*.svg"):
         old_graph.unlink()
-    selected_steps_by_mode = graph_set(output_dir, primary_records, "")
-    released_steps = graph_set(output_dir, released_records, "-released")
-    complete = [record["time_to_complete_seconds"] for record in primary_records if record["time_to_complete_seconds"] is not None]
-    reasoning = [record["time_to_first_reasoning_seconds"] for record in primary_records if record["time_to_first_reasoning_seconds"] is not None]
-    agent_jobs = [record["agent_job_seconds"] for record in primary_records if record["agent_job_seconds"] is not None]
-    copilot_steps = [record["copilot_step_seconds"] for record in primary_records if record["copilot_step_seconds"] is not None]
-    proxy_start = [record["time_to_proxy_step_seconds"] for record in primary_records if record["time_to_proxy_step_seconds"] is not None]
-    proxy_reasoning = [record["proxy_step_to_first_reasoning_seconds"] for record in primary_records if record["proxy_step_to_first_reasoning_seconds"] is not None]
-    complete_summary, reasoning_summary = summarize(complete), summarize(reasoning)
-    mode_counts = {mode: sum(record["mode"] == mode for record in primary_records) for mode in ("inference", "samples")}
-    released_mode_counts = {mode: sum(record["mode"] == mode for record in released_records) for mode in ("inference", "samples")}
-    released_complete = summarize([record["time_to_complete_seconds"] for record in released_records if record["time_to_complete_seconds"] is not None])
-    lines = ["# Copilot create-issue timing", "", "## Main vs released", "", "| Run group | Successful runs | Inference | Samples | Median complete | P90 complete |", "|---|---:|---:|---:|---:|---:|", f"| `--gh-aw-ref main` | {len(primary_records)} | {mode_counts['inference']} | {mode_counts['samples']} | {fmt(complete_summary['median'])} | {fmt(complete_summary['p90'])} |", f"| Released tags | {len(released_records)} | {released_mode_counts['inference']} | {released_mode_counts['samples']} | {fmt(released_complete['median'])} | {fmt(released_complete['p90'])} |", "", f"Primary analysis uses only the **{len(primary_records)} successful runs compiled with `--gh-aw-ref main`**.", "", "| Metric | Samples | Median | P90 | Min | Max |", "|---|---:|---:|---:|---:|---:|", f"| Time to complete | {complete_summary['count']} | {fmt(complete_summary['median'])} | {fmt(complete_summary['p90'])} | {fmt(complete_summary['min'])} | {fmt(complete_summary['max'])} |", f"| Time to first reasoning/sample proxy | {reasoning_summary['count']} | {fmt(reasoning_summary['median'])} | {fmt(reasoning_summary['p90'])} | {fmt(reasoning_summary['min'])} | {fmt(reasoning_summary['max'])} |", "", "The primary x-axis is the commit time of the resolved gh-aw main commit, not the workflow run time. Inference and deterministic sample runs are graphed separately. Stable and pre-release tags are combined into the released graph set at the end.", "", "## Main inference timing", "", "![Main inference historical timing](timing.svg)", "", "## Main sample timing", "", "![Main sample historical timing](timing-samples.svg)", "", "## Candidate regressions on main", "", f"Found **{len(regression_points)} threshold crossings** grouped into **{len(all_regressions)} episodes**. Baselines use only `--gh-aw-ref main` runs and are calculated separately for inference and sample runs; each `R#` labels the largest increase in an episode whose crossings are no more than three gh-aw commit-days apart.", "", "| Label | Episode | Mode | Metric | Peak | Prior median | Increase | Run | gh-aw version / commit |", "|---|---|---|---|---:|---:|---:|---|---|"]
-    for index, item in enumerate(all_regressions, 1):
-        gh_aw_commit = item["gh_aw_commit"][:12] if item["gh_aw_commit"] else "unresolved"
-        episode_start = item["episode_start"][:10]
-        episode_end = item["episode_end"][:10]
-        episode = episode_start if episode_start == episode_end else f"{episode_start} to {episode_end}"
-        metric_name = next(label for key, label, _ in MAIN_METRICS if key == item["metric"])
-        lines.append(f"| R{index} | {episode} ({item['episode_points']} point{'s' if item['episode_points'] != 1 else ''}) | {item['mode']} | {metric_name} | {fmt(item['value_seconds'])} | {fmt(item['baseline_seconds'])} | {item['increase_percent']:.0f}% | [#{item['run_number']}]({item['url']}) | `{item['gh_aw_version']}` / `{gh_aw_commit}` |")
-    step_values: dict[str, list[float]] = {}
-    for record in primary_records:
-        for name, duration in record["major_steps"].items():
-            step_values.setdefault(name, []).append(duration)
-    lines.extend(["", "## Job and major steps", "", "| Job or step | Samples | Median | P90 |", "|---|---:|---:|---:|"])
-    detection_jobs = [record["detection_job_seconds"] for record in records if record["detection_job_seconds"] is not None]
-    for name, values in [("Workflow start to proxy step", proxy_start), ("Proxy step to reasoning/sample proxy", proxy_reasoning), ("Agent job", agent_jobs), ("Execute GitHub Copilot CLI", copilot_steps), ("Detection job", detection_jobs)]:
-        summary = summarize(values)
-        lines.append(f"| {name} | {summary['count']} | {fmt(summary['median'])} | {fmt(summary['p90'])} |")
-    for name, values in sorted(step_values.items(), key=lambda item: statistics.median(item[1]), reverse=True):
-        if name in AGENT_STEP_NAMES:
-            continue
-        summary = summarize(values)
-        lines.append(f"| {name} | {summary['count']} | {fmt(summary['median'])} | {fmt(summary['p90'])} |")
-    lines.extend(["", "## Step timing by job", "", "A step is included within a mode when its overall median exceeds 10 seconds, its median over the latest five observations exceeds 10 seconds (with at least three observations), or one of its latest five observations is a regression of at least 50% and 10 seconds against the preceding median. Exact job and step names define each series, so renamed steps begin or end naturally."])
-    for mode, suffix in (("inference", ""), ("samples", "-samples")):
-        lines.extend(["", f"### {mode.title()} step graphs"])
-        for job_name, step_series in sorted(selected_steps_by_mode[mode].items()):
-            lines.extend(["", f"#### {job_name}", "", f"![{mode} {job_name} step timing](steps-{file_slug(job_name)}{suffix}.svg)", "", "| Step | Selection signal | Timed occurrences | Over 10s | Median | P90 |", "|---|---|---:|---:|---:|---:|"])
-            for step_name, values in sorted(step_series.items()):
-                durations = [duration for _, duration in values]
-                summary = summarize(durations)
-                over_ten = sum(duration > 10 for duration in durations)
-                signals = ", ".join(step_selection_reasons(durations))
-                lines.append(f"| {step_name} | {signals} | {len(durations)} | {over_ten / len(durations):.0%} | {fmt(summary['median'])} | {fmt(summary['p90'])} |")
-    append_graph_set(lines, "Released timing", released_records, "-released", released_steps)
-    lines.extend(["", "## Method", "", "Only overall-successful `workflow_dispatch` runs with a successful `agent` job are included. Compiler metadata classifies exact published stable and pre-release tags using the GitHub Releases API and combines both as `released`; other non-empty development or commit versions are treated as `--gh-aw-ref main`, matching the nightly source-mode entry. Historical exact semver tags no longer returned by the Releases API are also treated as released. Runs with missing compiler metadata are retained in CSV/JSON but excluded from graphs. Inference runs require a successful `Execute GitHub Copilot CLI` step; sample runs require a successful deterministic replay step. Time to complete is `run.updated_at - run.run_started_at`. The first-proxy metric is end to end from `run.run_started_at`. For inference, its endpoint is the first timestamped assistant/reasoning event or agent-originated `tools/call`; for samples, it is deterministic replay completion. Detection is the standalone `detection` job duration and is present only for non-sample runs. Step durations come directly from the GitHub Actions jobs API (`completed_at - started_at`) for successful steps in successful jobs. Runs without resolvable gh-aw commit dates remain in CSV/JSON but are omitted from the time-axis graphs.", ""])
+    lines = ["# Performance history for `copilot-create-issue.md`"]
+    for ref_kind, mode in (
+        ("main", "inference"),
+        ("released", "inference"),
+        ("main", "samples"),
+        ("released", "samples"),
+    ):
+        append_report_cell(lines, output_dir, records, ref_kind, mode)
+    lines.extend(["", "## Method", "", "Each section fixes both independent dimensions: gh-aw source (`main` or combined stable/pre-release `released`) and execution mode (`inference` or `samples`). Only overall-successful `workflow_dispatch` runs with a successful `agent` job are included. Candidate regression baselines use up to ten preceding observations from the same section and step; displayed regression episodes are limited to the six weeks before report generation. A step is graphed when it has a sustained cost, recent slowdown, or recent regression. Runs with missing compiler metadata remain in CSV/JSON but are excluded from graphs.", ""])
     (output_dir / "report.md").write_text("\n".join(lines))
 
 
