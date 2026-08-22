@@ -1,100 +1,91 @@
 # Copilot create-issue timing
 
-Analyzed **229** successful agent runs: **70 inference** and **159 samples**.
+## Main vs released
+
+| Run group | Successful runs | Inference | Samples | Median complete | P90 complete |
+|---|---:|---:|---:|---:|---:|
+| `--gh-aw-ref main` | 120 | 62 | 58 | 283.0s | 396.4s |
+| Released tags | 94 | 6 | 88 | 121.5s | 169.0s |
+
+Primary analysis uses only the **120 successful runs compiled with `--gh-aw-ref main`**.
 
 | Metric | Samples | Median | P90 | Min | Max |
 |---|---:|---:|---:|---:|---:|
-| Time to complete | 229 | 184.0s | 362.4s | 78.0s | 517.0s |
-| Time to first reasoning/sample proxy | 224 | 98.0s | 143.5s | 41.0s | 197.4s |
+| Time to complete | 120 | 283.0s | 396.4s | 147.0s | 517.0s |
+| Time to first reasoning/sample proxy | 120 | 116.7s | 154.1s | 78.0s | 197.4s |
 
-The x-axis is the commit time of the resolved gh-aw commit, not the workflow run time. Inference and deterministic sample runs are graphed separately.
+The primary x-axis is the commit time of the resolved gh-aw main commit, not the workflow run time. Inference and deterministic sample runs are graphed separately. Stable and pre-release tags are combined into the released graph set at the end.
 
-## Inference timing
+## Main inference timing
 
-![Inference historical timing](timing.svg)
+![Main inference historical timing](timing.svg)
 
-## Sample timing
+## Main sample timing
 
-![Sample historical timing](timing-samples.svg)
+![Main sample historical timing](timing-samples.svg)
 
-## Candidate regressions
+## Candidate regressions on main
 
-Found **214 threshold crossings** grouped into **51 episodes**. Baselines are calculated separately for inference and sample runs; each `R#` labels the largest increase in an episode whose crossings are no more than three gh-aw commit-days apart.
+Found **57 threshold crossings** grouped into **35 episodes**. Baselines use only `--gh-aw-ref main` runs and are calculated separately for inference and sample runs; each `R#` labels the largest increase in an episode whose crossings are no more than three gh-aw commit-days apart.
 
 | Label | Episode | Mode | Metric | Peak | Prior median | Increase | Run | gh-aw version / commit |
 |---|---|---|---|---:|---:|---:|---|---|
-| R1 | 2026-06-18 to 2026-06-25 (6 points) | inference | Activation | 50.0s | 13.0s | 285% | [#138](https://github.com/githubnext/gh-aw-test/actions/runs/27728784857) | `v0.80.3-6-g6be6637234-dirty` / `6be6637234c7` |
-| R2 | 2026-06-18 to 2026-06-22 (7 points) | inference | Conclusion | 38.0s | 9.0s | 322% | [#145](https://github.com/githubnext/gh-aw-test/actions/runs/27805721716) | `393419b2fb` / `393419b2fbab` |
-| R3 | 2026-06-18 to 2026-06-21 (4 points) | inference | Safe Outputs | 35.0s | 14.0s | 150% | [#148](https://github.com/githubnext/gh-aw-test/actions/runs/27860318787) | `9ad5040c3f` / `9ad5040c3f6f` |
-| R4 | 2026-06-18 to 2026-06-20 (3 points) | inference | Complete | 292.0s | 184.0s | 59% | [#145](https://github.com/githubnext/gh-aw-test/actions/runs/27805721716) | `393419b2fb` / `393419b2fbab` |
-| R5 | 2026-06-18 (1 point) | samples | Conclusion | 48.0s | 27.5s | 75% | [#142](https://github.com/githubnext/gh-aw-test/actions/runs/27787448695) | `v0.80.4-42-g5c1590bc9c` / `5c1590bc9c0b` |
-| R6 | 2026-06-18 (1 point) | samples | Safe Outputs | 43.0s | 27.0s | 59% | [#142](https://github.com/githubnext/gh-aw-test/actions/runs/27787448695) | `v0.80.4-42-g5c1590bc9c` / `5c1590bc9c0b` |
-| R7 | 2026-06-22 to 2026-06-24 (3 points) | samples | Agent | 79.0s | 41.5s | 90% | [#158](https://github.com/githubnext/gh-aw-test/actions/runs/27980997744) | `v0.80.9` / `a3624368c4e7` |
-| R8 | 2026-06-22 (1 point) | inference | First proxy | 182.8s | 115.9s | 58% | [#153](https://github.com/githubnext/gh-aw-test/actions/runs/27966398112) | `42a1743825` / `42a1743825aa` |
-| R9 | 2026-06-22 to 2026-08-05 (43 points) | samples | Activation | 73.0s | 20.0s | 265% | [#184](https://github.com/githubnext/gh-aw-test/actions/runs/28493889040) | `a146daa7e6` / `a146daa7e61e` |
-| R10 | 2026-06-22 to 2026-07-08 (15 points) | samples | Conclusion | 120.0s | 16.0s | 650% | [#184](https://github.com/githubnext/gh-aw-test/actions/runs/28493889040) | `a146daa7e6` / `a146daa7e61e` |
-| R11 | 2026-06-22 to 2026-06-24 (4 points) | samples | Safe Outputs | 52.0s | 16.0s | 225% | [#164](https://github.com/githubnext/gh-aw-test/actions/runs/28078251384) | `5373e080d7` / `5373e080d733` |
-| R12 | 2026-06-22 to 2026-07-04 (12 points) | samples | Complete | 310.0s | 123.5s | 151% | [#184](https://github.com/githubnext/gh-aw-test/actions/runs/28493889040) | `a146daa7e6` / `a146daa7e61e` |
-| R13 | 2026-06-22 to 2026-06-24 (3 points) | samples | First proxy | 134.0s | 75.5s | 77% | [#154](https://github.com/githubnext/gh-aw-test/actions/runs/27969702756) | `efe940eb13` / `efe940eb13d0` |
-| R14 | 2026-06-25 (1 point) | inference | Safe Outputs | 51.0s | 27.5s | 85% | [#295](https://github.com/githubnext/gh-aw-test/actions/runs/32516874360) | `v0.81.3-44-g42b108eaae` / `42b108eaae3a` |
-| R15 | 2026-06-27 to 2026-07-04 (7 points) | samples | Safe Outputs | 39.0s | 10.5s | 271% | [#175](https://github.com/githubnext/gh-aw-test/actions/runs/28311501615) | `2d16c282d0` / `2d16c282d0fa` |
-| R16 | 2026-06-27 to 2026-07-04 (9 points) | samples | First proxy | 121.0s | 60.0s | 102% | [#207](https://github.com/githubnext/gh-aw-test/actions/runs/28994888262) | `v0.81.6` / `eed4304d8740` |
-| R17 | 2026-06-29 to 2026-07-02 (2 points) | samples | Agent | 60.0s | 38.0s | 58% | [#187](https://github.com/githubnext/gh-aw-test/actions/runs/28565506990) | `588de5c52d` / `588de5c52dff` |
-| R18 | 2026-06-29 to 2026-07-03 (5 points) | inference | Agent | 191.0s | 88.0s | 117% | [#300](https://github.com/githubnext/gh-aw-test/actions/runs/32521125135) | `v0.82.1` / `b5fdd698c629` |
-| R19 | 2026-06-29 (1 point) | inference | Safe Outputs | 76.0s | 30.0s | 153% | [#299](https://github.com/githubnext/gh-aw-test/actions/runs/32520135455) | `v0.82.0-41-g663ad7b5aa` / `663ad7b5aa7c` |
-| R20 | 2026-07-02 to 2026-07-03 (2 points) | inference | Conclusion | 60.0s | 32.5s | 85% | [#303](https://github.com/githubnext/gh-aw-test/actions/runs/32525853446) | `v0.82.2-48-g332d5e24d2` / `332d5e24d2c6` |
-| R21 | 2026-07-08 to 2026-07-09 (2 points) | inference | Activation | 93.0s | 44.5s | 109% | [#308](https://github.com/githubnext/gh-aw-test/actions/runs/32531331276) | `v0.82.6-11-gbd5467ff41` / `bd5467ff4106` |
-| R22 | 2026-07-12 (1 point) | samples | Conclusion | 36.0s | 22.5s | 60% | [#215](https://github.com/githubnext/gh-aw-test/actions/runs/29179483580) | `bc7d2db69a` / `bc7d2db69a21` |
-| R23 | 2026-07-12 (1 point) | inference | Safe Outputs | 60.0s | 33.0s | 82% | [#312](https://github.com/githubnext/gh-aw-test/actions/runs/32534604788) | `v0.82.8-28-ge0a0e5d23d` / `e0a0e5d23d0e` |
-| R24 | 2026-07-13 to 2026-07-17 (3 points) | samples | Safe Outputs | 36.0s | 18.0s | 100% | [#218](https://github.com/githubnext/gh-aw-test/actions/runs/29223659614) | `fe2174281f` / `fe2174281f75` |
-| R25 | 2026-07-14 (1 point) | inference | Activation | 104.0s | 50.5s | 106% | [#314](https://github.com/githubnext/gh-aw-test/actions/runs/32536396153) | `v0.82.9-54-gdf13f08917` / `df13f0891719` |
-| R26 | 2026-07-14 (1 point) | inference | First proxy | 197.4s | 127.3s | 55% | [#314](https://github.com/githubnext/gh-aw-test/actions/runs/32536396153) | `v0.82.9-54-gdf13f08917` / `df13f0891719` |
-| R27 | 2026-07-15 (2 points) | samples | First proxy | 121.0s | 75.5s | 60% | [#224](https://github.com/githubnext/gh-aw-test/actions/runs/29388180753) | `61336cb2af` / `61336cb2af49` |
-| R28 | 2026-07-15 to 2026-07-17 (2 points) | inference | Conclusion | 82.0s | 40.5s | 102% | [#315](https://github.com/githubnext/gh-aw-test/actions/runs/32537059340) | `v0.82.9-134-gf0a3dd21c6` / `f0a3dd21c6e5` |
-| R29 | 2026-07-16 (1 point) | samples | Agent | 70.0s | 42.5s | 65% | [#232](https://github.com/githubnext/gh-aw-test/actions/runs/29555946105) | `v0.82.11` / `38e22c4075e3` |
-| R30 | 2026-07-16 to 2026-07-18 (3 points) | inference | Detection | 169.0s | 67.5s | 150% | [#317](https://github.com/githubnext/gh-aw-test/actions/runs/32538498682) | `v0.82.12-7-gc096ffebd2` / `c096ffebd27f` |
-| R31 | 2026-07-17 to 2026-08-05 (22 points) | samples | Conclusion | 65.0s | 21.5s | 202% | [#270](https://github.com/githubnext/gh-aw-test/actions/runs/30421452781) | `acc797bbab` / `acc797bbab36` |
-| R32 | 2026-07-20 (1 point) | samples | Complete | 237.0s | 146.5s | 62% | [#239](https://github.com/githubnext/gh-aw-test/actions/runs/29716703808) | `7bdc455764` / `7bdc455764ae` |
-| R33 | 2026-07-20 (1 point) | samples | First proxy | 157.0s | 86.0s | 83% | [#239](https://github.com/githubnext/gh-aw-test/actions/runs/29716703808) | `7bdc455764` / `7bdc455764ae` |
-| R34 | 2026-07-21 to 2026-08-05 (17 points) | samples | Safe Outputs | 39.0s | 13.5s | 189% | [#268](https://github.com/githubnext/gh-aw-test/actions/runs/30329600083) | `v0.83.3` / `7e728ffd6fc9` |
-| R35 | 2026-07-21 (1 point) | inference | Safe Outputs | 67.0s | 36.0s | 86% | [#321](https://github.com/githubnext/gh-aw-test/actions/runs/32540903699) | `v0.82.15-23-g2a7ac3d34e` / `2a7ac3d34e2d` |
-| R36 | 2026-07-24 to 2026-07-25 (3 points) | samples | Complete | 183.0s | 100.0s | 83% | [#252](https://github.com/githubnext/gh-aw-test/actions/runs/30066002900) | `755ee4dea3` / `755ee4dea341` |
-| R37 | 2026-07-24 (1 point) | samples | Agent | 64.0s | 39.5s | 62% | [#257](https://github.com/githubnext/gh-aw-test/actions/runs/30144752865) | `v0.83.2` / `56a38be41a18` |
-| R38 | 2026-07-24 to 2026-07-25 (2 points) | samples | First proxy | 107.0s | 66.0s | 62% | [#268](https://github.com/githubnext/gh-aw-test/actions/runs/30329600083) | `v0.83.3` / `7e728ffd6fc9` |
-| R39 | 2026-07-25 to 2026-07-26 (2 points) | inference | Activation | 92.0s | 45.0s | 104% | [#325](https://github.com/githubnext/gh-aw-test/actions/runs/32542948173) | `v0.83.3-17-g11d9ea9de7` / `11d9ea9de729` |
-| R40 | 2026-07-25 (1 point) | inference | Safe Outputs | 75.0s | 36.5s | 105% | [#325](https://github.com/githubnext/gh-aw-test/actions/runs/32542948173) | `v0.83.3-17-g11d9ea9de7` / `11d9ea9de729` |
-| R41 | 2026-07-27 (1 point) | samples | Agent | 67.0s | 41.5s | 61% | [#269](https://github.com/githubnext/gh-aw-test/actions/runs/30330754586) | `v0.83.4` / `bbb804287845` |
-| R42 | 2026-07-28 (1 point) | samples | Complete | 251.0s | 159.0s | 58% | [#270](https://github.com/githubnext/gh-aw-test/actions/runs/30421452781) | `acc797bbab` / `acc797bbab36` |
-| R43 | 2026-07-30 (1 point) | inference | Conclusion | 57.0s | 37.0s | 54% | [#330](https://github.com/githubnext/gh-aw-test/actions/runs/32545622744) | `v0.84.0-61-g5adcdb6d4e` / `5adcdb6d4ec1` |
-| R44 | 2026-08-01 to 2026-08-03 (2 points) | inference | Safe Outputs | 142.0s | 46.5s | 205% | [#334](https://github.com/githubnext/gh-aw-test/actions/runs/32547543586) | `v0.84.3-58-g53baccde53` / `53baccde5390` |
-| R45 | 2026-08-02 (1 point) | inference | Conclusion | 70.0s | 43.0s | 63% | [#333](https://github.com/githubnext/gh-aw-test/actions/runs/32547123314) | `v0.84.2-95-gf5bd99245e` / `f5bd99245e40` |
-| R46 | 2026-08-03 (1 point) | inference | Activation | 87.0s | 56.0s | 55% | [#334](https://github.com/githubnext/gh-aw-test/actions/runs/32547543586) | `v0.84.3-58-g53baccde53` / `53baccde5390` |
-| R47 | 2026-08-03 (1 point) | inference | Complete | 517.0s | 318.0s | 63% | [#334](https://github.com/githubnext/gh-aw-test/actions/runs/32547543586) | `v0.84.3-58-g53baccde53` / `53baccde5390` |
-| R48 | 2026-08-04 (1 point) | samples | Complete | 227.0s | 149.5s | 52% | [#288](https://github.com/githubnext/gh-aw-test/actions/runs/30876764168) | `021887f5dc` / `021887f5dce3` |
-| R49 | 2026-08-08 (1 point) | inference | Activation | 102.0s | 50.0s | 104% | [#341](https://github.com/githubnext/gh-aw-test/actions/runs/32552452139) | `v0.86.1-57-gba0a9f9589` / `ba0a9f958976` |
-| R50 | 2026-08-14 to 2026-08-17 (3 points) | inference | Safe Outputs | 78.0s | 37.5s | 108% | [#349](https://github.com/githubnext/gh-aw-test/actions/runs/32556073604) | `v0.86.2-73-gc35faf436c` / `c35faf436c79` |
-| R51 | 2026-08-17 (1 point) | inference | Activation | 68.0s | 45.0s | 51% | [#352](https://github.com/githubnext/gh-aw-test/actions/runs/32558234273) | `v0.87.0-133-g2b2cf3fb01` / `2b2cf3fb01ee` |
+| R1 | 2026-06-22 to 2026-06-25 (3 points) | inference | Activation | 81.0s | 36.0s | 125% | [#153](https://github.com/githubnext/gh-aw-test/actions/runs/27966398112) | `42a1743825` / `42a1743825aa` |
+| R2 | 2026-06-22 (1 point) | inference | First proxy | 182.8s | 114.8s | 59% | [#153](https://github.com/githubnext/gh-aw-test/actions/runs/27966398112) | `42a1743825` / `42a1743825aa` |
+| R3 | 2026-06-22 (1 point) | samples | Agent | 69.0s | 44.0s | 57% | [#154](https://github.com/githubnext/gh-aw-test/actions/runs/27969702756) | `efe940eb13` / `efe940eb13d0` |
+| R4 | 2026-06-22 (1 point) | inference | Conclusion | 53.0s | 33.0s | 61% | [#155](https://github.com/githubnext/gh-aw-test/actions/runs/27970094123) | `5fdf022bd5` / `5fdf022bd581` |
+| R5 | 2026-06-24 (1 point) | samples | Safe Outputs | 52.0s | 31.0s | 68% | [#164](https://github.com/githubnext/gh-aw-test/actions/runs/28078251384) | `5373e080d7` / `5373e080d733` |
+| R6 | 2026-06-25 (1 point) | inference | Safe Outputs | 51.0s | 27.5s | 85% | [#295](https://github.com/githubnext/gh-aw-test/actions/runs/32516874360) | `v0.81.3-44-g42b108eaae` / `42b108eaae3a` |
+| R7 | 2026-06-26 to 2026-07-03 (4 points) | samples | Conclusion | 120.0s | 35.5s | 238% | [#184](https://github.com/githubnext/gh-aw-test/actions/runs/28493889040) | `a146daa7e6` / `a146daa7e61e` |
+| R8 | 2026-06-29 to 2026-07-04 (5 points) | inference | Agent | 177.0s | 85.5s | 107% | [#299](https://github.com/githubnext/gh-aw-test/actions/runs/32520135455) | `v0.82.0-41-g663ad7b5aa` / `663ad7b5aa7c` |
+| R9 | 2026-06-29 (1 point) | inference | Conclusion | 47.0s | 30.0s | 57% | [#299](https://github.com/githubnext/gh-aw-test/actions/runs/32520135455) | `v0.82.0-41-g663ad7b5aa` / `663ad7b5aa7c` |
+| R10 | 2026-06-29 (1 point) | inference | Safe Outputs | 76.0s | 34.0s | 124% | [#299](https://github.com/githubnext/gh-aw-test/actions/runs/32520135455) | `v0.82.0-41-g663ad7b5aa` / `663ad7b5aa7c` |
+| R11 | 2026-07-01 (1 point) | samples | Activation | 73.0s | 44.5s | 64% | [#184](https://github.com/githubnext/gh-aw-test/actions/runs/28493889040) | `a146daa7e6` / `a146daa7e61e` |
+| R12 | 2026-07-02 to 2026-07-03 (2 points) | inference | Conclusion | 60.0s | 35.5s | 69% | [#303](https://github.com/githubnext/gh-aw-test/actions/runs/32525853446) | `v0.82.2-48-g332d5e24d2` / `332d5e24d2c6` |
+| R13 | 2026-07-08 to 2026-07-09 (2 points) | inference | Activation | 93.0s | 41.0s | 127% | [#308](https://github.com/githubnext/gh-aw-test/actions/runs/32531331276) | `v0.82.6-11-gbd5467ff41` / `bd5467ff4106` |
+| R14 | 2026-07-10 to 2026-07-15 (3 points) | samples | Activation | 75.0s | 41.0s | 83% | [#209](https://github.com/githubnext/gh-aw-test/actions/runs/29069069292) | `2de7b7329d` / `2de7b7329de2` |
+| R15 | 2026-07-12 (1 point) | inference | Safe Outputs | 60.0s | 33.0s | 82% | [#312](https://github.com/githubnext/gh-aw-test/actions/runs/32534604788) | `v0.82.8-28-ge0a0e5d23d` / `e0a0e5d23d0e` |
+| R16 | 2026-07-14 (1 point) | inference | Activation | 104.0s | 50.5s | 106% | [#314](https://github.com/githubnext/gh-aw-test/actions/runs/32536396153) | `v0.82.9-54-gdf13f08917` / `df13f0891719` |
+| R17 | 2026-07-14 (1 point) | inference | First proxy | 197.4s | 127.3s | 55% | [#314](https://github.com/githubnext/gh-aw-test/actions/runs/32536396153) | `v0.82.9-54-gdf13f08917` / `df13f0891719` |
+| R18 | 2026-07-15 to 2026-07-17 (2 points) | inference | Conclusion | 82.0s | 40.5s | 102% | [#315](https://github.com/githubnext/gh-aw-test/actions/runs/32537059340) | `v0.82.9-134-gf0a3dd21c6` / `f0a3dd21c6e5` |
+| R19 | 2026-07-16 to 2026-07-18 (3 points) | inference | Detection | 169.0s | 67.5s | 150% | [#317](https://github.com/githubnext/gh-aw-test/actions/runs/32538498682) | `v0.82.12-7-gc096ffebd2` / `c096ffebd27f` |
+| R20 | 2026-07-20 (1 point) | samples | Activation | 105.0s | 52.5s | 100% | [#239](https://github.com/githubnext/gh-aw-test/actions/runs/29716703808) | `7bdc455764` / `7bdc455764ae` |
+| R21 | 2026-07-20 (1 point) | samples | First proxy | 157.0s | 96.0s | 64% | [#239](https://github.com/githubnext/gh-aw-test/actions/runs/29716703808) | `7bdc455764` / `7bdc455764ae` |
+| R22 | 2026-07-21 (1 point) | inference | Safe Outputs | 67.0s | 36.0s | 86% | [#321](https://github.com/githubnext/gh-aw-test/actions/runs/32540903699) | `v0.82.15-23-g2a7ac3d34e` / `2a7ac3d34e2d` |
+| R23 | 2026-07-25 to 2026-07-26 (2 points) | inference | Activation | 92.0s | 45.0s | 104% | [#325](https://github.com/githubnext/gh-aw-test/actions/runs/32542948173) | `v0.83.3-17-g11d9ea9de7` / `11d9ea9de729` |
+| R24 | 2026-07-25 (1 point) | inference | Safe Outputs | 75.0s | 36.5s | 105% | [#325](https://github.com/githubnext/gh-aw-test/actions/runs/32542948173) | `v0.83.3-17-g11d9ea9de7` / `11d9ea9de729` |
+| R25 | 2026-07-27 (1 point) | samples | Activation | 61.0s | 40.5s | 51% | [#266](https://github.com/githubnext/gh-aw-test/actions/runs/30271118206) | `55b5181bb8` / `55b5181bb855` |
+| R26 | 2026-07-28 (2 points) | samples | Conclusion | 65.0s | 31.0s | 110% | [#270](https://github.com/githubnext/gh-aw-test/actions/runs/30421452781) | `acc797bbab` / `acc797bbab36` |
+| R27 | 2026-07-29 to 2026-08-01 (2 points) | samples | Safe Outputs | 46.0s | 28.0s | 64% | [#273](https://github.com/githubnext/gh-aw-test/actions/runs/30513003051) | `8d982baa62` / `8d982baa62cd` |
+| R28 | 2026-07-30 (1 point) | inference | Conclusion | 57.0s | 37.0s | 54% | [#330](https://github.com/githubnext/gh-aw-test/actions/runs/32545622744) | `v0.84.0-61-g5adcdb6d4e` / `5adcdb6d4ec1` |
+| R29 | 2026-08-01 to 2026-08-03 (2 points) | inference | Safe Outputs | 142.0s | 46.5s | 205% | [#334](https://github.com/githubnext/gh-aw-test/actions/runs/32547543586) | `v0.84.3-58-g53baccde53` / `53baccde5390` |
+| R30 | 2026-08-02 (1 point) | inference | Conclusion | 70.0s | 43.0s | 63% | [#333](https://github.com/githubnext/gh-aw-test/actions/runs/32547123314) | `v0.84.2-95-gf5bd99245e` / `f5bd99245e40` |
+| R31 | 2026-08-03 (1 point) | inference | Activation | 87.0s | 56.0s | 55% | [#334](https://github.com/githubnext/gh-aw-test/actions/runs/32547543586) | `v0.84.3-58-g53baccde53` / `53baccde5390` |
+| R32 | 2026-08-03 (1 point) | inference | Complete | 517.0s | 318.0s | 63% | [#334](https://github.com/githubnext/gh-aw-test/actions/runs/32547543586) | `v0.84.3-58-g53baccde53` / `53baccde5390` |
+| R33 | 2026-08-08 (1 point) | inference | Activation | 102.0s | 50.0s | 104% | [#341](https://github.com/githubnext/gh-aw-test/actions/runs/32552452139) | `v0.86.1-57-gba0a9f9589` / `ba0a9f958976` |
+| R34 | 2026-08-14 to 2026-08-17 (3 points) | inference | Safe Outputs | 78.0s | 37.5s | 108% | [#349](https://github.com/githubnext/gh-aw-test/actions/runs/32556073604) | `v0.86.2-73-gc35faf436c` / `c35faf436c79` |
+| R35 | 2026-08-17 (1 point) | inference | Activation | 68.0s | 45.0s | 51% | [#352](https://github.com/githubnext/gh-aw-test/actions/runs/32558234273) | `v0.87.0-133-g2b2cf3fb01` / `2b2cf3fb01ee` |
 
 ## Job and major steps
 
 | Job or step | Samples | Median | P90 |
 |---|---:|---:|---:|
-| Workflow start to proxy step | 229 | 94.0s | 127.0s |
-| Proxy step to reasoning/sample proxy | 224 | 0.0s | 23.7s |
-| Agent job | 229 | 47.0s | 107.2s |
-| Execute GitHub Copilot CLI | 70 | 30.0s | 114.1s |
+| Workflow start to proxy step | 120 | 104.0s | 134.1s |
+| Proxy step to reasoning/sample proxy | 120 | 15.5s | 26.6s |
+| Agent job | 120 | 73.0s | 168.0s |
+| Execute GitHub Copilot CLI | 62 | 29.5s | 114.0s |
 | Detection job | 69 | 70.0s | 88.4s |
 | Install ripgrep | 6 | 14.0s | 19.0s |
-| Download container images | 229 | 10.0s | 16.0s |
-| Set up job | 216 | 7.0s | 19.0s |
-| Start MCP Gateway | 229 | 7.0s | 11.2s |
-| Install GitHub Copilot CLI | 229 | 4.0s | 5.0s |
-| Upload agent artifacts | 56 | 2.0s | 2.0s |
-| Setup Scripts | 212 | 2.0s | 4.0s |
-| Download activation artifact | 82 | 2.0s | 2.0s |
-| Install AWF binary | 13 | 2.0s | 2.0s |
-| Checkout repository | 26 | 2.0s | 2.0s |
-| Stop MCP Gateway | 25 | 2.0s | 2.0s |
+| Set up job | 120 | 12.5s | 20.0s |
+| Download container images | 120 | 11.0s | 17.1s |
+| Start MCP Gateway | 120 | 7.0s | 11.0s |
+| Install GitHub Copilot CLI | 120 | 4.0s | 5.0s |
+| Setup Scripts | 118 | 2.5s | 4.3s |
+| Download activation artifact | 49 | 2.0s | 2.0s |
+| Upload agent artifacts | 31 | 2.0s | 2.0s |
+| Checkout repository | 23 | 2.0s | 2.0s |
+| Install AWF binary | 7 | 2.0s | 2.0s |
+| Stop MCP Gateway | 15 | 2.0s | 2.0s |
 | Print firewall logs | 1 | 2.0s | 2.0s |
 | Audit pre-agent workspace | 1 | 2.0s | 2.0s |
 
@@ -110,7 +101,7 @@ A step is included within a mode when its overall median exceeds 10 seconds, its
 
 | Step | Selection signal | Timed occurrences | Over 10s | Median | P90 |
 |---|---|---:|---:|---:|---:|
-| Set up job | overall median >10s, recent median >10s, recent regression | 70 | 94% | 31.0s | 54.1s |
+| Set up job | overall median >10s, recent median >10s, recent regression | 62 | 100% | 31.0s | 54.9s |
 
 #### agent
 
@@ -118,10 +109,10 @@ A step is included within a mode when its overall median exceeds 10 seconds, its
 
 | Step | Selection signal | Timed occurrences | Over 10s | Median | P90 |
 |---|---|---:|---:|---:|---:|
-| Download container images | overall median >10s | 70 | 66% | 11.0s | 18.1s |
-| Execute GitHub Copilot CLI | overall median >10s, recent median >10s | 70 | 100% | 30.0s | 114.1s |
+| Download container images | overall median >10s | 62 | 69% | 11.0s | 18.9s |
+| Execute GitHub Copilot CLI | overall median >10s, recent median >10s | 62 | 100% | 29.5s | 114.0s |
 | Install ripgrep | overall median >10s, recent median >10s | 6 | 67% | 14.0s | 19.0s |
-| Set up job | overall median >10s, recent median >10s | 70 | 81% | 17.0s | 22.0s |
+| Set up job | overall median >10s, recent median >10s | 62 | 90% | 17.0s | 21.9s |
 
 #### conclusion
 
@@ -129,8 +120,8 @@ A step is included within a mode when its overall median exceeds 10 seconds, its
 
 | Step | Selection signal | Timed occurrences | Over 10s | Median | P90 |
 |---|---|---:|---:|---:|---:|
-| Set up job | overall median >10s, recent median >10s, recent regression | 70 | 94% | 25.5s | 41.0s |
-| Upload usage artifact | recent regression | 65 | 2% | 1.0s | 2.0s |
+| Set up job | overall median >10s, recent median >10s, recent regression | 62 | 100% | 26.5s | 41.0s |
+| Upload usage artifact | recent regression | 62 | 2% | 1.0s | 2.0s |
 
 #### detection
 
@@ -138,10 +129,10 @@ A step is included within a mode when its overall median exceeds 10 seconds, its
 
 | Step | Selection signal | Timed occurrences | Over 10s | Median | P90 |
 |---|---|---:|---:|---:|---:|
-| Execute GitHub Copilot CLI | overall median >10s, recent median >10s, recent regression | 67 | 100% | 28.0s | 36.0s |
+| Execute GitHub Copilot CLI | overall median >10s, recent median >10s, recent regression | 60 | 100% | 28.0s | 36.1s |
 | Execute threat detection with AWF | overall median >10s | 2 | 100% | 40.5s | 42.5s |
-| Install GitHub Copilot CLI | recent median >10s | 69 | 6% | 4.0s | 5.6s |
-| Set up job | overall median >10s, recent median >10s | 69 | 78% | 17.0s | 21.2s |
+| Install GitHub Copilot CLI | recent median >10s | 62 | 6% | 4.0s | 7.7s |
+| Set up job | overall median >10s, recent median >10s | 62 | 82% | 17.0s | 21.9s |
 
 #### safe_outputs
 
@@ -149,7 +140,7 @@ A step is included within a mode when its overall median exceeds 10 seconds, its
 
 | Step | Selection signal | Timed occurrences | Over 10s | Median | P90 |
 |---|---|---:|---:|---:|---:|
-| Set up job | overall median >10s, recent median >10s | 70 | 94% | 28.0s | 42.9s |
+| Set up job | overall median >10s, recent median >10s | 62 | 100% | 28.5s | 50.1s |
 
 ### Samples step graphs
 
@@ -159,7 +150,7 @@ A step is included within a mode when its overall median exceeds 10 seconds, its
 
 | Step | Selection signal | Timed occurrences | Over 10s | Median | P90 |
 |---|---|---:|---:|---:|---:|
-| Set up job | recent median >10s, recent regression | 159 | 50% | 10.0s | 38.0s |
+| Set up job | overall median >10s, recent median >10s | 58 | 100% | 31.5s | 45.3s |
 
 #### conclusion
 
@@ -167,7 +158,7 @@ A step is included within a mode when its overall median exceeds 10 seconds, its
 
 | Step | Selection signal | Timed occurrences | Over 10s | Median | P90 |
 |---|---|---:|---:|---:|---:|
-| Set up job | recent median >10s, recent regression | 159 | 48% | 6.0s | 27.2s |
+| Set up job | overall median >10s, recent median >10s | 58 | 100% | 21.5s | 36.3s |
 
 #### safe_outputs
 
@@ -175,8 +166,40 @@ A step is included within a mode when its overall median exceeds 10 seconds, its
 
 | Step | Selection signal | Timed occurrences | Over 10s | Median | P90 |
 |---|---|---:|---:|---:|---:|
-| Set up job | recent median >10s, recent regression | 159 | 48% | 7.0s | 25.0s |
+| Set up job | overall median >10s, recent median >10s, recent regression | 58 | 100% | 20.0s | 31.6s |
+
+## Released timing
+
+**94 successful runs:** 6 inference and 88 samples.
+
+![Released timing inference timing](timing-released.svg)
+
+![Released timing sample timing](timing-released-samples.svg)
+
+### Inference activation steps
+
+![Released timing inference activation step timing](steps-activation-released.svg)
+
+### Inference agent steps
+
+![Released timing inference agent step timing](steps-agent-released.svg)
+
+### Inference conclusion steps
+
+![Released timing inference conclusion step timing](steps-conclusion-released.svg)
+
+### Inference detection steps
+
+![Released timing inference detection step timing](steps-detection-released.svg)
+
+### Inference safe_outputs steps
+
+![Released timing inference safe_outputs step timing](steps-safe-outputs-released.svg)
+
+### Samples agent steps
+
+![Released timing samples agent step timing](steps-agent-released-samples.svg)
 
 ## Method
 
-Only overall-successful `workflow_dispatch` runs with a successful `agent` job are included. Inference runs require a successful `Execute GitHub Copilot CLI` step; sample runs require a successful deterministic replay step. Time to complete is `run.updated_at - run.run_started_at`. The first-proxy metric is end to end from `run.run_started_at`. For inference, its endpoint is the first timestamped assistant/reasoning event or agent-originated `tools/call`; for samples, it is deterministic replay completion. Detection is the standalone `detection` job duration and is present only for non-sample runs. Step durations come directly from the GitHub Actions jobs API (`completed_at - started_at`) for successful steps in successful jobs. Runs without resolvable gh-aw commit dates remain in CSV/JSON but are omitted from the time-axis graphs.
+Only overall-successful `workflow_dispatch` runs with a successful `agent` job are included. Compiler metadata classifies exact published stable and pre-release tags using the GitHub Releases API and combines both as `released`; other non-empty development or commit versions are treated as `--gh-aw-ref main`, matching the nightly source-mode entry. Historical exact semver tags no longer returned by the Releases API are also treated as released. Runs with missing compiler metadata are retained in CSV/JSON but excluded from graphs. Inference runs require a successful `Execute GitHub Copilot CLI` step; sample runs require a successful deterministic replay step. Time to complete is `run.updated_at - run.run_started_at`. The first-proxy metric is end to end from `run.run_started_at`. For inference, its endpoint is the first timestamped assistant/reasoning event or agent-originated `tools/call`; for samples, it is deterministic replay completion. Detection is the standalone `detection` job duration and is present only for non-sample runs. Step durations come directly from the GitHub Actions jobs API (`completed_at - started_at`) for successful steps in successful jobs. Runs without resolvable gh-aw commit dates remain in CSV/JSON but are omitted from the time-axis graphs.

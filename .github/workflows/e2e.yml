@@ -798,20 +798,17 @@ jobs:
             --label e2e-status-report \
             --state open \
             --limit 50 \
-            --json number \
-            --jq '[.[].number] | join(",")')
+            --json number,title \
+            --jq '[.[] | select(.title | startswith("E2E status report —")) | .number] | join(",")')
           echo "numbers=$numbers" >> "$GITHUB_OUTPUT"
           echo "Prior open status reports: ${numbers:-none}"
 
       - name: Compose final issue body (with links to previous reports)
         env:
           PRIOR: ${{ steps.prior.outputs.numbers }}
-          GRAPH_BASE_URL: https://raw.githubusercontent.com/${{ github.repository }}/main/workflow-history-report
         run: |
           {
             cat report.md
-            echo
-            sed -E "s|^(!\[[^]]+\]\()([^)]+\.svg)(\))$|\1${GRAPH_BASE_URL}/\2?run=${GITHUB_RUN_ID}\3|" workflow-history-report/report.md
             if [[ -n "$PRIOR" ]]; then
               echo
               echo "## Previous status reports (closed by this run)"
@@ -846,6 +843,77 @@ jobs:
           PRIOR: ${{ steps.prior.outputs.numbers }}
           NEW_NUMBER: ${{ steps.create.outputs.number }}
           NEW_URL: ${{ steps.create.outputs.url }}
+        run: |
+          IFS=',' read -ra arr <<< "$PRIOR"
+          for n in "${arr[@]}"; do
+            gh issue comment "$n" \
+              --repo "$GITHUB_REPOSITORY" \
+              --body "Superseded by #${NEW_NUMBER} — ${NEW_URL}"
+            gh issue close "$n" \
+              --repo "$GITHUB_REPOSITORY" \
+              --reason "not planned"
+          done
+
+      - name: Find prior open performance reports
+        id: prior-performance
+        env:
+          GH_TOKEN: ${{ secrets.GH_AW_TEST_PAT }}
+        run: |
+          set -euo pipefail
+          numbers=$(gh issue list \
+            --repo "$GITHUB_REPOSITORY" \
+            --label e2e-status-report \
+            --state open \
+            --limit 50 \
+            --json number,title \
+            --jq '[.[] | select(.title | startswith("E2E performance report —")) | .number] | join(",")')
+          echo "numbers=$numbers" >> "$GITHUB_OUTPUT"
+          echo "Prior open performance reports: ${numbers:-none}"
+
+      - name: Compose performance issue body
+        env:
+          PRIOR: ${{ steps.prior-performance.outputs.numbers }}
+          GRAPH_BASE_URL: https://raw.githubusercontent.com/${{ github.repository }}/main/workflow-history-report
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          {
+            echo "**Run:** [$RUN_URL]($RUN_URL) &nbsp;·&nbsp; **Generated:** \`$(date -u +%FT%TZ)\`"
+            echo
+            sed -E "s|^(!\[[^]]+\]\()([^)]+\.svg)(\))$|\1${GRAPH_BASE_URL}/\2?run=${GITHUB_RUN_ID}\3|" workflow-history-report/report.md
+            if [[ -n "$PRIOR" ]]; then
+              echo
+              echo "## Previous performance reports (closed by this run)"
+              IFS=',' read -ra arr <<< "$PRIOR"
+              for n in "${arr[@]}"; do
+                echo "* #$n"
+              done
+            fi
+          } > performance-issue-body.md
+
+      - name: Create new performance report issue
+        id: create-performance
+        env:
+          GH_TOKEN: ${{ secrets.GH_AW_TEST_PAT }}
+        run: |
+          set -euo pipefail
+          title="E2E performance report — $(date -u +%F) (gh-aw timing)"
+          url=$(gh issue create \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "$title" \
+            --label e2e-status-report \
+            --body-file performance-issue-body.md)
+          number="${url##*/}"
+          echo "Created: $url"
+          echo "number=$number" >> "$GITHUB_OUTPUT"
+          echo "url=$url"       >> "$GITHUB_OUTPUT"
+
+      - name: Close previous performance report issues
+        if: steps.prior-performance.outputs.numbers != ''
+        env:
+          GH_TOKEN: ${{ secrets.GH_AW_TEST_PAT }}
+          PRIOR: ${{ steps.prior-performance.outputs.numbers }}
+          NEW_NUMBER: ${{ steps.create-performance.outputs.number }}
+          NEW_URL: ${{ steps.create-performance.outputs.url }}
         run: |
           IFS=',' read -ra arr <<< "$PRIOR"
           for n in "${arr[@]}"; do

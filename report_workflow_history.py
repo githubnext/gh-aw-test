@@ -25,6 +25,7 @@ DEFAULT_WORKFLOW = ".github/workflows/test-copilot-create-issue.lock.yml"
 AGENT_STEP_NAMES = ("Execute GitHub Copilot CLI", "Execute Copilot CLI")
 SAMPLE_STEP_NAME = "Replay safe-outputs samples (deterministic)"
 TIMESTAMP_RE = re.compile(r"(\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?Z)")
+RELEASE_VERSION_RE = re.compile(r"^v\d+\.\d+\.\d+$")
 REASONING_PATTERNS = (
     re.compile(r'"event"\s*:\s*"(?:assistant|assistant_message|reasoning|tool_use|tool_call)"', re.I),
     re.compile(r'"(?:role|type)"\s*:\s*"(?:assistant|reasoning)"', re.I),
@@ -180,6 +181,24 @@ def resolve_gh_aw_commit(version: str) -> dict[str, str | None]:
     return {"sha": commit, "committed_at": committed_at}
 
 
+def load_release_kinds() -> dict[str, str]:
+    pages = gh_json("github/gh-aw", "releases?per_page=100", paginate=True)
+    return {
+        release["tag_name"]: "pre-release" if release["prerelease"] else "release"
+        for page in pages
+        for release in page
+        if not release["draft"]
+    }
+
+
+def classify_gh_aw_ref(version: str | None, release_kinds: dict[str, str]) -> str:
+    if not version:
+        return "unknown"
+    if version in release_kinds:
+        return "released"
+    return "released" if RELEASE_VERSION_RE.fullmatch(version) else "main"
+
+
 def collect(repository: str, workflow: str, cache_dir: Path, limit: int | None, workers: int) -> list[dict[str, object]]:
     workflow_id = quote(workflow, safe="")
     pages = gh_json(
@@ -229,6 +248,7 @@ def collect(repository: str, workflow: str, cache_dir: Path, limit: int | None, 
     with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as executor:
         revisions.update(zip(unresolved_versions, executor.map(resolve_gh_aw_commit, unresolved_versions)))
     revisions_path.write_text(json.dumps(revisions, indent=2) + "\n")
+    release_kinds = load_release_kinds()
 
     for index, (run, jobs, agent, engine_step, sample_step) in enumerate(candidates, 1):
         run_id = run["id"]
@@ -273,6 +293,7 @@ def collect(repository: str, workflow: str, cache_dir: Path, limit: int | None, 
             "workflow_sha": run["head_sha"],
             "mode": mode,
             "gh_aw_version": compiler_version,
+            "gh_aw_ref_kind": classify_gh_aw_ref(compiler_version, release_kinds),
             "gh_aw_commit": gh_aw_commit,
             "gh_aw_committed_at": gh_aw_committed_at,
             "time_to_complete_seconds": seconds(run["run_started_at"], run["updated_at"]),
@@ -546,35 +567,88 @@ def write_step_svg(path: Path, records: list[dict[str, object]], mode: str, job_
     path.write_text("\n".join(lines))
 
 
+def graph_set(
+    output_dir: Path,
+    records: list[dict[str, object]],
+    file_suffix: str,
+) -> dict[str, dict[str, list[tuple[dict[str, object], float]]]]:
+    selected_steps_by_mode = {}
+    for mode, mode_suffix in (("inference", ""), ("samples", "-samples")):
+        mode_records = [record for record in records if record["mode"] == mode]
+        mode_points = [point for metric, _, _ in MAIN_METRICS for point in regressions(mode_records, metric)]
+        write_svg(
+            output_dir / f"timing{file_suffix}{mode_suffix}.svg",
+            mode_records,
+            mode,
+            regression_episodes(mode_points),
+        )
+        selected_steps_by_mode[mode] = qualifying_job_steps(mode_records)
+        for job_name, step_series in selected_steps_by_mode[mode].items():
+            write_step_svg(
+                output_dir / f"steps-{file_slug(job_name)}{file_suffix}{mode_suffix}.svg",
+                mode_records,
+                mode,
+                job_name,
+                step_series,
+            )
+    return selected_steps_by_mode
+
+
+def append_graph_set(
+    lines: list[str],
+    heading: str,
+    records: list[dict[str, object]],
+    file_suffix: str,
+    selected_steps_by_mode: dict[str, dict[str, list[tuple[dict[str, object], float]]]],
+) -> None:
+    mode_counts = {mode: sum(record["mode"] == mode for record in records) for mode in ("inference", "samples")}
+    lines.extend([
+        "",
+        f"## {heading}",
+        "",
+        f"**{len(records)} successful runs:** {mode_counts['inference']} inference and {mode_counts['samples']} samples.",
+        "",
+        f"![{heading} inference timing](timing{file_suffix}.svg)",
+        "",
+        f"![{heading} sample timing](timing{file_suffix}-samples.svg)",
+    ])
+    for mode, mode_suffix in (("inference", ""), ("samples", "-samples")):
+        for job_name in sorted(selected_steps_by_mode[mode]):
+            lines.extend([
+                "",
+                f"### {mode.title()} {job_name} steps",
+                "",
+                f"![{heading} {mode} {job_name} step timing](steps-{file_slug(job_name)}{file_suffix}{mode_suffix}.svg)",
+            ])
+
+
 def write_outputs(output_dir: Path, records: list[dict[str, object]]) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
-    regression_points = [point for metric, _, _ in MAIN_METRICS for point in regressions(records, metric)]
+    primary_records = [record for record in records if record.get("gh_aw_ref_kind") == "main"]
+    released_records = [record for record in records if record.get("gh_aw_ref_kind") == "released"]
+    regression_points = [point for metric, _, _ in MAIN_METRICS for point in regressions(primary_records, metric)]
     all_regressions = regression_episodes(regression_points)
     (output_dir / "runs.json").write_text(json.dumps(records, indent=2) + "\n")
-    fields = ["run_id", "run_number", "date", "url", "workflow_sha", "mode", "gh_aw_version", "gh_aw_commit", "gh_aw_committed_at", "time_to_complete_seconds", "agent_job_seconds", "copilot_step_seconds", "detection_job_seconds", "time_to_proxy_step_seconds", "proxy_step_to_first_reasoning_seconds", "time_to_first_reasoning_seconds"]
+    fields = ["run_id", "run_number", "date", "url", "workflow_sha", "mode", "gh_aw_version", "gh_aw_ref_kind", "gh_aw_commit", "gh_aw_committed_at", "time_to_complete_seconds", "agent_job_seconds", "copilot_step_seconds", "detection_job_seconds", "time_to_proxy_step_seconds", "proxy_step_to_first_reasoning_seconds", "time_to_first_reasoning_seconds"]
     with (output_dir / "runs.csv").open("w", newline="") as stream:
         writer = csv.DictWriter(stream, fieldnames=fields, extrasaction="ignore", lineterminator="\n")
         writer.writeheader()
         writer.writerows(records)
     for old_graph in output_dir.glob("*.svg"):
         old_graph.unlink()
-    selected_steps_by_mode = {}
-    for mode, suffix in (("inference", ""), ("samples", "-samples")):
-        mode_records = [record for record in records if record["mode"] == mode]
-        mode_points = [point for metric, _, _ in MAIN_METRICS for point in regressions(mode_records, metric)]
-        write_svg(output_dir / f"timing{suffix}.svg", mode_records, mode, regression_episodes(mode_points))
-        selected_steps_by_mode[mode] = qualifying_job_steps(mode_records)
-        for job_name, step_series in selected_steps_by_mode[mode].items():
-            write_step_svg(output_dir / f"steps-{file_slug(job_name)}{suffix}.svg", mode_records, mode, job_name, step_series)
-    complete = [record["time_to_complete_seconds"] for record in records if record["time_to_complete_seconds"] is not None]
-    reasoning = [record["time_to_first_reasoning_seconds"] for record in records if record["time_to_first_reasoning_seconds"] is not None]
-    agent_jobs = [record["agent_job_seconds"] for record in records if record["agent_job_seconds"] is not None]
-    copilot_steps = [record["copilot_step_seconds"] for record in records if record["copilot_step_seconds"] is not None]
-    proxy_start = [record["time_to_proxy_step_seconds"] for record in records if record["time_to_proxy_step_seconds"] is not None]
-    proxy_reasoning = [record["proxy_step_to_first_reasoning_seconds"] for record in records if record["proxy_step_to_first_reasoning_seconds"] is not None]
+    selected_steps_by_mode = graph_set(output_dir, primary_records, "")
+    released_steps = graph_set(output_dir, released_records, "-released")
+    complete = [record["time_to_complete_seconds"] for record in primary_records if record["time_to_complete_seconds"] is not None]
+    reasoning = [record["time_to_first_reasoning_seconds"] for record in primary_records if record["time_to_first_reasoning_seconds"] is not None]
+    agent_jobs = [record["agent_job_seconds"] for record in primary_records if record["agent_job_seconds"] is not None]
+    copilot_steps = [record["copilot_step_seconds"] for record in primary_records if record["copilot_step_seconds"] is not None]
+    proxy_start = [record["time_to_proxy_step_seconds"] for record in primary_records if record["time_to_proxy_step_seconds"] is not None]
+    proxy_reasoning = [record["proxy_step_to_first_reasoning_seconds"] for record in primary_records if record["proxy_step_to_first_reasoning_seconds"] is not None]
     complete_summary, reasoning_summary = summarize(complete), summarize(reasoning)
-    mode_counts = {mode: sum(record["mode"] == mode for record in records) for mode in ("inference", "samples")}
-    lines = ["# Copilot create-issue timing", "", f"Analyzed **{len(records)}** successful agent runs: **{mode_counts['inference']} inference** and **{mode_counts['samples']} samples**.", "", "| Metric | Samples | Median | P90 | Min | Max |", "|---|---:|---:|---:|---:|---:|", f"| Time to complete | {complete_summary['count']} | {fmt(complete_summary['median'])} | {fmt(complete_summary['p90'])} | {fmt(complete_summary['min'])} | {fmt(complete_summary['max'])} |", f"| Time to first reasoning/sample proxy | {reasoning_summary['count']} | {fmt(reasoning_summary['median'])} | {fmt(reasoning_summary['p90'])} | {fmt(reasoning_summary['min'])} | {fmt(reasoning_summary['max'])} |", "", "The x-axis is the commit time of the resolved gh-aw commit, not the workflow run time. Inference and deterministic sample runs are graphed separately.", "", "## Inference timing", "", "![Inference historical timing](timing.svg)", "", "## Sample timing", "", "![Sample historical timing](timing-samples.svg)", "", "## Candidate regressions", "", f"Found **{len(regression_points)} threshold crossings** grouped into **{len(all_regressions)} episodes**. Baselines are calculated separately for inference and sample runs; each `R#` labels the largest increase in an episode whose crossings are no more than three gh-aw commit-days apart.", "", "| Label | Episode | Mode | Metric | Peak | Prior median | Increase | Run | gh-aw version / commit |", "|---|---|---|---|---:|---:|---:|---|---|"]
+    mode_counts = {mode: sum(record["mode"] == mode for record in primary_records) for mode in ("inference", "samples")}
+    released_mode_counts = {mode: sum(record["mode"] == mode for record in released_records) for mode in ("inference", "samples")}
+    released_complete = summarize([record["time_to_complete_seconds"] for record in released_records if record["time_to_complete_seconds"] is not None])
+    lines = ["# Copilot create-issue timing", "", "## Main vs released", "", "| Run group | Successful runs | Inference | Samples | Median complete | P90 complete |", "|---|---:|---:|---:|---:|---:|", f"| `--gh-aw-ref main` | {len(primary_records)} | {mode_counts['inference']} | {mode_counts['samples']} | {fmt(complete_summary['median'])} | {fmt(complete_summary['p90'])} |", f"| Released tags | {len(released_records)} | {released_mode_counts['inference']} | {released_mode_counts['samples']} | {fmt(released_complete['median'])} | {fmt(released_complete['p90'])} |", "", f"Primary analysis uses only the **{len(primary_records)} successful runs compiled with `--gh-aw-ref main`**.", "", "| Metric | Samples | Median | P90 | Min | Max |", "|---|---:|---:|---:|---:|---:|", f"| Time to complete | {complete_summary['count']} | {fmt(complete_summary['median'])} | {fmt(complete_summary['p90'])} | {fmt(complete_summary['min'])} | {fmt(complete_summary['max'])} |", f"| Time to first reasoning/sample proxy | {reasoning_summary['count']} | {fmt(reasoning_summary['median'])} | {fmt(reasoning_summary['p90'])} | {fmt(reasoning_summary['min'])} | {fmt(reasoning_summary['max'])} |", "", "The primary x-axis is the commit time of the resolved gh-aw main commit, not the workflow run time. Inference and deterministic sample runs are graphed separately. Stable and pre-release tags are combined into the released graph set at the end.", "", "## Main inference timing", "", "![Main inference historical timing](timing.svg)", "", "## Main sample timing", "", "![Main sample historical timing](timing-samples.svg)", "", "## Candidate regressions on main", "", f"Found **{len(regression_points)} threshold crossings** grouped into **{len(all_regressions)} episodes**. Baselines use only `--gh-aw-ref main` runs and are calculated separately for inference and sample runs; each `R#` labels the largest increase in an episode whose crossings are no more than three gh-aw commit-days apart.", "", "| Label | Episode | Mode | Metric | Peak | Prior median | Increase | Run | gh-aw version / commit |", "|---|---|---|---|---:|---:|---:|---|---|"]
     for index, item in enumerate(all_regressions, 1):
         gh_aw_commit = item["gh_aw_commit"][:12] if item["gh_aw_commit"] else "unresolved"
         episode_start = item["episode_start"][:10]
@@ -583,7 +657,7 @@ def write_outputs(output_dir: Path, records: list[dict[str, object]]) -> None:
         metric_name = next(label for key, label, _ in MAIN_METRICS if key == item["metric"])
         lines.append(f"| R{index} | {episode} ({item['episode_points']} point{'s' if item['episode_points'] != 1 else ''}) | {item['mode']} | {metric_name} | {fmt(item['value_seconds'])} | {fmt(item['baseline_seconds'])} | {item['increase_percent']:.0f}% | [#{item['run_number']}]({item['url']}) | `{item['gh_aw_version']}` / `{gh_aw_commit}` |")
     step_values: dict[str, list[float]] = {}
-    for record in records:
+    for record in primary_records:
         for name, duration in record["major_steps"].items():
             step_values.setdefault(name, []).append(duration)
     lines.extend(["", "## Job and major steps", "", "| Job or step | Samples | Median | P90 |", "|---|---:|---:|---:|"])
@@ -607,7 +681,8 @@ def write_outputs(output_dir: Path, records: list[dict[str, object]]) -> None:
                 over_ten = sum(duration > 10 for duration in durations)
                 signals = ", ".join(step_selection_reasons(durations))
                 lines.append(f"| {step_name} | {signals} | {len(durations)} | {over_ten / len(durations):.0%} | {fmt(summary['median'])} | {fmt(summary['p90'])} |")
-    lines.extend(["", "## Method", "", "Only overall-successful `workflow_dispatch` runs with a successful `agent` job are included. Inference runs require a successful `Execute GitHub Copilot CLI` step; sample runs require a successful deterministic replay step. Time to complete is `run.updated_at - run.run_started_at`. The first-proxy metric is end to end from `run.run_started_at`. For inference, its endpoint is the first timestamped assistant/reasoning event or agent-originated `tools/call`; for samples, it is deterministic replay completion. Detection is the standalone `detection` job duration and is present only for non-sample runs. Step durations come directly from the GitHub Actions jobs API (`completed_at - started_at`) for successful steps in successful jobs. Runs without resolvable gh-aw commit dates remain in CSV/JSON but are omitted from the time-axis graphs.", ""])
+    append_graph_set(lines, "Released timing", released_records, "-released", released_steps)
+    lines.extend(["", "## Method", "", "Only overall-successful `workflow_dispatch` runs with a successful `agent` job are included. Compiler metadata classifies exact published stable and pre-release tags using the GitHub Releases API and combines both as `released`; other non-empty development or commit versions are treated as `--gh-aw-ref main`, matching the nightly source-mode entry. Historical exact semver tags no longer returned by the Releases API are also treated as released. Runs with missing compiler metadata are retained in CSV/JSON but excluded from graphs. Inference runs require a successful `Execute GitHub Copilot CLI` step; sample runs require a successful deterministic replay step. Time to complete is `run.updated_at - run.run_started_at`. The first-proxy metric is end to end from `run.run_started_at`. For inference, its endpoint is the first timestamped assistant/reasoning event or agent-originated `tools/call`; for samples, it is deterministic replay completion. Detection is the standalone `detection` job duration and is present only for non-sample runs. Step durations come directly from the GitHub Actions jobs API (`completed_at - started_at`) for successful steps in successful jobs. Runs without resolvable gh-aw commit dates remain in CSV/JSON but are omitted from the time-axis graphs.", ""])
     (output_dir / "report.md").write_text("\n".join(lines))
 
 
