@@ -1,8 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="663" viewBox="0 0 1200 663">
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="751" viewBox="0 0 1200 751">
 <rect width="100%" height="100%" fill="white"/>
 <style>text{font-family:ui-monospace,monospace;font-size:13px}.axis{stroke:#57606a;stroke-width:1}.grid{stroke:#d8dee4;stroke-width:1}</style>
-<text x="65" y="30" font-size="20">Step timing: detection job</text>
-<text x="65" y="52">Only steps over 10s in more than 50% of their timed occurrences</text>
+<text x="65" y="30" font-size="20">Step timing: detection job (inference)</text>
+<text x="65" y="52">Steps with a sustained cost, recent slowdown, or recent regression</text>
 <line class="grid" x1="65" y1="465.0" x2="1135" y2="465.0"/>
 <text x="8" y="470.0">0s</text>
 <line class="grid" x1="65" y1="387.0" x2="1135" y2="387.0"/>
@@ -24,33 +24,47 @@
 <line class="grid" x1="867.5" y1="75" x2="867.5" y2="465"/>
 <line class="grid" x1="1001.2" y1="75" x2="1001.2" y2="465"/>
 <line class="grid" x1="1135.0" y1="75" x2="1135.0" y2="465"/>
-<polyline points="65.0,361.1 103.2,382.5 185.5,397.8 692.3,382.5 702.9,351.9 711.6,367.2 723.9,355.0 730.0,364.1 731.4,370.3 734.5,342.7 735.4,364.1 739.7,355.0 748.6,355.0 765.5,388.6 774.5,367.2 784.0,379.4 793.2,388.6 802.1,379.4 811.0,391.6 819.9,373.3 830.0,394.7 836.2,385.5 846.1,391.6 856.9,361.1 874.3,394.7 883.8,397.8 892.1,358.0 902.4,385.5 910.4,394.7 920.5,391.6 930.2,388.6 940.0,364.1 948.9,367.2 958.1,128.8 964.5,110.5" fill="none" stroke="#0969da" stroke-width="2"><title>Execute GitHub Copilot CLI (inference)</title></polyline>
-<line x1="964.5" y1="110.5" x2="982.5" y2="88.5" stroke="#0969da" stroke-width="1"/>
-<circle cx="982.5" cy="88.5" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R2: Execute GitHub Copilot CLI, inference, 116.0s</title></circle>
-<text x="982.5" y="92.5" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R2</text>
+<polyline points="65.0,361.1 98.3,382.5 170.2,397.8 612.4,382.5 621.7,351.9 629.3,367.2 640.0,355.0 645.3,364.1 646.6,370.3 649.3,342.7 650.1,364.1 653.8,355.0 661.6,355.0 676.3,388.6 684.2,367.2 692.5,379.4 700.5,388.6 708.3,379.4 716.0,391.6 723.9,373.3 732.6,394.7 738.0,385.5 746.7,391.6 756.1,361.1 771.3,394.7 779.6,397.8 786.9,358.0 795.8,385.5 802.8,394.7 811.6,391.6 820.0,388.6 828.6,364.1 836.4,367.2 844.5,128.8 850.0,110.5 860.8,110.5 868.5,400.8 875.3,406.9 881.9,358.0 893.0,391.6 898.5,376.4 908.4,367.2 916.8,403.9 924.2,400.8 932.3,379.4 940.7,403.9 948.8,394.7 956.1,416.1 964.7,400.8 973.0,388.6 981.4,373.3 989.4,388.6 997.4,388.6 1013.5,382.5 1021.1,382.5 1028.6,355.0 1036.1,364.1 1053.5,379.4 1059.9,364.1 1068.4,355.0 1076.2,379.4 1085.7,355.0 1093.5,376.4 1101.8,373.3 1109.0,312.2 1117.8,370.3" fill="none" stroke="#0969da" stroke-width="2"><title>Execute GitHub Copilot CLI</title></polyline>
+<line x1="850.0" y1="110.5" x2="868.0" y2="88.5" stroke="#0969da" stroke-width="1"/>
+<circle cx="868.0" cy="88.5" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R2: Execute GitHub Copilot CLI, inference, 116.0s</title></circle>
+<text x="868.0" y="92.5" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R2</text>
+<line x1="1109.0" y1="312.2" x2="1124.0" y2="334.2" stroke="#0969da" stroke-width="1"/>
+<circle cx="1124.0" cy="334.2" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R4: Execute GitHub Copilot CLI, inference, 50.0s</title></circle>
+<text x="1124.0" y="338.2" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R4</text>
 <line x1="65" y1="521" x2="100" y2="521" stroke="#0969da" stroke-width="3"/>
 <text x="110" y="525">Execute GitHub Copilot CLI</text>
-<polyline points="65.0,443.6 103.2,455.8 185.5,449.7 692.3,449.7 702.9,446.7 711.6,449.7 723.9,446.7 730.0,434.4 731.4,431.4 734.5,437.5 735.4,446.7 739.7,446.7 748.6,431.4 765.5,416.1 774.5,410.0 784.0,413.0 793.2,437.5 802.1,410.0 811.0,416.1 819.9,416.1 830.0,416.1 836.2,416.1 846.1,413.0 856.9,413.0 874.3,403.9 883.8,416.1 892.1,406.9 902.4,403.9 910.4,416.1 920.5,416.1 930.2,416.1 940.0,397.8 948.9,431.4 958.1,416.1 964.5,394.7" fill="none" stroke="#cf222e" stroke-width="2"><title>Set up job (inference)</title></polyline>
-<line x1="765.5" y1="416.1" x2="747.5" y2="394.1" stroke="#cf222e" stroke-width="1"/>
-<circle cx="747.5" cy="394.1" r="11" fill="white" stroke="#cf222e" stroke-width="2"><title>R1: Set up job, inference, 16.0s</title></circle>
-<text x="747.5" y="398.1" fill="#cf222e" font-size="10" font-weight="bold" text-anchor="middle">R1</text>
+<polyline points="1125.8,348.9 1135.0,333.6" fill="none" stroke="#cf222e" stroke-width="2"><title>Execute threat detection with AWF</title></polyline>
 <line x1="65" y1="543" x2="100" y2="543" stroke="#cf222e" stroke-width="3"/>
-<text x="110" y="547">Set up job</text>
+<text x="110" y="547">Execute threat detection with AWF</text>
+<polyline points="65.0,455.8 98.3,452.8 170.2,455.8 612.4,452.8 621.7,452.8 629.3,452.8 640.0,452.8 645.3,452.8 646.6,452.8 649.3,452.8 650.1,449.7 653.8,452.8 661.6,452.8 676.3,452.8 684.2,455.8 692.5,455.8 700.5,452.8 708.3,455.8 716.0,455.8 723.9,452.8 732.6,455.8 738.0,449.7 746.7,452.8 756.1,452.8 771.3,458.9 779.6,455.8 786.9,452.8 795.8,455.8 802.8,452.8 811.6,452.8 820.0,452.8 828.6,455.8 836.4,452.8 844.5,455.8 850.0,455.8 860.8,452.8 868.5,452.8 875.3,452.8 881.9,452.8 893.0,455.8 898.5,452.8 908.4,452.8 916.8,449.7 924.2,452.8 932.3,452.8 940.7,452.8 948.8,452.8 956.1,452.8 964.7,452.8 973.0,449.7 981.4,452.8 989.4,449.7 997.4,449.7 1013.5,452.8 1021.1,452.8 1028.6,449.7 1036.1,449.7 1053.5,449.7 1059.9,452.8 1068.4,455.8 1076.2,452.8 1085.7,428.3 1093.5,434.4 1101.8,440.5 1109.0,437.5 1117.8,422.2 1125.8,431.4 1135.0,431.4" fill="none" stroke="#1a7f37" stroke-width="2"><title>Install GitHub Copilot CLI</title></polyline>
+<line x1="65" y1="565" x2="100" y2="565" stroke="#1a7f37" stroke-width="3"/>
+<text x="110" y="569">Install GitHub Copilot CLI</text>
+<polyline points="65.0,443.6 98.3,455.8 170.2,449.7 612.4,449.7 621.7,446.7 629.3,449.7 640.0,446.7 645.3,434.4 646.6,431.4 649.3,437.5 650.1,446.7 653.8,446.7 661.6,431.4 676.3,416.1 684.2,410.0 692.5,413.0 700.5,437.5 708.3,410.0 716.0,416.1 723.9,416.1 732.6,416.1 738.0,416.1 746.7,413.0 756.1,413.0 771.3,403.9 779.6,416.1 786.9,406.9 795.8,403.9 802.8,416.1 811.6,416.1 820.0,416.1 828.6,397.8 836.4,431.4 844.5,416.1 850.0,394.7 860.8,416.1 868.5,394.7 875.3,416.1 881.9,373.3 893.0,400.8 898.5,413.0 908.4,400.8 916.8,416.1 924.2,416.1 932.3,406.9 940.7,413.0 948.8,406.9 956.1,446.7 964.7,391.6 973.0,403.9 981.4,403.9 989.4,400.8 997.4,403.9 1013.5,413.0 1021.1,449.7 1028.6,403.9 1036.1,413.0 1053.5,416.1 1059.9,413.0 1068.4,397.8 1076.2,413.0 1085.7,416.1 1093.5,413.0 1101.8,406.9 1109.0,388.6 1117.8,413.0 1125.8,410.0 1135.0,413.0" fill="none" stroke="#8250df" stroke-width="2"><title>Set up job</title></polyline>
+<line x1="676.3" y1="416.1" x2="658.3" y2="394.1" stroke="#8250df" stroke-width="1"/>
+<circle cx="658.3" cy="394.1" r="11" fill="white" stroke="#8250df" stroke-width="2"><title>R1: Set up job, inference, 16.0s</title></circle>
+<text x="658.3" y="398.1" fill="#8250df" font-size="10" font-weight="bold" text-anchor="middle">R1</text>
+<line x1="881.9" y1="373.3" x2="863.9" y2="395.3" stroke="#8250df" stroke-width="1"/>
+<circle cx="863.9" cy="395.3" r="11" fill="white" stroke="#8250df" stroke-width="2"><title>R3: Set up job, inference, 30.0s</title></circle>
+<text x="863.9" y="399.3" fill="#8250df" font-size="10" font-weight="bold" text-anchor="middle">R3</text>
+<line x1="65" y1="587" x2="100" y2="587" stroke="#8250df" stroke-width="3"/>
+<text x="110" y="591">Set up job</text>
 <text x="65.0" y="490" text-anchor="start">2026-04-10</text>
-<text x="198.8" y="490" text-anchor="middle">2026-04-25</text>
-<text x="332.5" y="490" text-anchor="middle">2026-05-09</text>
-<text x="466.2" y="490" text-anchor="middle">2026-05-24</text>
-<text x="600.0" y="490" text-anchor="middle">2026-06-07</text>
-<text x="733.8" y="490" text-anchor="middle">2026-06-22</text>
-<text x="867.5" y="490" text-anchor="middle">2026-07-07</text>
-<text x="1001.2" y="490" text-anchor="middle">2026-07-21</text>
-<text x="1135.0" y="490" text-anchor="end">2026-08-05</text>
+<text x="198.8" y="490" text-anchor="middle">2026-04-27</text>
+<text x="332.5" y="490" text-anchor="middle">2026-05-14</text>
+<text x="466.2" y="490" text-anchor="middle">2026-05-30</text>
+<text x="600.0" y="490" text-anchor="middle">2026-06-16</text>
+<text x="733.8" y="490" text-anchor="middle">2026-07-03</text>
+<text x="867.5" y="490" text-anchor="middle">2026-07-19</text>
+<text x="1001.2" y="490" text-anchor="middle">2026-08-05</text>
+<text x="1135.0" y="490" text-anchor="end">2026-08-22</text>
 <line class="axis" x1="65" y1="465" x2="1135" y2="465"/>
-<line x1="900" y1="25" x2="940" y2="25" stroke="#57606a" stroke-width="3"/><text x="950" y="30">Inference</text>
-<line x1="900" y1="47" x2="940" y2="47" stroke="#57606a" stroke-width="3" stroke-dasharray="7 5"/><text x="950" y="52">Samples</text>
-<text x="65" y="587" font-size="16" font-weight="bold">Regression episodes</text>
-<text x="65" y="615" fill="#cf222e" font-weight="bold">R1</text>
-<text x="99" y="615">2026-06-25 to 2026-06-26  Set up job / inference  +167%</text>
-<text x="65" y="637" fill="#0969da" font-weight="bold">R2</text>
-<text x="99" y="637">2026-07-16 to 2026-07-17  Execute GitHub Copilot CLI / inference  +355%</text>
+<text x="65" y="631" font-size="16" font-weight="bold">Regression episodes</text>
+<text x="65" y="659" fill="#8250df" font-weight="bold">R1</text>
+<text x="99" y="659">2026-06-25 to 2026-06-26  Set up job / inference  +167%</text>
+<text x="65" y="681" fill="#0969da" font-weight="bold">R2</text>
+<text x="99" y="681">2026-07-16 to 2026-07-18  Execute GitHub Copilot CLI / inference  +355%</text>
+<text x="65" y="703" fill="#8250df" font-weight="bold">R3</text>
+<text x="99" y="703">2026-07-21  Set up job / inference  +88%</text>
+<text x="65" y="725" fill="#0969da" font-weight="bold">R4</text>
+<text x="99" y="725">2026-08-18  Execute GitHub Copilot CLI / inference  +59%</text>
 </svg>
