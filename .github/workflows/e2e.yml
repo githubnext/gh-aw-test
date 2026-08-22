@@ -430,6 +430,10 @@ jobs:
     steps:
       - name: Checkout gh-aw-test reporting tools
         uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.GH_AW_TEST_PAT }}
 
       - name: Download all matrix artifacts
         uses: actions/download-artifact@v4
@@ -448,6 +452,25 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_AW_TEST_PAT }}
         run: python3 report_workflow_history.py --workers 8 --output workflow-history-report
+
+      - name: Publish historical timing report to main
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add workflow-history-report/report.md \
+            workflow-history-report/runs.csv \
+            workflow-history-report/runs.json \
+            workflow-history-report/*.svg
+
+          if git diff --cached --quiet; then
+            echo "Historical timing report is already current"
+            exit 0
+          fi
+
+          git commit -m "chore: refresh historical workflow timing report [skip ci]"
+          git push origin HEAD:main
 
       - name: Upload historical timing report
         uses: actions/upload-artifact@v4
@@ -783,12 +806,12 @@ jobs:
       - name: Compose final issue body (with links to previous reports)
         env:
           PRIOR: ${{ steps.prior.outputs.numbers }}
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          GRAPH_BASE_URL: https://raw.githubusercontent.com/${{ github.repository }}/main/workflow-history-report
         run: |
           {
             cat report.md
             echo
-            sed -E "s|^!\[([^]]+)\]\(([^)]+\.svg)\)$|[\1 — download graph from this run's artifacts](${RUN_URL}#artifacts)|" workflow-history-report/report.md
+            sed -E "s|^(!\[[^]]+\]\()([^)]+\.svg)(\))$|\1${GRAPH_BASE_URL}/\2?run=${GITHUB_RUN_ID}\3|" workflow-history-report/report.md
             if [[ -n "$PRIOR" ]]; then
               echo
               echo "## Previous status reports (closed by this run)"
