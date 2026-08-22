@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700">
+<rect width="100%" height="100%" fill="white"/>
+<style>text{font-family:ui-monospace,monospace;font-size:13px}.axis{stroke:#57606a;stroke-width:1}.grid{stroke:#d8dee4;stroke-width:1}</style>
+<line class="grid" x1="65" y1="455.0" x2="1135" y2="455.0"/>
+<text x="8" y="460.0">0s</text>
+<line class="grid" x1="65" y1="377.0" x2="1135" y2="377.0"/>
+<text x="8" y="382.0">109s</text>
+<line class="grid" x1="65" y1="299.0" x2="1135" y2="299.0"/>
+<text x="8" y="304.0">218s</text>
+<line class="grid" x1="65" y1="221.0" x2="1135" y2="221.0"/>
+<text x="8" y="226.0">327s</text>
+<line class="grid" x1="65" y1="143.0" x2="1135" y2="143.0"/>
+<text x="8" y="148.0">436s</text>
+<line class="grid" x1="65" y1="65.0" x2="1135" y2="65.0"/>
+<text x="8" y="70.0">546s</text>
+<line x1="702.9" y1="246.3" x2="684.9" y2="226.3" stroke="#0969da" stroke-width="1"/>
+<circle cx="684.9" cy="226.3" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R1: Time to complete, inference, 292.0s</title></circle>
+<text x="684.9" y="230.3" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R1</text>
+<polyline points="65.0,321.3 103.2,340.6 185.5,303.5 692.3,254.1 702.9,246.3 711.6,244.1 723.9,250.6 730.0,240.6 731.4,233.4 734.5,187.7 735.4,229.8 739.7,222.7 748.6,237.7 765.5,211.2 774.5,252.0 784.0,237.0 793.2,234.1 802.1,139.8 811.0,186.9 819.9,171.9 830.0,187.7 836.2,169.1 846.1,198.4 856.9,179.1 874.3,196.2 883.8,154.1 892.1,146.9 902.4,174.1 910.4,187.7 920.5,121.9 930.2,155.5 940.0,129.8 948.9,132.6 958.1,138.3 964.5,100.5" fill="none" stroke="#0969da" stroke-width="2"><title>Time to complete (inference)</title></polyline>
+<line x1="813.3" y1="233.4" x2="795.3" y2="253.4" stroke="#0969da" stroke-width="1"/>
+<circle cx="795.3" cy="253.4" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R3: Time to complete, samples, 310.0s</title></circle>
+<text x="795.3" y="257.4" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R3</text>
+<line x1="988.0" y1="285.6" x2="970.0" y2="305.6" stroke="#0969da" stroke-width="1"/>
+<circle cx="970.0" cy="305.6" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R9: Time to complete, samples, 237.0s</title></circle>
+<text x="970.0" y="309.6" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R9</text>
+<line x1="1024.7" y1="324.2" x2="1024.7" y2="296.2" stroke="#0969da" stroke-width="1"/>
+<circle cx="1024.7" cy="296.2" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R11: Time to complete, samples, 183.0s</title></circle>
+<text x="1024.7" y="300.2" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R11</text>
+<line x1="1068.4" y1="275.6" x2="1050.4" y2="255.6" stroke="#0969da" stroke-width="1"/>
+<circle cx="1050.4" cy="255.6" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R13: Time to complete, samples, 251.0s</title></circle>
+<text x="1050.4" y="259.6" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R13</text>
+<line x1="1125.9" y1="292.7" x2="1124.0" y2="272.7" stroke="#0969da" stroke-width="1"/>
+<circle cx="1124.0" cy="272.7" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R14: Time to complete, samples, 227.0s</title></circle>
+<text x="1124.0" y="276.7" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R14</text>
+<polyline points="645.3,359.9 682.6,289.9 697.0,295.6 698.0,319.2 699.9,299.2 700.5,309.2 700.5,322.8 703.3,314.9 708.9,321.3 712.8,329.9 728.9,362.1 731.4,321.3 731.4,367.8 731.4,344.9 731.4,365.6 731.4,367.1 731.4,343.5 731.4,352.1 735.2,283.4 735.7,285.6 740.2,323.5 748.6,354.9 749.2,279.9 758.5,294.9 767.2,368.5 767.4,267.0 775.1,370.7 776.2,312.0 776.9,360.6 776.9,352.8 776.9,373.5 776.9,337.8 776.9,392.8 776.9,378.5 776.9,385.7 776.9,380.7 776.9,398.5 776.9,334.2 776.9,379.2 776.9,374.9 776.9,397.1 776.9,399.2 776.9,385.7 776.9,349.2 776.9,364.2 776.9,381.4 776.9,385.7 776.9,382.8 776.9,382.1 785.0,310.6 794.4,278.4 799.5,347.1 803.8,323.5 811.0,367.8 811.0,365.6 813.3,233.4 821.2,299.2 827.3,383.5 827.3,389.2 827.3,389.2 827.3,373.5 831.7,311.3 840.8,305.6 850.0,332.1 858.7,332.8 870.4,391.4 877.2,339.9 880.2,332.8 886.5,386.4 886.5,376.4 886.5,382.8 886.9,330.6 896.0,306.3 902.4,329.9 906.9,392.1 906.9,387.1 914.0,337.8 922.6,323.5 928.3,379.2 928.3,375.7 928.3,386.4 932.4,342.1 941.9,319.2 948.9,320.6 957.0,361.4 959.9,327.8 961.4,379.2 961.4,382.8 964.5,347.8 971.4,385.7 971.4,352.8 978.6,346.3 988.0,285.6 993.0,374.2 993.0,365.6 993.0,378.5 997.0,334.2 998.5,386.4 1001.0,349.9 1010.6,382.8 1010.6,384.9 1013.7,334.9 1018.4,346.3 1018.4,383.5 1018.4,388.5 1018.4,387.8 1018.4,383.5 1024.7,324.2 1025.4,354.2 1033.8,344.9 1036.7,394.2 1036.7,362.8 1036.7,317.0 1036.7,352.8 1042.9,347.8 1049.5,342.1 1054.1,334.2 1054.1,340.6 1054.1,351.4 1054.1,342.1 1054.1,327.0 1054.1,367.1 1054.1,359.2 1054.1,359.2 1055.5,324.2 1055.8,312.8 1061.3,296.3 1068.4,275.6 1076.7,362.1 1076.7,334.9 1077.7,299.9 1086.0,286.3 1092.7,339.9 1098.2,304.2 1099.8,384.2 1099.8,356.4 1099.8,371.4 1106.4,279.2 1116.7,313.5 1116.9,357.1 1116.9,384.9 1125.9,292.7 1133.3,383.5 1133.4,320.6 1135.0,313.5" fill="none" stroke="#0969da" stroke-width="2" stroke-dasharray="7 5"><title>Time to complete (samples)</title></polyline>
+<line x1="734.5" y1="324.3" x2="752.5" y2="304.3" stroke="#cf222e" stroke-width="1"/>
+<circle cx="752.5" cy="304.3" r="11" fill="white" stroke="#cf222e" stroke-width="2"><title>R2: Time to first reasoning proxy, inference, 182.8s</title></circle>
+<text x="752.5" y="308.3" fill="#cf222e" font-size="10" font-weight="bold" text-anchor="middle">R2</text>
+<line x1="940.0" y1="313.9" x2="940.0" y2="341.9" stroke="#cf222e" stroke-width="1"/>
+<circle cx="940.0" cy="341.9" r="11" fill="white" stroke="#cf222e" stroke-width="2"><title>R6: Time to first reasoning proxy, inference, 197.4s</title></circle>
+<text x="940.0" y="345.9" fill="#cf222e" font-size="10" font-weight="bold" text-anchor="middle">R6</text>
+<polyline points="692.3,355.5 702.9,371.3 711.6,373.0 723.9,375.5 730.0,373.1 731.4,365.3 734.5,324.3 735.4,363.2 739.7,345.2 748.6,370.1 765.5,333.7 774.5,371.5 784.0,357.4 793.2,350.2 802.1,363.1 811.0,353.4 819.9,363.0 830.0,376.3 836.2,373.3 846.1,383.1 856.9,373.2 874.3,365.4 883.8,335.1 892.1,348.5 902.4,376.0 910.4,362.7 920.5,337.8 930.2,350.0 940.0,313.9 948.9,354.4 958.1,374.3 964.5,380.0" fill="none" stroke="#cf222e" stroke-width="2"><title>Time to first reasoning proxy (inference)</title></polyline>
+<line x1="735.2" y1="359.2" x2="753.2" y2="379.2" stroke="#cf222e" stroke-width="1"/>
+<circle cx="753.2" cy="379.2" r="11" fill="white" stroke="#cf222e" stroke-width="2"><title>R4: Time to first reasoning proxy, samples, 134.0s</title></circle>
+<text x="753.2" y="383.2" fill="#cf222e" font-size="10" font-weight="bold" text-anchor="middle">R4</text>
+<line x1="776.9" y1="368.5" x2="776.9" y2="340.5" stroke="#cf222e" stroke-width="1"/>
+<circle cx="776.9" cy="340.5" r="11" fill="white" stroke="#cf222e" stroke-width="2"><title>R5: Time to first reasoning proxy, samples, 121.0s</title></circle>
+<text x="776.9" y="344.5" fill="#cf222e" font-size="10" font-weight="bold" text-anchor="middle">R5</text>
+<line x1="941.9" y1="368.5" x2="923.9" y2="348.5" stroke="#cf222e" stroke-width="1"/>
+<circle cx="923.9" cy="348.5" r="11" fill="white" stroke="#cf222e" stroke-width="2"><title>R7: Time to first reasoning proxy, samples, 121.0s</title></circle>
+<text x="923.9" y="352.5" fill="#cf222e" font-size="10" font-weight="bold" text-anchor="middle">R7</text>
+<line x1="988.0" y1="342.8" x2="1006.0" y2="362.8" stroke="#cf222e" stroke-width="1"/>
+<circle cx="1006.0" cy="362.8" r="11" fill="white" stroke="#cf222e" stroke-width="2"><title>R10: Time to first reasoning proxy, samples, 157.0s</title></circle>
+<text x="1006.0" y="366.8" fill="#cf222e" font-size="10" font-weight="bold" text-anchor="middle">R10</text>
+<line x1="1036.7" y1="378.5" x2="1036.7" y2="406.5" stroke="#cf222e" stroke-width="1"/>
+<circle cx="1036.7" cy="406.5" r="11" fill="white" stroke="#cf222e" stroke-width="2"><title>R12: Time to first reasoning proxy, samples, 107.0s</title></circle>
+<text x="1036.7" y="410.5" fill="#cf222e" font-size="10" font-weight="bold" text-anchor="middle">R12</text>
+<polyline points="645.3,402.1 682.6,361.4 697.0,360.6 698.0,384.9 699.9,395.7 700.5,379.2 700.5,395.0 703.3,385.7 708.9,384.9 712.8,390.7 728.9,411.4 731.4,371.4 731.4,410.0 731.4,400.7 731.4,406.4 731.4,411.4 731.4,401.4 731.4,391.4 735.2,359.2 735.7,364.2 740.2,395.7 748.6,403.5 749.2,369.9 758.5,373.5 767.2,412.8 767.4,382.8 775.1,416.4 776.2,378.5 776.9,409.3 776.9,400.7 776.9,418.5 776.9,405.0 776.9,418.5 776.9,411.4 776.9,420.0 776.9,412.8 776.9,423.5 776.9,368.5 776.9,411.4 776.9,417.1 776.9,422.8 776.9,425.7 776.9,418.5 776.9,384.9 776.9,389.2 776.9,417.8 776.9,412.1 776.9,412.8 776.9,416.4 785.0,387.8 794.4,378.5 799.5,389.2 803.8,394.2 811.0,411.4 811.0,413.5 813.3,369.9 821.2,359.9 827.3,412.8 827.3,416.4 827.3,415.7 827.3,414.3 831.7,394.2 840.8,386.4 850.0,398.5 858.7,397.1 870.4,420.7 877.2,390.7 880.2,388.5 886.5,418.5 886.5,410.0 886.5,412.8 886.9,384.9 896.0,372.1 902.4,384.2 906.9,418.5 906.9,416.4 914.0,393.5 922.6,378.5 928.3,412.8 928.3,408.5 928.3,415.7 932.4,390.7 941.9,368.5 948.9,372.8 957.0,393.5 959.9,389.2 961.4,411.4 961.4,417.1 964.5,393.5 971.4,417.1 971.4,393.5 978.6,388.5 988.0,342.8 993.0,410.0 993.0,396.4 993.0,411.4 997.0,385.7 998.5,411.4 1001.0,399.2 1010.6,413.5 1010.6,422.1 1013.7,380.7 1018.4,402.8 1018.4,412.8 1018.4,417.1 1018.4,412.8 1018.4,415.7 1024.7,398.5 1025.4,390.0 1033.8,397.1 1036.7,420.7 1036.7,395.0 1036.7,378.5 1036.7,397.1 1042.9,392.8 1049.5,393.5 1054.1,399.2 1054.1,382.8 1054.1,412.1 1054.1,396.4 1054.1,388.5 1054.1,409.3 1054.1,410.0 1054.1,400.7 1055.5,381.4 1055.8,376.4 1061.3,378.5 1068.4,384.9 1076.7,409.3 1076.7,385.7 1077.7,387.8 1086.0,380.7 1092.7,386.4 1098.2,382.8 1099.8,412.1 1099.8,402.8 1099.8,409.3 1106.4,368.5 1116.7,384.2 1116.9,406.4 1116.9,420.0 1125.9,369.9 1133.3,414.3 1133.4,387.1 1135.0,384.9" fill="none" stroke="#cf222e" stroke-width="2" stroke-dasharray="7 5"><title>Time to first reasoning proxy (samples)</title></polyline>
+<line x1="964.5" y1="334.2" x2="982.5" y2="314.2" stroke="#1a7f37" stroke-width="1"/>
+<circle cx="982.5" cy="314.2" r="11" fill="white" stroke="#1a7f37" stroke-width="2"><title>R8: Detection job, inference, 169.0s</title></circle>
+<text x="982.5" y="318.2" fill="#1a7f37" font-size="10" font-weight="bold" text-anchor="middle">R8</text>
+<polyline points="65.0,403.5 103.2,421.4 185.5,420.7 692.3,419.3 702.9,410.0 711.6,415.0 723.9,407.8 730.0,406.4 731.4,405.7 734.5,396.4 735.4,410.0 739.7,410.0 748.6,404.2 765.5,407.1 774.5,397.1 784.0,403.5 793.2,410.7 802.1,405.7 811.0,410.7 819.9,402.1 830.0,412.8 836.2,406.4 846.1,407.1 856.9,399.2 874.3,407.1 883.8,412.8 892.1,390.7 902.4,405.0 910.4,410.0 920.5,407.1 930.2,407.1 940.0,394.2 948.9,406.4 958.1,349.9 964.5,334.2" fill="none" stroke="#1a7f37" stroke-width="2"><title>Detection job (inference)</title></polyline>
+<line class="axis" x1="65" y1="455" x2="1135" y2="455"/>
+<text x="65" y="499">2026-04-10</text>
+<text x="1055" y="499">2026-08-05</text>
+<line x1="650" y1="22" x2="690" y2="22" stroke="#0969da" stroke-width="3"/><text x="700" y="27">Complete</text>
+<line x1="650" y1="44" x2="690" y2="44" stroke="#cf222e" stroke-width="3"/><text x="700" y="49">First proxy</text>
+<line x1="800" y1="22" x2="840" y2="22" stroke="#1a7f37" stroke-width="3"/><text x="850" y="27">Detection</text>
+<line x1="800" y1="44" x2="840" y2="44" stroke="#57606a" stroke-width="3" stroke-dasharray="7 5"/><text x="850" y="49">Samples (dashed)</text>
+<text x="65" y="30" font-size="20">Timing by gh-aw commit date</text>
+<text x="65" y="535" font-size="16" font-weight="bold">Regression episodes</text>
+<text x="65" y="562" fill="#0969da" font-weight="bold">R1</text>
+<text x="99" y="562">2026-06-18 to 2026-06-20  Complete / inference  +59%</text>
+<text x="65" y="585" fill="#cf222e" font-weight="bold">R2</text>
+<text x="99" y="585">2026-06-22  First proxy / inference  +58%</text>
+<text x="65" y="608" fill="#0969da" font-weight="bold">R3</text>
+<text x="99" y="608">2026-06-22 to 2026-07-04  Complete / samples  +151%</text>
+<text x="65" y="631" fill="#cf222e" font-weight="bold">R4</text>
+<text x="99" y="631">2026-06-22 to 2026-06-24  First proxy / samples  +77%</text>
+<text x="65" y="654" fill="#cf222e" font-weight="bold">R5</text>
+<text x="99" y="654">2026-06-27 to 2026-07-04  First proxy / samples  +102%</text>
+<text x="65" y="677" fill="#cf222e" font-weight="bold">R6</text>
+<text x="99" y="677">2026-07-14  First proxy / inference  +55%</text>
+<text x="615" y="562" fill="#cf222e" font-weight="bold">R7</text>
+<text x="649" y="562">2026-07-15  First proxy / samples  +60%</text>
+<text x="615" y="585" fill="#1a7f37" font-weight="bold">R8</text>
+<text x="649" y="585">2026-07-16 to 2026-07-17  Detection / inference  +150%</text>
+<text x="615" y="608" fill="#0969da" font-weight="bold">R9</text>
+<text x="649" y="608">2026-07-20  Complete / samples  +62%</text>
+<text x="615" y="631" fill="#cf222e" font-weight="bold">R10</text>
+<text x="649" y="631">2026-07-20  First proxy / samples  +83%</text>
+<text x="615" y="654" fill="#0969da" font-weight="bold">R11</text>
+<text x="649" y="654">2026-07-24 to 2026-07-25  Complete / samples  +83%</text>
+<text x="615" y="677" fill="#cf222e" font-weight="bold">R12</text>
+<text x="649" y="677">2026-07-24 to 2026-07-25  First proxy / samples  +62%</text>
+<text x="1165" y="562" fill="#0969da" font-weight="bold">R13</text>
+<text x="1199" y="562">2026-07-28  Complete / samples  +58%</text>
+<text x="1165" y="585" fill="#0969da" font-weight="bold">R14</text>
+<text x="1199" y="585">2026-08-04  Complete / samples  +52%</text>
+</svg>

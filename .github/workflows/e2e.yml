@@ -5,7 +5,8 @@ name: e2e
 #   1. github/gh-aw `main`              (source mode)
 #   2. the latest gh-aw pre-release tag (extension mode)
 #   3. the latest gh-aw stable release  (extension mode)
-# each crossed with samples=false (live engine) and samples=true (deterministic).
+# The main ref also runs copilot create-issue once with samples=false to retain
+# live inference timing, while the full suite remains deterministic.
 #
 # Execution model
 # ---------------
@@ -44,7 +45,7 @@ on:
         default: quick
         options:
           - quick            # main / source / samples=true   (fast, deterministic)
-          - main-live        # main / source / samples=true   (live engine path — samples=false temporarily disabled)
+          - main-live        # main / source / samples=false  (targeted Copilot create-issue inference)
           - release          # latest release / extension / samples=true
           - prerelease       # latest pre-release / extension / samples=true
           - full             # full matrix, run serially
@@ -128,6 +129,7 @@ jobs:
           #                           then run e2e.sh with NO --gh-aw-ref.
           #   samples : true  => run with --use-samples (deterministic, no engine)
           #             false => run against the live AI engine
+          #   targeted: true  => run only test-copilot-create-issue
           #
           # The job that consumes this matrix runs serially (max-parallel: 1) and
           # each entry pushes to its own dedicated branch, so entries never race
@@ -141,10 +143,8 @@ jobs:
                 '[{ label: $label, ref: $ref, mode: "source", samples: true }]')
               ;;
             main-live)
-              # samples=false temporarily disabled — COPILOT_GITHUB_TOKEN needs rotation.
-              # Change `samples: false` back to re-enable live-engine runs.
               matrix=$(jq -nc --arg ref "$src_ref" --arg label "$src_label" \
-                '[{ label: $label, ref: $ref, mode: "source", samples: true }]')
+                '[{ label: $label, ref: $ref, mode: "source", samples: false, targeted: true }]')
               ;;
             release)
               matrix=$(jq -nc --arg rel "$latest_release" \
@@ -183,15 +183,16 @@ jobs:
                   | unique_by(.ref)')
               fi
 
-              # # Expand each base entry across samples modes:
-              # #   main        → samples=false AND samples=true (inference + deterministic)
-              # #   pre-release/release → samples=true only (skip inference runs for speed)
-              # matrix=$(echo "$base" | jq -c '[ .[] as $e | if $e.label == "main" then (false, true) else true end | $e + { samples: . } ]')
-
-              # Expand each base entry across samples modes, always true for now
-              #   main        → samples=true (skip inference runs for stability for now)
-              #   pre-release/release → samples=true only (skip inference runs for speed)
-              matrix=$(echo "$base" | jq -c '[ .[] as $e | if $e.label == "main" then true else true end | $e + { samples: . } ]')
+              # Main gets one targeted live-inference run plus the full sampled
+              # suite. Release entries remain samples-only for speed and cost.
+              matrix=$(echo "$base" | jq -c '[ .[] as $e |
+                if $e.label == "main" then
+                  ($e + { samples: false, targeted: true }),
+                  ($e + { samples: true, targeted: false })
+                else
+                  $e + { samples: true, targeted: false }
+                end
+              ]')
               ;;
           esac
 
@@ -340,9 +341,13 @@ jobs:
             SAMPLES_FLAG="--use-samples"
           fi
 
-          # Tests to run in every matrix entry.
-          # Copilot suite in full; one create-issue test for Claude and Codex.
-          TESTS=('test-copilot-*' 'test-claude-create-issue' 'test-codex-create-issue')
+          if [[ "${{ matrix.entry.targeted || false }}" == "true" ]]; then
+            # Keep one nightly live inference run for historical timing.
+            TESTS=('test-copilot-create-issue')
+          else
+            # Copilot suite in full; one create-issue test for Claude and Codex.
+            TESTS=('test-copilot-*' 'test-claude-create-issue' 'test-codex-create-issue')
+          fi
 
           if [[ "$E2E_MODE" == "source" ]]; then
             # source mode: locally-built binary + --gh-aw-ref so lockfiles
@@ -419,13 +424,43 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     permissions:
+      actions: read
       issues: write
       contents: read
     steps:
+      - name: Checkout gh-aw-test reporting tools
+        uses: actions/checkout@v4
+
       - name: Download all matrix artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
+
+      - name: Restore workflow history cache
+        uses: actions/cache@v4
+        with:
+          path: workflow-history-report/cache
+          key: workflow-history-${{ github.run_id }}
+          restore-keys: |
+            workflow-history-
+
+      - name: Build historical timing report
+        env:
+          GH_TOKEN: ${{ secrets.GH_AW_TEST_PAT }}
+        run: python3 report_workflow_history.py --workers 8 --output workflow-history-report
+
+      - name: Upload historical timing report
+        uses: actions/upload-artifact@v4
+        with:
+          name: workflow-history-report
+          path: |
+            workflow-history-report/report.md
+            workflow-history-report/*.svg
+            workflow-history-report/runs.csv
+            workflow-history-report/runs.json
+
+      - name: Append historical timing summary
+        run: cat workflow-history-report/report.md >> "$GITHUB_STEP_SUMMARY"
 
       - name: Build status report body
         env:
@@ -748,9 +783,12 @@ jobs:
       - name: Compose final issue body (with links to previous reports)
         env:
           PRIOR: ${{ steps.prior.outputs.numbers }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           {
             cat report.md
+            echo
+            sed -E "s|^!\[([^]]+)\]\(([^)]+\.svg)\)$|[\1 — download graph from this run's artifacts](${RUN_URL}#artifacts)|" workflow-history-report/report.md
             if [[ -n "$PRIOR" ]]; then
               echo
               echo "## Previous status reports (closed by this run)"
