@@ -13,10 +13,6 @@ permissions:
 engine:
   id: copilot
 
-sandbox:
-  agent:
-    sudo: false
-
 safe-outputs:
   create-issue:
     title-prefix: "[copilot-network-isolation-test] "

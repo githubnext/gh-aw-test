@@ -34,8 +34,7 @@ safe-outputs:
     target: "*"
     samples:
       - pull_request_number: "${{ github.event.inputs.pull_request_number }}"
-        review_id: "auto"
         justification: "Dismissed by the Copilot dismiss-pull-request-review E2E test."
 ---
 
-On pull request #${{ github.event.inputs.pull_request_number }}, dismiss the review authored by the current workflow actor using `review_id: auto` and the justification "Dismissed by the Copilot dismiss-pull-request-review E2E test."
+On pull request #${{ github.event.inputs.pull_request_number }}, dismiss the review authored by the current workflow actor without specifying `review_id`, using the justification "Dismissed by the Copilot dismiss-pull-request-review E2E test."
