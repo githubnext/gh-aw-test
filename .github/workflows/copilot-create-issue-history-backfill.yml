@@ -1,4 +1,4 @@
-name: One-off Copilot Create Issue History Backfill
+name: One-off Copilot Create Issue Release History Backfill
 
 on:
   workflow_dispatch:
@@ -8,12 +8,12 @@ permissions:
   contents: read
 
 concurrency:
-  group: copilot-create-issue-history-backfill
+  group: copilot-create-issue-release-history-backfill
   cancel-in-progress: false
 
 jobs:
   backfill:
-    name: ${{ matrix.date }} / gh-aw@${{ matrix.sha }}
+    name: ${{ matrix.tag }} / ${{ matrix.date }}
     runs-on: ubuntu-latest
     timeout-minutes: 90
     strategy:
@@ -23,63 +23,46 @@ jobs:
       max-parallel: 1
       matrix:
         include:
-          - { date: "2026-06-26", sha: "42b108eaae3ac36f6ab5ecb1ea5bcb664cfbb784" }
-          - { date: "2026-06-27", sha: "95b5cd98a9b94d9eee85349ffca3ebf35d76aad2" }
-          - { date: "2026-06-28", sha: "9b8946c72eac79ab9d1c7656df083b69921f4e37" }
-          - { date: "2026-06-29", sha: "59d4d3b44afaba2865a921d99a6d30510fb5b793" }
-          - { date: "2026-06-30", sha: "663ad7b5aa7cbf4c5d56f4a73d99c8d95f09e466" }
-          - { date: "2026-07-01", sha: "b5fdd698c629c91b387d059628db059bcda73980" }
-          - { date: "2026-07-02", sha: "e8b9dc7132e3b86282d093daf64f9550046af3c8" }
-          - { date: "2026-07-03", sha: "98d108e4959308a8fe548ac14136a112c339fcfb" }
-          - { date: "2026-07-04", sha: "332d5e24d2c6c47b0cd58f8694911c6591c6de8a" }
-          - { date: "2026-07-05", sha: "117370b507e5c712b8d981e5b7d6601a078821d9" }
-          - { date: "2026-07-06", sha: "927a689cee61cfdc4a6787079dca356192b70bec" }
-          - { date: "2026-07-07", sha: "9babb63b39217bf2fd0e3809240d691f3155f623" }
-          - { date: "2026-07-08", sha: "da168b8262ffd5707c04c77a2fdbadc70aac6309" }
-          - { date: "2026-07-09", sha: "bd5467ff4106fd4970e359c1569acfc96209bf04" }
-          - { date: "2026-07-10", sha: "f2bff5d554593da959dfba86c5bce06ff7703dce" }
-          - { date: "2026-07-11", sha: "ed454002d35dffe2a6f8e46f6bc1f89639ef9099" }
-          - { date: "2026-07-12", sha: "b3b6881333d82b7c02de90f2f21799cd1929223b" }
-          - { date: "2026-07-13", sha: "e0a0e5d23d0e2b9f065b71469a1a75578d8a7047" }
-          - { date: "2026-07-14", sha: "072256746c0a33d54890f6f431b5c90314c23c4e" }
-          - { date: "2026-07-15", sha: "df13f08917192b95bda8aa6c9ab53ffd6684f788" }
-          - { date: "2026-07-16", sha: "f0a3dd21c6e5fc1eff595e0a62becf6b4c5d553f" }
-          - { date: "2026-07-17", sha: "c19fd53189742da810b717d538f0d88cb13c2d3f" }
-          - { date: "2026-07-18", sha: "c096ffebd27fa7dbfb278a87d87fbb00c5187239" }
-          - { date: "2026-07-19", sha: "dc63b6bdafd1e29ba7a35b20ce2a3aab40663659" }
-          - { date: "2026-07-20", sha: "5c93e1de4d27c06bdfcbf490b7cc55f356a61978" }
-          - { date: "2026-07-21", sha: "e3306490fd32fadaacb15b5d3f4f3335647ff120" }
-          - { date: "2026-07-22", sha: "2a7ac3d34e2d1795112b2e8d6703b17cc42dfe73" }
-          - { date: "2026-07-23", sha: "0629ee44cffe1469e74bbe9e1baac3a76f3ae8fe" }
-          - { date: "2026-07-24", sha: "c834b3749df802e481fffde5a2a6fcad5fb4b8d0" }
-          - { date: "2026-07-25", sha: "44b56e18b3fe95160e13e3678858853c65c8dff9" }
-          - { date: "2026-07-26", sha: "11d9ea9de7295df89744ca14894e26ade76c58e3" }
-          - { date: "2026-07-27", sha: "d4872c27ea33f4d3b7684430020195e804ade106" }
-          - { date: "2026-07-28", sha: "f427a5ea1f3c00d83d3582fa204a2c6c1efa6704" }
-          - { date: "2026-07-29", sha: "acc797bbab36245a25a108b1597789d08b0d3d90" }
-          - { date: "2026-07-30", sha: "8d982baa62cdac36cac6386f1c986f3edbbbef67" }
-          - { date: "2026-07-31", sha: "5adcdb6d4ec153409feab88c1688a9929fa07008" }
-          - { date: "2026-08-01", sha: "a4a8ff866757cbae7225c978a1ae9e1183e852b6" }
-          - { date: "2026-08-02", sha: "05bc7f1378e1dcb1707d52ea6a33c2b65398a188" }
-          - { date: "2026-08-03", sha: "f5bd99245e402c9d87b4cf5bec6b037e055aa86f" }
-          - { date: "2026-08-04", sha: "53baccde5390bbd2f062b7528266e9dd8edfcda9" }
-          - { date: "2026-08-05", sha: "9aa5938b0bb56a1813f4c8f566dfe38bfc1458d3" }
-          - { date: "2026-08-06", sha: "32c363e664fc5896127cab246f88cb96103ccaed" }
-          - { date: "2026-08-07", sha: "782af6ae3b59acf0e0f59498cacbf2abc17b29c9" }
-          - { date: "2026-08-08", sha: "e1e298d64bfa9f0d6d2cfd8da3b70c0a2528e1a6" }
-          - { date: "2026-08-09", sha: "ba0a9f958976c1d8d1baf3d2fc5a6aade16d01f2" }
-          - { date: "2026-08-10", sha: "2b4a6df88d5ea6216b577a0af184f9cecff96771" }
-          - { date: "2026-08-11", sha: "965f4a3e9be4ce24e1b95a58e5146de5381c0713" }
-          - { date: "2026-08-12", sha: "11b9b2a51a0ae7eb9bfd49486c652ddb8e7fa350" }
-          - { date: "2026-08-13", sha: "cccc09ad0907430c5307578c485c51f1877dab95" }
-          - { date: "2026-08-14", sha: "903f16a9eba25a03cc4cdad5c45d43e72ddd4b37" }
-          - { date: "2026-08-15", sha: "c35faf436c798d9535df6b69a6c6f3708c5ec021" }
-          - { date: "2026-08-16", sha: "f36a578e2dd1f55bd995e46f36f61bb4a4b098e2" }
-          - { date: "2026-08-17", sha: "356ceb8bdf7cab30485661ca4bebe7318d744af7" }
-          - { date: "2026-08-18", sha: "2b2cf3fb01eefb3e5bda06f3dc21ab2d961492bb" }
-          - { date: "2026-08-19", sha: "4845f00caf4609afc9cd34cbb45ad4b8ae621a20" }
-          - { date: "2026-08-20", sha: "5d5e0af5c46ca0d7a29a30fd135e40f29bfe2412" }
-          - { date: "2026-08-21", sha: "45d4273aa518769fcdcc1a1592305f90ec56d6ae" }
+          - { tag: "v0.81.4", date: "2026-06-26", sha: "1db7b9b617011f63a991644b80bfd7e4a044c34e" }
+          - { tag: "v0.81.5", date: "2026-06-27", sha: "f414fc71e36a3950e056639a12799fdf281e9c4f" }
+          - { tag: "v0.81.6", date: "2026-06-27", sha: "eed4304d8740f0593f2797276cb8299d228ffd9b" }
+          - { tag: "v0.82.0", date: "2026-06-29", sha: "be745b1aaf691dea9880c4dec3d55777027529c4" }
+          - { tag: "v0.82.2", date: "2026-07-02", sha: "0b1173e7d380fb68a9d6749af62e49ca050eefc1" }
+          - { tag: "v0.82.3", date: "2026-07-07", sha: "afad433c8081160f52c27dd324bf208c194a2717" }
+          - { tag: "v0.82.4", date: "2026-07-08", sha: "c94f43285a784cc6eec4f3e57c93f537f5cfdf00" }
+          - { tag: "v0.82.5", date: "2026-07-08", sha: "f9635a3f2f73c3c4ea746de20a17fd6892c7ece6" }
+          - { tag: "v0.82.6", date: "2026-07-08", sha: "adb344b16f741da11a367e06d099653147eadc43" }
+          - { tag: "v0.82.7", date: "2026-07-09", sha: "f78aa11992eb3e40e7e8c4207d98389edc377ea3" }
+          - { tag: "v0.82.8", date: "2026-07-11", sha: "0e0d3736527cc5029115b7a49a63388da83cc1b2" }
+          - { tag: "v0.82.9", date: "2026-07-13", sha: "e9b732bc366ade8de24f162b525ffbb354a53129" }
+          - { tag: "v0.82.10", date: "2026-07-16", sha: "de126a1f352e2b07084689e06a91ada08cab2857" }
+          - { tag: "v0.82.11", date: "2026-07-16", sha: "38e22c4075e399a5b9b2dbda1d94e2d66e91e9ca" }
+          - { tag: "v0.82.12", date: "2026-07-17", sha: "b944311ed8eb2bfdcd32693703aeb98dfebb1fa3" }
+          - { tag: "v0.82.13", date: "2026-07-18", sha: "017cdbc1b474bb0804e2c152b46012930fecb7b3" }
+          - { tag: "v0.82.14", date: "2026-07-20", sha: "8b820ae1073f301991aaf2f307f7e271f618bb9f" }
+          - { tag: "v0.82.15", date: "2026-07-21", sha: "8070dbd66af90bb83046bbdd92deab611d1d1d11" }
+          - { tag: "v0.83.0", date: "2026-07-22", sha: "5cce94a83e6e010cf2570b5150201de71210a333" }
+          - { tag: "v0.83.1", date: "2026-07-23", sha: "6268b9870d9f3bd9ce7526cb9d9cac988ffcfa35" }
+          - { tag: "v0.83.2", date: "2026-07-24", sha: "56a38be41a181e164a794ee308378d8c1081026a" }
+          - { tag: "v0.83.3", date: "2026-07-25", sha: "7e728ffd6fc9b1a4e8e03e8815701f4203e789ad" }
+          - { tag: "v0.83.4", date: "2026-07-27", sha: "bbb8042878459948333b15b66f27113f4b5c1b9a" }
+          - { tag: "v0.83.5", date: "2026-07-29", sha: "54b0997d61c900c666fd3327842d3e1759321b5f" }
+          - { tag: "v0.84.0", date: "2026-07-29", sha: "ec7e9b22470f36052c927b9a642f93a525bcef9a" }
+          - { tag: "v0.84.1", date: "2026-07-31", sha: "ccf88b8a317e2409b40d87e0df29e6978de0f9c5" }
+          - { tag: "v0.84.2", date: "2026-08-01", sha: "85d757b668121129235f2ebbe5cc753be9dcc8ba" }
+          - { tag: "v0.84.3", date: "2026-08-03", sha: "53258938b59e0797fefeed05ec0c681514b2a827" }
+          - { tag: "v0.84.4", date: "2026-08-04", sha: "918a49bd8c546648e99e71943e01ebd22418b7ef" }
+          - { tag: "v0.85.0", date: "2026-08-04", sha: "964e554e0302803dceecfdc0a58cb9c4bd7d732d" }
+          - { tag: "v0.85.1", date: "2026-08-05", sha: "04f0e42529bab85094ac42cc8dd0a0781d57c59c" }
+          - { tag: "v0.85.4", date: "2026-08-06", sha: "53843da968225dc56e1590978a7ed6407a8438ac" }
+          - { tag: "v0.86.0", date: "2026-08-07", sha: "435186c5f2612c5f2609a475dccfea3d9834ee88" }
+          - { tag: "v0.86.1", date: "2026-08-07", sha: "475927dfc6d1b262f4dd17baf4e49639af86d6ca" }
+          - { tag: "v0.86.2", date: "2026-08-11", sha: "48e5fa3ff52294d91d97715017a9f8693a48387f" }
+          - { tag: "v0.86.3", date: "2026-08-15", sha: "6062cd2238b68226eb2bfd47607703ed7944330f" }
+          - { tag: "v0.87.0", date: "2026-08-16", sha: "10fb8631802577d545941b64f2b9fe7820224ae6" }
+          - { tag: "v0.87.1", date: "2026-08-18", sha: "73def1609c73c93951bc9c9e31eef524dfd2162e" }
+          - { tag: "v0.87.2", date: "2026-08-20", sha: "d46b759176d4402dd99ea454e40841ad3c88c85e" }
+          - { tag: "v0.87.4", date: "2026-08-22", sha: "83d6315352f7db8882090ff2026087842f4256b9" }
 
     steps:
       - name: Checkout gh-aw-test main
@@ -115,6 +98,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GH_AW_TEST_PAT }}
           GH_AW_TEST_PAT: ${{ secrets.GH_AW_TEST_PAT }}
           GH_AW_SHA: ${{ matrix.sha }}
+          GH_AW_TAG: ${{ matrix.tag }}
           HISTORY_DATE: ${{ matrix.date }}
         run: |
           set -euo pipefail
@@ -125,7 +109,7 @@ jobs:
 
           git config user.name "gh-aw-test history backfill"
           git config user.email "gh-aw-test-e2e@users.noreply.github.com"
-          branch="history-copilot-create-issue-${HISTORY_DATE//-/}"
+          branch="history-copilot-create-issue-${GH_AW_TAG//./-}"
 
           # Deliberately omit --use-samples: every entry must call Copilot.
           ./e2e.sh \
@@ -138,6 +122,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: copilot-create-issue-${{ matrix.date }}
+          name: copilot-create-issue-${{ matrix.tag }}
           path: gh-aw-test/e2e-test-*.log
           if-no-files-found: warn
