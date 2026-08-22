@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="619" viewBox="0 0 1200 619">
+<rect width="100%" height="100%" fill="white"/>
+<style>text{font-family:ui-monospace,monospace;font-size:13px}.axis{stroke:#57606a;stroke-width:1}.grid{stroke:#d8dee4;stroke-width:1}</style>
+<text x="65" y="30" font-size="20">Step timing: agent job</text>
+<text x="65" y="52">Only steps over 10s in more than 50% of their timed occurrences</text>
+<line class="grid" x1="65" y1="465.0" x2="1135" y2="465.0"/>
+<text x="8" y="470.0">0s</text>
+<line class="grid" x1="65" y1="387.0" x2="1135" y2="387.0"/>
+<text x="8" y="392.0">27s</text>
+<line class="grid" x1="65" y1="309.0" x2="1135" y2="309.0"/>
+<text x="8" y="314.0">53s</text>
+<line class="grid" x1="65" y1="231.0" x2="1135" y2="231.0"/>
+<text x="8" y="236.0">80s</text>
+<line class="grid" x1="65" y1="153.0" x2="1135" y2="153.0"/>
+<text x="8" y="158.0">106s</text>
+<line class="grid" x1="65" y1="75.0" x2="1135" y2="75.0"/>
+<text x="8" y="80.0">133s</text>
+<line class="grid" x1="65.0" y1="75" x2="65.0" y2="465"/>
+<line class="grid" x1="198.8" y1="75" x2="198.8" y2="465"/>
+<line class="grid" x1="332.5" y1="75" x2="332.5" y2="465"/>
+<line class="grid" x1="466.2" y1="75" x2="466.2" y2="465"/>
+<line class="grid" x1="600.0" y1="75" x2="600.0" y2="465"/>
+<line class="grid" x1="733.8" y1="75" x2="733.8" y2="465"/>
+<line class="grid" x1="867.5" y1="75" x2="867.5" y2="465"/>
+<line class="grid" x1="1001.2" y1="75" x2="1001.2" y2="465"/>
+<line class="grid" x1="1135.0" y1="75" x2="1135.0" y2="465"/>
+<polyline points="65.0,380.0 103.2,377.1 185.5,391.7 692.3,356.6 702.9,365.4 711.6,383.0 723.9,374.2 730.0,380.0 731.4,388.8 734.5,374.2 735.4,371.2 739.7,353.7 748.6,374.2 765.5,374.2 774.5,383.0 784.0,371.2 793.2,383.0 802.1,113.4 811.0,113.4 819.9,133.9 830.0,139.8 836.2,128.0 846.1,139.8 856.9,133.9 874.3,131.0 883.8,136.8 892.1,133.9 902.4,136.8 910.4,142.7 920.5,116.3 930.2,110.5 940.0,133.9 948.9,116.3 958.1,131.0 964.5,133.9" fill="none" stroke="#0969da" stroke-width="2"><title>Execute GitHub Copilot CLI (inference)</title></polyline>
+<line x1="802.1" y1="113.4" x2="784.1" y2="91.4" stroke="#0969da" stroke-width="1"/>
+<circle cx="784.1" cy="91.4" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R1: Execute GitHub Copilot CLI, inference, 120.0s</title></circle>
+<text x="784.1" y="95.4" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R1</text>
+<line x1="65" y1="521" x2="100" y2="521" stroke="#0969da" stroke-width="3"/>
+<text x="110" y="525">Execute GitHub Copilot CLI</text>
+<text x="65.0" y="490" text-anchor="start">2026-04-10</text>
+<text x="198.8" y="490" text-anchor="middle">2026-04-25</text>
+<text x="332.5" y="490" text-anchor="middle">2026-05-09</text>
+<text x="466.2" y="490" text-anchor="middle">2026-05-24</text>
+<text x="600.0" y="490" text-anchor="middle">2026-06-07</text>
+<text x="733.8" y="490" text-anchor="middle">2026-06-22</text>
+<text x="867.5" y="490" text-anchor="middle">2026-07-07</text>
+<text x="1001.2" y="490" text-anchor="middle">2026-07-21</text>
+<text x="1135.0" y="490" text-anchor="end">2026-08-05</text>
+<line class="axis" x1="65" y1="465" x2="1135" y2="465"/>
+<line x1="900" y1="25" x2="940" y2="25" stroke="#57606a" stroke-width="3"/><text x="950" y="30">Inference</text>
+<line x1="900" y1="47" x2="940" y2="47" stroke="#57606a" stroke-width="3" stroke-dasharray="7 5"/><text x="950" y="52">Samples</text>
+<text x="65" y="565" font-size="16" font-weight="bold">Regression episodes</text>
+<text x="65" y="593" fill="#0969da" font-weight="bold">R1</text>
+<text x="99" y="593">2026-06-29 to 2026-07-04  Execute GitHub Copilot CLI / inference  +287%</text>
+</svg>
