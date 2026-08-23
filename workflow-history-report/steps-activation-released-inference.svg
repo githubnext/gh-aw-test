@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="597" viewBox="0 0 1200 597">
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="773" viewBox="0 0 1200 773">
 <rect width="100%" height="100%" fill="white"/>
 <style>text{font-family:ui-monospace,monospace;font-size:13px}.axis{stroke:#57606a;stroke-width:1}.grid{stroke:#d8dee4;stroke-width:1}</style>
 <text x="65" y="30" font-size="20">Major step timing: activation job (released, using inference)</text>
@@ -6,15 +6,15 @@
 <line class="grid" x1="65" y1="465.0" x2="1135" y2="465.0"/>
 <text x="8" y="470.0">0s</text>
 <line class="grid" x1="65" y1="387.0" x2="1135" y2="387.0"/>
-<text x="8" y="392.0">7s</text>
+<text x="8" y="392.0">15s</text>
 <line class="grid" x1="65" y1="309.0" x2="1135" y2="309.0"/>
-<text x="8" y="314.0">14s</text>
+<text x="8" y="314.0">29s</text>
 <line class="grid" x1="65" y1="231.0" x2="1135" y2="231.0"/>
-<text x="8" y="236.0">21s</text>
+<text x="8" y="236.0">44s</text>
 <line class="grid" x1="65" y1="153.0" x2="1135" y2="153.0"/>
-<text x="8" y="158.0">28s</text>
+<text x="8" y="158.0">58s</text>
 <line class="grid" x1="65" y1="75.0" x2="1135" y2="75.0"/>
-<text x="8" y="80.0">35s</text>
+<text x="8" y="80.0">73s</text>
 <line class="grid" x1="65.0" y1="75" x2="65.0" y2="465"/>
 <line class="grid" x1="198.8" y1="75" x2="198.8" y2="465"/>
 <line class="grid" x1="332.5" y1="75" x2="332.5" y2="465"/>
@@ -24,17 +24,56 @@
 <line class="grid" x1="867.5" y1="75" x2="867.5" y2="465"/>
 <line class="grid" x1="1001.2" y1="75" x2="1001.2" y2="465"/>
 <line class="grid" x1="1135.0" y1="75" x2="1135.0" y2="465"/>
-<polyline points="65.0,431.8 119.8,431.8 237.9,387.4 1020.9,132.6 1045.6,165.9 1135.0,110.5" fill="none" stroke="#0969da" stroke-width="2"><title>Set up job</title></polyline>
+<polyline points="65.0,448.9 98.3,448.9 170.1,427.4 646.4,303.8 661.4,320.0 677.6,212.5 684.5,153.4 686.1,336.1 705.8,336.1 715.8,293.1 730.1,336.1 767.7,325.3 774.3,336.1 776.0,336.1 776.9,303.8 781.7,287.7 799.5,303.8 818.2,330.7 838.8,201.8 843.2,341.4 847.1,325.3 874.7,255.5 879.4,271.6 890.0,346.8 896.8,298.5 902.9,341.4 912.8,336.1 928.0,325.3 944.3,277.0 947.7,239.4 961.6,148.1 967.8,260.9 982.7,212.5 995.0,255.5 1020.4,336.1 1050.6,293.1 1083.0,153.4 1085.6,293.1 1108.2,110.5 1124.8,293.1 1135.0,271.6" fill="none" stroke="#0969da" stroke-width="2"><title>Set up job</title></polyline>
+<line x1="838.8" y1="201.8" x2="820.8" y2="179.8" stroke="#0969da" stroke-width="1"/>
+<circle cx="820.8" cy="179.8" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R1: Set up job, inference, 49.0s</title></circle>
+<text x="820.8" y="183.8" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R1</text>
+<line x1="874.7" y1="255.5" x2="856.7" y2="277.5" stroke="#0969da" stroke-width="1"/>
+<circle cx="856.7" cy="277.5" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R3: Set up job, inference, 39.0s</title></circle>
+<text x="856.7" y="281.5" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R3</text>
+<line x1="961.6" y1="148.1" x2="979.6" y2="170.1" stroke="#0969da" stroke-width="1"/>
+<circle cx="979.6" cy="170.1" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R4: Set up job, inference, 59.0s</title></circle>
+<text x="979.6" y="174.1" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R4</text>
+<line x1="1083.0" y1="153.4" x2="1083.0" y2="123.4" stroke="#0969da" stroke-width="1"/>
+<circle cx="1083.0" cy="123.4" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R5: Set up job, inference, 58.0s</title></circle>
+<text x="1083.0" y="127.4" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R5</text>
+<line x1="1108.2" y1="110.5" x2="1108.2" y2="140.5" stroke="#0969da" stroke-width="1"/>
+<circle cx="1108.2" cy="140.5" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R6: Set up job, inference, 66.0s</title></circle>
+<text x="1108.2" y="144.5" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R6</text>
 <line x1="65" y1="521" x2="100" y2="521" stroke="#0969da" stroke-width="3"/>
 <text x="110" y="525">Set up job</text>
+<polyline points="65.0,459.6 98.3,459.6 170.1,411.3 646.4,454.3 661.4,454.3 677.6,357.6 684.5,368.3 686.1,454.3 705.8,454.3 715.8,448.9 730.1,448.9 767.7,438.1 774.3,448.9 776.0,454.3 776.9,454.3 781.7,438.1 799.5,454.3 818.2,438.1 838.8,379.0 843.2,448.9 847.1,443.5 874.7,438.1 879.4,443.5 890.0,454.3 896.8,448.9 902.9,454.3 912.8,448.9 928.0,443.5 944.3,432.8 947.7,395.2 961.6,427.4 967.8,454.3 982.7,432.8 995.0,422.0 1020.4,454.3 1050.6,454.3 1083.0,432.8 1085.6,448.9 1108.2,368.3 1124.8,432.8 1135.0,443.5" fill="none" stroke="#cf222e" stroke-width="2"><title>Setup Scripts</title></polyline>
+<line x1="838.8" y1="379.0" x2="856.8" y2="357.0" stroke="#cf222e" stroke-width="1"/>
+<circle cx="856.8" cy="357.0" r="11" fill="white" stroke="#cf222e" stroke-width="2"><title>R2: Setup Scripts, inference, 16.0s</title></circle>
+<text x="856.8" y="361.0" fill="#cf222e" font-size="10" font-weight="bold" text-anchor="middle">R2</text>
+<line x1="1108.2" y1="368.3" x2="1090.2" y2="346.3" stroke="#cf222e" stroke-width="1"/>
+<circle cx="1090.2" cy="346.3" r="11" fill="white" stroke="#cf222e" stroke-width="2"><title>R7: Setup Scripts, inference, 18.0s</title></circle>
+<text x="1090.2" y="350.3" fill="#cf222e" font-size="10" font-weight="bold" text-anchor="middle">R7</text>
+<line x1="65" y1="543" x2="100" y2="543" stroke="#cf222e" stroke-width="3"/>
+<text x="110" y="547">Setup Scripts</text>
 <text x="65.0" y="490" text-anchor="start">2026-04-10</text>
-<text x="198.8" y="490" text-anchor="middle">2026-04-20</text>
-<text x="332.5" y="490" text-anchor="middle">2026-05-01</text>
-<text x="466.2" y="490" text-anchor="middle">2026-05-11</text>
-<text x="600.0" y="490" text-anchor="middle">2026-05-21</text>
-<text x="733.8" y="490" text-anchor="middle">2026-05-31</text>
-<text x="867.5" y="490" text-anchor="middle">2026-06-10</text>
-<text x="1001.2" y="490" text-anchor="middle">2026-06-20</text>
-<text x="1135.0" y="490" text-anchor="end">2026-06-30</text>
+<text x="198.8" y="490" text-anchor="middle">2026-04-27</text>
+<text x="332.5" y="490" text-anchor="middle">2026-05-14</text>
+<text x="466.2" y="490" text-anchor="middle">2026-05-30</text>
+<text x="600.0" y="490" text-anchor="middle">2026-06-16</text>
+<text x="733.8" y="490" text-anchor="middle">2026-07-03</text>
+<text x="867.5" y="490" text-anchor="middle">2026-07-19</text>
+<text x="1001.2" y="490" text-anchor="middle">2026-08-05</text>
+<text x="1135.0" y="490" text-anchor="end">2026-08-22</text>
 <line class="axis" x1="65" y1="465" x2="1135" y2="465"/>
+<text x="65" y="587" font-size="16" font-weight="bold">Regression episodes</text>
+<text x="65" y="615" fill="#0969da" font-weight="bold">R1</text>
+<text x="99" y="615">2026-07-16  Set up job / inference  +92%</text>
+<text x="65" y="637" fill="#cf222e" font-weight="bold">R2</text>
+<text x="99" y="637">2026-07-16  Setup Scripts / inference  +433%</text>
+<text x="65" y="659" fill="#0969da" font-weight="bold">R3</text>
+<text x="99" y="659">2026-07-20  Set up job / inference  +50%</text>
+<text x="65" y="681" fill="#0969da" font-weight="bold">R4</text>
+<text x="99" y="681">2026-07-29 to 2026-07-31  Set up job / inference  +107%</text>
+<text x="65" y="703" fill="#0969da" font-weight="bold">R5</text>
+<text x="99" y="703">2026-08-15  Set up job / inference  +59%</text>
+<text x="65" y="725" fill="#0969da" font-weight="bold">R6</text>
+<text x="99" y="725">2026-08-18  Set up job / inference  +71%</text>
+<text x="65" y="747" fill="#cf222e" font-weight="bold">R7</text>
+<text x="99" y="747">2026-08-18  Setup Scripts / inference  +200%</text>
 </svg>
