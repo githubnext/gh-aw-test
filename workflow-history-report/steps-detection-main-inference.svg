@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="729" viewBox="0 0 1200 729">
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="773" viewBox="0 0 1200 773">
 <rect width="100%" height="100%" fill="white"/>
 <style>text{font-family:ui-monospace,monospace;font-size:13px}.axis{stroke:#57606a;stroke-width:1}.grid{stroke:#d8dee4;stroke-width:1}</style>
 <text x="65" y="30" font-size="20">Major step timing: detection job (main, using inference)</text>
@@ -24,42 +24,50 @@
 <line class="grid" x1="867.5" y1="75" x2="867.5" y2="465"/>
 <line class="grid" x1="1001.2" y1="75" x2="1001.2" y2="465"/>
 <line class="grid" x1="1135.0" y1="75" x2="1135.0" y2="465"/>
-<polyline points="65.0,382.5 83.8,351.9 99.1,367.2 120.7,355.0 131.4,364.1 139.4,342.7 140.9,364.1 148.5,355.0 193.9,388.6 209.7,367.2 226.6,379.4 242.7,388.6 258.4,379.4 289.8,373.3 307.4,394.7 318.3,385.5 335.9,391.6 354.9,361.1 385.4,394.7 402.2,397.8 416.9,358.0 434.9,385.5 448.9,394.7 466.7,391.6 483.8,388.6 501.1,364.1 516.7,367.2 533.0,128.8 544.2,110.5 565.9,110.5 581.4,400.8 595.2,406.9 608.4,358.0 630.9,391.6 642.1,376.4 661.9,367.2 678.9,403.9 693.9,400.8 710.1,379.4 727.1,403.9 743.5,394.7 758.1,416.1 775.5,400.8 792.2,388.6 809.3,373.3 825.3,388.6 841.6,388.6 873.9,382.5 889.4,382.5 904.4,355.0 919.6,364.1 954.7,379.4 967.5,364.1 984.8,355.0 1000.4,379.4 1019.7,355.0 1035.3,376.4 1052.1,373.3 1066.5,312.2 1084.4,370.3" fill="none" stroke="#0969da" stroke-width="2"><title>Execute GitHub Copilot CLI</title></polyline>
-<line x1="544.2" y1="110.5" x2="526.2" y2="88.5" stroke="#0969da" stroke-width="1"/>
-<circle cx="526.2" cy="88.5" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R1: Execute GitHub Copilot CLI, inference, 116.0s</title></circle>
-<text x="526.2" y="92.5" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R1</text>
-<line x1="1066.5" y1="312.2" x2="1048.5" y2="334.2" stroke="#0969da" stroke-width="1"/>
-<circle cx="1048.5" cy="334.2" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R3: Execute GitHub Copilot CLI, inference, 50.0s</title></circle>
-<text x="1048.5" y="338.2" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R3</text>
+<polyline points="65.0,443.6 83.5,440.5 98.5,446.7 119.8,437.5 130.4,437.5 138.3,434.4 139.8,425.3 147.2,443.6 192.0,434.4 207.6,428.3 224.1,431.4 240.0,434.4 255.4,431.4 286.4,431.4 303.8,437.5 314.5,434.4 331.8,434.4 350.5,431.4 380.5,422.2 397.1,437.5 411.5,419.2 429.3,425.3 443.1,431.4 460.6,431.4 477.4,434.4 494.5,419.2 509.9,425.3 526.0,437.5 537.0,428.3 558.3,428.3 573.6,422.2 587.1,437.5 600.2,413.0 622.3,428.3 633.4,434.4 652.9,431.4 669.6,440.5 684.4,443.6 700.4,437.5 717.1,437.5 733.3,440.5 747.6,437.5 764.8,425.3 781.2,437.5 798.0,434.4 813.8,437.5 829.8,431.4 861.7,443.6 876.9,443.6 891.7,422.2 906.7,431.4 941.2,440.5 953.9,443.6 970.9,422.2 986.2,465.0 1005.2,465.0 1020.6,461.9 1037.1,465.0 1051.4,461.9 1069.0,465.0 1084.8,440.5 1103.1,440.5 1118.8,440.5 1135.0,428.3" fill="none" stroke="#0969da" stroke-width="2"><title>Download container images</title></polyline>
+<line x1="1135.0" y1="428.3" x2="1124.0" y2="450.3" stroke="#0969da" stroke-width="1"/>
+<circle cx="1124.0" cy="450.3" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R4: Download container images, inference, 12.0s</title></circle>
+<text x="1124.0" y="454.3" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R4</text>
 <line x1="65" y1="521" x2="100" y2="521" stroke="#0969da" stroke-width="3"/>
-<text x="110" y="525">Execute GitHub Copilot CLI</text>
-<polyline points="1100.4,348.9 1119.0,333.6 1135.0,376.4" fill="none" stroke="#cf222e" stroke-width="2"><title>Execute threat detection with AWF</title></polyline>
+<text x="110" y="525">Download container images</text>
+<polyline points="65.0,382.5 83.5,351.9 98.5,367.2 119.8,355.0 130.4,364.1 138.3,342.7 139.8,364.1 147.2,355.0 192.0,388.6 207.6,367.2 224.1,379.4 240.0,388.6 255.4,379.4 286.4,373.3 303.8,394.7 314.5,385.5 331.8,391.6 350.5,361.1 380.5,394.7 397.1,397.8 411.5,358.0 429.3,385.5 443.1,394.7 460.6,391.6 477.4,388.6 494.5,364.1 509.9,367.2 526.0,128.8 537.0,110.5 558.3,110.5 573.6,400.8 587.1,406.9 600.2,358.0 622.3,391.6 633.4,376.4 652.9,367.2 669.6,403.9 684.4,400.8 700.4,379.4 717.1,403.9 733.3,394.7 747.6,416.1 764.8,400.8 781.2,388.6 798.0,373.3 813.8,388.6 829.8,388.6 861.7,382.5 876.9,382.5 891.7,355.0 906.7,364.1 941.2,379.4 953.9,364.1 970.9,355.0 986.2,379.4 1005.2,355.0 1020.6,376.4 1037.1,373.3 1051.4,312.2 1069.0,370.3" fill="none" stroke="#cf222e" stroke-width="2"><title>Execute GitHub Copilot CLI</title></polyline>
+<line x1="537.0" y1="110.5" x2="519.0" y2="88.5" stroke="#cf222e" stroke-width="1"/>
+<circle cx="519.0" cy="88.5" r="11" fill="white" stroke="#cf222e" stroke-width="2"><title>R1: Execute GitHub Copilot CLI, inference, 116.0s</title></circle>
+<text x="519.0" y="92.5" fill="#cf222e" font-size="10" font-weight="bold" text-anchor="middle">R1</text>
+<line x1="1051.4" y1="312.2" x2="1033.4" y2="334.2" stroke="#cf222e" stroke-width="1"/>
+<circle cx="1033.4" cy="334.2" r="11" fill="white" stroke="#cf222e" stroke-width="2"><title>R3: Execute GitHub Copilot CLI, inference, 50.0s</title></circle>
+<text x="1033.4" y="338.2" fill="#cf222e" font-size="10" font-weight="bold" text-anchor="middle">R3</text>
 <line x1="65" y1="543" x2="100" y2="543" stroke="#cf222e" stroke-width="3"/>
-<text x="110" y="547">Execute threat detection with AWF</text>
-<polyline points="65.0,452.8 83.8,452.8 99.1,452.8 120.7,452.8 131.4,452.8 139.4,452.8 140.9,449.7 148.5,452.8 193.9,452.8 209.7,455.8 226.6,455.8 242.7,452.8 258.4,455.8 289.8,452.8 307.4,455.8 318.3,449.7 335.9,452.8 354.9,452.8 385.4,458.9 402.2,455.8 416.9,452.8 434.9,455.8 448.9,452.8 466.7,452.8 483.8,452.8 501.1,455.8 516.7,452.8 533.0,455.8 544.2,455.8 565.9,452.8 581.4,452.8 595.2,452.8 608.4,452.8 630.9,455.8 642.1,452.8 661.9,452.8 678.9,449.7 693.9,452.8 710.1,452.8 727.1,452.8 743.5,452.8 758.1,452.8 775.5,452.8 792.2,449.7 809.3,452.8 825.3,449.7 841.6,449.7 873.9,452.8 889.4,452.8 904.4,449.7 919.6,449.7 954.7,449.7 967.5,452.8 984.8,455.8 1000.4,452.8 1019.7,428.3 1035.3,434.4 1052.1,440.5 1066.5,437.5 1084.4,422.2 1100.4,431.4 1119.0,431.4 1135.0,443.6" fill="none" stroke="#1a7f37" stroke-width="2"><title>Install GitHub Copilot CLI</title></polyline>
+<text x="110" y="547">Execute GitHub Copilot CLI</text>
+<polyline points="1084.8,348.9 1103.1,333.6 1118.8,376.4 1135.0,327.5" fill="none" stroke="#1a7f37" stroke-width="2"><title>Execute threat detection with AWF</title></polyline>
 <line x1="65" y1="565" x2="100" y2="565" stroke="#1a7f37" stroke-width="3"/>
-<text x="110" y="569">Install GitHub Copilot CLI</text>
-<polyline points="65.0,449.7 83.8,446.7 99.1,449.7 120.7,446.7 131.4,434.4 139.4,437.5 140.9,446.7 148.5,446.7 193.9,416.1 209.7,410.0 226.6,413.0 242.7,437.5 258.4,410.0 289.8,416.1 307.4,416.1 318.3,416.1 335.9,413.0 354.9,413.0 385.4,403.9 402.2,416.1 416.9,406.9 434.9,403.9 448.9,416.1 466.7,416.1 483.8,416.1 501.1,397.8 516.7,431.4 533.0,416.1 544.2,394.7 565.9,416.1 581.4,394.7 595.2,416.1 608.4,373.3 630.9,400.8 642.1,413.0 661.9,400.8 678.9,416.1 693.9,416.1 710.1,406.9 727.1,413.0 743.5,406.9 758.1,446.7 775.5,391.6 792.2,403.9 809.3,403.9 825.3,400.8 841.6,403.9 873.9,413.0 889.4,449.7 904.4,403.9 919.6,413.0 954.7,416.1 967.5,413.0 984.8,397.8 1000.4,413.0 1019.7,416.1 1035.3,413.0 1052.1,406.9 1066.5,388.6 1084.4,413.0 1100.4,410.0 1119.0,413.0 1135.0,449.7" fill="none" stroke="#8250df" stroke-width="2"><title>Set up job</title></polyline>
-<line x1="608.4" y1="373.3" x2="626.4" y2="351.3" stroke="#8250df" stroke-width="1"/>
-<circle cx="626.4" cy="351.3" r="11" fill="white" stroke="#8250df" stroke-width="2"><title>R2: Set up job, inference, 30.0s</title></circle>
-<text x="626.4" y="355.3" fill="#8250df" font-size="10" font-weight="bold" text-anchor="middle">R2</text>
+<text x="110" y="569">Execute threat detection with AWF</text>
+<polyline points="65.0,452.8 83.5,452.8 98.5,452.8 119.8,452.8 130.4,452.8 138.3,452.8 139.8,449.7 147.2,452.8 192.0,452.8 207.6,455.8 224.1,455.8 240.0,452.8 255.4,455.8 286.4,452.8 303.8,455.8 314.5,449.7 331.8,452.8 350.5,452.8 380.5,458.9 397.1,455.8 411.5,452.8 429.3,455.8 443.1,452.8 460.6,452.8 477.4,452.8 494.5,455.8 509.9,452.8 526.0,455.8 537.0,455.8 558.3,452.8 573.6,452.8 587.1,452.8 600.2,452.8 622.3,455.8 633.4,452.8 652.9,452.8 669.6,449.7 684.4,452.8 700.4,452.8 717.1,452.8 733.3,452.8 747.6,452.8 764.8,452.8 781.2,449.7 798.0,452.8 813.8,449.7 829.8,449.7 861.7,452.8 876.9,452.8 891.7,449.7 906.7,449.7 941.2,449.7 953.9,452.8 970.9,455.8 986.2,452.8 1005.2,428.3 1020.6,434.4 1037.1,440.5 1051.4,437.5 1069.0,422.2 1084.8,431.4 1103.1,431.4 1118.8,443.6 1135.0,431.4" fill="none" stroke="#8250df" stroke-width="2"><title>Install GitHub Copilot CLI</title></polyline>
 <line x1="65" y1="587" x2="100" y2="587" stroke="#8250df" stroke-width="3"/>
-<text x="110" y="591">Set up job</text>
+<text x="110" y="591">Install GitHub Copilot CLI</text>
+<polyline points="65.0,449.7 83.5,446.7 98.5,449.7 119.8,446.7 130.4,434.4 138.3,437.5 139.8,446.7 147.2,446.7 192.0,416.1 207.6,410.0 224.1,413.0 240.0,437.5 255.4,410.0 286.4,416.1 303.8,416.1 314.5,416.1 331.8,413.0 350.5,413.0 380.5,403.9 397.1,416.1 411.5,406.9 429.3,403.9 443.1,416.1 460.6,416.1 477.4,416.1 494.5,397.8 509.9,431.4 526.0,416.1 537.0,394.7 558.3,416.1 573.6,394.7 587.1,416.1 600.2,373.3 622.3,400.8 633.4,413.0 652.9,400.8 669.6,416.1 684.4,416.1 700.4,406.9 717.1,413.0 733.3,406.9 747.6,446.7 764.8,391.6 781.2,403.9 798.0,403.9 813.8,400.8 829.8,403.9 861.7,413.0 876.9,449.7 891.7,403.9 906.7,413.0 941.2,416.1 953.9,413.0 970.9,397.8 986.2,413.0 1005.2,416.1 1020.6,413.0 1037.1,406.9 1051.4,388.6 1069.0,413.0 1084.8,410.0 1103.1,413.0 1118.8,449.7 1135.0,397.8" fill="none" stroke="#bf8700" stroke-width="2"><title>Set up job</title></polyline>
+<line x1="600.2" y1="373.3" x2="618.2" y2="351.3" stroke="#bf8700" stroke-width="1"/>
+<circle cx="618.2" cy="351.3" r="11" fill="white" stroke="#bf8700" stroke-width="2"><title>R2: Set up job, inference, 30.0s</title></circle>
+<text x="618.2" y="355.3" fill="#bf8700" font-size="10" font-weight="bold" text-anchor="middle">R2</text>
+<line x1="65" y1="609" x2="100" y2="609" stroke="#bf8700" stroke-width="3"/>
+<text x="110" y="613">Set up job</text>
 <text x="65.0" y="490" text-anchor="start">2026-06-18</text>
 <text x="198.8" y="490" text-anchor="middle">2026-06-26</text>
 <text x="332.5" y="490" text-anchor="middle">2026-07-04</text>
-<text x="466.2" y="490" text-anchor="middle">2026-07-12</text>
+<text x="466.2" y="490" text-anchor="middle">2026-07-13</text>
 <text x="600.0" y="490" text-anchor="middle">2026-07-21</text>
 <text x="733.8" y="490" text-anchor="middle">2026-07-29</text>
-<text x="867.5" y="490" text-anchor="middle">2026-08-06</text>
-<text x="1001.2" y="490" text-anchor="middle">2026-08-14</text>
-<text x="1135.0" y="490" text-anchor="end">2026-08-23</text>
+<text x="867.5" y="490" text-anchor="middle">2026-08-07</text>
+<text x="1001.2" y="490" text-anchor="middle">2026-08-15</text>
+<text x="1135.0" y="490" text-anchor="end">2026-08-24</text>
 <line class="axis" x1="65" y1="465" x2="1135" y2="465"/>
-<text x="65" y="631" font-size="16" font-weight="bold">Regression episodes</text>
-<text x="65" y="659" fill="#0969da" font-weight="bold">R1</text>
-<text x="99" y="659">2026-07-16 to 2026-07-18  Execute GitHub Copilot CLI / inference  +355%</text>
-<text x="65" y="681" fill="#8250df" font-weight="bold">R2</text>
-<text x="99" y="681">2026-07-21  Set up job / inference  +88%</text>
-<text x="65" y="703" fill="#0969da" font-weight="bold">R3</text>
-<text x="99" y="703">2026-08-18  Execute GitHub Copilot CLI / inference  +59%</text>
+<text x="65" y="653" font-size="16" font-weight="bold">Regression episodes</text>
+<text x="65" y="681" fill="#cf222e" font-weight="bold">R1</text>
+<text x="99" y="681">2026-07-16 to 2026-07-18  Execute GitHub Copilot CLI / inference  +355%</text>
+<text x="65" y="703" fill="#bf8700" font-weight="bold">R2</text>
+<text x="99" y="703">2026-07-21  Set up job / inference  +88%</text>
+<text x="65" y="725" fill="#cf222e" font-weight="bold">R3</text>
+<text x="99" y="725">2026-08-18  Execute GitHub Copilot CLI / inference  +59%</text>
+<text x="65" y="747" fill="#0969da" font-weight="bold">R4</text>
+<text x="99" y="747">2026-08-24  Download container images / inference  +1100%</text>
 </svg>
