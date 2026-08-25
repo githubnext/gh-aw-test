@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="729" viewBox="0 0 1200 729">
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="663" viewBox="0 0 1200 663">
 <rect width="100%" height="100%" fill="white"/>
 <style>text{font-family:ui-monospace,monospace;font-size:13px}.axis{stroke:#57606a;stroke-width:1}.grid{stroke:#d8dee4;stroke-width:1}</style>
 <text x="65" y="30" font-size="20">Major step timing: agent job (released, using samples)</text>
@@ -6,15 +6,15 @@
 <line class="grid" x1="65" y1="465.0" x2="1135" y2="465.0"/>
 <text x="8" y="470.0">0s</text>
 <line class="grid" x1="65" y1="387.0" x2="1135" y2="387.0"/>
-<text x="8" y="392.0">12s</text>
+<text x="8" y="392.0">6s</text>
 <line class="grid" x1="65" y1="309.0" x2="1135" y2="309.0"/>
-<text x="8" y="314.0">23s</text>
+<text x="8" y="314.0">11s</text>
 <line class="grid" x1="65" y1="231.0" x2="1135" y2="231.0"/>
-<text x="8" y="236.0">35s</text>
+<text x="8" y="236.0">17s</text>
 <line class="grid" x1="65" y1="153.0" x2="1135" y2="153.0"/>
-<text x="8" y="158.0">47s</text>
+<text x="8" y="158.0">22s</text>
 <line class="grid" x1="65" y1="75.0" x2="1135" y2="75.0"/>
-<text x="8" y="80.0">58s</text>
+<text x="8" y="80.0">28s</text>
 <line class="grid" x1="65.0" y1="75" x2="65.0" y2="465"/>
 <line class="grid" x1="198.8" y1="75" x2="198.8" y2="465"/>
 <line class="grid" x1="332.5" y1="75" x2="332.5" y2="465"/>
@@ -24,27 +24,18 @@
 <line class="grid" x1="867.5" y1="75" x2="867.5" y2="465"/>
 <line class="grid" x1="1001.2" y1="75" x2="1001.2" y2="465"/>
 <line class="grid" x1="1135.0" y1="75" x2="1135.0" y2="465"/>
-<polyline points="65.0,418.2 126.8,391.4 203.5,411.5 207.5,110.5 207.5,378.0 207.5,404.8 207.5,418.2 207.5,411.5 207.5,378.0 207.5,418.2 236.1,404.8 266.8,404.8 279.8,418.2 282.9,398.1 282.9,351.3 282.9,411.5 282.9,411.5 282.9,411.5 282.9,411.5 282.9,398.1 282.9,404.8 282.9,418.2 282.9,404.8 282.9,398.1 282.9,404.8 282.9,404.8 282.9,418.2 282.9,411.5 282.9,404.8 282.9,411.5 282.9,404.8 282.9,411.5 282.9,391.4 282.9,404.8 320.4,384.7 339.3,411.5 339.3,418.2 366.3,404.8 366.3,411.5 366.3,404.8 366.3,398.1 437.8,404.8 464.4,418.2 464.4,411.5 464.4,411.5 498.2,418.2 498.2,418.2 533.6,418.2 533.6,411.5 533.6,411.5 581.1,384.7 588.4,404.8 588.4,398.1 605.0,418.2 605.0,411.5 640.8,418.2 640.8,411.5 640.8,418.2 649.8,418.2 670.0,411.5 670.0,444.9 682.8,411.5 682.8,364.7 682.8,411.5 682.8,411.5 682.8,418.2 694.4,311.1 713.1,398.1 713.1,304.5 713.1,391.4 713.1,317.8 742.0,404.8 742.0,384.7 742.0,398.1 742.0,371.3 742.0,391.4 742.0,398.1 742.0,398.1 742.0,358.0 779.4,384.7 779.4,337.9 805.9,384.7 817.6,391.4 817.6,378.0 817.6,398.1 846.0,337.9 846.0,398.1 873.1,391.4 974.8,284.4 974.8,398.1 1135.0,404.8 1135.0,404.8" fill="none" stroke="#0969da" stroke-width="2"><title>Download container images</title></polyline>
-<line x1="713.1" y1="304.5" x2="695.1" y2="282.5" stroke="#0969da" stroke-width="1"/>
-<circle cx="695.1" cy="282.5" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R1: Download container images, samples, 24.0s</title></circle>
-<text x="695.1" y="286.5" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R1</text>
-<line x1="974.8" y1="284.4" x2="992.8" y2="262.4" stroke="#0969da" stroke-width="1"/>
-<circle cx="992.8" cy="262.4" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R2: Download container images, samples, 27.0s</title></circle>
-<text x="992.8" y="266.4" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R2</text>
+<polyline points="65.0,408.3 126.8,408.3 203.5,394.1 207.5,408.3 207.5,422.5 207.5,408.3 207.5,408.3 207.5,408.3 207.5,422.5 207.5,408.3 236.1,394.1 266.8,422.5 279.8,422.5 282.9,422.5 282.9,422.5 282.9,422.5 282.9,422.5 282.9,422.5 282.9,422.5 282.9,422.5 282.9,422.5 282.9,408.3 282.9,422.5 282.9,422.5 282.9,422.5 282.9,408.3 282.9,422.5 282.9,422.5 282.9,422.5 282.9,422.5 282.9,408.3 282.9,422.5 282.9,408.3 282.9,408.3 320.4,422.5 339.3,408.3 339.3,422.5 366.3,422.5 366.3,408.3 366.3,422.5 366.3,422.5 437.8,422.5 464.4,408.3 464.4,422.5 464.4,408.3 498.2,408.3 498.2,408.3 533.6,422.5 533.6,408.3 533.6,422.5 581.1,422.5 588.4,408.3 588.4,408.3 605.0,422.5 605.0,422.5 640.8,408.3 640.8,408.3 640.8,408.3 649.8,422.5 670.0,408.3 670.0,408.3 682.8,408.3 682.8,408.3 682.8,408.3 682.8,408.3 682.8,408.3 694.4,408.3 713.1,408.3 713.1,422.5 713.1,408.3 713.1,394.1 742.0,408.3 742.0,408.3 742.0,394.1 742.0,394.1 742.0,408.3 742.0,408.3 742.0,408.3 742.0,422.5 779.4,408.3 779.4,422.5 805.9,408.3 817.6,408.3 817.6,394.1 817.6,408.3 846.0,394.1 846.0,408.3 873.1,394.1 974.8,252.3 974.8,351.5 974.8,379.9 1135.0,181.4 1135.0,351.5 1135.0,181.4" fill="none" stroke="#0969da" stroke-width="2"><title>Install GitHub Copilot CLI</title></polyline>
+<line x1="974.8" y1="252.3" x2="956.8" y2="230.3" stroke="#0969da" stroke-width="1"/>
+<circle cx="956.8" cy="230.3" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R1: Install GitHub Copilot CLI, samples, 15.0s</title></circle>
+<text x="956.8" y="234.3" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R1</text>
+<line x1="1135.0" y1="181.4" x2="1124.0" y2="159.4" stroke="#0969da" stroke-width="1"/>
+<circle cx="1124.0" cy="159.4" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R2: Install GitHub Copilot CLI, samples, 20.0s</title></circle>
+<text x="1124.0" y="163.4" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R2</text>
 <line x1="65" y1="521" x2="100" y2="521" stroke="#0969da" stroke-width="3"/>
-<text x="110" y="525">Download container images</text>
-<polyline points="65.0,438.2 126.8,438.2 203.5,431.6 207.5,438.2 207.5,444.9 207.5,438.2 207.5,438.2 207.5,438.2 207.5,444.9 207.5,438.2 236.1,431.6 266.8,444.9 279.8,444.9 282.9,444.9 282.9,444.9 282.9,444.9 282.9,444.9 282.9,444.9 282.9,444.9 282.9,444.9 282.9,444.9 282.9,438.2 282.9,444.9 282.9,444.9 282.9,444.9 282.9,438.2 282.9,444.9 282.9,444.9 282.9,444.9 282.9,444.9 282.9,438.2 282.9,444.9 282.9,438.2 282.9,438.2 320.4,444.9 339.3,438.2 339.3,444.9 366.3,444.9 366.3,438.2 366.3,444.9 366.3,444.9 437.8,444.9 464.4,438.2 464.4,444.9 464.4,438.2 498.2,438.2 498.2,438.2 533.6,444.9 533.6,438.2 533.6,444.9 581.1,444.9 588.4,438.2 588.4,438.2 605.0,444.9 605.0,444.9 640.8,438.2 640.8,438.2 640.8,438.2 649.8,444.9 670.0,438.2 670.0,438.2 682.8,438.2 682.8,438.2 682.8,438.2 682.8,438.2 682.8,438.2 694.4,438.2 713.1,438.2 713.1,444.9 713.1,438.2 713.1,431.6 742.0,438.2 742.0,438.2 742.0,431.6 742.0,431.6 742.0,438.2 742.0,438.2 742.0,438.2 742.0,444.9 779.4,438.2 779.4,444.9 805.9,438.2 817.6,438.2 817.6,431.6 817.6,438.2 846.0,431.6 846.0,438.2 873.1,431.6 974.8,364.7 974.8,411.5 1135.0,331.2 1135.0,411.5" fill="none" stroke="#cf222e" stroke-width="2"><title>Install GitHub Copilot CLI</title></polyline>
-<line x1="974.8" y1="364.7" x2="956.8" y2="386.7" stroke="#cf222e" stroke-width="1"/>
-<circle cx="956.8" cy="386.7" r="11" fill="white" stroke="#cf222e" stroke-width="2"><title>R3: Install GitHub Copilot CLI, samples, 15.0s</title></circle>
-<text x="956.8" y="390.7" fill="#cf222e" font-size="10" font-weight="bold" text-anchor="middle">R3</text>
-<line x1="1135.0" y1="331.2" x2="1124.0" y2="353.2" stroke="#cf222e" stroke-width="1"/>
-<circle cx="1124.0" cy="353.2" r="11" fill="white" stroke="#cf222e" stroke-width="2"><title>R4: Install GitHub Copilot CLI, samples, 20.0s</title></circle>
-<text x="1124.0" y="357.2" fill="#cf222e" font-size="10" font-weight="bold" text-anchor="middle">R4</text>
+<text x="110" y="525">Install GitHub Copilot CLI</text>
+<polyline points="974.8,110.5 974.8,323.2 974.8,252.3" fill="none" stroke="#cf222e" stroke-width="2"><title>Install ripgrep</title></polyline>
 <line x1="65" y1="543" x2="100" y2="543" stroke="#cf222e" stroke-width="3"/>
-<text x="110" y="547">Install GitHub Copilot CLI</text>
-<polyline points="974.8,297.8 974.8,398.1" fill="none" stroke="#1a7f37" stroke-width="2"><title>Install ripgrep</title></polyline>
-<line x1="65" y1="565" x2="100" y2="565" stroke="#1a7f37" stroke-width="3"/>
-<text x="110" y="569">Install ripgrep</text>
+<text x="110" y="547">Install ripgrep</text>
 <text x="65.0" y="490" text-anchor="start">2026-06-12</text>
 <text x="198.8" y="490" text-anchor="middle">2026-06-21</text>
 <text x="332.5" y="490" text-anchor="middle">2026-06-30</text>
@@ -55,13 +46,9 @@
 <text x="1001.2" y="490" text-anchor="middle">2026-08-13</text>
 <text x="1135.0" y="490" text-anchor="end">2026-08-22</text>
 <line class="axis" x1="65" y1="465" x2="1135" y2="465"/>
-<text x="65" y="609" font-size="16" font-weight="bold">Regression episodes</text>
-<text x="65" y="637" fill="#0969da" font-weight="bold">R1</text>
-<text x="99" y="637">2026-07-24 to 2026-07-25  Download container images / samples  +200%</text>
-<text x="65" y="659" fill="#0969da" font-weight="bold">R2</text>
-<text x="99" y="659">2026-08-11  Download container images / samples  +125%</text>
-<text x="65" y="681" fill="#cf222e" font-weight="bold">R3</text>
-<text x="99" y="681">2026-08-11  Install GitHub Copilot CLI / samples  +275%</text>
-<text x="65" y="703" fill="#cf222e" font-weight="bold">R4</text>
-<text x="99" y="703">2026-08-22  Install GitHub Copilot CLI / samples  +344%</text>
+<text x="65" y="587" font-size="16" font-weight="bold">Regression episodes</text>
+<text x="65" y="615" fill="#0969da" font-weight="bold">R1</text>
+<text x="99" y="615">2026-08-11  Install GitHub Copilot CLI / samples  +275%</text>
+<text x="65" y="637" fill="#0969da" font-weight="bold">R2</text>
+<text x="99" y="637">2026-08-22  Install GitHub Copilot CLI / samples  +300%</text>
 </svg>

@@ -24,30 +24,30 @@
 <line class="grid" x1="867.5" y1="75" x2="867.5" y2="465"/>
 <line class="grid" x1="1001.2" y1="75" x2="1001.2" y2="465"/>
 <line class="grid" x1="1135.0" y1="75" x2="1135.0" y2="465"/>
-<polyline points="65.0,405.2 83.5,381.3 98.5,353.5 119.8,353.5 130.4,397.3 138.3,393.3 139.8,385.3 147.2,397.3 192.0,297.7 207.6,369.4 224.1,345.5 240.0,349.5 255.4,222.0 286.4,369.4 303.8,369.4 314.5,353.5 331.8,337.5 350.5,361.4 380.5,401.3 397.1,369.4 411.5,369.4 429.3,321.6 443.1,393.3 460.6,309.6 477.4,353.5 494.5,413.2 509.9,349.5 526.0,353.5 537.0,393.3 558.3,325.6 573.6,377.4 587.1,365.4 600.2,261.8 622.3,397.3 633.4,365.4 652.9,361.4 669.6,222.0 684.4,349.5 700.4,329.6 717.1,325.6 733.3,317.6 747.6,333.5 764.8,333.5 781.2,218.0 798.0,321.6 813.8,110.5 829.8,325.6 861.7,349.5 876.9,413.2 891.7,413.2 906.7,365.4 941.2,349.5 953.9,341.5 970.9,369.4 986.2,190.1 1005.2,357.4 1020.6,245.9 1037.1,301.7 1051.4,301.7 1069.0,345.5 1084.8,349.5 1103.1,345.5 1118.8,293.7 1135.0,409.2" fill="none" stroke="#0969da" stroke-width="2"><title>Set up job</title></polyline>
-<line x1="600.2" y1="261.8" x2="582.2" y2="239.8" stroke="#0969da" stroke-width="1"/>
-<circle cx="582.2" cy="239.8" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R1: Set up job, inference, 51.0s</title></circle>
-<text x="582.2" y="243.8" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R1</text>
-<line x1="669.6" y1="222.0" x2="687.6" y2="200.0" stroke="#0969da" stroke-width="1"/>
-<circle cx="687.6" cy="200.0" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R2: Set up job, inference, 61.0s</title></circle>
-<text x="687.6" y="204.0" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R2</text>
-<line x1="813.8" y1="110.5" x2="795.8" y2="132.5" stroke="#0969da" stroke-width="1"/>
-<circle cx="795.8" cy="132.5" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R3: Set up job, inference, 89.0s</title></circle>
-<text x="795.8" y="136.5" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R3</text>
-<line x1="986.2" y1="190.1" x2="1004.2" y2="212.1" stroke="#0969da" stroke-width="1"/>
-<circle cx="1004.2" cy="212.1" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R4: Set up job, inference, 69.0s</title></circle>
-<text x="1004.2" y="216.1" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R4</text>
+<polyline points="65.0,405.2 83.2,381.3 98.0,353.5 119.0,353.5 129.4,397.3 137.2,393.3 138.7,385.3 146.0,397.3 190.1,297.7 205.5,369.4 221.8,345.5 237.4,349.5 252.6,222.0 283.1,369.4 300.3,369.4 310.8,353.5 327.9,337.5 346.3,361.4 375.9,401.3 392.2,369.4 406.4,369.4 423.9,321.6 437.6,393.3 454.8,309.6 471.4,353.5 488.2,413.2 503.3,349.5 519.2,353.5 530.0,393.3 551.1,325.6 566.1,377.4 579.5,365.4 592.3,261.8 614.1,397.3 625.0,365.4 644.2,361.4 660.7,222.0 675.2,349.5 691.0,329.6 707.5,325.6 723.4,317.6 737.6,333.5 754.5,333.5 770.6,218.0 787.2,321.6 802.8,110.5 818.5,325.6 850.0,349.5 864.9,413.2 879.5,413.2 894.3,365.4 928.3,349.5 940.8,341.5 957.5,369.4 972.6,190.1 991.4,357.4 1006.5,245.9 1022.8,301.7 1036.9,301.7 1054.2,345.5 1069.7,349.5 1087.8,345.5 1103.3,293.7 1119.2,409.2 1135.0,397.3" fill="none" stroke="#0969da" stroke-width="2"><title>Set up job</title></polyline>
+<line x1="592.3" y1="261.8" x2="574.3" y2="239.8" stroke="#0969da" stroke-width="1"/>
+<circle cx="574.3" cy="239.8" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R1: Set up job, inference, 51.0s</title></circle>
+<text x="574.3" y="243.8" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R1</text>
+<line x1="660.7" y1="222.0" x2="678.7" y2="200.0" stroke="#0969da" stroke-width="1"/>
+<circle cx="678.7" cy="200.0" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R2: Set up job, inference, 61.0s</title></circle>
+<text x="678.7" y="204.0" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R2</text>
+<line x1="802.8" y1="110.5" x2="784.8" y2="132.5" stroke="#0969da" stroke-width="1"/>
+<circle cx="784.8" cy="132.5" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R3: Set up job, inference, 89.0s</title></circle>
+<text x="784.8" y="136.5" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R3</text>
+<line x1="972.6" y1="190.1" x2="990.6" y2="212.1" stroke="#0969da" stroke-width="1"/>
+<circle cx="990.6" cy="212.1" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R4: Set up job, inference, 69.0s</title></circle>
+<text x="990.6" y="216.1" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R4</text>
 <line x1="65" y1="521" x2="100" y2="521" stroke="#0969da" stroke-width="3"/>
 <text x="110" y="525">Set up job</text>
 <text x="65.0" y="490" text-anchor="start">2026-06-18</text>
 <text x="198.8" y="490" text-anchor="middle">2026-06-26</text>
-<text x="332.5" y="490" text-anchor="middle">2026-07-04</text>
+<text x="332.5" y="490" text-anchor="middle">2026-07-05</text>
 <text x="466.2" y="490" text-anchor="middle">2026-07-13</text>
-<text x="600.0" y="490" text-anchor="middle">2026-07-21</text>
-<text x="733.8" y="490" text-anchor="middle">2026-07-29</text>
-<text x="867.5" y="490" text-anchor="middle">2026-08-07</text>
-<text x="1001.2" y="490" text-anchor="middle">2026-08-15</text>
-<text x="1135.0" y="490" text-anchor="end">2026-08-24</text>
+<text x="600.0" y="490" text-anchor="middle">2026-07-22</text>
+<text x="733.8" y="490" text-anchor="middle">2026-07-30</text>
+<text x="867.5" y="490" text-anchor="middle">2026-08-08</text>
+<text x="1001.2" y="490" text-anchor="middle">2026-08-16</text>
+<text x="1135.0" y="490" text-anchor="end">2026-08-25</text>
 <line class="axis" x1="65" y1="465" x2="1135" y2="465"/>
 <text x="65" y="565" font-size="16" font-weight="bold">Regression episodes</text>
 <text x="65" y="593" fill="#0969da" font-weight="bold">R1</text>
