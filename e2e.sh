@@ -577,6 +577,7 @@ get_all_tests() {
     echo "test-codex-update-pull-request"
     echo "test-copilot-update-pull-request"
     echo "test-copilot-close-pull-request"
+    echo "test-copilot-add-labels-pull-request"
     echo "test-copilot-add-reviewer"
     echo "test-copilot-mark-pull-request-as-ready-for-review"
     # Command-triggered tests
@@ -3808,6 +3809,19 @@ run_single_test() {
                                     success "Created test PR #$pr_num for $workflow: https://github.com/$repo_url/pull/$pr_num"
                                     sleep 10
                                     if wait_for_pr_closed "$pr_num" "$workflow" "$target_repo"; then
+                                        test_result="PASS"
+                                    fi
+                                fi
+                                ;;
+                            *"add-labels-pull-request")
+                                info "Creating test pull request to trigger $workflow..."
+                                local pr_num=$(create_test_pr "Test PR for $ai_display_name Add Labels" "This PR is for testing $workflow" "$target_repo")
+                                if [[ -n "$pr_num" ]]; then
+                                    local repo_url="$REPO_OWNER/$REPO_NAME"
+                                    [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                    success "Created test PR #$pr_num for $workflow: https://github.com/$repo_url/pull/$pr_num"
+                                    sleep 10
+                                    if wait_for_labels "$pr_num" "${ai_type}-safe-output-label-test" "$workflow" "$target_repo"; then
                                         test_result="PASS"
                                     fi
                                 fi
