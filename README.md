@@ -60,7 +60,7 @@ Tracking the full matrix of [safe outputs](https://github.com/github/gh-aw/blob/
 - [x] `custom safe output jobs` — test-copilot-custom-safe-outputs
 - [x] `gh-steps` — test-copilot-gh-steps
 - [ ] `restore-memory` in custom job (`jobs.<id>.restore-memory`) — test-copilot-restore-memory-custom-job
-- [x] `comment-memory` (map form: `memory-id`, `footer`, `max`, explicit numeric `target`) — test-copilot-comment-memory (no `samples:`; the memory-file sync only runs when the engine runs, so sampled runs validate the companion `add-comment` output)
+- [x] `comment-memory` (map form: `memory-id`, `footer`, `max`, explicit numeric `target`) — test-copilot-comment-memory (comment-memory itself is not sample-replayable — it is persisted by the post-run memory-file sync — so sampled runs validate the companion `add-comment` output instead)
 - [x] `add-comment` — test-copilot-add-comment
 - [x] `add-comment` (discussions) — test-copilot-add-discussion-comment
 - [x] `add-labels` — test-copilot-add-labels

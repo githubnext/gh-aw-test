@@ -2110,8 +2110,36 @@ validate_comment_memory() {
         fi
     done
 
+    # footer: false must suppress the generated footer; only the provenance marker stays.
+    if echo "$body" | grep -qF "This comment is managed by comment memory."; then
+        warning "(polling) Managed comment for memory-id '$memory_id' on issue #$issue_number has the generated footer despite 'footer: false'"
+        return 1
+    fi
+
     success "Issue #$issue_number has a single managed comment-memory comment for '$memory_id' containing: $expected_notes"
     return 0
+}
+
+# Poll for the managed comment without recording a test outcome. Used for the
+# intermediate check of multi-dispatch comment-memory tests.
+poll_comment_memory() {
+    local issue_number="$1"
+    local memory_id="$2"
+    local expected_notes="$3"
+    local repo="${4:-}"
+    local max_wait=480 # Max wait time in seconds (8 minutes)
+    local waited=0
+
+    while [[ $waited -lt $max_wait ]]; do
+        if validate_comment_memory "$issue_number" "$memory_id" "$expected_notes" "$repo"; then
+            return 0
+        fi
+        info "..."
+        sleep "$OUTCOME_POLL_INTERVAL"
+        waited=$((waited + OUTCOME_POLL_INTERVAL))
+    done
+
+    return 1
 }
 
 wait_for_comment_memory() {
@@ -2120,18 +2148,11 @@ wait_for_comment_memory() {
     local expected_notes="$3"
     local test_name="$4"
     local repo="${5:-}"
-    local max_wait=480 # Max wait time in seconds (8 minutes)
-    local waited=0
 
-    while [[ $waited -lt $max_wait ]]; do
-        if validate_comment_memory "$issue_number" "$memory_id" "$expected_notes" "$repo"; then
-            record_test_pass "$test_name"
-            return 0
-        fi
-        info "..."
-        sleep "$OUTCOME_POLL_INTERVAL"
-        waited=$((waited + OUTCOME_POLL_INTERVAL))
-    done
+    if poll_comment_memory "$issue_number" "$memory_id" "$expected_notes" "$repo"; then
+        record_test_pass "$test_name"
+        return 0
+    fi
 
     record_test_fail "$test_name"
     return 1
@@ -3648,7 +3669,7 @@ run_single_test() {
                         if wait_for_comment "$issue_num" "Comment memory run finished for note $note_one" "$workflow" "$target_repo"; then
                             test_result="PASS"
                         fi
-                    elif wait_for_comment_memory "$issue_num" "e2e-comment-memory" "$note_one" "$workflow" "$target_repo"; then
+                    elif poll_comment_memory "$issue_num" "e2e-comment-memory" "$note_one" "$target_repo"; then
                         info "Managed memory comment created; dispatching again to exercise memory restore + in-place update..."
                         if trigger_workflow_with_inputs "$workflow" "issue_number=$issue_num" "memory_note=$note_two"; then
                             if wait_for_comment_memory "$issue_num" "e2e-comment-memory" "$note_one $note_two" "$workflow" "$target_repo"; then
