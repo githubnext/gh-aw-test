@@ -600,6 +600,7 @@ get_all_tests() {
     # Workflow_dispatch tests with inputs (dispatch-workflow needs a sentinel)
     echo "test-copilot-submit-pull-request-review-locked"
     echo "test-copilot-dismiss-pull-request-review"
+    echo "test-copilot-comment-memory"
     echo "test-copilot-dispatch-workflow"
     echo "test-copilot-call-workflow"
     echo "test-copilot-inline-sub-agents"
@@ -2062,6 +2063,76 @@ wait_for_comment() {
         waited=$((waited + OUTCOME_POLL_INTERVAL))
     done
     
+    record_test_fail "$test_name"
+    return 1
+}
+
+# --- comment-memory -----------------------------------------------------------
+# The comment-memory handler keeps exactly one managed comment per memory-id on
+# the target issue/PR: the memory body is wrapped in a code fence opened with
+# "``````gh-aw-comment-memory:<memory-id>" and the managed comment always carries
+# the "<!-- gh-aw-agentic-workflow:" provenance marker. Later runs update that
+# comment in place instead of posting a new one.
+validate_comment_memory() {
+    local issue_number="$1"
+    local memory_id="$2"
+    local expected_notes="$3"   # space-separated substrings that must all be present
+    local repo="${4:-}"
+
+    local repo_flag=""
+    if [[ -n "$repo" ]]; then
+        repo_flag="--repo $repo"
+    fi
+
+    local marker="gh-aw-comment-memory:${memory_id}"
+    local jq_filter="[.comments[] | select(.body | contains(\"$marker\"))]"
+
+    local count
+    count=$(gh issue view $repo_flag "$issue_number" --json comments --jq "$jq_filter | length" 2>/dev/null)
+    if [[ "$count" != "1" ]]; then
+        warning "(polling) Issue #$issue_number has $count managed comment(s) for memory-id '$memory_id' (expected exactly 1)"
+        return 1
+    fi
+
+    local body
+    body=$(gh issue view $repo_flag "$issue_number" --json comments --jq "$jq_filter | .[0].body" 2>/dev/null)
+
+    if ! echo "$body" | grep -qF "<!-- gh-aw-agentic-workflow:"; then
+        warning "(polling) Managed comment for memory-id '$memory_id' on issue #$issue_number is missing the provenance marker"
+        return 1
+    fi
+
+    local note
+    for note in $expected_notes; do
+        if ! echo "$body" | grep -qF "$note"; then
+            warning "(polling) Managed comment for memory-id '$memory_id' on issue #$issue_number is missing note '$note'"
+            return 1
+        fi
+    done
+
+    success "Issue #$issue_number has a single managed comment-memory comment for '$memory_id' containing: $expected_notes"
+    return 0
+}
+
+wait_for_comment_memory() {
+    local issue_number="$1"
+    local memory_id="$2"
+    local expected_notes="$3"
+    local test_name="$4"
+    local repo="${5:-}"
+    local max_wait=480 # Max wait time in seconds (8 minutes)
+    local waited=0
+
+    while [[ $waited -lt $max_wait ]]; do
+        if validate_comment_memory "$issue_number" "$memory_id" "$expected_notes" "$repo"; then
+            record_test_pass "$test_name"
+            return 0
+        fi
+        info "..."
+        sleep "$OUTCOME_POLL_INTERVAL"
+        waited=$((waited + OUTCOME_POLL_INTERVAL))
+    done
+
     record_test_fail "$test_name"
     return 1
 }
@@ -3552,6 +3623,42 @@ run_single_test() {
                         test_result="PASS"
                     fi
                 fi
+            fi
+            ;;
+        # Comment-memory test: dispatch twice against one fixture issue and check that the
+        # managed memory comment is created, then restored + updated in place (not duplicated).
+        # comment-memory is persisted by the post-run memory-file sync, which --use-samples
+        # cannot replay, so sampled runs validate the sampled add-comment output instead.
+        *"comment-memory")
+            echo ""
+            echo -e "${CYAN}━━━ Preparing test prerequisites ━━━${NC}"
+            info "Creating host issue for $workflow..."
+            local issue_num=$(create_test_issue "[comment-memory-host] managed memory comment for $ai_display_name" "Host issue for the $workflow comment-memory test." "" "$target_repo")
+            if [[ -n "$issue_num" ]]; then
+                local repo_url="$REPO_OWNER/$REPO_NAME"
+                [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                success "Created test issue #$issue_num for $workflow: https://github.com/$repo_url/issues/$issue_num"
+                local note_one="cm-note-1-$(date +%s)-$$"
+                local note_two="cm-note-2-$(date +%s)-$$"
+                echo -e "${CYAN}━━━ Running workflow test ━━━${NC}"
+                echo ""
+                if trigger_workflow_with_inputs "$workflow" "issue_number=$issue_num" "memory_note=$note_one"; then
+                    if [[ "$USE_SAMPLES" == true ]]; then
+                        warning "--use-samples cannot replay the comment-memory file sync; validating the sampled add-comment output only"
+                        if wait_for_comment "$issue_num" "Comment memory run finished for note $note_one" "$workflow" "$target_repo"; then
+                            test_result="PASS"
+                        fi
+                    elif wait_for_comment_memory "$issue_num" "e2e-comment-memory" "$note_one" "$workflow" "$target_repo"; then
+                        info "Managed memory comment created; dispatching again to exercise memory restore + in-place update..."
+                        if trigger_workflow_with_inputs "$workflow" "issue_number=$issue_num" "memory_note=$note_two"; then
+                            if wait_for_comment_memory "$issue_num" "e2e-comment-memory" "$note_one $note_two" "$workflow" "$target_repo"; then
+                                test_result="PASS"
+                            fi
+                        fi
+                    fi
+                fi
+            else
+                error "Could not create host issue for $workflow"
             fi
             ;;
         # Workflow dispatch tests - triggered with gh aw run
