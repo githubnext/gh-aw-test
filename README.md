@@ -65,6 +65,7 @@ Tracking the full matrix of [safe outputs](https://github.com/github/gh-aw/blob/
 - [x] `add-labels` — test-copilot-add-labels
 - [x] `update-issue` — test-copilot-update-issue
 - [x] `update-pull-request` — test-copilot-update-pull-request
+- [x] `update-pull-request` (`replace-island`) — test-copilot-update-pull-request-replace-island
 - [x] `push-to-pull-request-branch` (slash-command) — test-copilot-push-to-pull-request-branch-using-slash-command
 - [x] `push-to-pull-request-branch` (dispatch, local repo) — test-copilot-push-to-pull-request-branch-using-dispatch
 - [x] `push-to-pull-request-branch` (dispatch, side-repo) — test-copilot-siderepo-push-to-pull-request-branch-using-dispatch

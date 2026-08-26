@@ -576,6 +576,7 @@ get_all_tests() {
     echo "test-claude-update-pull-request"
     echo "test-codex-update-pull-request"
     echo "test-copilot-update-pull-request"
+    echo "test-copilot-update-pull-request-replace-island"
     echo "test-copilot-close-pull-request"
     echo "test-copilot-add-reviewer"
     echo "test-copilot-mark-pull-request-as-ready-for-review"
@@ -2043,6 +2044,45 @@ validate_pr_updated() {
     fi
 }
 
+validate_pr_replace_island_updated() {
+    local pr_number="$1"
+    local workflow="$2"
+    local repo="${3:-}"
+
+    local repo_flag=""
+    if [[ -n "$repo" ]]; then
+        repo_flag="--repo $repo"
+    fi
+
+    local pr_data=$(gh pr view $repo_flag "$pr_number" --json body 2>/dev/null)
+
+    if [[ -z "$pr_data" ]]; then
+        warning "(polling) Could not retrieve PR #$pr_number data"
+        return 1
+    fi
+
+    local body=$(echo "$pr_data" | jq -r '.body')
+    local start_marker="<!-- gh-aw-island-start:$workflow -->"
+    local end_marker="<!-- gh-aw-island-end:$workflow -->"
+    local preserved_before="Preserved introduction before the replace-island section."
+    local preserved_after="Preserved conclusion after the replace-island section."
+    local old_content="Original island content that should be replaced."
+    local new_content="This island was replaced by the Copilot replace-island safe output."
+
+    if [[ "$body" == *"$preserved_before"* ]] &&
+       [[ "$body" == *"$preserved_after"* ]] &&
+       [[ "$body" == *"$start_marker"* ]] &&
+       [[ "$body" == *"$end_marker"* ]] &&
+       [[ "$body" == *"$new_content"* ]] &&
+       [[ "$body" != *"$old_content"* ]]; then
+        success "PR #$pr_number replace-island update preserved outer body and replaced island content"
+        return 0
+    else
+        warning "(polling) PR #$pr_number replace-island update not complete. Actual body: ${body:0:400}..."
+        return 1
+    fi
+}
+
 # Polling functions for workflow validation
 wait_for_comment() {
     local issue_number="$1"
@@ -2431,6 +2471,27 @@ wait_for_pr_update() {
 
     while [[ $waited -lt $max_wait ]]; do
         if validate_pr_updated "$pr_number" "$ai_type" "$repo"; then
+            record_test_pass "$test_name"
+            return 0
+        fi
+        info "..."
+        sleep "$OUTCOME_POLL_INTERVAL"
+        waited=$((waited + OUTCOME_POLL_INTERVAL))
+    done
+
+    record_test_fail "$test_name"
+    return 1
+}
+
+wait_for_pr_replace_island_update() {
+    local pr_number="$1"
+    local test_name="$2"
+    local repo="${3:-}"
+    local max_wait=480 # Max wait time in seconds (8 minutes)
+    local waited=0
+
+    while [[ $waited -lt $max_wait ]]; do
+        if validate_pr_replace_island_updated "$pr_number" "$test_name" "$repo"; then
             record_test_pass "$test_name"
             return 0
         fi
@@ -3782,6 +3843,20 @@ run_single_test() {
                                     success "Created test issue #$issue_num with source label for $workflow: https://github.com/$repo_url/issues/$issue_num"
                                     sleep 10
                                     if wait_for_label_replaced "$issue_num" "copilot-remove-label-test" "copilot-safe-output-label-test" "$workflow" "$target_repo"; then
+                                        test_result="PASS"
+                                    fi
+                                fi
+                                ;;
+                            *"update-pull-request-replace-island")
+                                info "Creating test pull request to trigger $workflow..."
+                                local island_body=$'Preserved introduction before the replace-island section.\n\n<!-- gh-aw-island-start:test-copilot-update-pull-request-replace-island -->\nOriginal island content that should be replaced.\n<!-- gh-aw-island-end:test-copilot-update-pull-request-replace-island -->\n\nPreserved conclusion after the replace-island section.'
+                                local pr_num=$(create_test_pr "Test PR for $ai_display_name Replace Island" "$island_body" "$target_repo")
+                                if [[ -n "$pr_num" ]]; then
+                                    local repo_url="$REPO_OWNER/$REPO_NAME"
+                                    [[ -n "$target_repo" ]] && repo_url="$target_repo"
+                                    success "Created test PR #$pr_num for $workflow: https://github.com/$repo_url/pull/$pr_num"
+                                    sleep 10
+                                    if wait_for_pr_replace_island_update "$pr_num" "$workflow" "$target_repo"; then
                                         test_result="PASS"
                                     fi
                                 fi
