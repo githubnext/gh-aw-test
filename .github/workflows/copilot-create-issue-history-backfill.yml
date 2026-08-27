@@ -23,46 +23,44 @@ jobs:
       max-parallel: 1
       matrix:
         include:
-          - { tag: "v0.81.4", date: "2026-06-26", sha: "1db7b9b617011f63a991644b80bfd7e4a044c34e" }
-          - { tag: "v0.81.5", date: "2026-06-27", sha: "f414fc71e36a3950e056639a12799fdf281e9c4f" }
-          - { tag: "v0.81.6", date: "2026-06-27", sha: "eed4304d8740f0593f2797276cb8299d228ffd9b" }
-          - { tag: "v0.82.0", date: "2026-06-29", sha: "be745b1aaf691dea9880c4dec3d55777027529c4" }
-          - { tag: "v0.82.2", date: "2026-07-02", sha: "0b1173e7d380fb68a9d6749af62e49ca050eefc1" }
-          - { tag: "v0.82.3", date: "2026-07-07", sha: "afad433c8081160f52c27dd324bf208c194a2717" }
-          - { tag: "v0.82.4", date: "2026-07-08", sha: "c94f43285a784cc6eec4f3e57c93f537f5cfdf00" }
-          - { tag: "v0.82.5", date: "2026-07-08", sha: "f9635a3f2f73c3c4ea746de20a17fd6892c7ece6" }
-          - { tag: "v0.82.6", date: "2026-07-08", sha: "adb344b16f741da11a367e06d099653147eadc43" }
-          - { tag: "v0.82.7", date: "2026-07-09", sha: "f78aa11992eb3e40e7e8c4207d98389edc377ea3" }
-          - { tag: "v0.82.8", date: "2026-07-11", sha: "0e0d3736527cc5029115b7a49a63388da83cc1b2" }
-          - { tag: "v0.82.9", date: "2026-07-13", sha: "e9b732bc366ade8de24f162b525ffbb354a53129" }
-          - { tag: "v0.82.10", date: "2026-07-16", sha: "de126a1f352e2b07084689e06a91ada08cab2857" }
-          - { tag: "v0.82.11", date: "2026-07-16", sha: "38e22c4075e399a5b9b2dbda1d94e2d66e91e9ca" }
-          - { tag: "v0.82.12", date: "2026-07-17", sha: "b944311ed8eb2bfdcd32693703aeb98dfebb1fa3" }
-          - { tag: "v0.82.13", date: "2026-07-18", sha: "017cdbc1b474bb0804e2c152b46012930fecb7b3" }
-          - { tag: "v0.82.14", date: "2026-07-20", sha: "8b820ae1073f301991aaf2f307f7e271f618bb9f" }
-          - { tag: "v0.82.15", date: "2026-07-21", sha: "8070dbd66af90bb83046bbdd92deab611d1d1d11" }
-          - { tag: "v0.83.0", date: "2026-07-22", sha: "5cce94a83e6e010cf2570b5150201de71210a333" }
-          - { tag: "v0.83.1", date: "2026-07-23", sha: "6268b9870d9f3bd9ce7526cb9d9cac988ffcfa35" }
-          - { tag: "v0.83.2", date: "2026-07-24", sha: "56a38be41a181e164a794ee308378d8c1081026a" }
-          - { tag: "v0.83.3", date: "2026-07-25", sha: "7e728ffd6fc9b1a4e8e03e8815701f4203e789ad" }
-          - { tag: "v0.83.4", date: "2026-07-27", sha: "bbb8042878459948333b15b66f27113f4b5c1b9a" }
-          - { tag: "v0.83.5", date: "2026-07-29", sha: "54b0997d61c900c666fd3327842d3e1759321b5f" }
-          - { tag: "v0.84.0", date: "2026-07-29", sha: "ec7e9b22470f36052c927b9a642f93a525bcef9a" }
-          - { tag: "v0.84.1", date: "2026-07-31", sha: "ccf88b8a317e2409b40d87e0df29e6978de0f9c5" }
-          - { tag: "v0.84.2", date: "2026-08-01", sha: "85d757b668121129235f2ebbe5cc753be9dcc8ba" }
-          - { tag: "v0.84.3", date: "2026-08-03", sha: "53258938b59e0797fefeed05ec0c681514b2a827" }
-          - { tag: "v0.84.4", date: "2026-08-04", sha: "918a49bd8c546648e99e71943e01ebd22418b7ef" }
-          - { tag: "v0.85.0", date: "2026-08-04", sha: "964e554e0302803dceecfdc0a58cb9c4bd7d732d" }
-          - { tag: "v0.85.1", date: "2026-08-05", sha: "04f0e42529bab85094ac42cc8dd0a0781d57c59c" }
-          - { tag: "v0.85.4", date: "2026-08-06", sha: "53843da968225dc56e1590978a7ed6407a8438ac" }
-          - { tag: "v0.86.0", date: "2026-08-07", sha: "435186c5f2612c5f2609a475dccfea3d9834ee88" }
-          - { tag: "v0.86.1", date: "2026-08-07", sha: "475927dfc6d1b262f4dd17baf4e49639af86d6ca" }
-          - { tag: "v0.86.2", date: "2026-08-11", sha: "48e5fa3ff52294d91d97715017a9f8693a48387f" }
-          - { tag: "v0.86.3", date: "2026-08-15", sha: "6062cd2238b68226eb2bfd47607703ed7944330f" }
-          - { tag: "v0.87.0", date: "2026-08-16", sha: "10fb8631802577d545941b64f2b9fe7820224ae6" }
-          - { tag: "v0.87.1", date: "2026-08-18", sha: "73def1609c73c93951bc9c9e31eef524dfd2162e" }
-          - { tag: "v0.87.2", date: "2026-08-20", sha: "d46b759176d4402dd99ea454e40841ad3c88c85e" }
-          - { tag: "v0.87.4", date: "2026-08-22", sha: "83d6315352f7db8882090ff2026087842f4256b9" }
+          - { tag: "v0.80.9", date: "2026-06-22" }
+          - { tag: "v0.81.2", date: "2026-06-24" }
+          - { tag: "v0.81.4", date: "2026-06-26" }
+          - { tag: "v0.81.5", date: "2026-06-27" }
+          - { tag: "v0.81.6", date: "2026-06-27" }
+          - { tag: "v0.82.0", date: "2026-06-29" }
+          - { tag: "v0.82.1", date: "2026-06-30" }
+          - { tag: "v0.82.2", date: "2026-07-02" }
+          - { tag: "v0.82.3", date: "2026-07-07" }
+          - { tag: "v0.82.4", date: "2026-07-08" }
+          - { tag: "v0.82.5", date: "2026-07-08" }
+          - { tag: "v0.82.6", date: "2026-07-08" }
+          - { tag: "v0.82.7", date: "2026-07-09" }
+          - { tag: "v0.82.8", date: "2026-07-11" }
+          - { tag: "v0.82.9", date: "2026-07-13" }
+          - { tag: "v0.82.10", date: "2026-07-16" }
+          - { tag: "v0.82.11", date: "2026-07-16" }
+          - { tag: "v0.82.12", date: "2026-07-17" }
+          - { tag: "v0.82.14", date: "2026-07-20" }
+          - { tag: "v0.82.15", date: "2026-07-21" }
+          - { tag: "v0.83.0", date: "2026-07-22" }
+          - { tag: "v0.83.1", date: "2026-07-23" }
+          - { tag: "v0.83.2", date: "2026-07-24" }
+          - { tag: "v0.83.3", date: "2026-07-25" }
+          - { tag: "v0.83.4", date: "2026-07-27" }
+          - { tag: "v0.83.5", date: "2026-07-29" }
+          - { tag: "v0.84.0", date: "2026-07-29" }
+          - { tag: "v0.84.1", date: "2026-07-31" }
+          - { tag: "v0.84.2", date: "2026-08-01" }
+          - { tag: "v0.84.3", date: "2026-08-03" }
+          - { tag: "v0.84.4", date: "2026-08-04" }
+          - { tag: "v0.86.1", date: "2026-08-07" }
+          - { tag: "v0.86.2", date: "2026-08-11" }
+          - { tag: "v0.86.3", date: "2026-08-15" }
+          - { tag: "v0.87.0", date: "2026-08-16" }
+          - { tag: "v0.87.1", date: "2026-08-18" }
+          - { tag: "v0.87.2", date: "2026-08-20" }
+          - { tag: "v0.87.4", date: "2026-08-22" }
 
     steps:
       - name: Checkout gh-aw-test main
@@ -73,19 +71,23 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GH_AW_TEST_PAT }}
 
-      - name: Checkout github/gh-aw at ${{ matrix.sha }}
-        uses: actions/checkout@v4
-        with:
-          repository: github/gh-aw
-          ref: ${{ matrix.sha }}
-          path: gh-aw
-          fetch-depth: 0
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: gh-aw/go.mod
-          cache-dependency-path: gh-aw/go.sum
+      - name: Install published gh-aw extension at ${{ matrix.tag }}
+        env:
+          GH_TOKEN: ${{ secrets.GH_AW_TEST_PAT }}
+        run: |
+          set -euo pipefail
+          gh extension remove github/gh-aw 2>/dev/null || true
+          for attempt in 1 2 3; do
+            if gh extension install github/gh-aw --pin "${{ matrix.tag }}"; then
+              break
+            fi
+            if [[ "$attempt" -eq 3 ]]; then
+              echo "::error::Failed to install gh-aw extension after 3 attempts"
+              exit 1
+            fi
+            sleep 90
+          done
+          gh aw --version
 
       - name: Set up Node.js
         uses: actions/setup-node@v5
@@ -97,7 +99,6 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_AW_TEST_PAT }}
           GITHUB_TOKEN: ${{ secrets.GH_AW_TEST_PAT }}
           GH_AW_TEST_PAT: ${{ secrets.GH_AW_TEST_PAT }}
-          GH_AW_SHA: ${{ matrix.sha }}
           GH_AW_TAG: ${{ matrix.tag }}
           HISTORY_DATE: ${{ matrix.date }}
         run: |
@@ -111,9 +112,9 @@ jobs:
           git config user.email "gh-aw-test-e2e@users.noreply.github.com"
           branch="history-copilot-create-issue-${GH_AW_TAG//./-}"
 
-          # Deliberately omit --use-samples: every entry must call Copilot.
+          # Deliberately omit both --use-samples and --gh-aw-ref: every entry
+          # must call Copilot using the published gh-aw-actions release.
           ./e2e.sh \
-            --gh-aw-ref "$GH_AW_SHA" \
             --branch "$branch" \
             --verbose \
             test-copilot-create-issue
