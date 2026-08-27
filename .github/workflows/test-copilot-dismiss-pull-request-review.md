@@ -22,7 +22,7 @@ safe-outputs:
   steps:
     - name: Create review fixture
       env:
-        GH_TOKEN: ${{ github.token }}
+        GH_TOKEN: ${{ secrets.GH_AW_TEST_PAT }}
         PR_NUMBER: ${{ github.event.inputs.pull_request_number }}
       run: |
         gh api --method POST \

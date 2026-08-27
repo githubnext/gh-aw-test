@@ -142,11 +142,11 @@ record_test_fail() {
         _run_id=$(gh run list \
             --repo "$REPO_OWNER/$REPO_NAME" \
             --workflow="$_wf" \
-            --limit=1 \
-            --json databaseId \
-            --jq '.[0].databaseId' 2>/dev/null || echo "")
+            --limit=20 \
+            --json databaseId,conclusion \
+            --jq '[.[] | select(.conclusion != "skipped")][0].databaseId' 2>/dev/null || echo "")
     fi
-    if [[ -n "$RUN_FAILURES_FILE" ]]; then
+    if [[ -n "$RUN_FAILURES_FILE" ]] && ! grep -q "^${test_name}\( \|$\)" "$RUN_FAILURES_FILE" 2>/dev/null; then
         if [[ -n "$_run_id" ]]; then
             echo "$test_name $_run_id" >> "$RUN_FAILURES_FILE"
         else
@@ -4400,12 +4400,11 @@ print_final_report() {
         print_agent_triage_prompt
     fi
 
-    if [[ -f "fails.txt" ]]; then
-        info "Remaining failures in fails.txt (run './e2e.sh report' to file issues, './e2e.sh rerun' to retry)"
-        exit 1
-    elif [[ ${#FAILED_TESTS[@]} -gt 0 ]]; then
+    if [[ ${#FAILED_TESTS[@]} -gt 0 ]]; then
         info "Failures recorded in fails.txt (run './e2e.sh report' to file issues, './e2e.sh rerun' to retry)"
         exit 1
+    elif [[ -f "fails.txt" ]]; then
+        info "Remaining failures in fails.txt (run './e2e.sh report' to file issues, './e2e.sh rerun' to retry)"
     fi
 }
 
