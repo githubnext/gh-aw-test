@@ -1495,6 +1495,7 @@ create_test_pr() {
     local title="$1"
     local body="$2"
     local repo="${3:-}"
+    local author_token="${4:-}"
     local branch="test-pr-$(date +%s)-${BASHPID:-$$}-$RANDOM"
 
     # Parallel-safety marker (see create_test_issue)
@@ -1537,7 +1538,12 @@ create_test_pr() {
             --field branch="$branch" &>/dev/null
         
         # Create a PR using the GitHub CLI
-        local pr_url=$(gh pr create $repo_flag --title "$title" --body "$body" --head "$branch" --base main 2>/dev/null)
+        local pr_url
+        if [[ -n "$author_token" ]]; then
+            pr_url=$(GH_TOKEN="$author_token" gh pr create $repo_flag --title "$title" --body "$body" --head "$branch" --base main 2>/dev/null)
+        else
+            pr_url=$(gh pr create $repo_flag --title "$title" --body "$body" --head "$branch" --base main 2>/dev/null)
+        fi
         
         if [[ -n "$pr_url" ]]; then
             local pr_number=$(echo "$pr_url" | grep -o '[0-9]\+$')
@@ -3562,7 +3568,7 @@ run_single_test() {
             echo ""
             echo -e "${CYAN}━━━ Preparing test prerequisites ━━━${NC}"
             info "Creating test pull request for $workflow..."
-            local pr_num=$(create_test_pr "Test PR for $ai_display_name Dismiss Review" "This PR is for testing $workflow." "$target_repo")
+            local pr_num=$(create_test_pr "Test PR for $ai_display_name Dismiss Review" "This PR is for testing $workflow." "$target_repo" "${E2E_PR_AUTHOR_TOKEN:-}")
             if [[ -n "$pr_num" ]]; then
                 local repo_url="$REPO_OWNER/$REPO_NAME"
                 [[ -n "$target_repo" ]] && repo_url="$target_repo"

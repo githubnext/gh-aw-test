@@ -65,7 +65,7 @@ concurrency:
 permissions:
   contents: read
   issues: write
-  pull-requests: read
+  pull-requests: write
   actions: read
 
 jobs:
@@ -304,6 +304,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_AW_TEST_PAT }}
           GITHUB_TOKEN: ${{ secrets.GH_AW_TEST_PAT }}
           GH_AW_TEST_PAT: ${{ secrets.GH_AW_TEST_PAT }}
+          E2E_PR_AUTHOR_TOKEN: ${{ github.token }}
           E2E_REF: ${{ matrix.entry.ref }}
           E2E_MODE: ${{ matrix.entry.mode }}
           E2E_USE_SAMPLES: ${{ matrix.entry.samples }}

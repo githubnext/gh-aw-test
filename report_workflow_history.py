@@ -25,6 +25,14 @@ DEFAULT_WORKFLOW = ".github/workflows/test-copilot-create-issue.lock.yml"
 AGENT_STEP_NAMES = ("Execute GitHub Copilot CLI", "Execute Copilot CLI")
 SAMPLE_STEP_NAME = "Replay safe-outputs samples (deterministic)"
 TIMESTAMP_RE = re.compile(r"(\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?Z)")
+COPILOT_PHASE_LABELS = {
+    "awf_startup_seconds": "Copilot phase — AWF startup",
+    "harness_startup_seconds": "Copilot phase — harness startup",
+    "copilot_process_seconds": "Copilot phase — Copilot process",
+}
+AWF_ENTRYPOINT_RE = re.compile(r"\[entrypoint\].*Agentic Workflow Firewall - Agent Container", re.I)
+COPILOT_PROCESS_STARTED_RE = re.compile(r"\[copilot-harness\].*attempt \d+: process started\b", re.I)
+COPILOT_PROCESS_CLOSED_RE = re.compile(r"\[copilot-harness\].*attempt \d+: process closed\b", re.I)
 RELEASE_VERSION_RE = re.compile(r"^v\d+\.\d+\.\d+$")
 REASONING_PATTERNS = (
     re.compile(r'"event"\s*:\s*"(?:assistant|assistant_message|reasoning|tool_use|tool_call)"', re.I),
@@ -95,6 +103,40 @@ def first_reasoning_time(log: str | None, step_start: str, step_end: str) -> tup
             value, _ = min(in_step, key=lambda item: item[1])
             return value, line[-240:]
     return None, "no observable reasoning marker"
+
+
+def copilot_phase_timings(log: str | None, step_start: str, step_end: str) -> dict[str, float | None]:
+    """Split the engine step around AWF entry and Copilot process lifecycle markers."""
+    result = {key: None for key in COPILOT_PHASE_LABELS}
+    if not log:
+        return result
+    start, end = parse_time(step_start), parse_time(step_end)
+    if not start or not end:
+        return result
+
+    markers: dict[str, list[dt.datetime]] = {"entrypoint": [], "process_started": [], "process_closed": []}
+    patterns = {
+        "entrypoint": AWF_ENTRYPOINT_RE,
+        "process_started": COPILOT_PROCESS_STARTED_RE,
+        "process_closed": COPILOT_PROCESS_CLOSED_RE,
+    }
+    for line in log.splitlines():
+        marker = next((name for name, pattern in patterns.items() if pattern.search(line)), None)
+        if not marker:
+            continue
+        timestamps = [parse_time(value) for value in TIMESTAMP_RE.findall(line)]
+        markers[marker].extend(timestamp for timestamp in timestamps if start <= timestamp <= end)
+
+    entrypoint = min(markers["entrypoint"], default=None)
+    process_started = min(markers["process_started"], default=None)
+    process_closed = max(markers["process_closed"], default=None)
+    if entrypoint:
+        result["awf_startup_seconds"] = (entrypoint - start).total_seconds()
+    if entrypoint and process_started and process_started >= entrypoint:
+        result["harness_startup_seconds"] = (process_started - entrypoint).total_seconds()
+    if process_started and process_closed and process_closed >= process_started:
+        result["copilot_process_seconds"] = (process_closed - process_started).total_seconds()
+    return result
 
 
 def percentile(values: list[float], fraction: float) -> float | None:
@@ -259,9 +301,11 @@ def collect(repository: str, workflow: str, cache_dir: Path, limit: int | None, 
         if engine_step:
             log = logs_by_run[run_id]
             reasoning_at, reasoning_marker = first_reasoning_time(log, engine_step["started_at"], engine_step["completed_at"])
+            copilot_phases = copilot_phase_timings(log, engine_step["started_at"], engine_step["completed_at"])
         else:
             reasoning_at = sample_step["completed_at"]
             reasoning_marker = "deterministic sample replay completed"
+            copilot_phases = {key: None for key in COPILOT_PHASE_LABELS}
         detection = next((job for job in jobs["jobs"] if job["name"] == "detection" and job["conclusion"] == "success"), None)
         major_steps = {
             step["name"]: seconds(step["started_at"], step["completed_at"])
@@ -277,6 +321,9 @@ def collect(repository: str, workflow: str, cache_dir: Path, limit: int | None, 
             for job in jobs["jobs"]
             if job["conclusion"] == "success"
         }
+        for key, label in COPILOT_PHASE_LABELS.items():
+            if copilot_phases[key] is not None:
+                job_steps.setdefault("agent", {})[label] = copilot_phases[key]
         job_durations = {
             job["name"]: duration
             for job in jobs["jobs"]
@@ -301,6 +348,7 @@ def collect(repository: str, workflow: str, cache_dir: Path, limit: int | None, 
             "time_to_complete_seconds": seconds(run["run_started_at"], run["updated_at"]),
             "agent_job_seconds": seconds(agent["started_at"], agent["completed_at"]),
             "copilot_step_seconds": seconds(engine_step["started_at"], engine_step["completed_at"]) if engine_step else None,
+            **copilot_phases,
             "detection_job_seconds": seconds(detection["started_at"], detection["completed_at"]) if detection else None,
             "time_to_proxy_step_seconds": seconds(run["run_started_at"], proxy_step["started_at"]),
             "proxy_step_to_first_reasoning_seconds": seconds(proxy_step["started_at"], reasoning_at),
@@ -598,7 +646,13 @@ def job_step_series(
     records: list[dict[str, object]],
     job_name: str,
 ) -> dict[str, list[tuple[dict[str, object], float]]]:
-    return qualifying_job_steps(records).get(job_name, {})
+    selected = qualifying_job_steps(records).get(job_name, {})
+    if job_name == "agent":
+        all_series = all_job_step_series(records, job_name)
+        for label in COPILOT_PHASE_LABELS.values():
+            if label in all_series:
+                selected[label] = all_series[label]
+    return selected
 
 
 def all_job_step_series(
@@ -618,6 +672,10 @@ def append_summary_table(lines: list[str], records: list[dict[str, object]]) -> 
         ("Workflow start to proxy step", [record["time_to_proxy_step_seconds"] for record in records]),
         ("Proxy step to first reasoning/sample", [record["proxy_step_to_first_reasoning_seconds"] for record in records]),
     ]
+    for key, label in COPILOT_PHASE_LABELS.items():
+        values = [record.get(key) for record in records]
+        if any(value is not None for value in values):
+            metrics.append((label, values))
     for job_name in REPORT_JOBS:
         metrics.append((f"Job `{job_name}`", [metric_value(record, f"job:{job_name}") for record in records]))
     major_steps: dict[str, list[float]] = {}
@@ -709,7 +767,7 @@ def append_report_cell(
 def write_outputs(output_dir: Path, records: list[dict[str, object]]) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     (output_dir / "runs.json").write_text(json.dumps(records, indent=2) + "\n")
-    fields = ["run_id", "run_number", "date", "url", "workflow_sha", "mode", "gh_aw_version", "gh_aw_ref_kind", "gh_aw_commit", "gh_aw_committed_at", "time_to_complete_seconds", "agent_job_seconds", "copilot_step_seconds", "detection_job_seconds", "time_to_proxy_step_seconds", "proxy_step_to_first_reasoning_seconds", "time_to_first_reasoning_seconds"]
+    fields = ["run_id", "run_number", "date", "url", "workflow_sha", "mode", "gh_aw_version", "gh_aw_ref_kind", "gh_aw_commit", "gh_aw_committed_at", "time_to_complete_seconds", "agent_job_seconds", "copilot_step_seconds", *COPILOT_PHASE_LABELS, "detection_job_seconds", "time_to_proxy_step_seconds", "proxy_step_to_first_reasoning_seconds", "time_to_first_reasoning_seconds"]
     with (output_dir / "runs.csv").open("w", newline="") as stream:
         writer = csv.DictWriter(stream, fieldnames=fields, extrasaction="ignore", lineterminator="\n")
         writer.writeheader()
@@ -724,7 +782,7 @@ def write_outputs(output_dir: Path, records: list[dict[str, object]]) -> None:
         ("released", "samples"),
     ):
         append_report_cell(lines, output_dir, records, ref_kind, mode)
-    lines.extend(["", "## Method", "", "Each section fixes both independent dimensions: gh-aw source (`main` or combined stable/pre-release `released`) and execution mode (`inference` or `samples`). Only overall-successful `workflow_dispatch` runs with a successful `agent` job are included. Candidate regression baselines use up to ten preceding observations from the same section and step; displayed regression episodes are limited to the six weeks before report generation. A step is graphed when it has a sustained cost, recent slowdown, or recent regression. Runs with missing compiler metadata remain in CSV/JSON but are excluded from graphs.", ""])
+    lines.extend(["", "## Method", "", "Each section fixes both independent dimensions: gh-aw source (`main` or combined stable/pre-release `released`) and execution mode (`inference` or `samples`). Only overall-successful `workflow_dispatch` runs with a successful `agent` job are included. Candidate regression baselines use up to ten preceding observations from the same section and step; displayed regression episodes are limited to the six weeks before report generation. A step is graphed when it has a sustained cost, recent slowdown, or recent regression. Runs with missing compiler metadata remain in CSV/JSON but are excluded from graphs.", "", "For inference runs, `Execute GitHub Copilot CLI` is additionally split using timestamped runtime markers: **AWF startup** is step start to the AWF agent-container entrypoint, **harness startup** is that entrypoint to the first Copilot process start, and **Copilot process** is the first process start through the final process close (including retries and retry delays). Cleanup after process close remains visible only in the full step duration, while unavailable markers produce no phase value.", ""])
     (output_dir / "report.md").write_text("\n".join(lines))
 
 
