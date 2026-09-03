@@ -1306,50 +1306,61 @@ trigger_workflow_with_inputs() {
     fi
 }
 
-# Close open issues and pull requests left over from previous runs.
-# Issues labelled "e2e-status-report" or "suggested new test" are kept.
-# Everything else older than 6 hours is closed.  Called once at the start
-# of each run so the live repository stays clean between executions.
-cleanup_stale_resources() {
-    local cutoff
-    cutoff=$(date -u -d '6 hours ago' '+%Y-%m-%dT%H:%M:%SZ' 2>/dev/null) \
-        || cutoff=$(date -u -v-6H '+%Y-%m-%dT%H:%M:%SZ' 2>/dev/null) \
-        || { warning "Could not calculate 6h cutoff; skipping stale cleanup"; return 0; }
-    info "Closing stale test issues/PRs older than 6h (before $cutoff)..."
+# Close E2E resources missed by per-test cleanup. Resources are considered
+# E2E-owned when GitHub Actions created them or their body has an E2E marker.
+# Reports, test suggestions, and all Copilot-authored PRs are always kept.
+cleanup_test_resources() {
+    local cutoff="$1"
+    local time_filter="${2:-before}"
+    local description="older than 6h"
+    [[ "$time_filter" == "since" ]] && description="created during this run"
+    info "Closing E2E test issues/PRs $description..."
 
     # ---- Issues (skip protected labels) ----
     local _stale_issues _count=0
     _stale_issues=$(gh issue list \
         --repo "$REPO_OWNER/$REPO_NAME" \
         --state open --limit 500 \
-        --json number,createdAt,labels 2>/dev/null \
-        | jq -r --arg c "$cutoff" '
-            .[] | select(.createdAt < $c)
+        --json number,createdAt,labels,author,body 2>/dev/null \
+        | jq -r --arg c "$cutoff" --arg mode "$time_filter" '
+            .[] | select(if $mode == "since" then .createdAt >= $c else .createdAt < $c end)
+            | select((.author.login == "app/github-actions") or ((.body // "") | contains("e2e-marker:")))
             | select(
                 (.labels | map(.name) |
-                 (contains(["e2e-status-report"]) or contains(["suggested new test"])))
+                 (contains(["e2e-status-report"]) or
+                  contains(["suggested new test"]) or
+                  contains(["agentic-workflows"])))
                 | not)
             | .number' 2>/dev/null || true)
     if [[ -n "$_stale_issues" ]]; then
         while IFS= read -r _n; do
             [[ -z "$_n" ]] && continue
             gh issue close "$_n" --repo "$REPO_OWNER/$REPO_NAME" \
-                --comment "Closed by e2e cleanup (stale, older than 6h)" \
+                --comment "Closed by e2e test-resource cleanup ($description)" \
                 &>> "$LOG_FILE" 2>/dev/null || true
             _count=$((_count + 1))
         done <<< "$_stale_issues"
     fi
     local _issue_count=$_count
 
-    # ---- Pull requests ----
+    # ---- Pull requests (never close Copilot-authored PRs) ----
     _count=0
     local _stale_prs
     _stale_prs=$(gh pr list \
         --repo "$REPO_OWNER/$REPO_NAME" \
         --state open --limit 500 \
-        --json number,createdAt 2>/dev/null \
-        | jq -r --arg c "$cutoff" \
-            '.[] | select(.createdAt < $c) | .number' 2>/dev/null || true)
+        --json number,createdAt,labels,author,body 2>/dev/null \
+        | jq -r --arg c "$cutoff" --arg mode "$time_filter" '
+            .[] | select(if $mode == "since" then .createdAt >= $c else .createdAt < $c end)
+            | select(((.author.login // "") | ascii_downcase | contains("copilot")) | not)
+            | select((.author.login == "app/github-actions") or ((.body // "") | contains("e2e-marker:")))
+            | select(
+                (.labels | map(.name) |
+                 (contains(["e2e-status-report"]) or
+                  contains(["suggested new test"]) or
+                  contains(["agentic-workflows"])))
+                | not)
+            | .number' 2>/dev/null || true)
     if [[ -n "$_stale_prs" ]]; then
         while IFS= read -r _n; do
             [[ -z "$_n" ]] && continue
@@ -1360,10 +1371,18 @@ cleanup_stale_resources() {
     fi
 
     if [[ $_issue_count -gt 0 || $_count -gt 0 ]]; then
-        success "Stale cleanup: closed $_issue_count issue(s) and $_count PR(s) older than 6h"
+        success "E2E cleanup: closed $_issue_count issue(s) and $_count PR(s) $description"
     else
-        info "No stale issues or PRs found older than 6h"
+        info "No E2E test issues or PRs found $description"
     fi
+}
+
+cleanup_stale_resources() {
+    local cutoff
+    cutoff=$(date -u -d '6 hours ago' '+%Y-%m-%dT%H:%M:%SZ' 2>/dev/null) \
+        || cutoff=$(date -u -v-6H '+%Y-%m-%dT%H:%M:%SZ' 2>/dev/null) \
+        || { warning "Could not calculate 6h cutoff; skipping stale cleanup"; return 0; }
+    cleanup_test_resources "$cutoff" before
 }
 
 create_test_issue() {
@@ -4602,6 +4621,7 @@ ISSUEBODY
             --repo "$repo_full" \
             --title "Debug agentic-workflow failure: $test_name" \
             --body "$issue_body" \
+            --label "e2e-status-report" \
             --assignee "copilot" 2>/dev/null); then
             success "Created issue (assigned to Copilot) for '$test_name': $issue_url"
             created_count=$((created_count + 1))
@@ -4610,7 +4630,8 @@ ISSUEBODY
             if issue_url=$(gh issue create \
                 --repo "$repo_full" \
                 --title "Debug agentic-workflow failure: $test_name" \
-                --body "$issue_body" 2>/dev/null); then
+                --body "$issue_body" \
+                --label "e2e-status-report" 2>/dev/null); then
                 success "Created issue for '$test_name': $issue_url"
                 warning "Could not assign to Copilot CCA automatically. Assign manually via the issue UI if desired."
                 created_count=$((created_count + 1))
@@ -4911,9 +4932,11 @@ main() {
         exit 0
     fi
     
+    local run_started_at
+    run_started_at=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
     log "Starting e2e tests at $(date)"
 
-    # Close any open issues/PRs older than 6h left from previous runs
+    # Close stale E2E-owned issues/PRs left from previous runs.
     cleanup_stale_resources
 
     check_prerequisites
@@ -4925,6 +4948,10 @@ main() {
     fi
     
     run_tests "${specific_tests[@]}"
+
+    # Catch workflow outputs that were created but escaped per-test tracking,
+    # for example when validation failed before discovering the resource.
+    cleanup_test_resources "$run_started_at" since
     
     print_final_report
     

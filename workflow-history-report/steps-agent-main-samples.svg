@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="575" viewBox="0 0 1200 575">
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="597" viewBox="0 0 1200 597">
 <rect width="100%" height="100%" fill="white"/>
 <style>text{font-family:ui-monospace,monospace;font-size:13px}.axis{stroke:#57606a;stroke-width:1}.grid{stroke:#d8dee4;stroke-width:1}</style>
 <text x="65" y="30" font-size="20">Major step timing: agent job (main, using samples)</text>
@@ -6,15 +6,15 @@
 <line class="grid" x1="65" y1="465.0" x2="1135" y2="465.0"/>
 <text x="8" y="470.0">0s</text>
 <line class="grid" x1="65" y1="387.0" x2="1135" y2="387.0"/>
-<text x="8" y="392.0">0s</text>
+<text x="8" y="392.0">2s</text>
 <line class="grid" x1="65" y1="309.0" x2="1135" y2="309.0"/>
-<text x="8" y="314.0">0s</text>
+<text x="8" y="314.0">5s</text>
 <line class="grid" x1="65" y1="231.0" x2="1135" y2="231.0"/>
-<text x="8" y="236.0">1s</text>
+<text x="8" y="236.0">7s</text>
 <line class="grid" x1="65" y1="153.0" x2="1135" y2="153.0"/>
-<text x="8" y="158.0">1s</text>
+<text x="8" y="158.0">10s</text>
 <line class="grid" x1="65" y1="75.0" x2="1135" y2="75.0"/>
-<text x="8" y="80.0">1s</text>
+<text x="8" y="80.0">12s</text>
 <line class="grid" x1="65.0" y1="75" x2="65.0" y2="465"/>
 <line class="grid" x1="198.8" y1="75" x2="198.8" y2="465"/>
 <line class="grid" x1="332.5" y1="75" x2="332.5" y2="465"/>
@@ -24,14 +24,17 @@
 <line class="grid" x1="867.5" y1="75" x2="867.5" y2="465"/>
 <line class="grid" x1="1001.2" y1="75" x2="1001.2" y2="465"/>
 <line class="grid" x1="1135.0" y1="75" x2="1135.0" y2="465"/>
+<polyline points="65.0,336.1 66.5,336.1 69.5,336.1 70.4,303.8 70.4,303.8 74.7,336.1 83.6,336.1 89.6,368.3 124.6,368.3 125.3,336.1 132.3,336.1 146.4,303.8 160.9,336.1 174.7,368.3 188.5,336.1 202.2,368.3 216.8,368.3 231.6,368.3 246.4,368.3 258.7,400.5 275.0,368.3 289.3,336.1 303.6,336.1 317.2,368.3 346.0,368.3 350.6,368.3 361.1,336.1 375.3,368.3 385.3,368.3 403.5,368.3 416.8,368.3 432.0,336.1 447.0,336.1 457.8,368.3 475.0,368.3 482.2,368.3 504.1,336.1 518.8,336.1 532.9,336.1 539.1,336.1 558.9,336.1 576.1,368.3 590.2,336.1 604.4,303.8 614.8,336.1 624.1,336.1 624.6,303.8 633.1,336.1 644.2,303.8 658.8,336.1 671.7,336.1 690.7,303.8 703.4,368.3 719.5,336.1 733.8,336.1 745.6,303.8 748.1,336.1 1005.6,400.5 1020.2,142.7 1034.6,368.3 1046.1,239.4 1063.9,110.5 1078.4,110.5 1091.2,174.9 1106.3,239.4 1135.0,110.5" fill="none" stroke="#0969da" stroke-width="2"><title>Install GitHub Copilot CLI</title></polyline>
+<line x1="65" y1="521" x2="100" y2="521" stroke="#0969da" stroke-width="3"/>
+<text x="110" y="525">Install GitHub Copilot CLI</text>
 <text x="65.0" y="490" text-anchor="start">2026-06-18</text>
 <text x="198.8" y="490" text-anchor="middle">2026-06-27</text>
-<text x="332.5" y="490" text-anchor="middle">2026-07-05</text>
-<text x="466.2" y="490" text-anchor="middle">2026-07-14</text>
-<text x="600.0" y="490" text-anchor="middle">2026-07-23</text>
-<text x="733.8" y="490" text-anchor="middle">2026-08-01</text>
-<text x="867.5" y="490" text-anchor="middle">2026-08-09</text>
-<text x="1001.2" y="490" text-anchor="middle">2026-08-18</text>
-<text x="1135.0" y="490" text-anchor="end">2026-08-27</text>
+<text x="332.5" y="490" text-anchor="middle">2026-07-07</text>
+<text x="466.2" y="490" text-anchor="middle">2026-07-16</text>
+<text x="600.0" y="490" text-anchor="middle">2026-07-25</text>
+<text x="733.8" y="490" text-anchor="middle">2026-08-04</text>
+<text x="867.5" y="490" text-anchor="middle">2026-08-13</text>
+<text x="1001.2" y="490" text-anchor="middle">2026-08-22</text>
+<text x="1135.0" y="490" text-anchor="end">2026-09-01</text>
 <line class="axis" x1="65" y1="465" x2="1135" y2="465"/>
 </svg>
