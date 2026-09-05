@@ -25,13 +25,13 @@
 <line class="grid" x1="1001.2" y1="75" x2="1001.2" y2="465"/>
 <line class="grid" x1="1135.0" y1="75" x2="1135.0" y2="465"/>
 <text x="65.0" y="490" text-anchor="start">2026-06-18</text>
-<text x="198.8" y="490" text-anchor="middle">2026-06-27</text>
-<text x="332.5" y="490" text-anchor="middle">2026-07-07</text>
-<text x="466.2" y="490" text-anchor="middle">2026-07-16</text>
-<text x="600.0" y="490" text-anchor="middle">2026-07-25</text>
-<text x="733.8" y="490" text-anchor="middle">2026-08-04</text>
-<text x="867.5" y="490" text-anchor="middle">2026-08-13</text>
-<text x="1001.2" y="490" text-anchor="middle">2026-08-22</text>
-<text x="1135.0" y="490" text-anchor="end">2026-09-01</text>
+<text x="198.8" y="490" text-anchor="middle">2026-06-28</text>
+<text x="332.5" y="490" text-anchor="middle">2026-07-08</text>
+<text x="466.2" y="490" text-anchor="middle">2026-07-18</text>
+<text x="600.0" y="490" text-anchor="middle">2026-07-27</text>
+<text x="733.8" y="490" text-anchor="middle">2026-08-06</text>
+<text x="867.5" y="490" text-anchor="middle">2026-08-16</text>
+<text x="1001.2" y="490" text-anchor="middle">2026-08-26</text>
+<text x="1135.0" y="490" text-anchor="end">2026-09-05</text>
 <line class="axis" x1="65" y1="465" x2="1135" y2="465"/>
 </svg>

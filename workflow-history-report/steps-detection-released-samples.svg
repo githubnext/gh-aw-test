@@ -27,11 +27,11 @@
 <text x="65.0" y="490" text-anchor="start">2026-06-12</text>
 <text x="198.8" y="490" text-anchor="middle">2026-06-23</text>
 <text x="332.5" y="490" text-anchor="middle">2026-07-03</text>
-<text x="466.2" y="490" text-anchor="middle">2026-07-13</text>
+<text x="466.2" y="490" text-anchor="middle">2026-07-14</text>
 <text x="600.0" y="490" text-anchor="middle">2026-07-24</text>
-<text x="733.8" y="490" text-anchor="middle">2026-08-03</text>
-<text x="867.5" y="490" text-anchor="middle">2026-08-13</text>
-<text x="1001.2" y="490" text-anchor="middle">2026-08-23</text>
-<text x="1135.0" y="490" text-anchor="end">2026-09-03</text>
+<text x="733.8" y="490" text-anchor="middle">2026-08-04</text>
+<text x="867.5" y="490" text-anchor="middle">2026-08-14</text>
+<text x="1001.2" y="490" text-anchor="middle">2026-08-24</text>
+<text x="1135.0" y="490" text-anchor="end">2026-09-04</text>
 <line class="axis" x1="65" y1="465" x2="1135" y2="465"/>
 </svg>
