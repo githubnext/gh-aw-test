@@ -65,27 +65,50 @@ def seconds(start: str | None, end: str | None) -> float | None:
     return (end_time - start_time).total_seconds() if start_time and end_time else None
 
 
+def rate_limit_delay(error: str, attempt: int) -> float:
+    if "rate limit exceeded" not in error.lower():
+        return 2 ** (attempt - 1)
+    result = subprocess.run(
+        ["gh", "api", "rate_limit", "--jq", ".resources.core.reset"],
+        text=True,
+        capture_output=True,
+    )
+    if result.returncode == 0:
+        try:
+            return max(1, int(result.stdout.strip()) - int(time.time()) + 5)
+        except ValueError:
+            pass
+    return 60
+
+
+def run_gh(command: list[str], attempts: int = 4) -> subprocess.CompletedProcess[str]:
+    for attempt in range(1, attempts + 1):
+        result = subprocess.run(command, text=True, capture_output=True)
+        if result.returncode == 0:
+            return result
+        error = result.stderr.strip() or result.stdout.strip() or f"exit status {result.returncode}"
+        print(f"GitHub API request failed ({attempt}/{attempts}): {error}", file=sys.stderr)
+        if attempt < attempts:
+            delay = rate_limit_delay(error, attempt)
+            print(f"Retrying in {delay:.0f}s", file=sys.stderr)
+            time.sleep(delay)
+    return result
+
+
 def gh_json(repository: str, endpoint: str, paginate: bool = False, attempts: int = 4) -> object:
     command = ["gh", "api"]
     if paginate:
         command.append("--paginate")
     command.extend([f"repos/{repository}/{endpoint}", "--slurp"] if paginate else [f"repos/{repository}/{endpoint}"])
-    for attempt in range(1, attempts + 1):
-        result = subprocess.run(command, text=True, capture_output=True)
-        if result.returncode == 0:
-            return json.loads(result.stdout)
-        error = result.stderr.strip() or result.stdout.strip() or f"exit status {result.returncode}"
-        print(f"GitHub API request failed ({attempt}/{attempts}): {error}", file=sys.stderr)
-        if attempt < attempts:
-            time.sleep(2 ** (attempt - 1))
+    result = run_gh(command, attempts)
+    if result.returncode == 0:
+        return json.loads(result.stdout)
     raise subprocess.CalledProcessError(result.returncode, command, output=result.stdout, stderr=result.stderr)
 
 
 def gh_log(repository: str, run_id: int) -> tuple[str | None, bool]:
-    result = subprocess.run(
+    result = run_gh(
         ["gh", "run", "view", str(run_id), "--repo", repository, "--log"],
-        text=True,
-        capture_output=True,
     )
     return (result.stdout, False) if result.returncode == 0 else (None, "HTTP 410" in result.stderr)
 

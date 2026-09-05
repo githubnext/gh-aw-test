@@ -451,8 +451,10 @@ jobs:
 
       - name: Build historical timing report
         env:
-          GH_TOKEN: ${{ secrets.GH_AW_TEST_PAT }}
-        run: python3 report_workflow_history.py --workers 8 --output workflow-history-report
+          # Keep report reads on the job-scoped installation token so the four
+          # preceding E2E entries cannot exhaust this job's API quota.
+          GH_TOKEN: ${{ github.token }}
+        run: python3 report_workflow_history.py --workers 4 --output workflow-history-report
 
       - name: Publish historical timing report to main
         run: |
