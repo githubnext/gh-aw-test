@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="685" viewBox="0 0 1200 685">
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="575" viewBox="0 0 1200 575">
 <rect width="100%" height="100%" fill="white"/>
 <style>text{font-family:ui-monospace,monospace;font-size:13px}.axis{stroke:#57606a;stroke-width:1}.grid{stroke:#d8dee4;stroke-width:1}</style>
 <text x="65" y="30" font-size="20">Major step timing: agent job (released, using samples)</text>
@@ -6,15 +6,15 @@
 <line class="grid" x1="65" y1="465.0" x2="1135" y2="465.0"/>
 <text x="8" y="470.0">0s</text>
 <line class="grid" x1="65" y1="387.0" x2="1135" y2="387.0"/>
-<text x="8" y="392.0">6s</text>
+<text x="8" y="392.0">0s</text>
 <line class="grid" x1="65" y1="309.0" x2="1135" y2="309.0"/>
-<text x="8" y="314.0">13s</text>
+<text x="8" y="314.0">0s</text>
 <line class="grid" x1="65" y1="231.0" x2="1135" y2="231.0"/>
-<text x="8" y="236.0">19s</text>
+<text x="8" y="236.0">1s</text>
 <line class="grid" x1="65" y1="153.0" x2="1135" y2="153.0"/>
-<text x="8" y="158.0">26s</text>
+<text x="8" y="158.0">1s</text>
 <line class="grid" x1="65" y1="75.0" x2="1135" y2="75.0"/>
-<text x="8" y="80.0">32s</text>
+<text x="8" y="80.0">1s</text>
 <line class="grid" x1="65.0" y1="75" x2="65.0" y2="465"/>
 <line class="grid" x1="198.8" y1="75" x2="198.8" y2="465"/>
 <line class="grid" x1="332.5" y1="75" x2="332.5" y2="465"/>
@@ -24,38 +24,14 @@
 <line class="grid" x1="867.5" y1="75" x2="867.5" y2="465"/>
 <line class="grid" x1="1001.2" y1="75" x2="1001.2" y2="465"/>
 <line class="grid" x1="1135.0" y1="75" x2="1135.0" y2="465"/>
-<polyline points="65.0,416.1 114.3,416.1 175.6,403.9 178.8,416.1 178.8,428.3 178.8,416.1 178.8,416.1 178.8,416.1 178.8,428.3 178.8,416.1 201.6,403.9 226.1,428.3 236.5,428.3 239.0,428.3 239.0,428.3 239.0,428.3 239.0,428.3 239.0,428.3 239.0,428.3 239.0,428.3 239.0,428.3 239.0,416.1 239.0,428.3 239.0,428.3 239.0,428.3 239.0,416.1 239.0,428.3 239.0,428.3 239.0,428.3 239.0,428.3 239.0,416.1 239.0,428.3 239.0,416.1 239.0,416.1 268.9,428.3 284.0,416.1 284.0,428.3 305.6,428.3 305.6,416.1 305.6,428.3 305.6,428.3 362.6,428.3 383.9,416.1 383.9,428.3 383.9,416.1 410.9,416.1 410.9,416.1 439.1,428.3 439.1,416.1 439.1,428.3 477.1,428.3 482.9,416.1 482.9,416.1 496.2,428.3 496.2,428.3 524.8,416.1 524.8,416.1 524.8,416.1 532.0,428.3 548.0,416.1 548.0,416.1 558.3,416.1 558.3,416.1 558.3,416.1 558.3,416.1 558.3,416.1 567.5,416.1 582.5,416.1 582.5,428.3 582.5,416.1 582.5,403.9 605.5,416.1 605.5,416.1 605.5,403.9 605.5,403.9 605.5,416.1 605.5,416.1 605.5,416.1 605.5,428.3 635.4,416.1 635.4,428.3 656.6,416.1 665.9,416.1 665.9,403.9 665.9,416.1 688.6,403.9 688.6,416.1 710.2,403.9 791.4,281.6 791.4,367.2 791.4,391.6 791.4,342.7 791.4,342.7 791.4,355.0 791.4,196.0 791.4,355.0 919.3,220.5 919.3,367.2 919.3,220.5 956.1,318.3 956.1,342.7 990.1,281.6 1000.7,355.0 1027.8,403.9 1027.8,428.3 1027.8,122.7 1027.8,293.8 1027.8,318.3 1049.6,232.7 1065.4,342.7 1065.4,367.2 1065.4,391.6 1065.4,367.2 1065.4,281.6 1073.4,342.7 1078.4,367.2 1078.4,110.5 1123.0,342.7 1131.3,318.3 1135.0,403.9" fill="none" stroke="#0969da" stroke-width="2"><title>Install GitHub Copilot CLI</title></polyline>
-<line x1="791.4" y1="281.6" x2="773.4" y2="259.6" stroke="#0969da" stroke-width="1"/>
-<circle cx="773.4" cy="259.6" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R1: Install GitHub Copilot CLI, samples, 15.0s</title></circle>
-<text x="773.4" y="263.6" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R1</text>
-<line x1="919.3" y1="220.5" x2="937.3" y2="198.5" stroke="#0969da" stroke-width="1"/>
-<circle cx="937.3" cy="198.5" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R2: Install GitHub Copilot CLI, samples, 20.0s</title></circle>
-<text x="937.3" y="202.5" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R2</text>
-<line x1="1027.8" y1="122.7" x2="1009.8" y2="144.7" stroke="#0969da" stroke-width="1"/>
-<circle cx="1009.8" cy="144.7" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R3: Install GitHub Copilot CLI, samples, 28.0s</title></circle>
-<text x="1009.8" y="148.7" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R3</text>
-<line x1="1078.4" y1="110.5" x2="1096.4" y2="132.5" stroke="#0969da" stroke-width="1"/>
-<circle cx="1096.4" cy="132.5" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R4: Install GitHub Copilot CLI, samples, 29.0s</title></circle>
-<text x="1096.4" y="136.5" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R4</text>
-<line x1="65" y1="521" x2="100" y2="521" stroke="#0969da" stroke-width="3"/>
-<text x="110" y="525">Install GitHub Copilot CLI</text>
 <text x="65.0" y="490" text-anchor="start">2026-06-12</text>
 <text x="198.8" y="490" text-anchor="middle">2026-06-23</text>
-<text x="332.5" y="490" text-anchor="middle">2026-07-04</text>
-<text x="466.2" y="490" text-anchor="middle">2026-07-15</text>
-<text x="600.0" y="490" text-anchor="middle">2026-07-26</text>
-<text x="733.8" y="490" text-anchor="middle">2026-08-06</text>
-<text x="867.5" y="490" text-anchor="middle">2026-08-17</text>
-<text x="1001.2" y="490" text-anchor="middle">2026-08-28</text>
-<text x="1135.0" y="490" text-anchor="end">2026-09-08</text>
+<text x="332.5" y="490" text-anchor="middle">2026-07-05</text>
+<text x="466.2" y="490" text-anchor="middle">2026-07-16</text>
+<text x="600.0" y="490" text-anchor="middle">2026-07-27</text>
+<text x="733.8" y="490" text-anchor="middle">2026-08-07</text>
+<text x="867.5" y="490" text-anchor="middle">2026-08-18</text>
+<text x="1001.2" y="490" text-anchor="middle">2026-08-29</text>
+<text x="1135.0" y="490" text-anchor="end">2026-09-09</text>
 <line class="axis" x1="65" y1="465" x2="1135" y2="465"/>
-<text x="65" y="565" font-size="16" font-weight="bold">Regression episodes</text>
-<text x="65" y="593" fill="#0969da" font-weight="bold">R1</text>
-<text x="99" y="593">2026-08-11  Install GitHub Copilot CLI / samples  +275%</text>
-<text x="65" y="615" fill="#0969da" font-weight="bold">R2</text>
-<text x="99" y="615">2026-08-22  Install GitHub Copilot CLI / samples  +122%</text>
-<text x="65" y="637" fill="#0969da" font-weight="bold">R3</text>
-<text x="99" y="637">2026-08-31  Install GitHub Copilot CLI / samples  +195%</text>
-<text x="65" y="659" fill="#0969da" font-weight="bold">R4</text>
-<text x="99" y="659">2026-09-04  Install GitHub Copilot CLI / samples  +190%</text>
 </svg>
