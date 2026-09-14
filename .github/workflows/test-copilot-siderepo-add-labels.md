@@ -25,6 +25,7 @@ tools:
 
 safe-outputs:
   add-labels:
+    target: '*'
     target-repo: 'githubnext/gh-aw-side-repo'
     allowed-repos: ['githubnext/gh-aw-side-repo']
     github-token: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
