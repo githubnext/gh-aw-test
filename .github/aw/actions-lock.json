@@ -55,6 +55,11 @@
       "version": "76f0291fa192d9b06ac6175c30c818845abf6bad",
       "sha": "76f0291fa192d9b06ac6175c30c818845abf6bad"
     },
+    "github/gh-aw/actions/setup@aa0cabfb259e06ef1bfa7a1b7b9f19733f41c33f": {
+      "repo": "github/gh-aw/actions/setup",
+      "version": "aa0cabfb259e06ef1bfa7a1b7b9f19733f41c33f",
+      "sha": "aa0cabfb259e06ef1bfa7a1b7b9f19733f41c33f"
+    },
     "github/gh-aw/actions/setup@bce650cfc7c57d8876b9da41fe9e908de093bc77": {
       "repo": "github/gh-aw/actions/setup",
       "version": "bce650cfc7c57d8876b9da41fe9e908de093bc77",
