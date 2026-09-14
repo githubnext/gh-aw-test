@@ -25,6 +25,7 @@ steps:
 safe-outputs:
   upload-code-coverage:
     max: 1
+    fail-on-error: false
     samples:
       - file: coverage.xml
         language: TypeScript

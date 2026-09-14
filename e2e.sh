@@ -1052,7 +1052,7 @@ wait_for_workflow() {
         fi
         
         local status conclusion
-        if status=$(gh run view "$run_id" --json status,conclusion -q '.status + "," + (.conclusion // "")' 2>/dev/null); then
+        if status=$(timeout 30s gh run view "$run_id" --json status,conclusion -q '.status + "," + (.conclusion // "")' 2>/dev/null); then
             consecutive_failures=0
             IFS=',' read -r run_status run_conclusion <<< "$status"
             
@@ -1148,7 +1148,7 @@ enable_workflow() {
     
     info "Enabling workflow '$workflow_name'..."
     # Redirect gh aw enable output to log file to prevent terminal control codes from clearing previous output
-    $GH_AW_BIN enable "$workflow_name" &>> "$LOG_FILE"
+    timeout 120s $GH_AW_BIN enable "$workflow_name" &>> "$LOG_FILE"
     local rc=$?
     if [[ $rc -eq 0 ]]; then
         success "Successfully enabled '$workflow_name'"
@@ -1174,7 +1174,7 @@ disable_workflow() {
     local workflow_name="$1"
     
     info "Disabling workflow '$workflow_name'..."
-    $GH_AW_BIN disable "$workflow_name" &>> "$LOG_FILE"
+    timeout 120s $GH_AW_BIN disable "$workflow_name" &>> "$LOG_FILE"
     local rc=$?
     if [[ $rc -eq 0 ]]; then
         success "Successfully disabled '$workflow_name'"
@@ -3313,7 +3313,8 @@ run_single_test() {
     # after the test regardless of pass/fail.
     export E2E_TEST_RESOURCE_FILE="/tmp/e2e-resources-${workflow}-$$.txt"
     
-    # Redirect all output to test-specific log
+    # Preserve the parent output stream, then capture this test's output.
+    exec 3>&1
     exec 1>"$test_log" 2>&1
 
     # If this workflow failed to compile, record failure immediately and return
@@ -3323,7 +3324,7 @@ run_single_test() {
             flock -x 200
             echo "$workflow|FAIL" >> "$RESULTS_FILE"
         ) 200>"$RESULTS_LOCK"
-        cat "$test_log"
+        cat "$test_log" >&3
         rm -f "$test_log"
         return 0
     fi
@@ -4135,7 +4136,7 @@ run_single_test() {
     ) 200>"$RESULTS_LOCK"
     
     # Output test log for aggregation
-    cat "$test_log"
+    cat "$test_log" >&3
     rm -f "$test_log"
     
     return 0
@@ -4229,8 +4230,8 @@ run_tests_parallel() {
         # Wait for batch to complete with live status
         local completed=0
         local total_in_batch=${#batch_tests[@]}
-        # Hard ceiling per test — PR-triggered tests + validation polling can take ~5–8 min in parallel
-        local per_test_kill_seconds=600
+        # Leave enough grace for a worker's own timeout path to record diagnostics.
+        local per_test_kill_seconds=$((TIMEOUT_MINUTES * 60 + 60))
         echo
         info "  ⏳ Waiting for $total_in_batch tests to complete (per-test kill after ${per_test_kill_seconds}s)..."
 
