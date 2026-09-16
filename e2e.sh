@@ -61,6 +61,7 @@ declare -A TEST_RUN_URLS=()  # maps test name -> actions run URL (when available
 declare -A FINAL_RUN_URLS=()  # populated in parent during batch result reading
 RUN_PASSES_FILE="${E2E_RUN_PASSES_FILE:-passes.txt}"
 RUN_FAILURES_FILE="${E2E_RUN_FAILURES_FILE:-}"
+RUN_STARTED_AT=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
 
 # Parallel execution settings
 BATCH_SIZE=25
@@ -105,7 +106,7 @@ record_test_pass() {
     local test_name="$1"
     PASSED_TESTS+=("$test_name")
     # Write the current-run result with run ID (same format as fails.txt)
-    local _url="${TEST_RUN_URLS[$test_name]:-}"
+    local _url="${FINAL_RUN_URLS[$test_name]:-${TEST_RUN_URLS[$test_name]:-}}"
     local _run_id=""
     if [[ -n "$_url" ]]; then
         _run_id="${_url##*/}"
@@ -132,7 +133,7 @@ record_test_fail() {
     local test_name="$1"
     FAILED_TESTS+=("$test_name")
     # Look up the run ID
-    local _url="${TEST_RUN_URLS[$test_name]:-}"
+    local _url="${FINAL_RUN_URLS[$test_name]:-${TEST_RUN_URLS[$test_name]:-}}"
     local _run_id=""
     if [[ -n "$_url" ]]; then
         _run_id="${_url##*/}"
@@ -143,8 +144,10 @@ record_test_fail() {
             --repo "$REPO_OWNER/$REPO_NAME" \
             --workflow="$_wf" \
             --limit=20 \
-            --json databaseId,conclusion \
-            --jq '[.[] | select(.conclusion != "skipped")][0].databaseId' 2>/dev/null || echo "")
+            --json databaseId,conclusion,createdAt 2>/dev/null \
+            | jq -r --arg started "$RUN_STARTED_AT" \
+                '[.[] | select(.conclusion != "skipped" and .createdAt >= $started)][0].databaseId // empty' \
+            || echo "")
     fi
     if [[ -n "$RUN_FAILURES_FILE" ]] && ! grep -q "^${test_name}\( \|$\)" "$RUN_FAILURES_FILE" 2>/dev/null; then
         if [[ -n "$_run_id" ]]; then
