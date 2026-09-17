@@ -30,10 +30,10 @@
       "version": "v0.89.15",
       "sha": "045beb2d14bda8d0c1f2e83b41527f63770d2855"
     },
-    "github/gh-aw/actions/setup@0fea86e1185ffb7b6870c6070eecf918ad79e4cb": {
+    "github/gh-aw/actions/setup@290730bc3932e398476f556fa9c047ebb669f943": {
       "repo": "github/gh-aw/actions/setup",
-      "version": "0fea86e1185ffb7b6870c6070eecf918ad79e4cb",
-      "sha": "0fea86e1185ffb7b6870c6070eecf918ad79e4cb"
+      "version": "290730bc3932e398476f556fa9c047ebb669f943",
+      "sha": "290730bc3932e398476f556fa9c047ebb669f943"
     }
   }
 }
