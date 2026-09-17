@@ -614,6 +614,17 @@ get_all_tests() {
     echo "test-copilot-update-release"
     echo "test-copilot-upload-asset"
     echo "test-copilot-upload-code-coverage"
+    # Phase 3: workflow and package frontmatter
+    echo "test-copilot-agent-continue-on-error"
+    echo "test-copilot-aw-manifest-wildcard-include"
+    echo "test-copilot-concurrency-job-discriminator"
+    echo "test-copilot-on-bots-import"
+    echo "test-copilot-nested-imports-order"
+    echo "test-copilot-stop-after-expression"
+    echo "test-copilot-workflow-run-conclusion"
+    echo "test-copilot-user-rate-limit"
+    echo "test-copilot-generated-job-needs"
+    echo "test-copilot-evals-frontmatter"
     # Nosandbox tests - limited set for claude/codex, full matrix for copilot
     echo "test-copilot-nosandbox-create-issue"
     echo "test-copilot-nosandbox-create-discussion"
@@ -1694,6 +1705,18 @@ validate_issue_created() {
         error "No issue found with title prefix: $title_prefix"
         return 1
     fi
+}
+
+validate_issue_body_contains() {
+    local title_prefix="$1"
+    local expected_text="$2"
+    local repo="${3:-}"
+    local repo_flag=""
+    [[ -n "$repo" ]] && repo_flag="--repo $repo"
+    local body
+    body=$(gh issue list $repo_flag --limit 10 --json title,body \
+        --jq ".[] | select(.title | startswith(\"$title_prefix\")) | .body" | head -1)
+    [[ "$body" == *"$expected_text"* ]]
 }
 
 validate_comment() {
@@ -3351,6 +3374,46 @@ run_single_test() {
     local test_result="FAIL"
     
     case "$workflow" in
+        *"aw-manifest-wildcard-include")
+            local package_dir
+            package_dir=$(mktemp -d)
+            if git -C "$package_dir" init --quiet \
+                && (cd "$package_dir" && "$GH_AW_BIN" add \
+                    "githubnext/gh-aw-test/.github/phase3-aw-package@main" \
+                    --dir .github/workflows --force &>> "$LOG_FILE") \
+                && [[ -f "$package_dir/.github/workflows/first.md" ]] \
+                && [[ -f "$package_dir/.github/workflows/second.md" ]]; then
+                success "aw.yml trailing wildcard installed both direct children"
+                test_result="PASS"
+            else
+                error "aw.yml trailing wildcard did not install both package children"
+            fi
+            rm -rf "$package_dir"
+            ;;
+        *"agent-continue-on-error")
+            if grep -q 'continue-on-error: true' ".github/workflows/${workflow}.lock.yml" \
+                && trigger_workflow_dispatch_and_await_completion "$workflow"; then
+                test_result="PASS"
+            fi
+            ;;
+        *"stop-after-expression")
+            if trigger_workflow_with_inputs "$workflow" "expiry=2020-01-01"; then
+                local stopped_run_id="${TEST_RUN_URLS[$workflow]##*/}"
+                local stopped_agent_conclusion
+                stopped_agent_conclusion=$(gh run view "$stopped_run_id" --repo "$REPO_OWNER/$REPO_NAME" --json jobs \
+                    --jq '[.jobs[] | select(.name == "agent")][0].conclusion // empty' 2>/dev/null)
+                if [[ "$stopped_agent_conclusion" == "skipped" ]] \
+                    && trigger_workflow_with_inputs "$workflow" "expiry=+24h"; then
+                    local title_prefix
+                    title_prefix=$(get_title_prefix "$workflow" "$ai_type")
+                    local expected_labels
+                    expected_labels=$(get_expected_labels "$ai_type")
+                    if validate_issue_created "$title_prefix" "$expected_labels" "$target_repo"; then
+                        test_result="PASS"
+                    fi
+                fi
+            fi
+            ;;
         # Siderepo tests with workflow_dispatch + inputs - need to create prerequisite then trigger
         *"siderepo-add-comment"|*"siderepo-add-labels"|*"siderepo-update-issue")
             echo ""
@@ -3585,7 +3648,7 @@ run_single_test() {
             fi
             ;;
         # Workflow dispatch tests - triggered with gh aw run
-        *"create-issue"|*"create-discussion"|*"create-pull-request"|*"create-two-pull-requests"|*"code-scanning-alert"|*"create-check-run"|*"mcp"*|*"safe-jobs"|*"gh-steps"|*"restore-memory-custom-job"|*"custom-safe-outputs"|*"noop"|*"report-incomplete"|*"missing-data"|*"missing-tool"|*"assign-to-agent"|*"set-issue-field"|*"set-issue-field-builtin-rejection"|*"issue-intents"|*"skills-frontmatter"|*"inline-sub-agents"|*"network-isolation"|*"upload-code-coverage")
+        *"create-issue"|*"create-discussion"|*"create-pull-request"|*"create-two-pull-requests"|*"code-scanning-alert"|*"create-check-run"|*"mcp"*|*"safe-jobs"|*"gh-steps"|*"restore-memory-custom-job"|*"custom-safe-outputs"|*"noop"|*"report-incomplete"|*"missing-data"|*"missing-tool"|*"assign-to-agent"|*"set-issue-field"|*"set-issue-field-builtin-rejection"|*"issue-intents"|*"skills-frontmatter"|*"inline-sub-agents"|*"network-isolation"|*"upload-code-coverage"|*"concurrency-job-discriminator"|*"on-bots-import"|*"nested-imports-order"|*"workflow-run-conclusion"|*"user-rate-limit"|*"generated-job-needs"|*"evals-frontmatter")
             local workflow_success=false
             if trigger_workflow_dispatch_and_await_completion "$workflow"; then
                 workflow_success=true
@@ -3604,11 +3667,15 @@ run_single_test() {
                             validation_success=true
                         fi
                         ;;
-                    *"create-issue"|*"skills-frontmatter"|*"restore-memory-custom-job"|*"inline-sub-agents"|*"network-isolation")
+                    *"create-issue"|*"skills-frontmatter"|*"restore-memory-custom-job"|*"inline-sub-agents"|*"network-isolation"|*"concurrency-job-discriminator"|*"on-bots-import"|*"nested-imports-order"|*"workflow-run-conclusion"|*"user-rate-limit"|*"generated-job-needs"|*"evals-frontmatter")
                         local title_prefix=$(get_title_prefix "$workflow" "$ai_type")
                         local expected_labels=$(get_expected_labels "$ai_type")
                         if validate_issue_created "$title_prefix" "$expected_labels" "$target_repo"; then
                             validation_success=true
+                        fi
+                        if [[ "$workflow" == *"nested-imports-order"* ]] \
+                            && ! validate_issue_body_contains "$title_prefix" "CBA" "$target_repo"; then
+                            validation_success=false
                         fi
                         ;;
                     *"create-discussion")
