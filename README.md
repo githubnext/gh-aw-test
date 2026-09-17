@@ -121,6 +121,23 @@ Tracking the full matrix of [safe outputs](https://github.com/github/gh-aw/blob/
 - [x] `create-check-run` — test-copilot-create-check-run
 - [x] `update-release` — test-copilot-update-release
 
+### Workflow and Package Frontmatter
+
+- [x] generated agent `continue-on-error` — test-copilot-agent-continue-on-error
+- [x] `aw.yml` trailing wildcard includes — test-copilot-aw-manifest-wildcard-include
+- [x] imported `concurrency.job-discriminator` — test-copilot-concurrency-job-discriminator
+- [x] imported `on.skip-bots` merge — test-copilot-on-bots-import
+- [x] nested import dependency order — test-copilot-nested-imports-order
+- [x] runtime expression in `on.stop-after` — test-copilot-stop-after-expression
+- [x] `on.workflow_run.conclusion` filter — test-copilot-workflow-run-conclusion
+- [x] canonical `user-rate-limit.max-runs-per-window` (experimental) — test-copilot-user-rate-limit
+- [x] additive `jobs.agent.needs` — test-copilot-generated-job-needs
+- [x] binary `evals` frontmatter — test-copilot-evals-frontmatter
+
+Shared workflows on current gh-aw main reject the former imported `on.bots`
+field. The bot-import test uses the supported import-safe `on.skip-bots` field
+instead. The package manifest fixture lives in `.github/phase3-aw-package/`.
+
 ### Deferred (require special infrastructure)
 
 - [ ] `create-agent-session` — requires Copilot coding agent access

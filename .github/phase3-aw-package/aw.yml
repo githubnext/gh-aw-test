@@ -1,0 +1,3 @@
+name: Phase 3 wildcard include fixture
+includes:
+  - workflows/*
