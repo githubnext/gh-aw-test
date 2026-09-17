@@ -121,6 +121,23 @@ Tracking the full matrix of [safe outputs](https://github.com/github/gh-aw/blob/
 - [x] `create-check-run` — test-copilot-create-check-run
 - [x] `update-release` — test-copilot-update-release
 
+### Runtime, Sandbox, Network, and MCP
+
+- [x] concurrent cache-memory JSONL union merge — test-copilot-cache-memory-concurrent-merge
+- [x] explicit `docker-sudo-iptables` sandbox runtime profile — test-copilot-sandbox-runtime-profile
+- [x] large GitHub MCP JSON payload — test-copilot-mcp-large-json-payload
+- [x] Playwright CLI mode — test-copilot-playwright-cli
+- [x] `on.cooldown` agent-job gating — test-copilot-cooldown
+- [x] fork branch rejection (skips without a dedicated writable fork) — test-copilot-siderepo-push-to-pull-request-branch-fork-rejection
+- [x] explicit `copilot` network domain opt-in — test-copilot-network-engine-domain-opt-in
+- [x] HTTP MCP GitHub OIDC permission path (skips without an OIDC MCP fixture) — test-copilot-mcp-http-oidc-permission
+- [x] sandbox `excluded-env` filtering — test-copilot-sandbox-exclude-env
+- [x] hosted GitHub remote MCP transport — test-copilot-mcp-github-remote
+
+The runtime-profile test intentionally uses `docker-sudo-iptables`. Removed
+`legacy-security` and `sudo` fields are not tested, and deprecated `gvisor` and
+`docker-sbx` runtime values are not introduced into the live suite.
+
 ### Deferred (require special infrastructure)
 
 - [ ] `create-agent-session` — requires Copilot coding agent access
