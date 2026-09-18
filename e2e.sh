@@ -128,6 +128,16 @@ record_test_pass() {
     fi
 }
 
+record_test_skip() {
+    local test_name="$1"
+    local reason="$2"
+    warning "Skipping '$test_name': $reason"
+    (
+        flock -x 200
+        echo "$test_name|SKIP" >> "$RESULTS_FILE"
+    ) 200>"$RESULTS_LOCK"
+}
+
 # Record a test failure: update arrays and add/append to fails.txt
 record_test_fail() {
     local test_name="$1"
@@ -614,6 +624,17 @@ get_all_tests() {
     echo "test-copilot-update-release"
     echo "test-copilot-upload-asset"
     echo "test-copilot-upload-code-coverage"
+    # Phase 1: new safe outputs and capabilities
+    echo "test-copilot-repo-memory"
+    echo "test-copilot-linear-create-issue"
+    echo "test-copilot-jira-create-issue"
+    echo "test-copilot-steer"
+    echo "test-copilot-update-project"
+    echo "test-copilot-close-issue-duplicate-of"
+    echo "test-copilot-assign-to-agent-reasoning-effort"
+    echo "test-copilot-assign-to-agent-with-config"
+    echo "test-copilot-update-pull-request-replace-island"
+    echo "test-copilot-body-footer"
     # Nosandbox tests - limited set for claude/codex, full matrix for copilot
     echo "test-copilot-nosandbox-create-issue"
     echo "test-copilot-nosandbox-create-discussion"
@@ -1703,6 +1724,38 @@ validate_issue_created() {
     fi
 }
 
+validate_issue_body_contains() {
+    local title_prefix="$1"
+    local expected_text="$2"
+    local repo="${3:-}"
+    local repo_flag=""
+    [[ -n "$repo" ]] && repo_flag="--repo $repo"
+
+    local body
+    body=$(gh issue list $repo_flag --limit 10 --json title,body \
+        --jq ".[] | select(.title | startswith(\"$title_prefix\")) | .body" | head -1)
+    if [[ "$body" == *"$expected_text"* ]]; then
+        success "Issue body contains expected text: $expected_text"
+        return 0
+    fi
+    error "Issue body missing expected text: $expected_text"
+    return 1
+}
+
+validate_issue_closed_as_duplicate() {
+    local issue_number="$1"
+    local repo="${2:-$REPO_OWNER/$REPO_NAME}"
+    local issue_data
+    issue_data=$(gh issue view "$issue_number" --repo "$repo" --json state,stateReason 2>/dev/null || echo '{}')
+    if [[ "$(echo "$issue_data" | jq -r '.state // empty')" == "CLOSED" \
+        && "$(echo "$issue_data" | jq -r '.stateReason // empty')" == "DUPLICATE" ]]; then
+        success "Issue #$issue_number was closed with the native duplicate reason"
+        return 0
+    fi
+    error "Issue #$issue_number was not closed as a native duplicate"
+    return 1
+}
+
 validate_comment() {
     local issue_number="$1"
     local expected_comment_text="$2"
@@ -2467,6 +2520,35 @@ wait_for_pr_update() {
 
     while [[ $waited -lt $max_wait ]]; do
         if validate_pr_updated "$pr_number" "$ai_type" "$repo"; then
+            record_test_pass "$test_name"
+            return 0
+        fi
+        info "..."
+        sleep "$OUTCOME_POLL_INTERVAL"
+        waited=$((waited + OUTCOME_POLL_INTERVAL))
+    done
+
+    record_test_fail "$test_name"
+    return 1
+}
+
+wait_for_pr_body_contains() {
+    local pr_number="$1"
+    local expected_text="$2"
+    local test_name="$3"
+    local repo="${4:-}"
+    local max_wait=480
+    local waited=0
+    local repo_flag=""
+    [[ -n "$repo" ]] && repo_flag="--repo $repo"
+
+    while [[ $waited -lt $max_wait ]]; do
+        local body
+        body=$(gh pr view $repo_flag "$pr_number" --json body --jq '.body' 2>/dev/null || echo "")
+        if [[ "$body" == *"$expected_text"* \
+            && "$body" == *"Content before the managed island."* \
+            && "$body" == *"Content after the managed island."* ]]; then
+            success "PR #$pr_number contains the replacement and preserved surrounding content"
             record_test_pass "$test_name"
             return 0
         fi
@@ -3356,8 +3438,69 @@ run_single_test() {
     
     # Run test based on workflow pattern - handles ALL test types
     local test_result="FAIL"
+
+    case "$workflow" in
+        *"linear-create-issue")
+            if ! gh secret list --repo "$REPO_OWNER/$REPO_NAME" --json name --jq '.[].name' 2>/dev/null | grep -qx 'LINEAR_API_KEY' \
+                || ! gh variable list --repo "$REPO_OWNER/$REPO_NAME" --json name --jq '.[].name' 2>/dev/null | grep -qx 'LINEAR_TEAM_ID'; then
+                record_test_skip "$workflow" "requires LINEAR_API_KEY and LINEAR_TEAM_ID; see docs/e2e-external-integrations.md"
+                cat "$test_log" >&3
+                rm -f "$test_log"
+                return 0
+            fi
+            ;;
+        *"jira-create-issue")
+            local jira_prerequisites=(JIRA_USER_EMAIL JIRA_API_TOKEN)
+            local jira_secret
+            for jira_secret in "${jira_prerequisites[@]}"; do
+                if ! gh secret list --repo "$REPO_OWNER/$REPO_NAME" --json name --jq '.[].name' 2>/dev/null | grep -qx "$jira_secret"; then
+                    record_test_skip "$workflow" "requires JIRA_BASE_URL, JIRA_USER_EMAIL, and JIRA_API_TOKEN; see docs/e2e-external-integrations.md"
+                    cat "$test_log" >&3
+                    rm -f "$test_log"
+                    return 0
+                fi
+            done
+            local jira_variables=(JIRA_BASE_URL JIRA_PROJECT_KEY)
+            local jira_variable
+            for jira_variable in "${jira_variables[@]}"; do
+                if ! gh variable list --repo "$REPO_OWNER/$REPO_NAME" --json name --jq '.[].name' 2>/dev/null | grep -qx "$jira_variable"; then
+                    record_test_skip "$workflow" "requires JIRA_BASE_URL, JIRA_PROJECT_KEY, JIRA_USER_EMAIL, and JIRA_API_TOKEN; see docs/e2e-external-integrations.md"
+                    cat "$test_log" >&3
+                    rm -f "$test_log"
+                    return 0
+                fi
+            done
+            ;;
+        *"update-project")
+            if ! gh secret list --repo "$REPO_OWNER/$REPO_NAME" --json name --jq '.[].name' 2>/dev/null | grep -qx 'GH_AW_PROJECT_GITHUB_TOKEN'; then
+                record_test_skip "$workflow" "requires GH_AW_PROJECT_GITHUB_TOKEN and a Projects V2 fixture; see docs/e2e-external-integrations.md"
+                cat "$test_log" >&3
+                rm -f "$test_log"
+                return 0
+            fi
+            ;;
+    esac
     
     case "$workflow" in
+        *"close-issue-duplicate-of")
+            echo -e "${CYAN}━━━ Preparing duplicate issues ━━━${NC}"
+            local canonical_issue
+            canonical_issue=$(create_test_issue "Canonical issue for duplicate E2E" "Canonical fixture for $workflow" "" "$target_repo")
+            local duplicate_issue
+            duplicate_issue=$(create_test_issue "Duplicate issue for duplicate E2E" "Duplicate fixture for $workflow" "" "$target_repo")
+            if [[ -n "$canonical_issue" && -n "$duplicate_issue" ]] \
+                && trigger_workflow_with_inputs "$workflow" "issue_number=$duplicate_issue" "duplicate_of=$canonical_issue" \
+                && validate_issue_closed_as_duplicate "$duplicate_issue" "${target_repo:-$REPO_OWNER/$REPO_NAME}"; then
+                test_result="PASS"
+            fi
+            ;;
+        *"update-project")
+            local project_issue
+            project_issue=$(create_test_issue "Project update E2E fixture" "Fixture for $workflow" "" "$target_repo")
+            if [[ -n "$project_issue" ]] && trigger_workflow_with_inputs "$workflow" "issue_number=$project_issue"; then
+                test_result="PASS"
+            fi
+            ;;
         # Siderepo tests with workflow_dispatch + inputs - need to create prerequisite then trigger
         *"siderepo-add-comment"|*"siderepo-add-labels"|*"siderepo-update-issue")
             echo ""
@@ -3592,7 +3735,7 @@ run_single_test() {
             fi
             ;;
         # Workflow dispatch tests - triggered with gh aw run
-        *"create-issue"|*"create-discussion"|*"create-pull-request"|*"create-two-pull-requests"|*"code-scanning-alert"|*"create-check-run"|*"mcp"*|*"safe-jobs"|*"gh-steps"|*"restore-memory-custom-job"|*"custom-safe-outputs"|*"noop"|*"report-incomplete"|*"missing-data"|*"missing-tool"|*"assign-to-agent"|*"set-issue-field"|*"set-issue-field-builtin-rejection"|*"issue-intents"|*"skills-frontmatter"|*"inline-sub-agents"|*"network-isolation"|*"upload-code-coverage")
+        *"create-issue"|*"create-discussion"|*"create-pull-request"|*"create-two-pull-requests"|*"code-scanning-alert"|*"create-check-run"|*"mcp"*|*"safe-jobs"|*"gh-steps"|*"restore-memory-custom-job"|*"custom-safe-outputs"|*"noop"|*"report-incomplete"|*"missing-data"|*"missing-tool"|*"assign-to-agent"|*"set-issue-field"|*"set-issue-field-builtin-rejection"|*"issue-intents"|*"skills-frontmatter"|*"inline-sub-agents"|*"network-isolation"|*"upload-code-coverage"|*"repo-memory"|*"linear-create-issue"|*"jira-create-issue"|*"steer"|*"body-footer")
             local workflow_success=false
             if trigger_workflow_dispatch_and_await_completion "$workflow"; then
                 workflow_success=true
@@ -3601,6 +3744,10 @@ run_single_test() {
             if [[ "$workflow_success" == true ]]; then
                 local validation_success=false
                 case "$workflow" in
+                    *"linear-create-issue"|*"jira-create-issue"|*"steer")
+                        success "Workflow '$workflow' completed successfully"
+                        validation_success=true
+                        ;;
                     *"multi")
                         local title_prefix=$(get_title_prefix "$workflow" "$ai_type")
                         local expected_labels=$(get_expected_labels "$ai_type")
@@ -3611,11 +3758,15 @@ run_single_test() {
                             validation_success=true
                         fi
                         ;;
-                    *"create-issue"|*"skills-frontmatter"|*"restore-memory-custom-job"|*"inline-sub-agents"|*"network-isolation")
+                    *"create-issue"|*"skills-frontmatter"|*"restore-memory-custom-job"|*"inline-sub-agents"|*"network-isolation"|*"repo-memory"|*"body-footer")
                         local title_prefix=$(get_title_prefix "$workflow" "$ai_type")
                         local expected_labels=$(get_expected_labels "$ai_type")
                         if validate_issue_created "$title_prefix" "$expected_labels" "$target_repo"; then
                             validation_success=true
+                        fi
+                        if [[ "$workflow" == *"body-footer"* ]] \
+                            && ! validate_issue_body_contains "$title_prefix" "Global footer from" "$target_repo"; then
+                            validation_success=false
                         fi
                         ;;
                     *"create-discussion")
@@ -3825,13 +3976,27 @@ run_single_test() {
                                 ;;
                             *"update-pull-request")
                                 info "Creating test pull request to trigger $workflow..."
-                                local pr_num=$(create_test_pr "Test PR for $ai_display_name Update PR" "This PR is for testing $workflow" "$target_repo")
+                                local pr_body="This PR is for testing $workflow"
+                                if [[ "$workflow" == *"replace-island" ]]; then
+                                    pr_body="e2e-marker:test-copilot-update-pull-request-replace-island
+
+Content before the managed island.
+<!-- gh-aw-island-start:test-copilot-update-pull-request-replace-island -->
+Original managed content.
+<!-- gh-aw-island-end:test-copilot-update-pull-request-replace-island -->
+Content after the managed island."
+                                fi
+                                local pr_num=$(create_test_pr "Test PR for $ai_display_name Update PR" "$pr_body" "$target_repo")
                                 if [[ -n "$pr_num" ]]; then
                                     local repo_url="$REPO_OWNER/$REPO_NAME"
                                     [[ -n "$target_repo" ]] && repo_url="$target_repo"
                                     success "Created test PR #$pr_num for $workflow: https://github.com/$repo_url/pull/$pr_num"
                                     sleep 10
-                                    if wait_for_pr_update "$pr_num" "$ai_display_name" "$workflow" "$target_repo"; then
+                                    if [[ "$workflow" == *"replace-island" ]] \
+                                        && wait_for_pr_body_contains "$pr_num" "The marker-delimited island was replaced by the Copilot E2E workflow." "$workflow" "$target_repo"; then
+                                        test_result="PASS"
+                                    elif [[ "$workflow" != *"replace-island" ]] \
+                                        && wait_for_pr_update "$pr_num" "$ai_display_name" "$workflow" "$target_repo"; then
                                         test_result="PASS"
                                     fi
                                 fi
