@@ -24,27 +24,27 @@
 <line class="grid" x1="867.5" y1="75" x2="867.5" y2="465"/>
 <line class="grid" x1="1001.2" y1="75" x2="1001.2" y2="465"/>
 <line class="grid" x1="1135.0" y1="75" x2="1135.0" y2="465"/>
-<polyline points="65.0,389.0 66.2,385.4 68.7,345.6 69.5,367.3 69.5,389.0 73.0,385.4 80.3,392.6 85.2,403.5 114.1,389.0 114.7,396.3 120.4,392.6 132.0,331.1 144.0,403.5 155.4,396.3 166.7,392.6 178.0,360.1 190.1,363.7 202.3,374.6 214.4,381.8 224.6,418.0 238.0,389.0 249.8,342.0 261.6,414.4 272.8,392.6 296.4,414.4 300.3,410.7 308.9,410.7 320.6,399.9 328.8,392.6 343.8,410.7 354.8,374.6 367.4,414.4 379.7,418.0 388.6,403.5 402.7,396.3 408.7,418.0 426.7,418.0 438.8,410.7 450.4,403.5 455.5,403.5 471.9,418.0 486.0,385.4 497.7,392.6 509.4,418.0 517.9,407.1 525.6,392.6 526.0,389.0 533.0,392.6 542.1,385.4 554.1,334.8 564.7,370.9 580.4,331.1 590.9,342.0 604.2,374.6 616.0,352.8 625.7,360.1 627.7,370.9 839.8,374.6 851.8,269.6 863.7,370.9 873.2,396.3 887.8,374.6 899.8,403.5 910.3,385.4 922.8,378.2 946.4,407.1 981.3,291.3 993.6,323.9 1017.0,309.4 1028.3,110.5 1040.4,349.2 1051.3,150.3 1064.5,302.2 1076.3,370.9 1088.1,360.1 1099.9,349.2 1099.9,345.6 1110.9,305.8 1121.6,150.3 1126.2,320.3 1135.0,349.2" fill="none" stroke="#0969da" stroke-width="2"><title>Set up job</title></polyline>
-<line x1="851.8" y1="269.6" x2="833.8" y2="247.6" stroke="#0969da" stroke-width="1"/>
-<circle cx="833.8" cy="247.6" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R1: Set up job, samples, 54.0s</title></circle>
-<text x="833.8" y="251.6" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R1</text>
-<line x1="1028.3" y1="110.5" x2="1046.3" y2="88.5" stroke="#0969da" stroke-width="1"/>
-<circle cx="1046.3" cy="88.5" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R2: Set up job, samples, 98.0s</title></circle>
-<text x="1046.3" y="92.5" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R2</text>
-<line x1="1121.6" y1="150.3" x2="1103.6" y2="172.3" stroke="#0969da" stroke-width="1"/>
-<circle cx="1103.6" cy="172.3" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R3: Set up job, samples, 87.0s</title></circle>
-<text x="1103.6" y="176.3" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R3</text>
+<polyline points="65.0,389.0 66.2,385.4 68.7,345.6 69.4,367.3 69.4,389.0 72.9,385.4 80.1,392.6 85.0,403.5 113.6,389.0 114.2,396.3 119.9,392.6 131.3,331.1 143.2,403.5 154.5,396.3 165.7,392.6 176.9,360.1 188.8,363.7 200.9,374.6 212.9,381.8 223.0,418.0 236.2,389.0 247.9,342.0 259.6,414.4 270.7,392.6 294.1,414.4 297.9,410.7 306.4,410.7 318.0,399.9 326.1,392.6 341.0,410.7 351.9,374.6 364.3,414.4 376.5,418.0 385.3,403.5 399.3,396.3 405.2,418.0 423.1,418.0 435.0,410.7 446.5,403.5 451.6,403.5 467.7,418.0 481.7,385.4 493.3,392.6 504.9,418.0 513.3,407.1 520.9,392.6 521.3,389.0 528.3,392.6 537.3,385.4 549.1,334.8 559.7,370.9 575.1,331.1 585.6,342.0 598.7,374.6 610.4,352.8 620.0,360.1 622.0,370.9 832.0,374.6 843.8,269.6 855.6,370.9 864.9,396.3 879.4,374.6 891.3,403.5 901.7,385.4 914.1,378.2 937.5,407.1 972.0,291.3 984.2,323.9 1007.3,309.4 1018.5,110.5 1030.5,349.2 1041.2,150.3 1054.4,302.2 1066.0,370.9 1077.7,360.1 1089.4,349.2 1089.4,345.6 1100.3,305.8 1110.8,150.3 1115.4,320.3 1124.1,349.2 1135.0,298.6" fill="none" stroke="#0969da" stroke-width="2"><title>Set up job</title></polyline>
+<line x1="843.8" y1="269.6" x2="825.8" y2="247.6" stroke="#0969da" stroke-width="1"/>
+<circle cx="825.8" cy="247.6" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R1: Set up job, samples, 54.0s</title></circle>
+<text x="825.8" y="251.6" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R1</text>
+<line x1="1018.5" y1="110.5" x2="1036.5" y2="88.5" stroke="#0969da" stroke-width="1"/>
+<circle cx="1036.5" cy="88.5" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R2: Set up job, samples, 98.0s</title></circle>
+<text x="1036.5" y="92.5" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R2</text>
+<line x1="1110.8" y1="150.3" x2="1092.8" y2="172.3" stroke="#0969da" stroke-width="1"/>
+<circle cx="1092.8" cy="172.3" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R3: Set up job, samples, 87.0s</title></circle>
+<text x="1092.8" y="176.3" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R3</text>
 <line x1="65" y1="521" x2="100" y2="521" stroke="#0969da" stroke-width="3"/>
 <text x="110" y="525">Set up job</text>
 <text x="65.0" y="490" text-anchor="start">2026-06-18</text>
 <text x="198.8" y="490" text-anchor="middle">2026-06-29</text>
 <text x="332.5" y="490" text-anchor="middle">2026-07-11</text>
 <text x="466.2" y="490" text-anchor="middle">2026-07-22</text>
-<text x="600.0" y="490" text-anchor="middle">2026-08-02</text>
+<text x="600.0" y="490" text-anchor="middle">2026-08-03</text>
 <text x="733.8" y="490" text-anchor="middle">2026-08-14</text>
-<text x="867.5" y="490" text-anchor="middle">2026-08-25</text>
-<text x="1001.2" y="490" text-anchor="middle">2026-09-05</text>
-<text x="1135.0" y="490" text-anchor="end">2026-09-17</text>
+<text x="867.5" y="490" text-anchor="middle">2026-08-26</text>
+<text x="1001.2" y="490" text-anchor="middle">2026-09-06</text>
+<text x="1135.0" y="490" text-anchor="end">2026-09-18</text>
 <line class="axis" x1="65" y1="465" x2="1135" y2="465"/>
 <text x="65" y="565" font-size="16" font-weight="bold">Regression episodes</text>
 <text x="65" y="593" fill="#0969da" font-weight="bold">R1</text>
