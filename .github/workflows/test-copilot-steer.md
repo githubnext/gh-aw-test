@@ -5,6 +5,7 @@ permissions:
   contents: read
   actions: read
   issues: read
+  copilot-requests: write
 engine: copilot
 safe-outputs:
   steer: true

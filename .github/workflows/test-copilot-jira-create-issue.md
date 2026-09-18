@@ -4,6 +4,7 @@ on:
 permissions:
   contents: read
   actions: read
+  copilot-requests: write
 engine: copilot
 safe-outputs:
   env:

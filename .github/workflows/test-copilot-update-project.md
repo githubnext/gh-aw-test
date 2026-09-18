@@ -11,12 +11,13 @@ concurrency:
 permissions:
   contents: read
   issues: read
+  copilot-requests: write
 engine: copilot
 safe-outputs:
   update-project:
     max: 1
-    project: https://github.com/orgs/githubnext/projects/1
-    github-token: ${{ secrets.GH_AW_PROJECT_GITHUB_TOKEN }}
+    project: https://github.com/orgs/githubnext/projects/153
+    github-token: ${{ secrets.GH_AW_TEST_PAT }}
 timeout-minutes: 5
 ---
 

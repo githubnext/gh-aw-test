@@ -5,6 +5,7 @@ engine: copilot
 permissions:
   contents: read
   issues: read
+  copilot-requests: write
 safe-outputs:
   body-footer: "Global footer from {workflow_name}: {run_url}"
   create-issue:

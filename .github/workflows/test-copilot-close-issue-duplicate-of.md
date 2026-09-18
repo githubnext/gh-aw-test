@@ -15,6 +15,7 @@ concurrency:
 permissions:
   issues: read
   contents: read
+  copilot-requests: write
 engine: copilot
 safe-outputs:
   close-issue:
