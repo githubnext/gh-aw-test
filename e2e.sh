@@ -64,7 +64,7 @@ RUN_FAILURES_FILE="${E2E_RUN_FAILURES_FILE:-}"
 RUN_STARTED_AT=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
 
 # Parallel execution settings
-BATCH_SIZE=25
+BATCH_SIZE=15
 NO_PARALLEL=false
 
 # Lock file for synchronized result tracking across parallel processes
@@ -202,15 +202,15 @@ safe_run() {
 # Configuration
 REPO_OWNER="githubnext"
 REPO_NAME="gh-aw-test"
-TIMEOUT_MINUTES=10
+TIMEOUT_MINUTES=15
 # In CI, poll 10x less frequently (50s vs 5s) to conserve GitHub API rate limits.
 # The human isn't watching for fast feedback, so the extra latency is fine.
 POLL_INTERVAL=5
 # Outcome poll: how often wait_for_* functions recheck the GitHub API for expected output.
 # Kept faster than POLL_INTERVAL because each check is cheap, but still CI-aware.
 OUTCOME_POLL_INTERVAL=5
-# Throttle before launching a new batch if GitHub REST API remaining calls drops below this.
-RATE_LIMIT_THRESHOLD=400
+# Reserve enough GitHub REST API quota for one parallel batch to finish.
+RATE_LIMIT_THRESHOLD=1500
 if [[ "${CI:-false}" == "true" ]]; then
     POLL_INTERVAL=50
     OUTCOME_POLL_INTERVAL=20
@@ -1066,8 +1066,9 @@ wait_for_workflow() {
     progress "View run details: https://github.com/$REPO_OWNER/$REPO_NAME/actions/runs/$run_id"
     
     while true; do
-        local status conclusion
-        if status=$(timeout 30s gh run view "$run_id" --json status,conclusion -q '.status + "," + (.conclusion // "")' 2>/dev/null); then
+        local status conclusion status_output
+        if status_output=$(timeout 30s gh run view "$run_id" --json status,conclusion -q '.status + "," + (.conclusion // "")' 2>&1); then
+            status="$status_output"
             consecutive_failures=0
             IFS=',' read -r run_status run_conclusion <<< "$status"
 
@@ -1108,6 +1109,10 @@ wait_for_workflow() {
                     return 1
                     ;;
             esac
+        elif is_rate_limit_error "$status_output"; then
+            wait_for_rate_limit_reset "checking workflow run $run_id"
+            start_time=$(date +%s)
+            consecutive_failures=0
         else
             local current_time=$(date +%s)
             local elapsed=$((current_time - start_time))
@@ -1131,14 +1136,53 @@ wait_for_workflow() {
 
 get_latest_run_id() {
     local workflow_file="$1"
-    gh run list --workflow="$workflow_file" --limit=1 --json databaseId -q '.[0].databaseId' 2>/dev/null || echo ""
+    local output
+    while true; do
+        if output=$(gh run list --workflow="$workflow_file" --limit=1 --json databaseId -q '.[0].databaseId' 2>&1); then
+            echo "$output"
+            return 0
+        fi
+        if ! is_rate_limit_error "$output"; then
+            warning "Failed to list runs for '$workflow_file': $output" >&2
+            return 1
+        fi
+        wait_for_rate_limit_reset "listing runs for $workflow_file" >&2
+    done
+}
+
+is_rate_limit_error() {
+    local output="$1"
+    [[ "$output" == *"API rate limit exceeded"* || "$output" == *"rate limit exceeded"* ]]
+}
+
+# Pause all API-dependent work until GitHub's current core quota resets.
+wait_for_rate_limit_reset() {
+    local context="${1:-calling the GitHub API}"
+    local result remaining limit reset_ts reset_time now sleep_sec
+    result=$(gh api -H "Cache-Control: no-cache" rate_limit 2>/dev/null) || result=""
+    remaining=$(echo "$result" | jq -r '.resources.core.remaining // .rate.remaining // empty' 2>/dev/null)
+    limit=$(echo "$result" | jq -r '.resources.core.limit // .rate.limit // empty' 2>/dev/null)
+    reset_ts=$(echo "$result" | jq -r '.resources.core.reset // .rate.reset // empty' 2>/dev/null)
+
+    if [[ -n "$reset_ts" && "$reset_ts" =~ ^[0-9]+$ && "${remaining:-0}" -lt "$RATE_LIMIT_THRESHOLD" ]]; then
+        now=$(date +%s)
+        sleep_sec=$((reset_ts - now + 15))
+        reset_time=$(date -d "@$reset_ts" '+%H:%M:%S' 2>/dev/null \
+            || date -r "$reset_ts" '+%H:%M:%S' 2>/dev/null \
+            || echo "@${reset_ts}")
+        warning "GitHub API rate limit exhausted while $context (${remaining}/${limit}). Sleeping ${sleep_sec}s until ${reset_time} UTC..."
+        (( sleep_sec > 0 )) && sleep "$sleep_sec"
+    else
+        warning "GitHub reported a rate limit error while $context, but reset metadata was unavailable. Retrying in 60s..."
+        sleep 60
+    fi
 }
 
 # Print the current GitHub REST API rate limit status.
 # The /rate_limit endpoint does not itself consume any quota.
 check_api_rate_limit() {
     local result
-    result=$(gh api rate_limit 2>/dev/null) || { warning "Could not read GitHub API rate limit"; return 0; }
+    result=$(gh api -H "Cache-Control: no-cache" rate_limit 2>/dev/null) || { warning "Could not read GitHub API rate limit"; return 0; }
     local remaining limit reset_ts reset_time
     remaining=$(echo "$result" | jq -r '.rate.remaining')
     limit=$(echo "$result"     | jq -r '.rate.limit')
@@ -1153,7 +1197,7 @@ check_api_rate_limit() {
 # until the window resets (plus a small buffer). Prints quota status either way.
 throttle_if_rate_limited() {
     local result
-    result=$(gh api rate_limit 2>/dev/null) || return 0
+    result=$(gh api -H "Cache-Control: no-cache" rate_limit 2>/dev/null) || return 0
     local remaining limit reset_ts reset_time
     remaining=$(echo "$result" | jq -r '.rate.remaining')
     limit=$(echo "$result"     | jq -r '.rate.limit')
@@ -1179,8 +1223,16 @@ enable_workflow() {
     
     info "Enabling workflow '$workflow_name'..."
     # Redirect gh aw enable output to log file to prevent terminal control codes from clearing previous output
-    timeout 120s $GH_AW_BIN enable "$workflow_name" &>> "$LOG_FILE"
-    local rc=$?
+    local rc command_output
+    while true; do
+        command_output=$(timeout 120s $GH_AW_BIN enable "$workflow_name" 2>&1)
+        rc=$?
+        printf '%s\n' "$command_output" >> "$LOG_FILE"
+        if [[ $rc -eq 0 ]] || ! is_rate_limit_error "$command_output"; then
+            break
+        fi
+        wait_for_rate_limit_reset "enabling workflow $workflow_name"
+    done
     if [[ $rc -eq 0 ]]; then
         success "Successfully enabled '$workflow_name'"
         
@@ -1205,8 +1257,16 @@ disable_workflow() {
     local workflow_name="$1"
     
     info "Disabling workflow '$workflow_name'..."
-    timeout 120s $GH_AW_BIN disable "$workflow_name" &>> "$LOG_FILE"
-    local rc=$?
+    local rc command_output
+    while true; do
+        command_output=$(timeout 120s $GH_AW_BIN disable "$workflow_name" 2>&1)
+        rc=$?
+        printf '%s\n' "$command_output" >> "$LOG_FILE"
+        if [[ $rc -eq 0 ]] || ! is_rate_limit_error "$command_output"; then
+            break
+        fi
+        wait_for_rate_limit_reset "disabling workflow $workflow_name"
+    done
     if [[ $rc -eq 0 ]]; then
         success "Successfully disabled '$workflow_name'"
         
@@ -1243,13 +1303,19 @@ trigger_workflow_dispatch_and_await_completion() {
     fi
     
     # Get the run ID before triggering
-    local before_run_id=$(get_latest_run_id "$workflow_file")
+    local before_run_id
+    if ! before_run_id=$(get_latest_run_id "$workflow_file"); then
+        error "Could not read the current run ID for '$workflow_name'"
+        disable_workflow "$workflow_name"
+        return 1
+    fi
     
     # Trigger the workflow using gh aw run
     local -a run_args=("$workflow_name")
     if [[ -n "$DISPATCH_REF" ]]; then
         run_args+=(--ref "$DISPATCH_REF")
     fi
+    throttle_if_rate_limited
     if $GH_AW_BIN run "${run_args[@]}" &>> "$LOG_FILE"; then
         success "Successfully triggered '$workflow_name'"
         
@@ -1257,7 +1323,12 @@ trigger_workflow_dispatch_and_await_completion() {
         sleep 5
         
         # Get the new run ID
-        local after_run_id=$(get_latest_run_id "$workflow_file")
+        local after_run_id
+        if ! after_run_id=$(get_latest_run_id "$workflow_file"); then
+            error "Could not discover the new workflow run for '$workflow_name'"
+            disable_workflow "$workflow_name"
+            return 1
+        fi
         
         if [[ "$after_run_id" != "$before_run_id" && -n "$after_run_id" ]]; then
             local result=0
@@ -1294,7 +1365,12 @@ trigger_workflow_with_inputs() {
     fi
     
     # Get the run ID before triggering
-    local before_run_id=$(get_latest_run_id "$workflow_file")
+    local before_run_id
+    if ! before_run_id=$(get_latest_run_id "$workflow_file"); then
+        error "Could not read the current run ID for '$workflow_name'"
+        disable_workflow "$workflow_name"
+        return 1
+    fi
     
     # Build the gh workflow run command with inputs
     local cmd="gh workflow run \"$workflow_file\""
@@ -1307,6 +1383,7 @@ trigger_workflow_with_inputs() {
     cmd+=" &>> \"$LOG_FILE\""
     
     # Trigger the workflow using gh workflow run with inputs
+    throttle_if_rate_limited
     if eval "$cmd"; then
         success "Successfully triggered '$workflow_name' with inputs"
         
@@ -1314,7 +1391,12 @@ trigger_workflow_with_inputs() {
         sleep 5
         
         # Get the new run ID
-        local after_run_id=$(get_latest_run_id "$workflow_file")
+        local after_run_id
+        if ! after_run_id=$(get_latest_run_id "$workflow_file"); then
+            error "Could not discover the new workflow run for '$workflow_name'"
+            disable_workflow "$workflow_name"
+            return 1
+        fi
         
         if [[ "$after_run_id" != "$before_run_id" && -n "$after_run_id" ]]; then
             local result=0
