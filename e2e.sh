@@ -1045,19 +1045,18 @@ wait_for_workflow() {
     progress "View run details: https://github.com/$REPO_OWNER/$REPO_NAME/actions/runs/$run_id"
     
     while true; do
-        local current_time=$(date +%s)
-        local elapsed=$((current_time - start_time))
-        
-        if [[ $elapsed -gt $timeout_seconds ]]; then
-            error "Timeout waiting for workflow '$workflow_name' after $TIMEOUT_MINUTES minutes"
-            error "View run details: https://github.com/$REPO_OWNER/$REPO_NAME/actions/runs/$run_id"
-            return 1
-        fi
-        
         local status conclusion
         if status=$(timeout 30s gh run view "$run_id" --json status,conclusion -q '.status + "," + (.conclusion // "")' 2>/dev/null); then
             consecutive_failures=0
             IFS=',' read -r run_status run_conclusion <<< "$status"
+
+            local current_time=$(date +%s)
+            local elapsed=$((current_time - start_time))
+            if [[ "$run_status" != "completed" && $elapsed -gt $timeout_seconds ]]; then
+                error "Timeout waiting for workflow '$workflow_name' after $TIMEOUT_MINUTES minutes"
+                error "View run details: https://github.com/$REPO_OWNER/$REPO_NAME/actions/runs/$run_id"
+                return 1
+            fi
             
             case "$run_status" in
                 "completed")
@@ -1089,6 +1088,14 @@ wait_for_workflow() {
                     ;;
             esac
         else
+            local current_time=$(date +%s)
+            local elapsed=$((current_time - start_time))
+            if [[ $elapsed -gt $timeout_seconds ]]; then
+                error "Timeout waiting for workflow '$workflow_name' after $TIMEOUT_MINUTES minutes"
+                error "View run details: https://github.com/$REPO_OWNER/$REPO_NAME/actions/runs/$run_id"
+                return 1
+            fi
+
             consecutive_failures=$((consecutive_failures + 1))
             if [[ $consecutive_failures -ge $max_consecutive_failures ]]; then
                 error "Failed to get status for workflow run $run_id after $max_consecutive_failures consecutive attempts"
