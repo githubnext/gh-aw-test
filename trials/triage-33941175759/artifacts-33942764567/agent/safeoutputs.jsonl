@@ -1,0 +1,1 @@
+{"alternatives":"Continue without calling the tool.","reason":"The tool is intentionally unavailable for this E2E test.","tool":"hypothetical-unavailable-tool","type":"missing_tool"}

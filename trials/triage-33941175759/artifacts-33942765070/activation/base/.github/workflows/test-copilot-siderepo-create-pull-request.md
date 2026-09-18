@@ -1,0 +1,90 @@
+---
+on:
+  workflow_dispatch:
+
+permissions:
+  issues: read
+  pull-requests: read
+  actions: read
+  contents: read
+  discussions: read
+  copilot-requests: write
+
+engine: 
+  id: copilot
+
+tools:
+  github:
+    # The GitHub tools must be authorized to read across-repo 
+    github-token: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
+
+checkout:
+  - repository: githubnext/gh-aw-side-repo
+    path: gh-aw-side-repo
+    token: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
+    fetch: ["*"]      # fetch all open PR refs after checkout
+    fetch-depth: 0               # fetch full history to ensure we can see all commits and PR details
+
+safe-outputs:
+  create-pull-request:
+    title-prefix: "[copilot-test-single-pr] "
+    labels: [copilot, automation, bot]
+    target-repo: 'githubnext/gh-aw-side-repo'
+    allowed-repos: ['githubnext/gh-aw-side-repo']
+    github-token: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
+    samples:
+      - title: "Multi-commit test from Copilot"
+        body: "This pull request was created by Copilot in the side repository to test multi-commit functionality."
+        branch: "gh-aw-sample-copilot-siderepo-multi-commit"
+        patch: |
+          diff --git a/README-test.md b/README-test.md
+          new file mode 100644
+          --- /dev/null
+          +++ b/README-test.md
+          @@ -0,0 +1,3 @@
+          +# Test Project (Side Repo)
+          +
+          +This is a test project created by Copilot in the side repository.
+---
+
+# Test Copilot Create Pull Request (Side Repo)
+
+This test workflow specifically tests multi-commit functionality in create-pull-request in the side repository.
+
+**IMPORTANT: Create multiple separate commits for this test case**
+
+1. **First commit**: Create a file "README-test.md" with content:
+   ```markdown
+   # Test Project
+   
+   This is a test project created by Copilot to test multi-commit pull requests.
+   
+   Created at: {{ current timestamp }}
+   ```
+
+2. **Second commit**: Create a JavaScript script "test-script.js" with:
+   ```javascript
+   #!/usr/bin/env node
+   function hello() {
+       console.log("Hello from Copilot multi-commit test!");
+   }
+   
+   if (require.main === module) {
+       hello();
+   }
+   ```
+
+3. **Third commit**: Create a configuration file "config.json" with:
+   ```json
+   {
+       "test": true,
+       "engine": "copilot",
+       "purpose": "multi-commit-test",
+       "repository": "githubnext/gh-aw-side-repo",
+       "timestamp": "{{ current timestamp }}"
+   }
+   ```
+
+Create a pull request in the repository githubnext/gh-aw-side-repo with title "[copilot-test] Multi-Commit PR Test" targeting the main branch.
+
+Make sure all three commits are separate and properly attributed. Include a summary of all changes in the PR description.

@@ -1,0 +1,1 @@
+{"items":[{"type":"create_pull_request","body":"This pull request was created by Copilot using a depth-1 sparse checkout of src/ and docs/ in the side repository.","branch":"gh-aw-sample-copilot-siderepo-sparse-pr","title":"Shallow sparse-checkout PR test from Copilot"}],"errors":[]}

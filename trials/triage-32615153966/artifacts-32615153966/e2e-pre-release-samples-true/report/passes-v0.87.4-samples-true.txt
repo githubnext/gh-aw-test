@@ -1,0 +1,97 @@
+test-copilot-add-comment
+test-copilot-assign-to-user
+test-copilot-update-issue
+test-copilot-close-discussion
+test-copilot-add-discussion-comment
+test-copilot-remove-labels
+test-copilot-unassign-from-user
+test-copilot-close-issue
+test-copilot-add-labels
+test-copilot-update-discussion
+test-copilot-mcp-code-quality
+test-copilot-create-discussion
+test-copilot-update-issue
+test-claude-create-issue
+test-copilot-close-discussion
+test-copilot-add-discussion-comment
+test-copilot-skills-frontmatter
+test-copilot-assign-to-user
+test-copilot-add-comment
+test-copilot-remove-labels
+test-copilot-unassign-from-user
+test-copilot-close-issue
+test-copilot-update-discussion
+test-copilot-add-labels
+test-copilot-custom-safe-outputs
+test-copilot-create-check-run
+test-copilot-create-repository-code-scanning-alert
+test-copilot-create-pull-request
+test-codex-create-issue
+test-copilot-gh-steps
+test-copilot-create-issue
+test-copilot-create-two-pull-requests
+test-copilot-restore-memory-custom-job
+test-copilot-mcp
+test-copilot-submit-pull-request-review
+test-copilot-assign-milestone
+test-copilot-set-issue-type
+test-copilot-hide-comment 32619051864
+test-copilot-update-pull-request
+test-copilot-reply-to-pull-request-review-comment 32619055212
+test-copilot-push-to-pull-request-branch-using-slash-command
+test-copilot-command
+test-copilot-create-pull-request-review-comment
+test-copilot-mark-pull-request-as-ready-for-review
+test-copilot-close-pull-request
+test-copilot-add-reviewer
+test-copilot-link-sub-issue 32619050563
+test-copilot-resolve-pull-request-review-thread 32619054426
+test-copilot-submit-pull-request-review
+test-copilot-issue-intents
+test-copilot-assign-milestone
+test-copilot-set-issue-type
+test-copilot-hide-comment
+test-copilot-reply-to-pull-request-review-comment
+test-copilot-update-pull-request
+test-copilot-command
+test-copilot-push-to-pull-request-branch-using-slash-command
+test-copilot-create-pull-request-review-comment
+test-copilot-mark-pull-request-as-ready-for-review
+test-copilot-close-pull-request
+test-copilot-add-reviewer
+test-copilot-set-issue-field-builtin-rejection
+test-copilot-set-issue-field
+test-copilot-assign-to-agent
+test-copilot-inline-sub-agents
+test-copilot-network-isolation
+test-copilot-link-sub-issue
+test-copilot-submit-pull-request-review-locked
+test-copilot-resolve-pull-request-review-thread
+test-copilot-nosandbox-command
+test-copilot-nosandbox-push-to-pull-request-branch
+test-copilot-nosandbox-update-issue
+test-copilot-nosandbox-add-discussion-comment
+test-copilot-nosandbox-create-pull-request-review-comment
+test-copilot-nosandbox-add-comment
+test-copilot-nosandbox-add-labels
+test-copilot-nosandbox-command
+test-copilot-nosandbox-push-to-pull-request-branch
+test-copilot-nosandbox-update-issue
+test-copilot-nosandbox-add-discussion-comment
+test-copilot-nosandbox-create-pull-request-review-comment
+test-copilot-nosandbox-add-comment
+test-copilot-nosandbox-add-labels
+test-copilot-siderepo-add-labels 32620344853
+test-copilot-siderepo-link-sub-issue 32620345765
+test-copilot-siderepo-update-issue 32620344910
+test-copilot-siderepo-add-discussion-comment 32620345247
+test-copilot-siderepo-create-pull-request-review-comment 32620346546
+test-copilot-siderepo-add-comment 32620344771
+test-copilot-siderepo-mcp
+test-copilot-siderepo-add-labels
+test-copilot-siderepo-create-two-pull-requests
+test-copilot-siderepo-link-sub-issue
+test-copilot-siderepo-update-issue
+test-copilot-siderepo-add-discussion-comment
+test-copilot-siderepo-create-pull-request-review-comment
+test-copilot-siderepo-add-comment

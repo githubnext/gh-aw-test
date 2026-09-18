@@ -1,0 +1,14 @@
+{
+  "timestamp": "2026-08-27T05:16:03.931Z",
+  "status": "failure",
+  "errorCode": "E099",
+  "message": "1 safe output(s) failed:\n  - call_workflow: Workflow name is empty",
+  "workflow": "Test Copilot Call Workflow",
+  "run_id": "33041830113",
+  "failures": [
+    {
+      "type": "call_workflow",
+      "error": "Workflow name is empty"
+    }
+  ]
+}

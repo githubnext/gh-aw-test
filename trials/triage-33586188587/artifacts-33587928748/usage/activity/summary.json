@@ -1,0 +1,10 @@
+{
+  "schema": "usage-activity-summary/v1",
+  "working_set": {
+    "measurement_state": "unavailable",
+    "cumulative_input_tokens": 0,
+    "peak_input_tokens": 0,
+    "rebuild_excess_tokens": 0,
+    "invocations": 0
+  }
+}

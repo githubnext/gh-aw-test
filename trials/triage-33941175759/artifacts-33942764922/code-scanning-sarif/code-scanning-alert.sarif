@@ -1,0 +1,37 @@
+{
+  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "GitHub Agentic Workflows Security Scanner",
+          "version": "1.0.0",
+          "informationUri": "https://github.com/github/gh-aw"
+        }
+      },
+      "results": [
+        {
+          "ruleId": "workflow-security-finding-1",
+          "message": {
+            "text": "Copilot (No Sandbox) wants security review. Security remains critical even without sandbox protection. Comprehensive security reviews help maintain code integrity and protect against threats, ensuring our systems remain trustworthy and resilient."
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "ERROR_HANDLING_ASSESSMENT.md"
+                },
+                "region": {
+                  "startLine": 30,
+                  "startColumn": 1
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

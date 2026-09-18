@@ -1,0 +1,290 @@
+ISSUE #11389: Suggested test: copilot/approve-workflow-run-comment (Safe Output: approve-workflow-run)
+  URL: https://github.com/githubnext/gh-aw-test/issues/11389
+  PRs: ['54504']
+  Motivation excerpt:
+    github/gh-aw#54504 — Added comment support to the `approve-workflow-run` safe output: after approving a pending workflow run, it now posts a comment on each associated pull request (with the run's HTML URL and standard footer), controlled by a new `comment` config field (default `true`). Least-privilege permissions now request `pull-requests: write` only when `comment` is enabled.
+    There is currently no `test-*-approve-workflow-run*.md` file in this repo, so neither the base behaviour nor this new `comment` field has e2e coverage.
+------------------------------------------------------------
+ISSUE #11367: Suggested test: copilot/push-to-pull-request-branch-head-only-bundle (Safe Output: push-to-pull-request-branch)
+  URL: https://github.com/githubnext/gh-aw-test/issues/11367
+  PRs: ['51833', '50740']
+  Motivation excerpt:
+    github/gh-aw#51833 (fixes github/gh-aw#50740) — `push_to_pull_request_branch` failed when a filtered git bundle advertised only `HEAD` (no `refs/heads/<branch>` entry), leaving valid agent changes unapplied. The fix adds bundle-heads inspection and fallback to a validated `HEAD` SHA.
+------------------------------------------------------------
+ISSUE #11365: Suggested test: copilot/comment-memory-config (Safe Output: add-comment)
+  URL: https://github.com/githubnext/gh-aw-test/issues/11365
+  PRs: ['51622']
+  Motivation excerpt:
+    Link to the gh-aw PR: github/gh-aw#51622 — expanded unit-test coverage for `comment-memory` map-form config fields (`max`, `memory-id`, `target`, `target-repo`, `allowed-repos`, `footer`), which are parsed by `parseCommentMemoryConfigValue`. These fields are only covered by Go unit tests today; there is no E2E workflow exercising `comment-memory` at all.
+------------------------------------------------------------
+ISSUE #11354: Suggested test: copilot/create-pull-request-with-checkout-step (Safe Output: create-pull-request)
+  URL: https://github.com/githubnext/gh-aw-test/issues/11354
+  PRs: ['50907']
+  Motivation excerpt:
+    Link to the gh-aw PR: github/gh-aw#50907 — fixed a bug where declaring `actions/checkout` in `safe-outputs.steps` caused the compiler to unconditionally inject `contents: read`, downgrading a handler-derived `contents: write` (from `create-pull-request`), which broke `git push`/branch creation with 403s.
+------------------------------------------------------------
+ISSUE #11353: Suggested test: copilot/add-labels-on-pull-request (Safe Output: add-labels)
+  URL: https://github.com/githubnext/gh-aw-test/issues/11353
+  PRs: ['50910']
+  Motivation excerpt:
+    Link to the gh-aw PR: github/gh-aw#50910 — add_labels intent path unconditionally called the `updateIssue` GraphQL mutation, which rejects PR node IDs; fixed by routing PR targets through `updatePullRequest`.
+------------------------------------------------------------
+ISSUE #11102: Suggested test: copilot/report-failed-jobs-config (Safe Output: report-failed-jobs: false)
+  URL: https://github.com/githubnext/gh-aw-test/issues/11102
+  PRs: ['50076']
+  Motivation excerpt:
+    github/gh-aw#50076 — safe-output-integrator found two `SafeOutputsConfig` types with no fixture coverage: `data` and `report-failed-jobs`. New Go unit tests were added upstream (`compiler_safe_outputs_config_test.go`), but there is no live E2E workflow exercising either in `gh-aw-test`.
+------------------------------------------------------------
+ISSUE #10906: Suggested test: copilot/pull-request-target-ready-for-review (Safe Output: add-comment)
+  URL: https://github.com/githubnext/gh-aw-test/issues/10906
+  PRs: ['49865']
+  Motivation excerpt:
+    github/gh-aw#49865 — `pull_request_target.types` previously rejected the `ready_for_review` activity type, even though it's valid for `pull_request_target` events (e.g. converting a draft PR to ready). Schema now allows `[opened, ready_for_review, ...]`.
+------------------------------------------------------------
+ISSUE #10905: Suggested test: copilot/siderepo-push-to-pull-request-branch-wildcard-repo (Safe Output: push_to_pull_request_branch)
+  URL: https://github.com/githubnext/gh-aw-test/issues/10905
+  PRs: ['49813']
+  Motivation excerpt:
+    github/gh-aw#49813 — `push_to_pull_request_branch` gained an explicit `repo` (`owner/repo`) input for disambiguating wildcard (`target: "*"`) targets in multi-repo workflows, since branch resolution previously failed when the PR branch existed only in a side checkout.
+------------------------------------------------------------
+ISSUE #10716: Suggested test: copilot/add-labels-pull-requests-permission-opt-out (Safe Output: add-labels)
+  URL: https://github.com/githubnext/gh-aw-test/issues/10716
+  PRs: ['49477']
+  Motivation excerpt:
+    github/gh-aw#49477 — `safe-outputs.add-labels` gained `issues`/`pull-requests` boolean toggles so a workflow can opt out of `pull-requests: write` (e.g. `add-labels: { pull-requests: false }`), useful for least-privilege GitHub App installs that only grant `issues: write`. No existing test compiles or exercises this opt-out; `test-copilot-add-labels.md` uses default (both-scopes) behavior.
+------------------------------------------------------------
+ISSUE #10715: Suggested test: copilot/dismiss-pull-request-review-bot-author (Safe Output: dismiss-pull-request-review)
+  URL: https://github.com/githubnext/gh-aw-test/issues/10715
+  PRs: ['49648']
+  Motivation excerpt:
+    github/gh-aw#49648 — `dismiss_pull_request_review.cjs` now exempts bot accounts (`reviewAuthor.endsWith("[bot]")`) from the author-match guard, allowing a workflow to dismiss a review it authored as `github-actions[bot]` (previously rejected with "review author must match dismisser"). No existing test exercises `dismiss-pull-request-review` at all.
+------------------------------------------------------------
+ISSUE #10717: Suggested test: copilot/resolve-pull-request-review-thread-stale-noop (Safe Output: resolve-pull-request-review-thread)
+  URL: https://github.com/githubnext/gh-aw-test/issues/10717
+  PRs: ['49648']
+  Motivation excerpt:
+    github/gh-aw#49648 — `resolve_pull_request_review_thread.cjs` now treats stale/invalid thread IDs and already-resolved threads as successful no-ops (`{ success: true, skipped: true }`) instead of raising an error, so `resolve-pull-request-review-thread` no longer fails a job when the target thread was resolved/deleted between agent decision and safe-output execution. The existing `test-copilot-resolve-pull-request-review-thread.md` only exercises the happy path (a valid, unresolved thread) driven by `workflow_dispatch` inputs.
+------------------------------------------------------------
+ISSUE #10528: Suggested test: copilot/dispatch-workflow-ref-override (Safe Output: dispatch-workflow)
+  URL: https://github.com/githubnext/gh-aw-test/issues/10528
+  PRs: ['49408']
+  Motivation excerpt:
+    github/gh-aw#49408 — `dispatch_workflow` safe output now accepts a per-call `ref` field on the payload (`DispatchWorkflowOutput.ref`), which takes highest priority over configured `target-ref`, `GITHUB_HEAD_REF`, and `context.ref`. Branch names are normalized to `refs/heads/<name>`; full refs are passed through as-is.
+------------------------------------------------------------
+ISSUE #10527: Suggested test: copilot/create-pull-request-auto-merge-strategy (Safe Output: create-pull-request)
+  URL: https://github.com/githubnext/gh-aw-test/issues/10527
+  PRs: ['49412', '49377']
+  Motivation excerpt:
+    github/gh-aw#49412 — `safe-outputs.create-pull-request.auto-merge` now accepts explicit merge strategies (`squash`, `merge`, `rebase`) in addition to the existing boolean, mapping to GraphQL `PullRequestMergeMethod` for `enablePullRequestAutoMerge`. Fixes github/gh-aw#49377.
+------------------------------------------------------------
+ISSUE #10338: Suggested test: copilot/dispatch-workflow-yaml-extension (Safe Output: dispatch-workflow)
+  URL: https://github.com/githubnext/gh-aw-test/issues/10338
+  PRs: ['49230']
+  Motivation excerpt:
+    Link to the gh-aw PR: github/gh-aw#49230 — `findWorkflowFile` (used by `dispatch-workflow` and `call-workflow` validation) previously only checked `.yml`, silently failing to resolve target workflows defined as `.yaml`. Now both extensions are checked.
+------------------------------------------------------------
+ISSUE #10337: Suggested test: copilot/per-output-github-app-override (Safe Output: add-comment)
+  URL: https://github.com/githubnext/gh-aw-test/issues/10337
+  PRs: ['49226']
+  Motivation excerpt:
+    Link to the gh-aw PR: github/gh-aw#49226 — allows configuring a distinct GitHub App per safe-output handler in `safe-outputs`, instead of one app for the whole workflow.
+------------------------------------------------------------
+ISSUE #9966: Suggested test: copilot/submit-pull-request-review-commit-id (Safe Output: submit-pull-request-review)
+  URL: https://github.com/githubnext/gh-aw-test/issues/9966
+  PRs: ['48738']
+  Motivation excerpt:
+    Link to the gh-aw PR: github/gh-aw#48738 — feat: add `commit-id` config option to pin review attribution to the reviewed commit
+    Under `workflow_run` triggers the safe-outputs step runs after the agent, so a new commit may land during the agent's run, causing the review to be attributed to the wrong commit SHA. The new `commit-id` field on `submit-pull-request-review` pins attribution to the intended commit.
+------------------------------------------------------------
+ISSUE #9782: Suggested test: copilot/dispatch-workflow-single-target-inference (Safe Output: dispatch_workflow)
+  URL: https://github.com/githubnext/gh-aw-test/issues/9782
+  PRs: ['48317']
+  Motivation excerpt:
+    Link to the gh-aw PR: github/gh-aw#48317 — Restore backward compatibility for single-target `dispatch_workflow` safe outputs
+    When a workflow configures exactly one `dispatch_workflow.workflows` entry, an agent can omit `workflow_name` from the safe-output item and gh-aw should infer it automatically. PR #48317 fixed a regression where this previously-valid omission was rejected. No regression test exists.
+------------------------------------------------------------
+ISSUE #9241: Suggested test: copilot/create-pull-request-with-labels (Safe Output: create-pull-request)
+  URL: https://github.com/githubnext/gh-aw-test/issues/9241
+  PRs: ['48100']
+  Motivation excerpt:
+    Link to the gh-aw PR: github/gh-aw#48100 — Fix `mcp-cli` per-field stdin mode: when an agent piped a full JSON payload with `--body .`, the entire JSON string was assigned as the field value instead of extracting the named field. This affected `create_pull_request` (which has an `array`-typed `labels` field, triggering JSON mode).
+------------------------------------------------------------
+ISSUE #9063: Suggested test: copilot/add-discussion-comment-dispatch (Safe Output: add-comment)
+  URL: https://github.com/githubnext/gh-aw-test/issues/9063
+  PRs: ['47722']
+  Motivation excerpt:
+    Link to the gh-aw PR: github/gh-aw#47722 — fix `add_comment` failures for discussion targeting and `workflow_dispatch` PR context.
+    The fix resolved two root causes: (1) `discussions: true` was absent from the `add-comment` config, causing the token to lack `discussions:write`; (2) the agent was using the wrong context when triggered via `workflow_dispatch` to post a comment on a discussion. The existing `test-copilot-add-discussion-comment` test only uses a `discussion:` trigger, so the `workflow_dispatch` + explicit discussion number path is untested.
+------------------------------------------------------------
+ISSUE #8653: Suggested test: copilot/submit-pull-request-review-self-authored-fallback (Safe Output: submit-pull-request-review)
+  URL: https://github.com/githubnext/gh-aw-test/issues/8653
+  PRs: ['47400']
+  Motivation excerpt:
+    Link to the gh-aw PR: github/gh-aw#47400 — fix: downgrade REQUEST_CHANGES→COMMENT on self-authored PRs in safe-outputs PR review
+    When the reviewing identity matches the PR author, GitHub rejects `REQUEST_CHANGES` with 422 "Can not request changes on your own pull request". The fix ensures reviewer workflows fall back to `COMMENT` in this case. Previously the fallback was bypassed when another 422 ("Line could not be resolved") occurred first. There is no regression test for this scenario.
+------------------------------------------------------------
+ISSUE #8652: Suggested test: copilot/submit-pull-request-review-suggestion-syntax (Safe Output: submit-pull-request-review)
+  URL: https://github.com/githubnext/gh-aw-test/issues/8652
+  PRs: ['47508']
+  Motivation excerpt:
+    Link to the gh-aw PR: github/gh-aw#47508 — feat: use GitHub suggestion syntax in PR reviewer comments
+    The PR review safe-output now supports emitting code fixes in GitHub suggestion syntax (` ``` suggestion ``` ` blocks) instead of collapsed `<details>` blocks. There is no test covering this new output format.
+------------------------------------------------------------
+ISSUE #8479: Suggested test: copilot/close-issue-state-reason-list (Safe Output: close-issue)
+  URL: https://github.com/githubnext/gh-aw-test/issues/8479
+  PRs: ['47045']
+  Motivation excerpt:
+    Link to the gh-aw PR: github/gh-aw#47045 — Allow close_issue agents to choose state-reason at runtime
+    Previously `state-reason` in the `close-issue` safe-output config was scalar-only; the agent could not choose at runtime. This PR adds two new config modes: omitted (agent picks from `completed`, `not_planned`, `duplicate`) and list form (agent picks from a declared subset). No E2E test covers the list-form config or the omitted/agent-choice path.
+------------------------------------------------------------
+ISSUE #8478: Suggested test: copilot/assign-to-agent-with-config (Safe Output: assign-to-agent)
+  URL: https://github.com/githubnext/gh-aw-test/issues/8478
+  PRs: ['47047']
+  Motivation excerpt:
+    Link to the gh-aw PR: github/gh-aw#47047 — fix: send agent_assignment in assignAgentToIssue REST payload
+    Before this fix, `assign-to-agent` silently dropped `model`, `customInstructions`, `baseBranch`, and `pullRequestRepoSlug` fields — the agent was always assigned with a bare payload. The fix wires these into the API request. There is currently no E2E test that exercises any of these optional config fields.
+------------------------------------------------------------
+ISSUE #8302: Suggested test: copilot/close-issue-intents (Safe Output: close-issue)
+  URL: https://github.com/githubnext/gh-aw-test/issues/8302
+  PRs: ['46850']
+  Motivation excerpt:
+    Link to the gh-aw PR: github/gh-aw#46850 — fix: nest issue-intent metadata correctly in close_issue and assign_to_agent payloads
+    This bug fix changed how intent metadata (rationale, confidence, suggest) is nested in close_issue payloads — from top-level spread (silently ignored by GitHub API) to nested inside the state object. There is currently no regression test exercising close_issue under issue-intents mode.
+------------------------------------------------------------
+ISSUE #8128: Suggested test: copilot/add-labels-issue-intents (Safe Output: add-labels)
+  URL: https://github.com/githubnext/gh-aw-test/issues/8128
+  PRs: ['46589']
+  Motivation excerpt:
+    Link to the gh-aw PR: github/gh-aw#46589 — Fix `add_labels` strict-mode narrowing for CJS lint/typecheck
+    The fix corrects a TypeScript narrowing bug in the `add_labels` action when `issue-intents: true` is set and the agent emits structured label objects (with `rationale` and `confidence`). The only existing `add-labels` test (`test-copilot-add-labels.md`) uses plain string labels without `issue-intents`, so the strict structured-label path has no E2E regression coverage.
+------------------------------------------------------------
+ISSUE #7780: Suggested test: copilot/wire-api-auto-configure (Safe Output: create_issue)
+  URL: https://github.com/githubnext/gh-aw-test/issues/7780
+  PRs: ['46156']
+  Motivation excerpt:
+    Link to the gh-aw PR: github/gh-aw#46156 — auto-configure COPILOT_PROVIDER_WIRE_API from model catalog
+    Models like `gpt-5-mini` and `mai-code-1-flash-picker` require `wire_api: responses` (OpenAI Responses API). Before this fix, the CLI defaulted to `completions`, causing HTTP 400 failures. A model catalog was added and a build-time case-statement auto-sets `COPILOT_PROVIDER_WIRE_API=responses` for affected models before Copilot CLI launches.
+------------------------------------------------------------
+ISSUE #7606: Suggested test: copilot/issue-intent-opt-out (Safe Output: close-issue)
+  URL: https://github.com/githubnext/gh-aw-test/issues/7606
+  PRs: ['46014']
+  Motivation excerpt:
+    Link to the gh-aw PR or issue: github/gh-aw#46014 — require issue-intent metadata for close/assignment tools by default, with per-tool opt-out
+------------------------------------------------------------
+ISSUE #7607: Suggested test: copilot/sandbox-exclude-env (Safe Output: add-comment)
+  URL: https://github.com/githubnext/gh-aw-test/issues/7607
+  PRs: ['46076']
+  Motivation excerpt:
+    Link to the gh-aw PR or issue: github/gh-aw#46076 — fix: exclude job-output credential env vars from agent sandbox (`--exclude-env`)
+------------------------------------------------------------
+ISSUE #7605: Suggested test: copilot/outcome-status-lifecycle (Safe Output: add-comment)
+  URL: https://github.com/githubnext/gh-aw-test/issues/7605
+  PRs: ['46039']
+  Motivation excerpt:
+    Link to the gh-aw PR or issue: github/gh-aw#46039 — add `OutcomeStatusLifecycle` and `OutcomeStatusLifecycleClose` as first-class outcome status constants
+------------------------------------------------------------
+ISSUE #7434: Suggested test: copilot/update-project (Safe Output: update-project)
+  URL: https://github.com/githubnext/gh-aw-test/issues/7434
+  PRs: ['45825']
+  Motivation excerpt:
+    Link to the gh-aw PR: github/gh-aw#45825 — fix(update_project): parse string-typed `fields` instead of iterating over characters
+    A bug was fixed where `Object.entries()` iterated over character indices when `fields` was a JSON-encoded string rather than a plain object, polluting project boards with junk fields. There is no regression test for `update_project` safe output at all.
+------------------------------------------------------------
+ISSUE #7258: Suggested test: copilot/suppress-spurious-report-incomplete (Safe Output: add-comment)
+  URL: https://github.com/githubnext/gh-aw-test/issues/7258
+  PRs: ['45599']
+  Motivation excerpt:
+    Link to the gh-aw PR: github/gh-aw#45599 — Suppress spurious `report_incomplete` failures after successful Copilot task output
+    A bug caused workflows to be marked incomplete even when Copilot completed its task and emitted safe outputs — if `task_complete` was not separately registered. The fix adds actuation-tracking to prevent this false negative.
+------------------------------------------------------------
+ISSUE #7084: Suggested test: copilot/create-pull-request-issues-disabled (Safe Output: create-pull-request)
+  URL: https://github.com/githubnext/gh-aw-test/issues/7084
+  PRs: ['45359']
+  Motivation excerpt:
+    Link to gh-aw PR: github/gh-aw#45359 — fix(create_pull_request): redirect fallback issue to alternate repo when target has issues disabled (410).
+    When a cross-repo PR workflow targets a repo with issues disabled, `createFallbackIssue` received a 410 Gone and hard-failed the entire safe-output step. The fix redirects the fallback to `GH_AW_FAILURE_ISSUE_REPO` or `GITHUB_REPOSITORY`. No regression test exists for this code path.
+------------------------------------------------------------
+ISSUE #6909: Suggested test: copilot/mcp-issue-dependency-tools (Safe Output: add-comment)
+  URL: https://github.com/githubnext/gh-aw-test/issues/6909
+  PRs: ['45082']
+  Motivation excerpt:
+    Link to the gh-aw PR: github/gh-aw#45082 — Update GitHub MCP toolsets mapping: add `issue_dependency_read` and `issue_dependency_write` to the `issues` toolset.
+------------------------------------------------------------
+ISSUE #6560: Suggested test: copilot/replace-label (Safe Output: replace-label)
+  URL: https://github.com/githubnext/gh-aw-test/issues/6560
+  PRs: ['44798']
+  Motivation excerpt:
+    Link to the gh-aw PR: github/gh-aw#44798 — Add dedicated outcome evaluators for `replace_label` and close operations; fill spec/compliance gaps
+------------------------------------------------------------
+ISSUE #6209: Suggested test: copilot/checkout-safe-output-github-app (Safe Output: push-to-pull-request-branch)
+  URL: https://github.com/githubnext/gh-aw-test/issues/6209
+  PRs: ['44444']
+  Motivation excerpt:
+    Link to the gh-aw PR: github/gh-aw#44444 — Add `checkout.safe-output-github-app` support for safe_outputs checkout auth
+    PR #44444 added a new `checkout.safe-output-github-app` frontmatter field that allows per-checkout GitHub App credentials for safe_outputs git operations in cross-repo PR/push flows. There is no E2E test exercising this auth path.
+------------------------------------------------------------
+ISSUE #6208: test: add test-copilot-model-alias-small (Safe Output: Unknown)
+  URL: https://github.com/githubnext/gh-aw-test/issues/6208
+  PRs: ['44288', '44288']
+  Motivation excerpt:
+    Adds a regression gate for [github/gh-aw#44288](https://github.com/github/gh-aw/pull/44288), which fixed the Copilot CLI rejecting the `small` model meta-alias as unsupported. The `small` alias resolves through `mini` to `gpt-5-mini` / `haiku` at runtime, but the CLI was previously failing before that resolution could occur.
+------------------------------------------------------------
+ISSUE #5969: feat: add test-copilot-update-pull-request-required-labels (Safe Output: Unknown)
+  URL: https://github.com/githubnext/gh-aw-test/issues/5969
+  PRs: ['44168']
+  Motivation excerpt:
+------------------------------------------------------------
+ISSUE #5620: Suggested test: copilot/dismiss-pull-request-review (Safe Output: dismiss-pull-request-review)
+  URL: https://github.com/githubnext/gh-aw-test/issues/5620
+  PRs: ['43457']
+  Motivation excerpt:
+    Link to the gh-aw PR: github/gh-aw#43457 — feat: dismiss pr reviews when all threads are resolved in pr-sous-chef
+    This PR ships `dismiss_pull_request_review` as a safe output used in `pr-sous-chef`. There is currently no dedicated E2E test exercising this safe output directly. The same PR also corrected an incorrect actor guard that was preventing `workflow_dispatch`-triggered runs from dismissing `github-actions[bot]` reviews — a regression guard for that fix is missing.
+------------------------------------------------------------
+ISSUE #5621: Suggested test: copilot/create-pull-request-allowed-files (Safe Output: create-pull-request)
+  URL: https://github.com/githubnext/gh-aw-test/issues/5621
+  PRs: ['43496']
+  Motivation excerpt:
+    Link to the gh-aw PR: github/gh-aw#43496 — daily-yamllint-fixer: remove allowed-files restriction from safe-outputs
+    This PR fixed a bug where `allowed-files` globs on `create-pull-request` incorrectly rejected valid file paths (e.g. `header.go`, `*_test.go`). There is an open suggestion for `push-to-pull-request-branch-allowed-files` (#4417), but no test verifies `allowed-files` on `create-pull-request` itself.
+------------------------------------------------------------
+ISSUE #5448: Suggested test: copilot/maintenance-disabled-jobs (Safe Output: noop)
+  URL: https://github.com/githubnext/gh-aw-test/issues/5448
+  PRs: ['43300']
+  Motivation excerpt:
+    Link to the gh-aw PR: github/gh-aw#43300 — Add `maintenance.disabled_jobs` to selectively omit agentics-maintenance jobs and permissions
+    The compiler gained support for a `maintenance.disabled_jobs` key in `aw.json` that lets repos omit specific generated maintenance jobs (e.g. `close-expired-entities`, `apply_safe_outputs`). When all label-triggered jobs are disabled the `issues:labeled` trigger is also suppressed. There is no E2E test verifying that a workflow compiled from a source that declares `maintenance.disabled_jobs` actually omits those jobs at runtime.
+------------------------------------------------------------
+ISSUE #5447: Suggested test: copilot/close-issue-duplicate-of (Safe Output: close-issue)
+  URL: https://github.com/githubnext/gh-aw-test/issues/5447
+  PRs: ['43152', '43152']
+  Motivation excerpt:
+    Link to the gh-aw PR: github/gh-aw#43152 — feat(close-issue): add `duplicate_of` for native GitHub duplicate marking
+    The `close-issue` safe output gained a new optional `duplicate_of` field that calls the GitHub `markAsDuplicate` GraphQL mutation to create the native timeline relationship between two issues. There is no E2E test covering this new field.
+------------------------------------------------------------
+ISSUE #5274: Suggested test: copilot/missing-tool (Safe Output: missing-tool)
+  URL: https://github.com/githubnext/gh-aw-test/issues/5274
+  PRs: ['43118']
+  Motivation excerpt:
+    Link to gh-aw PR: github/gh-aw#43118 — fix(designer): add missing safe output types and frontmatter fields to designer SKILL.md
+    `missing-tool` is one of three auto-enabled system safe-output types documented in that PR alongside `missing-data` and `report-incomplete`. The latter two now have tests (`test-copilot-report-incomplete.md` was already present; `test-copilot-missing-data.md` was added in a companion PR). `missing-tool` has no coverage.
+------------------------------------------------------------
+ISSUE #5273: feat: add test-copilot-missing-data (Safe Output: Unknown)
+  URL: https://github.com/githubnext/gh-aw-test/issues/5273
+  PRs: ['43118']
+  Motivation excerpt:
+    github/gh-aw#43118 added `missing-data`, `missing-tool`, and `report-incomplete` to the designer SKILL.md as auto-enabled system safe-output types. `report-incomplete` already has a dedicated test (`test-copilot-report-incomplete.md`) and `noop` has one too, but `missing-data` has no coverage.
+------------------------------------------------------------
+ISSUE #4929: Suggested test: copilot/create-pull-request-dynamic-assignee (Safe Output: create-pull-request)
+  URL: https://github.com/githubnext/gh-aw-test/issues/4929
+  PRs: ['42621']
+  Motivation excerpt:
+    Link to the gh-aw PR: github/gh-aw#42621 — feat: support runtime/dynamic reviewers, team-reviewers, and assignees in `create-pull-request`
+    `reviewers`, `team-reviewers`, and `assignees` on `create-pull-request` previously only accepted static lists. PR #42621 upgraded these fields to `TemplatableStringSlice`, enabling `${{ }}` expression passthrough. It also fixed a bug where `assignees` was only applied to fallback issues, not to the created PR itself. No existing test exercises expression-valued `assignees` (or `reviewers`) on the `create-pull-request` safe-output.
+------------------------------------------------------------
+ISSUE #4418: Suggested test: copilot/label-command (Safe Output: add-comment)
+  URL: https://github.com/githubnext/gh-aw-test/issues/4418
+  PRs: ['41920']
+  Motivation excerpt:
+    github/gh-aw#41920 — `Add run-again footer hints for slash and label command triggers` — adds footer rendering for `label_command` triggers and emits `GH_AW_LABEL_COMMANDS` in the compiled workflow. The `label_command` trigger type has **no E2E test** in `githubnext/gh-aw-test`; only `slash_command` is currently exercised via `test-copilot-command.md`.
+------------------------------------------------------------

@@ -1,0 +1,16 @@
+{
+  "schema": "usage-activity-summary/v1",
+  "safe_outputs": {
+    "total_items": 1,
+    "items_by_type": {
+      "upload_code_coverage": 1
+    }
+  },
+  "working_set": {
+    "measurement_state": "unavailable",
+    "cumulative_input_tokens": 0,
+    "peak_input_tokens": 0,
+    "rebuild_excess_tokens": 0,
+    "invocations": 0
+  }
+}

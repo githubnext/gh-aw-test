@@ -1,0 +1,10 @@
+{"timestamp":"2026-09-16T03:42:30.489Z","source":"response_headers","operation":"actions.getWorkflowRun","resource":"core","limit":15000,"remaining":14738,"used":262,"reset":"2026-09-16T04:16:26.000Z"}
+{"timestamp":"2026-09-16T03:42:30.736Z","source":"response_headers","operation":"repos.getContent","resource":"core","limit":15000,"remaining":14215,"used":785,"reset":"2026-09-16T04:16:26.000Z"}
+{"timestamp":"2026-09-16T03:42:30.941Z","source":"response_headers","operation":"repos.getContent","resource":"core","limit":15000,"remaining":14214,"used":786,"reset":"2026-09-16T04:16:26.000Z"}
+{"timestamp":"2026-09-16T03:43:24.539Z","source":"retry","operation":"MCP gateway health check","attempt":1,"delay_ms":500}
+{"timestamp":"2026-09-16T03:43:25.047Z","source":"retry","operation":"MCP gateway health check","attempt":2,"delay_ms":1000}
+{"timestamp":"2026-09-16T03:43:26.050Z","source":"retry","operation":"MCP gateway health check","attempt":3,"delay_ms":1000}
+{"timestamp":"2026-09-16T03:43:27.053Z","source":"retry","operation":"MCP gateway health check","attempt":4,"delay_ms":1000}
+{"timestamp":"2026-09-16T03:43:28.055Z","source":"retry","operation":"MCP gateway health check","attempt":5,"delay_ms":1000}
+{"timestamp":"2026-09-16T03:43:29.057Z","source":"retry","operation":"MCP gateway health check","attempt":6,"delay_ms":1000}
+{"timestamp":"2026-09-16T03:43:39.096Z","source":"response_headers","operation":"repos.listCollaborators","resource":"core","limit":15000,"remaining":14210,"used":790,"reset":"2026-09-16T04:16:26.000Z"}

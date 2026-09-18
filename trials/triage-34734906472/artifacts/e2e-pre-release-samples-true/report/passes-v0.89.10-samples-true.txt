@@ -1,0 +1,81 @@
+test-copilot-create-check-run
+test-copilot-create-discussion
+test-copilot-create-repository-code-scanning-alert
+test-copilot-create-issue
+test-codex-create-issue
+test-copilot-restore-memory-custom-job
+test-copilot-gh-steps
+test-claude-create-issue
+test-copilot-custom-safe-outputs
+test-copilot-mcp-code-quality
+test-copilot-create-pull-request
+test-copilot-create-two-pull-requests
+test-copilot-skills-frontmatter
+test-copilot-mcp
+test-copilot-assign-milestone
+test-copilot-create-pull-request-review-comment
+test-copilot-command
+test-copilot-submit-pull-request-review
+test-copilot-set-issue-type
+test-copilot-mark-pull-request-as-ready-for-review
+test-copilot-update-pull-request
+test-copilot-link-sub-issue 34737959709
+test-copilot-hide-comment 34737959740
+test-copilot-dismiss-pull-request-review 34737961473
+test-copilot-push-to-pull-request-branch-using-dispatch 34737962559
+test-copilot-reply-to-pull-request-review-comment 34737962929
+test-copilot-resolve-pull-request-review-thread 34737963537
+test-copilot-push-to-pull-request-branch-using-slash-command
+test-copilot-close-pull-request
+test-copilot-dispatch-workflow 34737959198
+test-copilot-add-reviewer
+test-copilot-call-workflow 34737958235
+test-copilot-assign-milestone
+test-copilot-create-pull-request-review-comment
+test-copilot-command
+test-copilot-submit-pull-request-review
+test-copilot-set-issue-type
+test-copilot-mark-pull-request-as-ready-for-review
+test-copilot-update-pull-request
+test-copilot-issue-intents
+test-copilot-set-issue-field-builtin-rejection
+test-copilot-set-issue-field
+test-copilot-inline-sub-agents
+test-copilot-network-isolation
+test-copilot-assign-to-agent
+test-copilot-hide-comment
+test-copilot-link-sub-issue
+test-copilot-dismiss-pull-request-review
+test-copilot-reply-to-pull-request-review-comment
+test-copilot-resolve-pull-request-review-thread
+test-copilot-push-to-pull-request-branch-using-dispatch
+test-copilot-push-to-pull-request-branch-using-slash-command
+test-copilot-close-pull-request
+test-copilot-dispatch-workflow
+test-copilot-add-reviewer
+test-copilot-submit-pull-request-review-locked
+test-copilot-call-workflow
+test-copilot-update-release 34738197894
+test-copilot-report-incomplete
+test-copilot-noop
+test-copilot-missing-data
+test-copilot-siderepo-create-pull-request
+test-copilot-update-release
+test-copilot-upload-code-coverage
+test-copilot-siderepo-link-sub-issue 34738477053
+test-copilot-siderepo-sparse-push-to-pull-request-branch-using-dispatch 34738478858
+test-copilot-siderepo-push-to-pull-request-branch-using-dispatch 34738479095
+test-copilot-siderepo-update-issue 34738475950
+test-copilot-siderepo-add-discussion-comment 34738476711
+test-copilot-siderepo-add-comment 34738475960
+test-copilot-siderepo-create-pull-request-review-comment 34738478544
+test-copilot-siderepo-link-sub-issue
+test-copilot-siderepo-sparse-push-to-pull-request-branch-using-dispatch
+test-copilot-siderepo-push-to-pull-request-branch-using-dispatch
+test-copilot-siderepo-update-issue
+test-copilot-siderepo-add-discussion-comment
+test-copilot-siderepo-mcp
+test-copilot-siderepo-subdir-create-pull-request
+test-copilot-siderepo-create-two-pull-requests
+test-copilot-siderepo-add-comment
+test-copilot-siderepo-create-pull-request-review-comment
