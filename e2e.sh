@@ -3472,8 +3472,8 @@ run_single_test() {
             done
             ;;
         *"update-project")
-            if ! gh secret list --repo "$REPO_OWNER/$REPO_NAME" --json name --jq '.[].name' 2>/dev/null | grep -qx 'GH_AW_PROJECT_GITHUB_TOKEN'; then
-                record_test_skip "$workflow" "requires GH_AW_PROJECT_GITHUB_TOKEN and a Projects V2 fixture; see docs/e2e-external-integrations.md"
+            if ! gh secret list --repo "$REPO_OWNER/$REPO_NAME" --json name --jq '.[].name' 2>/dev/null | grep -qx 'GH_AW_TEST_PAT'; then
+                record_test_skip "$workflow" "requires GH_AW_TEST_PAT and a Projects V2 fixture; see docs/e2e-external-integrations.md"
                 cat "$test_log" >&3
                 rm -f "$test_log"
                 return 0
