@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="597" viewBox="0 0 1200 597">
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="575" viewBox="0 0 1200 575">
 <rect width="100%" height="100%" fill="white"/>
 <style>text{font-family:ui-monospace,monospace;font-size:13px}.axis{stroke:#57606a;stroke-width:1}.grid{stroke:#d8dee4;stroke-width:1}</style>
 <text x="65" y="30" font-size="20">Major step timing: agent job (main, using samples)</text>
@@ -6,15 +6,15 @@
 <line class="grid" x1="65" y1="465.0" x2="1135" y2="465.0"/>
 <text x="8" y="470.0">0s</text>
 <line class="grid" x1="65" y1="387.0" x2="1135" y2="387.0"/>
-<text x="8" y="392.0">6s</text>
+<text x="8" y="392.0">0s</text>
 <line class="grid" x1="65" y1="309.0" x2="1135" y2="309.0"/>
-<text x="8" y="314.0">12s</text>
+<text x="8" y="314.0">0s</text>
 <line class="grid" x1="65" y1="231.0" x2="1135" y2="231.0"/>
-<text x="8" y="236.0">18s</text>
+<text x="8" y="236.0">1s</text>
 <line class="grid" x1="65" y1="153.0" x2="1135" y2="153.0"/>
-<text x="8" y="158.0">24s</text>
+<text x="8" y="158.0">1s</text>
 <line class="grid" x1="65" y1="75.0" x2="1135" y2="75.0"/>
-<text x="8" y="80.0">30s</text>
+<text x="8" y="80.0">1s</text>
 <line class="grid" x1="65.0" y1="75" x2="65.0" y2="465"/>
 <line class="grid" x1="198.8" y1="75" x2="198.8" y2="465"/>
 <line class="grid" x1="332.5" y1="75" x2="332.5" y2="465"/>
@@ -24,17 +24,14 @@
 <line class="grid" x1="867.5" y1="75" x2="867.5" y2="465"/>
 <line class="grid" x1="1001.2" y1="75" x2="1001.2" y2="465"/>
 <line class="grid" x1="1135.0" y1="75" x2="1135.0" y2="465"/>
-<polyline points="65.0,307.4 66.2,333.7 68.6,359.9 69.3,320.6 69.3,346.8 72.8,346.8 79.9,320.6 84.7,333.7 112.8,110.5 113.3,307.4 119.0,346.8 130.2,307.4 141.9,307.4 153.0,294.3 164.0,346.8 175.0,346.8 186.7,294.3 198.6,373.1 210.5,359.9 220.3,228.6 233.4,359.9 244.9,359.9 256.4,346.8 267.2,346.8 290.3,346.8 294.0,373.1 302.4,359.9 313.8,373.1 321.8,373.1 336.4,373.1 347.1,346.8 359.3,359.9 371.3,373.1 379.9,346.8 393.7,346.8 399.5,359.9 417.1,294.3 428.9,359.9 440.1,359.9 445.1,359.9 461.1,359.9 474.8,333.7 486.2,333.7 497.5,307.4 505.8,346.8 513.3,320.6 513.7,294.3 520.6,333.7 529.4,307.4 541.1,359.9 551.4,320.6 566.7,320.6 576.9,241.8 589.8,346.8 601.3,333.7 610.7,346.8 612.7,359.9 819.2,346.8 830.9,346.8 842.4,333.7 851.6,333.7 865.9,333.7 877.5,359.9 887.8,346.8 900.0,346.8 923.0,346.8 957.0,333.7 968.9,333.7 991.6,346.8 1002.7,346.8 1014.4,307.4 1025.0,281.2 1037.9,346.8 1049.3,346.8 1060.9,268.0 1072.3,307.4 1072.3,254.9 1083.1,320.6 1093.5,333.7 1097.9,333.7 1106.5,333.7 1117.2,215.5 1117.2,307.4 1129.9,333.7 1135.0,320.6" fill="none" stroke="#0969da" stroke-width="2"><title>Download container images</title></polyline>
-<line x1="65" y1="521" x2="100" y2="521" stroke="#0969da" stroke-width="3"/>
-<text x="110" y="525">Download container images</text>
 <text x="65.0" y="490" text-anchor="start">2026-06-18</text>
-<text x="198.8" y="490" text-anchor="middle">2026-06-30</text>
-<text x="332.5" y="490" text-anchor="middle">2026-07-11</text>
-<text x="466.2" y="490" text-anchor="middle">2026-07-23</text>
-<text x="600.0" y="490" text-anchor="middle">2026-08-04</text>
-<text x="733.8" y="490" text-anchor="middle">2026-08-15</text>
-<text x="867.5" y="490" text-anchor="middle">2026-08-27</text>
-<text x="1001.2" y="490" text-anchor="middle">2026-09-07</text>
-<text x="1135.0" y="490" text-anchor="end">2026-09-19</text>
+<text x="198.8" y="490" text-anchor="middle">2026-06-27</text>
+<text x="332.5" y="490" text-anchor="middle">2026-07-06</text>
+<text x="466.2" y="490" text-anchor="middle">2026-07-15</text>
+<text x="600.0" y="490" text-anchor="middle">2026-07-24</text>
+<text x="733.8" y="490" text-anchor="middle">2026-08-02</text>
+<text x="867.5" y="490" text-anchor="middle">2026-08-11</text>
+<text x="1001.2" y="490" text-anchor="middle">2026-08-21</text>
+<text x="1135.0" y="490" text-anchor="end">2026-08-30</text>
 <line class="axis" x1="65" y1="465" x2="1135" y2="465"/>
 </svg>
