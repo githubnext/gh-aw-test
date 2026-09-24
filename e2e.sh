@@ -1807,7 +1807,7 @@ validate_issue_created() {
 }
 
 validate_issue_body_contains() {
-    local title_prefix="$1"
+    local issue_title="$1"
     local expected_text="$2"
     local repo="${3:-}"
     local repo_flag=""
@@ -1815,7 +1815,7 @@ validate_issue_body_contains() {
 
     local body
     body=$(gh issue list $repo_flag --limit 10 --json title,body \
-        --jq ".[] | select(.title | startswith(\"$title_prefix\")) | .body" | head -1)
+        --jq ".[] | select(.title == \"$issue_title\") | .body" | head -1)
     if [[ "$body" == *"$expected_text"* ]]; then
         success "Issue body contains expected text: $expected_text"
         return 0
@@ -3817,7 +3817,7 @@ run_single_test() {
             fi
             ;;
         # Workflow dispatch tests - triggered with gh aw run
-        *"create-issue"|*"create-discussion"|*"create-pull-request"|*"create-two-pull-requests"|*"code-scanning-alert"|*"create-check-run"|*"mcp"*|*"safe-jobs"|*"gh-steps"|*"restore-memory-custom-job"|*"custom-safe-outputs"|*"noop"|*"report-incomplete"|*"missing-data"|*"missing-tool"|*"assign-to-agent"|*"set-issue-field"|*"set-issue-field-builtin-rejection"|*"issue-intents"|*"skills-frontmatter"|*"inline-sub-agents"|*"network-isolation"|*"upload-code-coverage"|*"repo-memory"|*"linear-create-issue"|*"jira-create-issue"|*"steer"|*"body-footer")
+        *"create-issue"|*"create-discussion"|*"create-pull-request"|*"create-two-pull-requests"|*"code-scanning-alert"|*"create-check-run"|*"mcp"*|*"safe-jobs"|*"gh-steps"|*"restore-memory-custom-job"|*"custom-safe-outputs"|*"noop"|*"report-incomplete"|*"missing-data"|*"missing-tool"|*"assign-to-agent"*|*"set-issue-field"|*"set-issue-field-builtin-rejection"|*"issue-intents"|*"skills-frontmatter"|*"inline-sub-agents"|*"network-isolation"|*"upload-code-coverage"|*"repo-memory"|*"linear-create-issue"|*"jira-create-issue"|*"steer"|*"body-footer")
             local workflow_success=false
             if trigger_workflow_dispatch_and_await_completion "$workflow"; then
                 workflow_success=true
@@ -3847,7 +3847,7 @@ run_single_test() {
                             validation_success=true
                         fi
                         if [[ "$workflow" == *"body-footer"* ]] \
-                            && ! validate_issue_body_contains "$title_prefix" "Global footer from" "$target_repo"; then
+                            && ! validate_issue_body_contains "${title_prefix}body-footer composition smoke test" "Global footer from" "$target_repo"; then
                             validation_success=false
                         fi
                         ;;
@@ -4056,7 +4056,7 @@ run_single_test() {
                                     fi
                                 fi
                                 ;;
-                            *"update-pull-request")
+                            *"update-pull-request"*)
                                 info "Creating test pull request to trigger $workflow..."
                                 local pr_body="This PR is for testing $workflow"
                                 if [[ "$workflow" == *"replace-island" ]]; then

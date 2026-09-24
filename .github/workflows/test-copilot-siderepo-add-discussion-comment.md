@@ -30,6 +30,7 @@ safe-outputs:
   add-comment:
     discussions: true
     target-repo: 'githubnext/gh-aw-side-repo'
+    target: "*"
     allowed-repos: ['githubnext/gh-aw-side-repo']
     # min: 1
     samples:

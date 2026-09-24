@@ -25,6 +25,7 @@ engine:
 
 safe-outputs:
   link-sub-issue:
+    target: "*"
     # min: 1
     samples:
       - parent_issue_number: "${{ github.event.inputs.parent_issue_number }}"

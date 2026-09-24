@@ -22,8 +22,8 @@ safe-outputs:
     target: "*"
     state-reason: duplicate
     samples:
-      - issue_number: 1
-        duplicate_of: 2
+      - issue_number: ${{ inputs.issue_number }}
+        duplicate_of: ${{ inputs.duplicate_of }}
         body: "Closing this issue as a duplicate of the canonical fixture issue."
 ---
 

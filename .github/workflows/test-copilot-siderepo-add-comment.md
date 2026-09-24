@@ -27,6 +27,7 @@ safe-outputs:
   github-token: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
   add-comment:
     target-repo: 'githubnext/gh-aw-side-repo'
+    target: "*"
     allowed-repos: ['githubnext/gh-aw-side-repo']
     # min: 1
     samples:

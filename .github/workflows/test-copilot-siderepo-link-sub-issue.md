@@ -31,6 +31,7 @@ tools:
 safe-outputs:
   link-sub-issue:
     target-repo: "githubnext/gh-aw-side-repo"
+    target: "*"
     allowed-repos: ["${{ github.repository_owner }}/gh-aw-side-repo"]
     github-token: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
     # min: 1
