@@ -138,10 +138,26 @@ The runtime-profile test intentionally uses `docker-sudo-iptables`. Removed
 `legacy-security` and `sudo` fields are not tested, and deprecated `gvisor` and
 `docker-sbx` runtime values are not introduced into the live suite.
 
+### New Capabilities
+
+- [x] repository memory — test-copilot-repo-memory
+- [x] `linear-create-issue` (experimental; skips without external fixture) — test-copilot-linear-create-issue
+- [x] `jira-create-issue` (skips without external fixture) — test-copilot-jira-create-issue
+- [x] `steer` (experimental) — test-copilot-steer
+- [x] `update-project` (skips without Projects V2 fixture) — test-copilot-update-project
+- [x] `close-issue` native duplicate reason — test-copilot-close-issue-duplicate-of
+- [x] `assign-to-agent` reasoning effort — test-copilot-assign-to-agent-reasoning-effort
+- [x] `assign-to-agent` model, base branch, and custom instructions — test-copilot-assign-to-agent-with-config
+- [x] `update-pull-request` replace-island operation — test-copilot-update-pull-request-replace-island
+- [x] global and per-handler `body-footer` — test-copilot-body-footer
+
+Provisioning for external fixtures is documented in
+[External integration E2E fixtures](docs/e2e-external-integrations.md).
+
 ### Deferred (require special infrastructure)
 
 - [ ] `create-agent-session` — requires Copilot coding agent access
-- [ ] `create-project` / `update-project` / `create-project-status-update` — requires PAT with Projects permissions
+- [ ] `create-project` / `create-project-status-update` — requires PAT with Projects permissions (`update-project` is covered above)
 - [ ] `upload-artifact` — needs a staged fixture file plus artifact-specific assertions in the harness
 - [ ] `autofix-code-scanning-alert` — requires existing code scanning alerts
 - [ ] `dispatch_repository` — experimental, requires cross-repo setup

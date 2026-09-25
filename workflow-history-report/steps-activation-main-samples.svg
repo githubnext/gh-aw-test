@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="707" viewBox="0 0 1200 707">
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="663" viewBox="0 0 1200 663">
 <rect width="100%" height="100%" fill="white"/>
 <style>text{font-family:ui-monospace,monospace;font-size:13px}.axis{stroke:#57606a;stroke-width:1}.grid{stroke:#d8dee4;stroke-width:1}</style>
 <text x="65" y="30" font-size="20">Major step timing: activation job (main, using samples)</text>
@@ -24,41 +24,33 @@
 <line class="grid" x1="867.5" y1="75" x2="867.5" y2="465"/>
 <line class="grid" x1="1001.2" y1="75" x2="1001.2" y2="465"/>
 <line class="grid" x1="1135.0" y1="75" x2="1135.0" y2="465"/>
-<polyline points="65.0,458.6 66.2,461.8 68.7,458.6 69.5,455.4 69.5,458.6 73.0,452.2 80.3,461.8 85.2,458.6 114.1,458.6 114.7,458.6 120.4,461.8 132.0,458.6 144.0,455.4 155.4,461.8 166.7,458.6 178.0,458.6 190.1,461.8 202.3,461.8 214.4,449.0 224.6,452.2 238.0,461.8 249.8,458.6 261.6,458.6 272.8,455.4 296.4,458.6 300.3,458.6 308.9,461.8 320.6,445.8 328.8,458.6 343.8,461.8 354.8,458.6 367.4,458.6 379.7,445.8 388.6,455.4 402.7,458.6 408.7,461.8 426.7,461.8 438.8,461.8 450.4,458.6 455.5,458.6 471.9,452.2 486.0,458.6 497.7,461.8 509.4,458.6 517.9,461.8 525.6,458.6 526.0,458.6 533.0,458.6 542.1,461.8 554.1,458.6 564.7,455.4 580.4,458.6 590.9,458.6 604.2,458.6 616.0,452.2 625.7,458.6 627.7,458.6 839.8,455.4 851.8,458.6 863.7,461.8 873.2,461.8 887.8,458.6 899.8,458.6 910.3,458.6 922.8,458.6 946.4,455.4 981.3,452.2 993.6,442.6 1017.0,458.6 1028.3,458.6 1040.4,455.4 1051.3,442.6 1064.5,461.8 1076.3,458.6 1088.1,461.8 1099.9,452.2 1099.9,442.6 1110.9,458.6 1121.6,423.5 1126.2,452.2 1135.0,461.8" fill="none" stroke="#0969da" stroke-width="2"><title>Checkout .github and .agents folders</title></polyline>
-<line x1="1121.6" y1="423.5" x2="1124.0" y2="445.5" stroke="#0969da" stroke-width="1"/>
-<circle cx="1124.0" cy="445.5" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R4: Checkout .github and .agents folders, samples, 13.0s</title></circle>
-<text x="1124.0" y="449.5" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R4</text>
+<polyline points="65.0,343.6 66.1,401.1 68.4,391.5 69.1,366.0 69.1,394.7 72.4,382.0 79.1,372.4 83.6,366.0 110.1,321.3 110.6,318.1 115.9,378.8 126.6,337.2 137.6,359.6 148.1,372.4 158.5,330.8 168.9,369.2 179.9,366.0 191.1,378.8 202.3,295.7 211.6,343.6 224.0,388.3 234.8,359.6 245.6,391.5 255.9,388.3 277.7,372.4 281.2,382.0 289.1,394.7 299.8,318.1 307.4,327.7 321.2,391.5 331.3,350.0 342.8,362.8 354.1,330.8 362.3,353.2 375.3,382.0 380.8,375.6 397.4,391.5 408.5,164.8 419.1,362.8 423.8,397.9 438.9,353.2 451.8,385.1 462.6,385.1 473.3,391.5 481.1,366.0 488.2,340.4 488.6,318.1 495.0,337.2 503.4,362.8 514.4,350.0 524.2,350.0 538.6,337.2 548.2,346.8 560.4,369.2 571.2,311.7 580.1,362.8 582.0,356.4 776.9,330.8 788.0,404.3 798.9,397.9 807.6,356.4 821.0,353.2 832.0,401.1 841.7,397.9 853.2,362.8 874.9,238.2 907.0,353.2 918.2,231.8 939.7,311.7 950.1,369.2 961.2,340.4 971.2,327.7 983.4,388.3 994.2,308.5 1005.1,401.1 1015.9,372.4 1015.9,257.4 1026.0,382.0 1035.8,110.5 1040.0,350.0 1048.1,375.6 1058.2,397.9 1058.2,302.1 1070.2,401.1 1075.0,372.4 1075.0,346.8 1102.4,394.7 1123.6,404.3 1135.0,423.5" fill="none" stroke="#0969da" stroke-width="2"><title>Set up job</title></polyline>
+<line x1="874.9" y1="238.2" x2="856.9" y2="216.2" stroke="#0969da" stroke-width="1"/>
+<circle cx="856.9" cy="216.2" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R1: Set up job, samples, 71.0s</title></circle>
+<text x="856.9" y="220.2" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R1</text>
+<line x1="918.2" y1="231.8" x2="936.2" y2="209.8" stroke="#0969da" stroke-width="1"/>
+<circle cx="936.2" cy="209.8" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R2: Set up job, samples, 73.0s</title></circle>
+<text x="936.2" y="213.8" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R2</text>
+<line x1="1035.8" y1="110.5" x2="1017.8" y2="132.5" stroke="#0969da" stroke-width="1"/>
+<circle cx="1017.8" cy="132.5" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R3: Set up job, samples, 111.0s</title></circle>
+<text x="1017.8" y="136.5" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R3</text>
 <line x1="65" y1="521" x2="100" y2="521" stroke="#0969da" stroke-width="3"/>
-<text x="110" y="525">Checkout .github and .agents folders</text>
-<polyline points="65.0,343.6 66.2,401.1 68.7,391.5 69.5,366.0 69.5,394.7 73.0,382.0 80.3,372.4 85.2,366.0 114.1,321.3 114.7,318.1 120.4,378.8 132.0,337.2 144.0,359.6 155.4,372.4 166.7,330.8 178.0,369.2 190.1,366.0 202.3,378.8 214.4,295.7 224.6,343.6 238.0,388.3 249.8,359.6 261.6,391.5 272.8,388.3 296.4,372.4 300.3,382.0 308.9,394.7 320.6,318.1 328.8,327.7 343.8,391.5 354.8,350.0 367.4,362.8 379.7,330.8 388.6,353.2 402.7,382.0 408.7,375.6 426.7,391.5 438.8,164.8 450.4,362.8 455.5,397.9 471.9,353.2 486.0,385.1 497.7,385.1 509.4,391.5 517.9,366.0 525.6,340.4 526.0,318.1 533.0,337.2 542.1,362.8 554.1,350.0 564.7,350.0 580.4,337.2 590.9,346.8 604.2,369.2 616.0,311.7 625.7,362.8 627.7,356.4 839.8,330.8 851.8,404.3 863.7,397.9 873.2,356.4 887.8,353.2 899.8,401.1 910.3,397.9 922.8,362.8 946.4,238.2 981.3,353.2 993.6,231.8 1017.0,311.7 1028.3,369.2 1040.4,340.4 1051.3,327.7 1064.5,388.3 1076.3,308.5 1088.1,401.1 1099.9,372.4 1099.9,257.4 1110.9,382.0 1121.6,110.5 1126.2,350.0 1135.0,375.6" fill="none" stroke="#cf222e" stroke-width="2"><title>Set up job</title></polyline>
-<line x1="946.4" y1="238.2" x2="928.4" y2="216.2" stroke="#cf222e" stroke-width="1"/>
-<circle cx="928.4" cy="216.2" r="11" fill="white" stroke="#cf222e" stroke-width="2"><title>R1: Set up job, samples, 71.0s</title></circle>
-<text x="928.4" y="220.2" fill="#cf222e" font-size="10" font-weight="bold" text-anchor="middle">R1</text>
-<line x1="993.6" y1="231.8" x2="1011.6" y2="209.8" stroke="#cf222e" stroke-width="1"/>
-<circle cx="1011.6" cy="209.8" r="11" fill="white" stroke="#cf222e" stroke-width="2"><title>R2: Set up job, samples, 73.0s</title></circle>
-<text x="1011.6" y="213.8" fill="#cf222e" font-size="10" font-weight="bold" text-anchor="middle">R2</text>
-<line x1="1121.6" y1="110.5" x2="1103.6" y2="132.5" stroke="#cf222e" stroke-width="1"/>
-<circle cx="1103.6" cy="132.5" r="11" fill="white" stroke="#cf222e" stroke-width="2"><title>R3: Set up job, samples, 111.0s</title></circle>
-<text x="1103.6" y="136.5" fill="#cf222e" font-size="10" font-weight="bold" text-anchor="middle">R3</text>
-<line x1="65" y1="543" x2="100" y2="543" stroke="#cf222e" stroke-width="3"/>
-<text x="110" y="547">Set up job</text>
+<text x="110" y="525">Set up job</text>
 <text x="65.0" y="490" text-anchor="start">2026-06-18</text>
-<text x="198.8" y="490" text-anchor="middle">2026-06-29</text>
-<text x="332.5" y="490" text-anchor="middle">2026-07-11</text>
-<text x="466.2" y="490" text-anchor="middle">2026-07-22</text>
-<text x="600.0" y="490" text-anchor="middle">2026-08-02</text>
-<text x="733.8" y="490" text-anchor="middle">2026-08-14</text>
-<text x="867.5" y="490" text-anchor="middle">2026-08-25</text>
-<text x="1001.2" y="490" text-anchor="middle">2026-09-05</text>
-<text x="1135.0" y="490" text-anchor="end">2026-09-17</text>
+<text x="198.8" y="490" text-anchor="middle">2026-06-30</text>
+<text x="332.5" y="490" text-anchor="middle">2026-07-13</text>
+<text x="466.2" y="490" text-anchor="middle">2026-07-25</text>
+<text x="600.0" y="490" text-anchor="middle">2026-08-06</text>
+<text x="733.8" y="490" text-anchor="middle">2026-08-19</text>
+<text x="867.5" y="490" text-anchor="middle">2026-08-31</text>
+<text x="1001.2" y="490" text-anchor="middle">2026-09-12</text>
+<text x="1135.0" y="490" text-anchor="end">2026-09-25</text>
 <line class="axis" x1="65" y1="465" x2="1135" y2="465"/>
-<text x="65" y="587" font-size="16" font-weight="bold">Regression episodes</text>
-<text x="65" y="615" fill="#cf222e" font-weight="bold">R1</text>
-<text x="99" y="615">2026-09-01  Set up job / samples  +122%</text>
-<text x="65" y="637" fill="#cf222e" font-weight="bold">R2</text>
-<text x="99" y="637">2026-09-05  Set up job / samples  +121%</text>
-<text x="65" y="659" fill="#cf222e" font-weight="bold">R3</text>
-<text x="99" y="659">2026-09-14 to 2026-09-15  Set up job / samples  +222%</text>
-<text x="65" y="681" fill="#0969da" font-weight="bold">R4</text>
-<text x="99" y="681">2026-09-15  Checkout .github and .agents folders / samples  +550%</text>
+<text x="65" y="565" font-size="16" font-weight="bold">Regression episodes</text>
+<text x="65" y="593" fill="#0969da" font-weight="bold">R1</text>
+<text x="99" y="593">2026-09-01  Set up job / samples  +122%</text>
+<text x="65" y="615" fill="#0969da" font-weight="bold">R2</text>
+<text x="99" y="615">2026-09-05  Set up job / samples  +121%</text>
+<text x="65" y="637" fill="#0969da" font-weight="bold">R3</text>
+<text x="99" y="637">2026-09-14 to 2026-09-18  Set up job / samples  +222%</text>
 </svg>

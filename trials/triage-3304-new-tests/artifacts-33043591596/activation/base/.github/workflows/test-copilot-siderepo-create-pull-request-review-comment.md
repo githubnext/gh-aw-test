@@ -1,0 +1,49 @@
+---
+on:
+  workflow_dispatch:
+    inputs:
+      pull_request_number:
+        description: 'Pull request number'
+        required: true
+        type: number
+
+permissions:
+  issues: read
+  pull-requests: read
+  actions: read
+  contents: read
+  discussions: read
+  copilot-requests: write
+
+engine: 
+  id: copilot
+
+tools:
+  github:
+    # The GitHub tools must be authorized to read across-repo 
+    github-token: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
+
+safe-outputs:
+  # Set workflow-level github-token so global.github in the safe_outputs step
+  # uses TEMP_USER_PAT. This is required for cross-repo operations where
+  # pr_review_buffer.cjs calls github.rest.pulls.listReviews on the side repo
+  # (the per-handler github-token only sets a separate octokit client; it does
+  # not update global.github which the review buffer uses).
+  github-token: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
+  create-pull-request-review-comment:
+    max: 3
+    target: "*"
+    target-repo: 'githubnext/gh-aw-side-repo'
+    allowed-repos: ['githubnext/gh-aw-side-repo']
+    github-token: ${{ secrets.TEMP_USER_PAT || secrets.GH_AW_TEST_PAT }}
+    # min: 1
+    samples:
+      - pull_request_number: "${{ github.event.inputs.pull_request_number }}"
+        path: "README.md"
+        line: 2
+        body: "This code is magnificent! Great work on this cross-repo contribution."
+---
+
+Analyze the pull request #${{ inputs.pull_request_number }} in repository githubnext/gh-aw-side-repo.
+
+Create 1 review comment on the second line of the first hunk of the first file in the PR, praising the code and suggesting it looks great.

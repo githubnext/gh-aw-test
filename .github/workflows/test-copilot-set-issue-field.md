@@ -25,6 +25,7 @@ safe-outputs:
   set-issue-field:
     allowed-fields: ["Priority"]
     max: 1
+    target: "*"
     samples:
       - issue_number: "#aw_field_issue"
         field_name: "Priority"

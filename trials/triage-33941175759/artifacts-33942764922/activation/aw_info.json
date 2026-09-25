@@ -1,0 +1,35 @@
+{
+  "engine_id": "copilot",
+  "engine_name": "GitHub Copilot CLI",
+  "model": "auto",
+  "version": "1.0.80",
+  "agent_version": "1.0.80",
+  "workflow_name": "Test Copilot Code Scanning Alert (No Sandbox)",
+  "experimental": false,
+  "supports_tools_allowlist": true,
+  "cache_memory": false,
+  "run_id": 33942764922,
+  "run_number": 207,
+  "run_attempt": "1",
+  "repository": "githubnext/gh-aw-test",
+  "ref": "refs/heads/main",
+  "sha": "9f837344e8afb05803b65400d52c8b90e160edd4",
+  "actor": "dsyme",
+  "event_name": "workflow_dispatch",
+  "target_repo": "",
+  "staged": false,
+  "allowed_domains": [
+    "defaults"
+  ],
+  "firewall_enabled": false,
+  "awf_version": "",
+  "awmg_version": "",
+  "agent_runtime": "",
+  "steps": {
+    "firewall": ""
+  },
+  "created_at": "2026-09-05T03:46:54.396Z",
+  "features": {
+    "dangerously-disable-sandbox-agent": "test environment with no useful secrets or information"
+  }
+}

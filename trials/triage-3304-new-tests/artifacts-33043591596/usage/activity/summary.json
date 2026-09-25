@@ -1,0 +1,7 @@
+{
+  "schema": "usage-activity-summary/v1",
+  "safe_outputs": {
+    "total_items": 0,
+    "items_by_type": {}
+  }
+}

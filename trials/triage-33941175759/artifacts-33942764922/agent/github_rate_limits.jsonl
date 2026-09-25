@@ -1,0 +1,6 @@
+{"timestamp":"2026-09-05T03:46:58.408Z","source":"response_headers","operation":"repos.getContent","resource":"core","limit":15000,"remaining":14581,"used":419,"reset":"2026-09-05T04:16:30.000Z"}
+{"timestamp":"2026-09-05T03:46:58.597Z","source":"response_headers","operation":"repos.getContent","resource":"core","limit":15000,"remaining":14579,"used":421,"reset":"2026-09-05T04:16:30.000Z"}
+{"timestamp":"2026-09-05T03:47:48.142Z","source":"retry","operation":"MCP gateway health check","attempt":1,"delay_ms":500}
+{"timestamp":"2026-09-05T03:47:48.713Z","source":"retry","operation":"MCP gateway health check","attempt":2,"delay_ms":1000}
+{"timestamp":"2026-09-05T03:47:49.716Z","source":"retry","operation":"MCP gateway health check","attempt":3,"delay_ms":1000}
+{"timestamp":"2026-09-05T03:47:53.480Z","source":"response_headers","operation":"repos.listCollaborators","resource":"core","limit":15000,"remaining":14532,"used":468,"reset":"2026-09-05T04:16:30.000Z"}

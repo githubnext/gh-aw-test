@@ -64,7 +64,7 @@ RUN_FAILURES_FILE="${E2E_RUN_FAILURES_FILE:-}"
 RUN_STARTED_AT=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
 
 # Parallel execution settings
-BATCH_SIZE=25
+BATCH_SIZE=15
 NO_PARALLEL=false
 
 # Lock file for synchronized result tracking across parallel processes
@@ -202,15 +202,15 @@ safe_run() {
 # Configuration
 REPO_OWNER="githubnext"
 REPO_NAME="gh-aw-test"
-TIMEOUT_MINUTES=10
+TIMEOUT_MINUTES=15
 # In CI, poll 10x less frequently (50s vs 5s) to conserve GitHub API rate limits.
 # The human isn't watching for fast feedback, so the extra latency is fine.
 POLL_INTERVAL=5
 # Outcome poll: how often wait_for_* functions recheck the GitHub API for expected output.
 # Kept faster than POLL_INTERVAL because each check is cheap, but still CI-aware.
 OUTCOME_POLL_INTERVAL=5
-# Throttle before launching a new batch if GitHub REST API remaining calls drops below this.
-RATE_LIMIT_THRESHOLD=400
+# Reserve enough GitHub REST API quota for one parallel batch to finish.
+RATE_LIMIT_THRESHOLD=1500
 if [[ "${CI:-false}" == "true" ]]; then
     POLL_INTERVAL=50
     OUTCOME_POLL_INTERVAL=20
@@ -635,6 +635,17 @@ get_all_tests() {
     echo "test-copilot-mcp-http-oidc-permission"
     echo "test-copilot-sandbox-exclude-env"
     echo "test-copilot-mcp-github-remote"
+    # Phase 1: new safe outputs and capabilities
+    echo "test-copilot-repo-memory"
+    echo "test-copilot-linear-create-issue"
+    echo "test-copilot-jira-create-issue"
+    echo "test-copilot-steer"
+    echo "test-copilot-update-project"
+    echo "test-copilot-close-issue-duplicate-of"
+    echo "test-copilot-assign-to-agent-reasoning-effort"
+    echo "test-copilot-assign-to-agent-with-config"
+    echo "test-copilot-update-pull-request-replace-island"
+    echo "test-copilot-body-footer"
     # Nosandbox tests - limited set for claude/codex, full matrix for copilot
     echo "test-copilot-nosandbox-create-issue"
     echo "test-copilot-nosandbox-create-discussion"
@@ -1066,19 +1077,19 @@ wait_for_workflow() {
     progress "View run details: https://github.com/$REPO_OWNER/$REPO_NAME/actions/runs/$run_id"
     
     while true; do
-        local current_time=$(date +%s)
-        local elapsed=$((current_time - start_time))
-        
-        if [[ $elapsed -gt $timeout_seconds ]]; then
-            error "Timeout waiting for workflow '$workflow_name' after $TIMEOUT_MINUTES minutes"
-            error "View run details: https://github.com/$REPO_OWNER/$REPO_NAME/actions/runs/$run_id"
-            return 1
-        fi
-        
-        local status conclusion
-        if status=$(timeout 30s gh run view "$run_id" --json status,conclusion -q '.status + "," + (.conclusion // "")' 2>/dev/null); then
+        local status conclusion status_output
+        if status_output=$(timeout 30s gh run view "$run_id" --json status,conclusion -q '.status + "," + (.conclusion // "")' 2>&1); then
+            status="$status_output"
             consecutive_failures=0
             IFS=',' read -r run_status run_conclusion <<< "$status"
+
+            local current_time=$(date +%s)
+            local elapsed=$((current_time - start_time))
+            if [[ "$run_status" != "completed" && $elapsed -gt $timeout_seconds ]]; then
+                error "Timeout waiting for workflow '$workflow_name' after $TIMEOUT_MINUTES minutes"
+                error "View run details: https://github.com/$REPO_OWNER/$REPO_NAME/actions/runs/$run_id"
+                return 1
+            fi
             
             case "$run_status" in
                 "completed")
@@ -1109,7 +1120,19 @@ wait_for_workflow() {
                     return 1
                     ;;
             esac
+        elif is_rate_limit_error "$status_output"; then
+            wait_for_rate_limit_reset "checking workflow run $run_id"
+            start_time=$(date +%s)
+            consecutive_failures=0
         else
+            local current_time=$(date +%s)
+            local elapsed=$((current_time - start_time))
+            if [[ $elapsed -gt $timeout_seconds ]]; then
+                error "Timeout waiting for workflow '$workflow_name' after $TIMEOUT_MINUTES minutes"
+                error "View run details: https://github.com/$REPO_OWNER/$REPO_NAME/actions/runs/$run_id"
+                return 1
+            fi
+
             consecutive_failures=$((consecutive_failures + 1))
             if [[ $consecutive_failures -ge $max_consecutive_failures ]]; then
                 error "Failed to get status for workflow run $run_id after $max_consecutive_failures consecutive attempts"
@@ -1124,14 +1147,53 @@ wait_for_workflow() {
 
 get_latest_run_id() {
     local workflow_file="$1"
-    gh run list --workflow="$workflow_file" --limit=1 --json databaseId -q '.[0].databaseId' 2>/dev/null || echo ""
+    local output
+    while true; do
+        if output=$(gh run list --workflow="$workflow_file" --limit=1 --json databaseId -q '.[0].databaseId' 2>&1); then
+            echo "$output"
+            return 0
+        fi
+        if ! is_rate_limit_error "$output"; then
+            warning "Failed to list runs for '$workflow_file': $output" >&2
+            return 1
+        fi
+        wait_for_rate_limit_reset "listing runs for $workflow_file" >&2
+    done
+}
+
+is_rate_limit_error() {
+    local output="$1"
+    [[ "$output" == *"API rate limit exceeded"* || "$output" == *"rate limit exceeded"* ]]
+}
+
+# Pause all API-dependent work until GitHub's current core quota resets.
+wait_for_rate_limit_reset() {
+    local context="${1:-calling the GitHub API}"
+    local result remaining limit reset_ts reset_time now sleep_sec
+    result=$(gh api -H "Cache-Control: no-cache" rate_limit 2>/dev/null) || result=""
+    remaining=$(echo "$result" | jq -r '.resources.core.remaining // .rate.remaining // empty' 2>/dev/null)
+    limit=$(echo "$result" | jq -r '.resources.core.limit // .rate.limit // empty' 2>/dev/null)
+    reset_ts=$(echo "$result" | jq -r '.resources.core.reset // .rate.reset // empty' 2>/dev/null)
+
+    if [[ -n "$reset_ts" && "$reset_ts" =~ ^[0-9]+$ && "${remaining:-0}" -lt "$RATE_LIMIT_THRESHOLD" ]]; then
+        now=$(date +%s)
+        sleep_sec=$((reset_ts - now + 15))
+        reset_time=$(date -d "@$reset_ts" '+%H:%M:%S' 2>/dev/null \
+            || date -r "$reset_ts" '+%H:%M:%S' 2>/dev/null \
+            || echo "@${reset_ts}")
+        warning "GitHub API rate limit exhausted while $context (${remaining}/${limit}). Sleeping ${sleep_sec}s until ${reset_time} UTC..."
+        (( sleep_sec > 0 )) && sleep "$sleep_sec"
+    else
+        warning "GitHub reported a rate limit error while $context, but reset metadata was unavailable. Retrying in 60s..."
+        sleep 60
+    fi
 }
 
 # Print the current GitHub REST API rate limit status.
 # The /rate_limit endpoint does not itself consume any quota.
 check_api_rate_limit() {
     local result
-    result=$(gh api rate_limit 2>/dev/null) || { warning "Could not read GitHub API rate limit"; return 0; }
+    result=$(gh api -H "Cache-Control: no-cache" rate_limit 2>/dev/null) || { warning "Could not read GitHub API rate limit"; return 0; }
     local remaining limit reset_ts reset_time
     remaining=$(echo "$result" | jq -r '.rate.remaining')
     limit=$(echo "$result"     | jq -r '.rate.limit')
@@ -1146,7 +1208,7 @@ check_api_rate_limit() {
 # until the window resets (plus a small buffer). Prints quota status either way.
 throttle_if_rate_limited() {
     local result
-    result=$(gh api rate_limit 2>/dev/null) || return 0
+    result=$(gh api -H "Cache-Control: no-cache" rate_limit 2>/dev/null) || return 0
     local remaining limit reset_ts reset_time
     remaining=$(echo "$result" | jq -r '.rate.remaining')
     limit=$(echo "$result"     | jq -r '.rate.limit')
@@ -1172,8 +1234,16 @@ enable_workflow() {
     
     info "Enabling workflow '$workflow_name'..."
     # Redirect gh aw enable output to log file to prevent terminal control codes from clearing previous output
-    timeout 120s $GH_AW_BIN enable "$workflow_name" &>> "$LOG_FILE"
-    local rc=$?
+    local rc command_output
+    while true; do
+        command_output=$(timeout 120s $GH_AW_BIN enable "$workflow_name" 2>&1)
+        rc=$?
+        printf '%s\n' "$command_output" >> "$LOG_FILE"
+        if [[ $rc -eq 0 ]] || ! is_rate_limit_error "$command_output"; then
+            break
+        fi
+        wait_for_rate_limit_reset "enabling workflow $workflow_name"
+    done
     if [[ $rc -eq 0 ]]; then
         success "Successfully enabled '$workflow_name'"
         
@@ -1198,8 +1268,16 @@ disable_workflow() {
     local workflow_name="$1"
     
     info "Disabling workflow '$workflow_name'..."
-    timeout 120s $GH_AW_BIN disable "$workflow_name" &>> "$LOG_FILE"
-    local rc=$?
+    local rc command_output
+    while true; do
+        command_output=$(timeout 120s $GH_AW_BIN disable "$workflow_name" 2>&1)
+        rc=$?
+        printf '%s\n' "$command_output" >> "$LOG_FILE"
+        if [[ $rc -eq 0 ]] || ! is_rate_limit_error "$command_output"; then
+            break
+        fi
+        wait_for_rate_limit_reset "disabling workflow $workflow_name"
+    done
     if [[ $rc -eq 0 ]]; then
         success "Successfully disabled '$workflow_name'"
         
@@ -1236,13 +1314,19 @@ trigger_workflow_dispatch_and_await_completion() {
     fi
     
     # Get the run ID before triggering
-    local before_run_id=$(get_latest_run_id "$workflow_file")
+    local before_run_id
+    if ! before_run_id=$(get_latest_run_id "$workflow_file"); then
+        error "Could not read the current run ID for '$workflow_name'"
+        disable_workflow "$workflow_name"
+        return 1
+    fi
     
     # Trigger the workflow using gh aw run
     local -a run_args=("$workflow_name")
     if [[ -n "$DISPATCH_REF" ]]; then
         run_args+=(--ref "$DISPATCH_REF")
     fi
+    throttle_if_rate_limited
     if $GH_AW_BIN run "${run_args[@]}" &>> "$LOG_FILE"; then
         success "Successfully triggered '$workflow_name'"
         
@@ -1250,7 +1334,12 @@ trigger_workflow_dispatch_and_await_completion() {
         sleep 5
         
         # Get the new run ID
-        local after_run_id=$(get_latest_run_id "$workflow_file")
+        local after_run_id
+        if ! after_run_id=$(get_latest_run_id "$workflow_file"); then
+            error "Could not discover the new workflow run for '$workflow_name'"
+            disable_workflow "$workflow_name"
+            return 1
+        fi
         
         if [[ "$after_run_id" != "$before_run_id" && -n "$after_run_id" ]]; then
             local result=0
@@ -1287,7 +1376,12 @@ trigger_workflow_with_inputs() {
     fi
     
     # Get the run ID before triggering
-    local before_run_id=$(get_latest_run_id "$workflow_file")
+    local before_run_id
+    if ! before_run_id=$(get_latest_run_id "$workflow_file"); then
+        error "Could not read the current run ID for '$workflow_name'"
+        disable_workflow "$workflow_name"
+        return 1
+    fi
     
     # Build the gh workflow run command with inputs
     local cmd="gh workflow run \"$workflow_file\""
@@ -1300,6 +1394,7 @@ trigger_workflow_with_inputs() {
     cmd+=" &>> \"$LOG_FILE\""
     
     # Trigger the workflow using gh workflow run with inputs
+    throttle_if_rate_limited
     if eval "$cmd"; then
         success "Successfully triggered '$workflow_name' with inputs"
         
@@ -1307,7 +1402,12 @@ trigger_workflow_with_inputs() {
         sleep 5
         
         # Get the new run ID
-        local after_run_id=$(get_latest_run_id "$workflow_file")
+        local after_run_id
+        if ! after_run_id=$(get_latest_run_id "$workflow_file"); then
+            error "Could not discover the new workflow run for '$workflow_name'"
+            disable_workflow "$workflow_name"
+            return 1
+        fi
         
         if [[ "$after_run_id" != "$before_run_id" && -n "$after_run_id" ]]; then
             local result=0
@@ -1715,6 +1815,38 @@ validate_issue_created() {
         error "No issue found with title prefix: $title_prefix"
         return 1
     fi
+}
+
+validate_issue_body_contains() {
+    local issue_title="$1"
+    local expected_text="$2"
+    local repo="${3:-}"
+    local repo_flag=""
+    [[ -n "$repo" ]] && repo_flag="--repo $repo"
+
+    local body
+    body=$(gh issue list $repo_flag --limit 10 --json title,body \
+        --jq ".[] | select(.title == \"$issue_title\") | .body" | head -1)
+    if [[ "$body" == *"$expected_text"* ]]; then
+        success "Issue body contains expected text: $expected_text"
+        return 0
+    fi
+    error "Issue body missing expected text: $expected_text"
+    return 1
+}
+
+validate_issue_closed_as_duplicate() {
+    local issue_number="$1"
+    local repo="${2:-$REPO_OWNER/$REPO_NAME}"
+    local issue_data
+    issue_data=$(gh issue view "$issue_number" --repo "$repo" --json state,stateReason 2>/dev/null || echo '{}')
+    if [[ "$(echo "$issue_data" | jq -r '.state // empty')" == "CLOSED" \
+        && "$(echo "$issue_data" | jq -r '.stateReason // empty')" == "DUPLICATE" ]]; then
+        success "Issue #$issue_number was closed with the native duplicate reason"
+        return 0
+    fi
+    error "Issue #$issue_number was not closed as a native duplicate"
+    return 1
 }
 
 validate_comment() {
@@ -2481,6 +2613,35 @@ wait_for_pr_update() {
 
     while [[ $waited -lt $max_wait ]]; do
         if validate_pr_updated "$pr_number" "$ai_type" "$repo"; then
+            record_test_pass "$test_name"
+            return 0
+        fi
+        info "..."
+        sleep "$OUTCOME_POLL_INTERVAL"
+        waited=$((waited + OUTCOME_POLL_INTERVAL))
+    done
+
+    record_test_fail "$test_name"
+    return 1
+}
+
+wait_for_pr_body_contains() {
+    local pr_number="$1"
+    local expected_text="$2"
+    local test_name="$3"
+    local repo="${4:-}"
+    local max_wait=480
+    local waited=0
+    local repo_flag=""
+    [[ -n "$repo" ]] && repo_flag="--repo $repo"
+
+    while [[ $waited -lt $max_wait ]]; do
+        local body
+        body=$(gh pr view $repo_flag "$pr_number" --json body --jq '.body' 2>/dev/null || echo "")
+        if [[ "$body" == *"$expected_text"* \
+            && "$body" == *"Content before the managed island."* \
+            && "$body" == *"Content after the managed island."* ]]; then
+            success "PR #$pr_number contains the replacement and preserved surrounding content"
             record_test_pass "$test_name"
             return 0
         fi
@@ -3384,6 +3545,45 @@ run_single_test() {
             rm -f "$test_log"
             return 0
             ;;
+        *"linear-create-issue")
+            if ! gh secret list --repo "$REPO_OWNER/$REPO_NAME" --json name --jq '.[].name' 2>/dev/null | grep -qx 'LINEAR_API_KEY' \
+                || ! gh variable list --repo "$REPO_OWNER/$REPO_NAME" --json name --jq '.[].name' 2>/dev/null | grep -qx 'LINEAR_TEAM_ID'; then
+                record_test_skip "$workflow" "requires LINEAR_API_KEY and LINEAR_TEAM_ID; see docs/e2e-external-integrations.md"
+                cat "$test_log" >&3
+                rm -f "$test_log"
+                return 0
+            fi
+            ;;
+        *"jira-create-issue")
+            local jira_prerequisites=(JIRA_USER_EMAIL JIRA_API_TOKEN)
+            local jira_secret
+            for jira_secret in "${jira_prerequisites[@]}"; do
+                if ! gh secret list --repo "$REPO_OWNER/$REPO_NAME" --json name --jq '.[].name' 2>/dev/null | grep -qx "$jira_secret"; then
+                    record_test_skip "$workflow" "requires JIRA_BASE_URL, JIRA_USER_EMAIL, and JIRA_API_TOKEN; see docs/e2e-external-integrations.md"
+                    cat "$test_log" >&3
+                    rm -f "$test_log"
+                    return 0
+                fi
+            done
+            local jira_variables=(JIRA_BASE_URL JIRA_PROJECT_KEY)
+            local jira_variable
+            for jira_variable in "${jira_variables[@]}"; do
+                if ! gh variable list --repo "$REPO_OWNER/$REPO_NAME" --json name --jq '.[].name' 2>/dev/null | grep -qx "$jira_variable"; then
+                    record_test_skip "$workflow" "requires JIRA_BASE_URL, JIRA_PROJECT_KEY, JIRA_USER_EMAIL, and JIRA_API_TOKEN; see docs/e2e-external-integrations.md"
+                    cat "$test_log" >&3
+                    rm -f "$test_log"
+                    return 0
+                fi
+            done
+            ;;
+        *"update-project")
+            if ! gh secret list --repo "$REPO_OWNER/$REPO_NAME" --json name --jq '.[].name' 2>/dev/null | grep -qx 'GH_AW_TEST_PAT'; then
+                record_test_skip "$workflow" "requires GH_AW_TEST_PAT and a Projects V2 fixture; see docs/e2e-external-integrations.md"
+                cat "$test_log" >&3
+                rm -f "$test_log"
+                return 0
+            fi
+            ;;
     esac
     
     case "$workflow" in
@@ -3434,6 +3634,25 @@ run_single_test() {
                 else
                     error "Expected second cooldown agent job to be skipped, got '$agent_conclusion'"
                 fi
+            fi
+            ;;
+        *"close-issue-duplicate-of")
+            echo -e "${CYAN}━━━ Preparing duplicate issues ━━━${NC}"
+            local canonical_issue
+            canonical_issue=$(create_test_issue "Canonical issue for duplicate E2E" "Canonical fixture for $workflow" "" "$target_repo")
+            local duplicate_issue
+            duplicate_issue=$(create_test_issue "Duplicate issue for duplicate E2E" "Duplicate fixture for $workflow" "" "$target_repo")
+            if [[ -n "$canonical_issue" && -n "$duplicate_issue" ]] \
+                && trigger_workflow_with_inputs "$workflow" "issue_number=$duplicate_issue" "duplicate_of=$canonical_issue" \
+                && validate_issue_closed_as_duplicate "$duplicate_issue" "${target_repo:-$REPO_OWNER/$REPO_NAME}"; then
+                test_result="PASS"
+            fi
+            ;;
+        *"update-project")
+            local project_issue
+            project_issue=$(create_test_issue "Project update E2E fixture" "Fixture for $workflow" "" "$target_repo")
+            if [[ -n "$project_issue" ]] && trigger_workflow_with_inputs "$workflow" "issue_number=$project_issue"; then
+                test_result="PASS"
             fi
             ;;
         # Siderepo tests with workflow_dispatch + inputs - need to create prerequisite then trigger
@@ -3670,7 +3889,7 @@ run_single_test() {
             fi
             ;;
         # Workflow dispatch tests - triggered with gh aw run
-        *"create-issue"|*"create-discussion"|*"create-pull-request"|*"create-two-pull-requests"|*"code-scanning-alert"|*"create-check-run"|*"mcp"*|*"safe-jobs"|*"gh-steps"|*"restore-memory-custom-job"|*"custom-safe-outputs"|*"noop"|*"report-incomplete"|*"missing-data"|*"missing-tool"|*"assign-to-agent"|*"set-issue-field"|*"set-issue-field-builtin-rejection"|*"issue-intents"|*"skills-frontmatter"|*"inline-sub-agents"|*"network-isolation"|*"upload-code-coverage"|*"sandbox-runtime-profile"|*"playwright-cli"|*"network-engine-domain-opt-in"|*"sandbox-exclude-env")
+        *"create-issue"|*"create-discussion"|*"create-pull-request"|*"create-two-pull-requests"|*"code-scanning-alert"|*"create-check-run"|*"mcp"*|*"safe-jobs"|*"gh-steps"|*"restore-memory-custom-job"|*"custom-safe-outputs"|*"noop"|*"report-incomplete"|*"missing-data"|*"missing-tool"|*"assign-to-agent"*|*"set-issue-field"|*"set-issue-field-builtin-rejection"|*"issue-intents"|*"skills-frontmatter"|*"inline-sub-agents"|*"network-isolation"|*"upload-code-coverage"|*"sandbox-runtime-profile"|*"playwright-cli"|*"network-engine-domain-opt-in"|*"sandbox-exclude-env"|*"repo-memory"|*"linear-create-issue"|*"jira-create-issue"|*"steer"|*"body-footer")
             local workflow_success=false
             if trigger_workflow_dispatch_and_await_completion "$workflow"; then
                 workflow_success=true
@@ -3679,6 +3898,10 @@ run_single_test() {
             if [[ "$workflow_success" == true ]]; then
                 local validation_success=false
                 case "$workflow" in
+                    *"linear-create-issue"|*"jira-create-issue"|*"steer")
+                        success "Workflow '$workflow' completed successfully"
+                        validation_success=true
+                        ;;
                     *"multi")
                         local title_prefix=$(get_title_prefix "$workflow" "$ai_type")
                         local expected_labels=$(get_expected_labels "$ai_type")
@@ -3689,11 +3912,15 @@ run_single_test() {
                             validation_success=true
                         fi
                         ;;
-                    *"create-issue"|*"skills-frontmatter"|*"restore-memory-custom-job"|*"inline-sub-agents"|*"network-isolation"|*"sandbox-runtime-profile"|*"playwright-cli"|*"network-engine-domain-opt-in"|*"sandbox-exclude-env")
+                    *"create-issue"|*"skills-frontmatter"|*"restore-memory-custom-job"|*"inline-sub-agents"|*"network-isolation"|*"sandbox-runtime-profile"|*"playwright-cli"|*"network-engine-domain-opt-in"|*"sandbox-exclude-env"|*"repo-memory"|*"body-footer")
                         local title_prefix=$(get_title_prefix "$workflow" "$ai_type")
                         local expected_labels=$(get_expected_labels "$ai_type")
                         if validate_issue_created "$title_prefix" "$expected_labels" "$target_repo"; then
                             validation_success=true
+                        fi
+                        if [[ "$workflow" == *"body-footer"* ]] \
+                            && ! validate_issue_body_contains "${title_prefix}body-footer composition smoke test" "Global footer from" "$target_repo"; then
+                            validation_success=false
                         fi
                         ;;
                     *"create-discussion")
@@ -3901,15 +4128,29 @@ run_single_test() {
                                     fi
                                 fi
                                 ;;
-                            *"update-pull-request")
+                            *"update-pull-request"*)
                                 info "Creating test pull request to trigger $workflow..."
-                                local pr_num=$(create_test_pr "Test PR for $ai_display_name Update PR" "This PR is for testing $workflow" "$target_repo")
+                                local pr_body="This PR is for testing $workflow"
+                                if [[ "$workflow" == *"replace-island" ]]; then
+                                    pr_body="e2e-marker:test-copilot-update-pull-request-replace-island
+
+Content before the managed island.
+<!-- gh-aw-island-start:test-copilot-update-pull-request-replace-island -->
+Original managed content.
+<!-- gh-aw-island-end:test-copilot-update-pull-request-replace-island -->
+Content after the managed island."
+                                fi
+                                local pr_num=$(create_test_pr "Test PR for $ai_display_name Update PR" "$pr_body" "$target_repo")
                                 if [[ -n "$pr_num" ]]; then
                                     local repo_url="$REPO_OWNER/$REPO_NAME"
                                     [[ -n "$target_repo" ]] && repo_url="$target_repo"
                                     success "Created test PR #$pr_num for $workflow: https://github.com/$repo_url/pull/$pr_num"
                                     sleep 10
-                                    if wait_for_pr_update "$pr_num" "$ai_display_name" "$workflow" "$target_repo"; then
+                                    if [[ "$workflow" == *"replace-island" ]] \
+                                        && wait_for_pr_body_contains "$pr_num" "The marker-delimited island was replaced by the Copilot E2E workflow." "$workflow" "$target_repo"; then
+                                        test_result="PASS"
+                                    elif [[ "$workflow" != *"replace-island" ]] \
+                                        && wait_for_pr_update "$pr_num" "$ai_display_name" "$workflow" "$target_repo"; then
                                         test_result="PASS"
                                     fi
                                 fi

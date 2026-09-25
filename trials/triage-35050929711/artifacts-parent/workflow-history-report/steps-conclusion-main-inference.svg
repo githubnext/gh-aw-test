@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="619" viewBox="0 0 1200 619">
+<rect width="100%" height="100%" fill="white"/>
+<style>text{font-family:ui-monospace,monospace;font-size:13px}.axis{stroke:#57606a;stroke-width:1}.grid{stroke:#d8dee4;stroke-width:1}</style>
+<text x="65" y="30" font-size="20">Major step timing: conclusion job (main, using inference)</text>
+<text x="65" y="52">Steps with a sustained cost, recent slowdown, or recent regression</text>
+<line class="grid" x1="65" y1="465.0" x2="1135" y2="465.0"/>
+<text x="8" y="470.0">0s</text>
+<line class="grid" x1="65" y1="387.0" x2="1135" y2="387.0"/>
+<text x="8" y="392.0">13s</text>
+<line class="grid" x1="65" y1="309.0" x2="1135" y2="309.0"/>
+<text x="8" y="314.0">26s</text>
+<line class="grid" x1="65" y1="231.0" x2="1135" y2="231.0"/>
+<text x="8" y="236.0">39s</text>
+<line class="grid" x1="65" y1="153.0" x2="1135" y2="153.0"/>
+<text x="8" y="158.0">52s</text>
+<line class="grid" x1="65" y1="75.0" x2="1135" y2="75.0"/>
+<text x="8" y="80.0">65s</text>
+<line class="grid" x1="65.0" y1="75" x2="65.0" y2="465"/>
+<line class="grid" x1="198.8" y1="75" x2="198.8" y2="465"/>
+<line class="grid" x1="332.5" y1="75" x2="332.5" y2="465"/>
+<line class="grid" x1="466.2" y1="75" x2="466.2" y2="465"/>
+<line class="grid" x1="600.0" y1="75" x2="600.0" y2="465"/>
+<line class="grid" x1="733.8" y1="75" x2="733.8" y2="465"/>
+<line class="grid" x1="867.5" y1="75" x2="867.5" y2="465"/>
+<line class="grid" x1="1001.2" y1="75" x2="1001.2" y2="465"/>
+<line class="grid" x1="1135.0" y1="75" x2="1135.0" y2="465"/>
+<polyline points="65.0,362.8 78.8,326.8 90.0,338.8 105.9,356.8 113.8,320.8 119.7,338.8 120.8,212.6 126.4,332.8 159.7,374.9 171.4,380.9 183.7,368.9 195.6,332.8 207.1,242.7 230.2,314.8 243.2,206.6 251.2,224.6 264.1,380.9 278.0,296.7 300.4,362.8 312.8,302.8 323.6,296.7 336.8,266.7 347.2,308.8 360.2,254.7 372.7,320.8 385.5,320.8 396.9,218.6 408.9,374.9 417.2,116.5 433.1,380.9 444.5,308.8 454.6,320.8 464.4,374.9 480.8,290.7 489.1,308.8 503.6,296.7 516.1,380.9 527.1,278.7 539.1,368.9 551.6,362.8 563.6,266.7 574.3,218.6 587.1,248.7 599.4,200.6 611.9,110.5 623.7,242.7 635.7,290.7 659.5,254.7 670.8,284.7 681.9,290.7 693.1,356.8 718.8,242.7 728.3,302.8 740.9,284.7 752.4,272.7 766.6,374.9 778.0,290.7 790.4,338.8 801.0,350.8 814.1,176.6 825.9,356.8 839.6,272.7 851.3,278.7 863.4,326.8 875.3,278.7 884.9,308.8 899.6,296.7 911.7,266.7 922.3,236.6 934.4,272.7 958.4,242.7 970.4,278.7 983.0,260.7 993.8,248.7 1006.1,242.7 1017.8,332.8 1029.7,248.7 1041.1,248.7 1053.2,278.7 1064.2,290.7 1077.3,296.7 1089.4,176.6 1101.3,224.6 1113.1,218.6 1113.1,182.6 1124.2,224.6 1135.0,140.5" fill="none" stroke="#0969da" stroke-width="2"><title>Set up job</title></polyline>
+<line x1="814.1" y1="176.6" x2="796.1" y2="154.6" stroke="#0969da" stroke-width="1"/>
+<circle cx="796.1" cy="154.6" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R1: Set up job, inference, 48.0s</title></circle>
+<text x="796.1" y="158.6" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R1</text>
+<line x1="65" y1="521" x2="100" y2="521" stroke="#0969da" stroke-width="3"/>
+<text x="110" y="525">Set up job</text>
+<text x="65.0" y="490" text-anchor="start">2026-06-18</text>
+<text x="198.8" y="490" text-anchor="middle">2026-06-29</text>
+<text x="332.5" y="490" text-anchor="middle">2026-07-10</text>
+<text x="466.2" y="490" text-anchor="middle">2026-07-21</text>
+<text x="600.0" y="490" text-anchor="middle">2026-08-01</text>
+<text x="733.8" y="490" text-anchor="middle">2026-08-13</text>
+<text x="867.5" y="490" text-anchor="middle">2026-08-24</text>
+<text x="1001.2" y="490" text-anchor="middle">2026-09-04</text>
+<text x="1135.0" y="490" text-anchor="end">2026-09-15</text>
+<line class="axis" x1="65" y1="465" x2="1135" y2="465"/>
+<text x="65" y="565" font-size="16" font-weight="bold">Regression episodes</text>
+<text x="65" y="593" fill="#0969da" font-weight="bold">R1</text>
+<text x="99" y="593">2026-08-19  Set up job / inference  +71%</text>
+</svg>

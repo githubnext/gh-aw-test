@@ -1,0 +1,12 @@
+diff --git a/.github/workflows/test-copilot-upload-code-coverage.md b/.github/workflows/test-copilot-upload-code-coverage.md
+index f48d3e13..8dc853e6 100644
+--- a/.github/workflows/test-copilot-upload-code-coverage.md
++++ b/.github/workflows/test-copilot-upload-code-coverage.md
+@@ -25,6 +25,7 @@ steps:
+ safe-outputs:
+   upload-code-coverage:
+     max: 1
++    fail-on-error: false
+     samples:
+       - file: coverage.xml
+         language: TypeScript

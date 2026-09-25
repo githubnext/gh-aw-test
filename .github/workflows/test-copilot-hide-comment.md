@@ -29,6 +29,7 @@ safe-outputs:
         body: "Hidden by Copilot hide-comment safe output"
   hide-comment:
     max: 1
+    target: "*"
     # min: 1
     samples:
       - comment_id: "${{ github.event.inputs.comment_node_id }}"

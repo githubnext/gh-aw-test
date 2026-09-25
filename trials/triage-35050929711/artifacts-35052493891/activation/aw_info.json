@@ -1,0 +1,32 @@
+{
+  "engine_id": "copilot",
+  "engine_name": "GitHub Copilot CLI",
+  "model": "auto",
+  "version": "1.0.83",
+  "agent_version": "1.0.83",
+  "workflow_name": "Test Copilot Close Pull Request",
+  "experimental": false,
+  "supports_tools_allowlist": true,
+  "cache_memory": false,
+  "run_id": 35052493891,
+  "run_number": 3429,
+  "run_attempt": "1",
+  "repository": "githubnext/gh-aw-test",
+  "ref": "refs/pull/15842/merge",
+  "sha": "3b2b22924e2a9b6d12b08c81ef61325d5721ac8f",
+  "actor": "dsyme",
+  "event_name": "pull_request",
+  "target_repo": "",
+  "staged": false,
+  "allowed_domains": [
+    "defaults"
+  ],
+  "firewall_enabled": true,
+  "awf_version": "v0.28.18",
+  "awmg_version": "",
+  "agent_runtime": "",
+  "steps": {
+    "firewall": "squid"
+  },
+  "created_at": "2026-09-16T03:39:45.569Z"
+}
