@@ -624,6 +624,17 @@ get_all_tests() {
     echo "test-copilot-update-release"
     echo "test-copilot-upload-asset"
     echo "test-copilot-upload-code-coverage"
+    # Phase 2: runtime, sandbox, network, memory, and MCP
+    echo "test-copilot-cache-memory-concurrent-merge"
+    echo "test-copilot-sandbox-runtime-profile"
+    echo "test-copilot-mcp-large-json-payload"
+    echo "test-copilot-playwright-cli"
+    echo "test-copilot-cooldown"
+    echo "test-copilot-siderepo-push-to-pull-request-branch-fork-rejection"
+    echo "test-copilot-network-engine-domain-opt-in"
+    echo "test-copilot-mcp-http-oidc-permission"
+    echo "test-copilot-sandbox-exclude-env"
+    echo "test-copilot-mcp-github-remote"
     # Phase 1: new safe outputs and capabilities
     echo "test-copilot-repo-memory"
     echo "test-copilot-linear-create-issue"
@@ -3522,6 +3533,18 @@ run_single_test() {
     local test_result="FAIL"
 
     case "$workflow" in
+        *"fork-rejection")
+            record_test_skip "$workflow" "requires a dedicated fork and a token with write access"
+            cat "$test_log" >&3
+            rm -f "$test_log"
+            return 0
+            ;;
+        *"mcp-http-oidc-permission")
+            record_test_skip "$workflow" "requires an HTTP MCP fixture with a GitHub OIDC trust policy"
+            cat "$test_log" >&3
+            rm -f "$test_log"
+            return 0
+            ;;
         *"linear-create-issue")
             if ! gh secret list --repo "$REPO_OWNER/$REPO_NAME" --json name --jq '.[].name' 2>/dev/null | grep -qx 'LINEAR_API_KEY' \
                 || ! gh variable list --repo "$REPO_OWNER/$REPO_NAME" --json name --jq '.[].name' 2>/dev/null | grep -qx 'LINEAR_TEAM_ID'; then
@@ -3564,6 +3587,55 @@ run_single_test() {
     esac
     
     case "$workflow" in
+        *"cache-memory-concurrent-merge")
+            local marker_one="first-${E2E_RUN_START_EPOCH}-$RANDOM"
+            local marker_two="second-${E2E_RUN_START_EPOCH}-$RANDOM"
+            local workflow_file="${workflow}.lock.yml"
+            if enable_workflow "$workflow"; then
+                local before_run_id
+                before_run_id=$(get_latest_run_id "$workflow_file")
+                local ref_args=()
+                [[ -n "$DISPATCH_REF" ]] && ref_args=(--ref "$DISPATCH_REF")
+                if gh workflow run "$workflow_file" "${ref_args[@]}" -f "marker=$marker_one" &>> "$LOG_FILE"; then
+                    sleep 5
+                    local first_run_id
+                    first_run_id=$(get_latest_run_id "$workflow_file")
+                    if [[ -n "$first_run_id" && "$first_run_id" != "$before_run_id" ]] \
+                        && gh workflow run "$workflow_file" "${ref_args[@]}" -f "marker=$marker_two" &>> "$LOG_FILE"; then
+                        sleep 5
+                        local second_run_id
+                        second_run_id=$(get_latest_run_id "$workflow_file")
+                        if [[ -n "$second_run_id" && "$second_run_id" != "$first_run_id" ]] \
+                            && wait_for_workflow "$workflow" "$first_run_id" \
+                            && wait_for_workflow "$workflow" "$second_run_id"; then
+                            disable_workflow "$workflow"
+                            if trigger_workflow_with_inputs "$workflow" "marker=verify-$RANDOM"; then
+                                local merged_body
+                                merged_body=$(gh issue list --repo "$REPO_OWNER/$REPO_NAME" --limit 20 --json body \
+                                    --jq '.[].body' | grep -F "$marker_one" | grep -F "$marker_two" | head -1)
+                                [[ -n "$merged_body" ]] && test_result="PASS"
+                            fi
+                        fi
+                    fi
+                fi
+                disable_workflow "$workflow"
+            fi
+            ;;
+        *"cooldown")
+            if trigger_workflow_dispatch_and_await_completion "$workflow" \
+                && trigger_workflow_dispatch_and_await_completion "$workflow"; then
+                local cooldown_run_id="${TEST_RUN_URLS[$workflow]##*/}"
+                local agent_conclusion
+                agent_conclusion=$(gh run view "$cooldown_run_id" --repo "$REPO_OWNER/$REPO_NAME" --json jobs \
+                    --jq '[.jobs[] | select(.name == "agent")][0].conclusion // empty' 2>/dev/null)
+                if [[ "$agent_conclusion" == "skipped" ]]; then
+                    success "Second cooldown run skipped the agent job"
+                    test_result="PASS"
+                else
+                    error "Expected second cooldown agent job to be skipped, got '$agent_conclusion'"
+                fi
+            fi
+            ;;
         *"close-issue-duplicate-of")
             echo -e "${CYAN}━━━ Preparing duplicate issues ━━━${NC}"
             local canonical_issue
@@ -3817,7 +3889,7 @@ run_single_test() {
             fi
             ;;
         # Workflow dispatch tests - triggered with gh aw run
-        *"create-issue"|*"create-discussion"|*"create-pull-request"|*"create-two-pull-requests"|*"code-scanning-alert"|*"create-check-run"|*"mcp"*|*"safe-jobs"|*"gh-steps"|*"restore-memory-custom-job"|*"custom-safe-outputs"|*"noop"|*"report-incomplete"|*"missing-data"|*"missing-tool"|*"assign-to-agent"*|*"set-issue-field"|*"set-issue-field-builtin-rejection"|*"issue-intents"|*"skills-frontmatter"|*"inline-sub-agents"|*"network-isolation"|*"upload-code-coverage"|*"repo-memory"|*"linear-create-issue"|*"jira-create-issue"|*"steer"|*"body-footer")
+        *"create-issue"|*"create-discussion"|*"create-pull-request"|*"create-two-pull-requests"|*"code-scanning-alert"|*"create-check-run"|*"mcp"*|*"safe-jobs"|*"gh-steps"|*"restore-memory-custom-job"|*"custom-safe-outputs"|*"noop"|*"report-incomplete"|*"missing-data"|*"missing-tool"|*"assign-to-agent"*|*"set-issue-field"|*"set-issue-field-builtin-rejection"|*"issue-intents"|*"skills-frontmatter"|*"inline-sub-agents"|*"network-isolation"|*"upload-code-coverage"|*"sandbox-runtime-profile"|*"playwright-cli"|*"network-engine-domain-opt-in"|*"sandbox-exclude-env"|*"repo-memory"|*"linear-create-issue"|*"jira-create-issue"|*"steer"|*"body-footer")
             local workflow_success=false
             if trigger_workflow_dispatch_and_await_completion "$workflow"; then
                 workflow_success=true
@@ -3840,7 +3912,7 @@ run_single_test() {
                             validation_success=true
                         fi
                         ;;
-                    *"create-issue"|*"skills-frontmatter"|*"restore-memory-custom-job"|*"inline-sub-agents"|*"network-isolation"|*"repo-memory"|*"body-footer")
+                    *"create-issue"|*"skills-frontmatter"|*"restore-memory-custom-job"|*"inline-sub-agents"|*"network-isolation"|*"sandbox-runtime-profile"|*"playwright-cli"|*"network-engine-domain-opt-in"|*"sandbox-exclude-env"|*"repo-memory"|*"body-footer")
                         local title_prefix=$(get_title_prefix "$workflow" "$ai_type")
                         local expected_labels=$(get_expected_labels "$ai_type")
                         if validate_issue_created "$title_prefix" "$expected_labels" "$target_repo"; then
