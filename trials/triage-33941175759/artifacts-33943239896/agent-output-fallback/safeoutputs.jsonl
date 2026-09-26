@@ -1,1 +1,0 @@
-{"message":"Multi-commit test push from Copilot in side repo","type":"push_to_pull_request_branch","head_repo":"githubnext/gh-aw-side-repo","repo_cwd":"/home/runner/work/gh-aw-test/gh-aw-test/gh-aw-side-repo","base_branch":"main","branch":"test-pr-1788580618-30202-26693","base_commit":"7e5803af957db135c077af9a97e16376c732ff44","diff_size":595}

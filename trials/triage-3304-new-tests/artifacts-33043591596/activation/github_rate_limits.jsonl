@@ -1,2 +1,0 @@
-{"timestamp":"2026-08-27T05:47:04.237Z","source":"response_headers","operation":"repos.getContent","resource":"core","limit":15000,"remaining":14226,"used":774,"reset":"2026-08-27T05:49:30.000Z"}
-{"timestamp":"2026-08-27T05:47:04.383Z","source":"response_headers","operation":"repos.getContent","resource":"core","limit":15000,"remaining":14224,"used":776,"reset":"2026-08-27T05:49:30.000Z"}
