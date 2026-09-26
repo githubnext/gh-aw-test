@@ -4,6 +4,7 @@ on:
 permissions:
   contents: read
   issues: read
+  copilot-requests: write
 engine: copilot
 sandbox:
   agent:

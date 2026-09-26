@@ -4,7 +4,7 @@ on:
     types: [opened, reopened]
   reaction: eyes
 
-if: contains(github.event.pull_request.body, 'e2e-marker:test-copilot-update-pull-request')
+if: contains(github.event.pull_request.body, '<!-- e2e-marker:test-copilot-update-pull-request -->')
 
 permissions:
   issues: read

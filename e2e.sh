@@ -1784,6 +1784,7 @@ validate_issue_created() {
     local title_prefix="$1"
     local expected_labels="$2"
     local repo="${3:-}"
+    VALIDATED_ISSUE_NUMBER=""
     
     local repo_flag=""
     local repo_url="$REPO_OWNER/$REPO_NAME"
@@ -1796,6 +1797,7 @@ validate_issue_created() {
     local issue_number=$(gh issue list $repo_flag --limit 10 --json number,title,labels --jq ".[] | select(.title | startswith(\"$title_prefix\")) | .number" | head -1)
     
     if [[ -n "$issue_number" ]]; then
+        VALIDATED_ISSUE_NUMBER="$issue_number"
         if [[ -n "$expected_labels" ]]; then
             local labels=$(gh issue view $repo_flag "$issue_number" --json labels --jq '.labels[].name' | tr '\n' ',' | sed 's/,$//')
             for label in ${expected_labels//,/ }; do
@@ -1818,20 +1820,19 @@ validate_issue_created() {
 }
 
 validate_issue_body_contains() {
-    local issue_title="$1"
+    local issue_number="$1"
     local expected_text="$2"
     local repo="${3:-}"
     local repo_flag=""
     [[ -n "$repo" ]] && repo_flag="--repo $repo"
 
     local body
-    body=$(gh issue list $repo_flag --limit 10 --json title,body \
-        --jq ".[] | select(.title == \"$issue_title\") | .body" | head -1)
+    body=$(gh issue view $repo_flag "$issue_number" --json body --jq '.body' 2>/dev/null || echo "")
     if [[ "$body" == *"$expected_text"* ]]; then
-        success "Issue body contains expected text: $expected_text"
+        success "Issue #$issue_number body contains expected text: $expected_text"
         return 0
     fi
-    error "Issue body missing expected text: $expected_text"
+    warning "(polling) Issue #$issue_number body missing expected text: $expected_text"
     return 1
 }
 
@@ -2622,6 +2623,26 @@ wait_for_pr_update() {
     done
 
     record_test_fail "$test_name"
+    return 1
+}
+
+wait_for_issue_body_contains() {
+    local issue_number="$1"
+    local expected_text="$2"
+    local repo="${3:-}"
+    local max_wait=120
+    local waited=0
+
+    while [[ $waited -lt $max_wait ]]; do
+        if validate_issue_body_contains "$issue_number" "$expected_text" "$repo"; then
+            return 0
+        fi
+        info "..."
+        sleep "$OUTCOME_POLL_INTERVAL"
+        waited=$((waited + OUTCOME_POLL_INTERVAL))
+    done
+
+    error "Issue #$issue_number body missing expected text after ${max_wait}s: $expected_text"
     return 1
 }
 
@@ -3917,10 +3938,10 @@ run_single_test() {
                         local expected_labels=$(get_expected_labels "$ai_type")
                         if validate_issue_created "$title_prefix" "$expected_labels" "$target_repo"; then
                             validation_success=true
-                        fi
-                        if [[ "$workflow" == *"body-footer"* ]] \
-                            && ! validate_issue_body_contains "${title_prefix}body-footer composition smoke test" "Global footer from" "$target_repo"; then
-                            validation_success=false
+                            if [[ "$workflow" == *"body-footer"* ]] \
+                                && ! wait_for_issue_body_contains "$VALIDATED_ISSUE_NUMBER" "Global footer from" "$target_repo"; then
+                                validation_success=false
+                            fi
                         fi
                         ;;
                     *"create-discussion")
