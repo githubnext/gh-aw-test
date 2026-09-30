@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="905" viewBox="0 0 1200 905">
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="883" viewBox="0 0 1200 883">
 <rect width="100%" height="100%" fill="white"/>
 <style>text{font-family:ui-monospace,monospace;font-size:13px}.axis{stroke:#57606a;stroke-width:1}.grid{stroke:#d8dee4;stroke-width:1}</style>
 <text x="65" y="30" font-size="20">Major step timing: agent job (released, using inference)</text>
@@ -24,74 +24,82 @@
 <line class="grid" x1="867.5" y1="75" x2="867.5" y2="465"/>
 <line class="grid" x1="1001.2" y1="75" x2="1001.2" y2="465"/>
 <line class="grid" x1="1135.0" y1="75" x2="1135.0" y2="465"/>
-<polyline points="482.7,416.7 495.8,412.7 510.0,414.7 516.0,417.0 517.5,417.1 534.8,421.1 543.5,430.1 556.0,425.1 589.0,426.9 594.8,441.1 597.1,440.2 601.3,427.8 616.9,431.9 633.3,430.8 651.4,432.1 655.2,437.3 658.6,430.7 682.8,431.5 687.0,433.8 696.3,431.2 702.2,432.1 707.6,423.0 716.2,428.5 729.5,432.1 743.9,423.1 746.9,424.6 810.6,428.0 837.1,425.1 865.5,399.3 867.8,428.9 887.6,423.2 902.1,420.3 911.1,404.9 973.9,365.6 1135.0,425.6" fill="none" stroke="#0969da" stroke-width="2"><title>Copilot phase — AWF startup</title></polyline>
-<line x1="973.9" y1="365.6" x2="955.9" y2="343.6" stroke="#0969da" stroke-width="1"/>
-<circle cx="955.9" cy="343.6" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R1: Copilot phase — AWF startup, inference, 35.6s</title></circle>
-<text x="955.9" y="347.6" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R1</text>
+<polyline points="65.0,416.7 65.0,416.7 93.7,412.7 93.7,412.7 124.6,414.7 124.6,414.7 137.7,417.0 137.7,417.0 140.9,417.1 140.9,417.1 178.5,421.1 178.5,421.1 197.6,430.1 197.6,430.1 224.8,425.1 224.8,425.1 296.7,426.9 296.7,426.9 309.3,441.1 309.3,441.1 314.2,440.2 314.2,440.2 323.5,427.8 323.5,427.8 357.4,431.9 357.4,431.9 393.1,430.8 393.1,430.8 432.5,432.1 432.5,432.1 440.9,437.3 440.9,437.3 448.3,430.7 448.3,430.7 501.0,431.5 501.0,431.5 510.1,433.8 510.1,433.8 530.3,431.2 530.3,431.2 543.2,432.1 543.2,432.1 554.9,423.0 554.9,423.0 573.8,428.5 573.8,428.5 602.8,432.1 602.8,432.1 634.1,423.1 634.1,423.1 640.5,424.6 640.5,424.6 779.3,428.0 779.3,428.0 837.1,425.1 837.1,425.1 898.9,399.3 898.9,399.3 904.0,428.9 904.0,428.9 947.1,423.2 947.1,423.2 978.7,420.3 978.7,420.3 998.2,404.9 998.2,404.9 1135.0,365.6 1135.0,365.6" fill="none" stroke="#0969da" stroke-width="2"><title>Copilot phase — AWF startup</title></polyline>
+<line x1="1135.0" y1="365.6" x2="1117.0" y2="343.6" stroke="#0969da" stroke-width="1"/>
+<circle cx="1117.0" cy="343.6" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R1: Copilot phase — AWF startup, inference, 35.6s</title></circle>
+<text x="1117.0" y="347.6" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R1</text>
+<line x1="1135.0" y1="365.6" x2="1117.0" y2="343.6" stroke="#0969da" stroke-width="1"/>
+<circle cx="1117.0" cy="343.6" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R1: Copilot phase — AWF startup, inference, 35.6s</title></circle>
+<text x="1117.0" y="347.6" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R1</text>
 <line x1="65" y1="521" x2="100" y2="521" stroke="#0969da" stroke-width="3"/>
 <text x="110" y="525">Copilot phase — AWF startup</text>
-<polyline points="482.7,441.9 495.8,441.3 510.0,440.3 516.0,445.0 517.5,442.1 534.8,440.5 543.5,443.4 556.0,436.8 589.0,442.7 594.8,443.8 597.1,445.9 601.3,442.4 616.9,443.9 633.3,442.9 651.4,443.7 655.2,442.7 658.6,445.5 682.8,441.4 687.0,441.4 696.3,432.9 702.2,443.0 707.6,443.6 716.2,441.2 729.5,442.5 743.9,444.6 746.9,446.5 810.6,448.2 837.1,446.4 865.5,447.3 867.8,446.6 887.6,450.1 902.1,449.6 911.1,446.5 973.9,440.2 1135.0,448.9" fill="none" stroke="#cf222e" stroke-width="2"><title>Copilot phase — Copilot process</title></polyline>
+<polyline points="65.0,441.9 65.0,441.9 93.7,441.3 93.7,441.3 124.6,440.3 124.6,440.3 137.7,445.0 137.7,445.0 140.9,442.1 140.9,442.1 178.5,440.5 178.5,440.5 197.6,443.4 197.6,443.4 224.8,436.8 224.8,436.8 296.7,442.7 296.7,442.7 309.3,443.8 309.3,443.8 314.2,445.9 314.2,445.9 323.5,442.4 323.5,442.4 357.4,443.9 357.4,443.9 393.1,442.9 393.1,442.9 432.5,443.7 432.5,443.7 440.9,442.7 440.9,442.7 448.3,445.5 448.3,445.5 501.0,441.4 501.0,441.4 510.1,441.4 510.1,441.4 530.3,432.9 530.3,432.9 543.2,443.0 543.2,443.0 554.9,443.6 554.9,443.6 573.8,441.2 573.8,441.2 602.8,442.5 602.8,442.5 634.1,444.6 634.1,444.6 640.5,446.5 640.5,446.5 779.3,448.2 779.3,448.2 837.1,446.4 837.1,446.4 898.9,447.3 898.9,447.3 904.0,446.6 904.0,446.6 947.1,450.1 947.1,450.1 978.7,449.6 978.7,449.6 998.2,446.5 998.2,446.5 1135.0,440.2 1135.0,440.2" fill="none" stroke="#cf222e" stroke-width="2"><title>Copilot phase — Copilot process</title></polyline>
 <line x1="65" y1="543" x2="100" y2="543" stroke="#cf222e" stroke-width="3"/>
 <text x="110" y="547">Copilot phase — Copilot process</text>
-<polyline points="482.7,454.6 495.8,450.1 510.0,460.6 516.0,460.7 517.5,454.6 534.8,455.8 543.5,453.6 556.0,442.4 589.0,455.2 594.8,461.6 597.1,462.0 601.3,461.8 616.9,453.4 633.3,461.8 651.4,461.5 655.2,462.0 658.6,461.0 682.8,461.1 687.0,455.7 696.3,459.7 702.2,461.2 707.6,454.4 716.2,461.4 729.5,462.0 743.9,461.0 746.9,461.6 810.6,458.3 837.1,457.5 865.5,455.1 867.8,459.7 887.6,449.3 902.1,454.5 911.1,459.5 973.9,428.7 1135.0,458.0" fill="none" stroke="#1a7f37" stroke-width="2"><title>Copilot phase — harness startup</title></polyline>
-<line x1="973.9" y1="428.7" x2="991.9" y2="406.7" stroke="#1a7f37" stroke-width="1"/>
-<circle cx="991.9" cy="406.7" r="11" fill="white" stroke="#1a7f37" stroke-width="2"><title>R2: Copilot phase — harness startup, inference, 13.0s</title></circle>
-<text x="991.9" y="410.7" fill="#1a7f37" font-size="10" font-weight="bold" text-anchor="middle">R2</text>
+<polyline points="65.0,454.6 65.0,454.6 93.7,450.1 93.7,450.1 124.6,460.6 124.6,460.6 137.7,460.7 137.7,460.7 140.9,454.6 140.9,454.6 178.5,455.8 178.5,455.8 197.6,453.6 197.6,453.6 224.8,442.4 224.8,442.4 296.7,455.2 296.7,455.2 309.3,461.6 309.3,461.6 314.2,462.0 314.2,462.0 323.5,461.8 323.5,461.8 357.4,453.4 357.4,453.4 393.1,461.8 393.1,461.8 432.5,461.5 432.5,461.5 440.9,462.0 440.9,462.0 448.3,461.0 448.3,461.0 501.0,461.1 501.0,461.1 510.1,455.7 510.1,455.7 530.3,459.7 530.3,459.7 543.2,461.2 543.2,461.2 554.9,454.4 554.9,454.4 573.8,461.4 573.8,461.4 602.8,462.0 602.8,462.0 634.1,461.0 634.1,461.0 640.5,461.6 640.5,461.6 779.3,458.3 779.3,458.3 837.1,457.5 837.1,457.5 898.9,455.1 898.9,455.1 904.0,459.7 904.0,459.7 947.1,449.3 947.1,449.3 978.7,454.5 978.7,454.5 998.2,459.5 998.2,459.5 1135.0,428.7 1135.0,428.7" fill="none" stroke="#1a7f37" stroke-width="2"><title>Copilot phase — harness startup</title></polyline>
 <line x1="65" y1="565" x2="100" y2="565" stroke="#1a7f37" stroke-width="3"/>
 <text x="110" y="569">Copilot phase — harness startup</text>
-<polyline points="65.0,437.1 482.7,431.5 495.8,417.5 510.0,431.5 516.0,431.5 517.5,425.9 534.8,431.5 543.5,434.3 556.0,406.4 589.0,417.5 594.8,434.3 597.1,412.0 601.3,428.7 616.9,431.5 633.3,414.7 651.4,431.5 655.2,434.3 658.6,431.5 682.8,428.7 687.0,431.5 696.3,428.7 702.2,431.5 707.6,423.1 716.2,428.7 729.5,428.7 743.9,434.3 746.9,428.7 810.6,442.7 837.1,437.1 865.5,453.8 867.8,453.8 887.6,442.7 902.1,439.9 911.1,423.1 973.9,336.6 1135.0,434.3" fill="none" stroke="#8250df" stroke-width="2"><title>Download container images</title></polyline>
-<line x1="973.9" y1="336.6" x2="955.9" y2="358.6" stroke="#8250df" stroke-width="1"/>
-<circle cx="955.9" cy="358.6" r="11" fill="white" stroke="#8250df" stroke-width="2"><title>R3: Download container images, inference, 46.0s</title></circle>
-<text x="955.9" y="362.6" fill="#8250df" font-size="10" font-weight="bold" text-anchor="middle">R3</text>
+<polyline points="65.0,431.5 65.0,431.5 93.7,417.5 93.7,417.5 124.6,431.5 124.6,431.5 137.7,431.5 137.7,431.5 140.9,425.9 140.9,425.9 178.5,431.5 178.5,431.5 197.6,434.3 197.6,434.3 224.8,406.4 224.8,406.4 296.7,417.5 296.7,417.5 309.3,434.3 309.3,434.3 314.2,412.0 314.2,412.0 323.5,428.7 323.5,428.7 357.4,431.5 357.4,431.5 393.1,414.7 393.1,414.7 432.5,431.5 432.5,431.5 440.9,434.3 440.9,434.3 448.3,431.5 448.3,431.5 501.0,428.7 501.0,428.7 510.1,431.5 510.1,431.5 530.3,428.7 530.3,428.7 543.2,431.5 543.2,431.5 554.9,423.1 554.9,423.1 573.8,428.7 573.8,428.7 602.8,428.7 602.8,428.7 634.1,434.3 634.1,434.3 640.5,428.7 640.5,428.7 779.3,442.7 779.3,442.7 837.1,437.1 837.1,437.1 898.9,453.8 898.9,453.8 904.0,453.8 904.0,453.8 947.1,442.7 947.1,442.7 978.7,439.9 978.7,439.9 998.2,423.1 998.2,423.1 1135.0,336.6 1135.0,336.6" fill="none" stroke="#8250df" stroke-width="2"><title>Download container images</title></polyline>
+<line x1="1135.0" y1="336.6" x2="1124.0" y2="314.6" stroke="#8250df" stroke-width="1"/>
+<circle cx="1124.0" cy="314.6" r="11" fill="white" stroke="#8250df" stroke-width="2"><title>R2: Download container images, inference, 46.0s</title></circle>
+<text x="1124.0" y="318.6" fill="#8250df" font-size="10" font-weight="bold" text-anchor="middle">R2</text>
+<line x1="1135.0" y1="336.6" x2="1124.0" y2="314.6" stroke="#8250df" stroke-width="1"/>
+<circle cx="1124.0" cy="314.6" r="11" fill="white" stroke="#8250df" stroke-width="2"><title>R2: Download container images, inference, 46.0s</title></circle>
+<text x="1124.0" y="318.6" fill="#8250df" font-size="10" font-weight="bold" text-anchor="middle">R2</text>
 <line x1="65" y1="587" x2="100" y2="587" stroke="#8250df" stroke-width="3"/>
 <text x="110" y="591">Download container images</text>
-<polyline points="65.0,395.2 482.7,381.2 495.8,370.1 510.0,381.2 516.0,389.6 517.5,381.2 534.8,384.0 543.5,138.4 556.0,110.5 589.0,135.6 594.8,157.9 597.1,160.7 601.3,144.0 616.9,141.2 633.3,146.7 651.4,149.5 655.2,152.3 658.6,149.5 682.8,398.0 687.0,395.2 696.3,389.6 702.2,400.8 707.6,386.8 716.2,398.0 729.5,400.8 743.9,395.2 746.9,398.0 810.6,400.8 837.1,395.2 865.5,367.3 867.8,400.8 887.6,386.8 902.1,389.6 911.1,375.7 973.9,291.9 1135.0,398.0" fill="none" stroke="#bf8700" stroke-width="2"><title>Execute GitHub Copilot CLI</title></polyline>
-<line x1="973.9" y1="291.9" x2="991.9" y2="313.9" stroke="#bf8700" stroke-width="1"/>
-<circle cx="991.9" cy="313.9" r="11" fill="white" stroke="#bf8700" stroke-width="2"><title>R4: Execute GitHub Copilot CLI, inference, 62.0s</title></circle>
-<text x="991.9" y="317.9" fill="#bf8700" font-size="10" font-weight="bold" text-anchor="middle">R4</text>
+<polyline points="65.0,381.2 65.0,381.2 93.7,370.1 93.7,370.1 124.6,381.2 124.6,381.2 137.7,389.6 137.7,389.6 140.9,381.2 140.9,381.2 178.5,384.0 178.5,384.0 197.6,138.4 197.6,138.4 224.8,110.5 224.8,110.5 296.7,135.6 296.7,135.6 309.3,157.9 309.3,157.9 314.2,160.7 314.2,160.7 323.5,144.0 323.5,144.0 357.4,141.2 357.4,141.2 393.1,146.7 393.1,146.7 432.5,149.5 432.5,149.5 440.9,152.3 440.9,152.3 448.3,149.5 448.3,149.5 501.0,398.0 501.0,398.0 510.1,395.2 510.1,395.2 530.3,389.6 530.3,389.6 543.2,400.8 543.2,400.8 554.9,386.8 554.9,386.8 573.8,398.0 573.8,398.0 602.8,400.8 602.8,400.8 634.1,395.2 634.1,395.2 640.5,398.0 640.5,398.0 779.3,400.8 779.3,400.8 837.1,395.2 837.1,395.2 898.9,367.3 898.9,367.3 904.0,400.8 904.0,400.8 947.1,386.8 947.1,386.8 978.7,389.6 978.7,389.6 998.2,375.7 998.2,375.7 1135.0,291.9 1135.0,291.9" fill="none" stroke="#bf8700" stroke-width="2"><title>Execute GitHub Copilot CLI</title></polyline>
+<line x1="1135.0" y1="291.9" x2="1117.0" y2="313.9" stroke="#bf8700" stroke-width="1"/>
+<circle cx="1117.0" cy="313.9" r="11" fill="white" stroke="#bf8700" stroke-width="2"><title>R3: Execute GitHub Copilot CLI, inference, 62.0s</title></circle>
+<text x="1117.0" y="317.9" fill="#bf8700" font-size="10" font-weight="bold" text-anchor="middle">R3</text>
+<line x1="1135.0" y1="291.9" x2="1117.0" y2="313.9" stroke="#bf8700" stroke-width="1"/>
+<circle cx="1117.0" cy="313.9" r="11" fill="white" stroke="#bf8700" stroke-width="2"><title>R3: Execute GitHub Copilot CLI, inference, 62.0s</title></circle>
+<text x="1117.0" y="317.9" fill="#bf8700" font-size="10" font-weight="bold" text-anchor="middle">R3</text>
 <line x1="65" y1="609" x2="100" y2="609" stroke="#bf8700" stroke-width="3"/>
 <text x="110" y="613">Execute GitHub Copilot CLI</text>
-<polyline points="837.1,423.1 865.5,431.5 867.8,437.1" fill="none" stroke="#0550ae" stroke-width="2"><title>Install ripgrep</title></polyline>
+<polyline points="65.0,453.8 65.0,453.8 93.7,456.6 93.7,456.6 124.6,456.6 124.6,456.6 137.7,453.8 137.7,453.8 140.9,456.6 140.9,456.6 178.5,456.6 178.5,456.6 197.6,453.8 197.6,453.8 224.8,451.0 224.8,451.0 296.7,456.6 296.7,456.6 309.3,456.6 309.3,456.6 314.2,456.6 314.2,456.6 323.5,453.8 323.5,453.8 357.4,453.8 357.4,453.8 393.1,456.6 393.1,456.6 432.5,453.8 432.5,453.8 440.9,453.8 440.9,453.8 448.3,453.8 448.3,453.8 501.0,451.0 501.0,451.0 510.1,456.6 510.1,456.6 530.3,453.8 530.3,453.8 543.2,453.8 543.2,453.8 554.9,453.8 554.9,453.8 573.8,453.8 573.8,453.8 602.8,451.0 602.8,451.0 634.1,451.0 634.1,451.0 640.5,451.0 640.5,451.0 779.3,439.9 779.3,439.9 837.1,434.3 837.1,434.3 898.9,437.1 898.9,437.1 904.0,445.5 904.0,445.5 947.1,442.7 947.1,442.7 978.7,442.7 978.7,442.7 998.2,423.1 998.2,423.1 1135.0,423.1 1135.0,423.1" fill="none" stroke="#0550ae" stroke-width="2"><title>Install GitHub Copilot CLI</title></polyline>
 <line x1="65" y1="631" x2="100" y2="631" stroke="#0550ae" stroke-width="3"/>
-<text x="110" y="635">Install ripgrep</text>
-<polyline points="65.0,456.6 482.7,459.4 495.8,456.6 510.0,456.6 516.0,459.4 517.5,456.6 534.8,459.4 543.5,456.6 556.0,451.0 589.0,453.8 594.8,462.2 597.1,456.6 601.3,456.6 616.9,456.6 633.3,456.6 651.4,459.4 655.2,456.6 658.6,459.4 682.8,453.8 687.0,459.4 696.3,453.8 702.2,459.4 707.6,453.8 716.2,462.2 729.5,456.6 743.9,456.6 746.9,456.6 810.6,459.4 837.1,459.4 865.5,453.8 867.8,456.6 887.6,459.4 902.1,459.4 911.1,453.8 973.9,384.0 1135.0,414.7" fill="none" stroke="#9a6700" stroke-width="2"><title>Set up job</title></polyline>
-<line x1="973.9" y1="384.0" x2="973.9" y2="354.0" stroke="#9a6700" stroke-width="1"/>
-<circle cx="973.9" cy="354.0" r="11" fill="white" stroke="#9a6700" stroke-width="2"><title>R5: Set up job, inference, 29.0s</title></circle>
-<text x="973.9" y="358.0" fill="#9a6700" font-size="10" font-weight="bold" text-anchor="middle">R5</text>
-<line x1="1135.0" y1="414.7" x2="1117.0" y2="392.7" stroke="#9a6700" stroke-width="1"/>
-<circle cx="1117.0" cy="392.7" r="11" fill="white" stroke="#9a6700" stroke-width="2"><title>R7: Set up job, inference, 18.0s</title></circle>
-<text x="1117.0" y="396.7" fill="#9a6700" font-size="10" font-weight="bold" text-anchor="middle">R7</text>
+<text x="110" y="635">Install GitHub Copilot CLI</text>
+<polyline points="837.1,423.1 837.1,423.1 898.9,431.5 898.9,431.5 904.0,437.1 904.0,437.1" fill="none" stroke="#9a6700" stroke-width="2"><title>Install ripgrep</title></polyline>
 <line x1="65" y1="653" x2="100" y2="653" stroke="#9a6700" stroke-width="3"/>
-<text x="110" y="657">Set up job</text>
-<polyline points="65.0,448.2 482.7,451.0 495.8,442.7 510.0,448.2 516.0,451.0 517.5,451.0 534.8,448.2 543.5,451.0 556.0,425.9 589.0,439.9 594.8,448.2 597.1,445.5 601.3,448.2 616.9,451.0 633.3,448.2 651.4,451.0 655.2,448.2 658.6,445.5 682.8,445.5 687.0,451.0 696.3,445.5 702.2,451.0 707.6,445.5 716.2,448.2 729.5,448.2 743.9,445.5 746.9,448.2 810.6,448.2 837.1,437.1 865.5,437.1 867.8,445.5 887.6,442.7 902.1,451.0 911.1,448.2 973.9,400.8 1135.0,442.7" fill="none" stroke="#116329" stroke-width="2"><title>Start MCP Gateway</title></polyline>
-<line x1="973.9" y1="400.8" x2="973.9" y2="430.8" stroke="#116329" stroke-width="1"/>
-<circle cx="973.9" cy="430.8" r="11" fill="white" stroke="#116329" stroke-width="2"><title>R6: Start MCP Gateway, inference, 23.0s</title></circle>
-<text x="973.9" y="434.8" fill="#116329" font-size="10" font-weight="bold" text-anchor="middle">R6</text>
+<text x="110" y="657">Install ripgrep</text>
+<polyline points="65.0,459.4 65.0,459.4 93.7,456.6 93.7,456.6 124.6,456.6 124.6,456.6 137.7,459.4 137.7,459.4 140.9,456.6 140.9,456.6 178.5,459.4 178.5,459.4 197.6,456.6 197.6,456.6 224.8,451.0 224.8,451.0 296.7,453.8 296.7,453.8 309.3,462.2 309.3,462.2 314.2,456.6 314.2,456.6 323.5,456.6 323.5,456.6 357.4,456.6 357.4,456.6 393.1,456.6 393.1,456.6 432.5,459.4 432.5,459.4 440.9,456.6 440.9,456.6 448.3,459.4 448.3,459.4 501.0,453.8 501.0,453.8 510.1,459.4 510.1,459.4 530.3,453.8 530.3,453.8 543.2,459.4 543.2,459.4 554.9,453.8 554.9,453.8 573.8,462.2 573.8,462.2 602.8,456.6 602.8,456.6 634.1,456.6 634.1,456.6 640.5,456.6 640.5,456.6 779.3,459.4 779.3,459.4 837.1,459.4 837.1,459.4 898.9,453.8 898.9,453.8 904.0,456.6 904.0,456.6 947.1,459.4 947.1,459.4 978.7,459.4 978.7,459.4 998.2,453.8 998.2,453.8 1135.0,384.0 1135.0,384.0" fill="none" stroke="#116329" stroke-width="2"><title>Set up job</title></polyline>
+<line x1="1135.0" y1="384.0" x2="1124.0" y2="406.0" stroke="#116329" stroke-width="1"/>
+<circle cx="1124.0" cy="406.0" r="11" fill="white" stroke="#116329" stroke-width="2"><title>R4: Set up job, inference, 29.0s</title></circle>
+<text x="1124.0" y="410.0" fill="#116329" font-size="10" font-weight="bold" text-anchor="middle">R4</text>
+<line x1="1135.0" y1="384.0" x2="1124.0" y2="406.0" stroke="#116329" stroke-width="1"/>
+<circle cx="1124.0" cy="406.0" r="11" fill="white" stroke="#116329" stroke-width="2"><title>R4: Set up job, inference, 29.0s</title></circle>
+<text x="1124.0" y="410.0" fill="#116329" font-size="10" font-weight="bold" text-anchor="middle">R4</text>
 <line x1="65" y1="675" x2="100" y2="675" stroke="#116329" stroke-width="3"/>
-<text x="110" y="679">Start MCP Gateway</text>
-<text x="65.0" y="490" text-anchor="start">2026-04-23</text>
-<text x="198.8" y="490" text-anchor="middle">2026-05-12</text>
-<text x="332.5" y="490" text-anchor="middle">2026-05-31</text>
-<text x="466.2" y="490" text-anchor="middle">2026-06-19</text>
-<text x="600.0" y="490" text-anchor="middle">2026-07-08</text>
-<text x="733.8" y="490" text-anchor="middle">2026-07-27</text>
-<text x="867.5" y="490" text-anchor="middle">2026-08-15</text>
-<text x="1001.2" y="490" text-anchor="middle">2026-09-03</text>
-<text x="1135.0" y="490" text-anchor="end">2026-09-22</text>
+<text x="110" y="679">Set up job</text>
+<polyline points="65.0,451.0 65.0,451.0 93.7,442.7 93.7,442.7 124.6,448.2 124.6,448.2 137.7,451.0 137.7,451.0 140.9,451.0 140.9,451.0 178.5,448.2 178.5,448.2 197.6,451.0 197.6,451.0 224.8,425.9 224.8,425.9 296.7,439.9 296.7,439.9 309.3,448.2 309.3,448.2 314.2,445.5 314.2,445.5 323.5,448.2 323.5,448.2 357.4,451.0 357.4,451.0 393.1,448.2 393.1,448.2 432.5,451.0 432.5,451.0 440.9,448.2 440.9,448.2 448.3,445.5 448.3,445.5 501.0,445.5 501.0,445.5 510.1,451.0 510.1,451.0 530.3,445.5 530.3,445.5 543.2,451.0 543.2,451.0 554.9,445.5 554.9,445.5 573.8,448.2 573.8,448.2 602.8,448.2 602.8,448.2 634.1,445.5 634.1,445.5 640.5,448.2 640.5,448.2 779.3,448.2 779.3,448.2 837.1,437.1 837.1,437.1 898.9,437.1 898.9,437.1 904.0,445.5 904.0,445.5 947.1,442.7 947.1,442.7 978.7,451.0 978.7,451.0 998.2,448.2 998.2,448.2 1135.0,400.8 1135.0,400.8" fill="none" stroke="#0969da" stroke-width="2"><title>Start MCP Gateway</title></polyline>
+<line x1="1135.0" y1="400.8" x2="1124.0" y2="370.8" stroke="#0969da" stroke-width="1"/>
+<circle cx="1124.0" cy="370.8" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R5: Start MCP Gateway, inference, 23.0s</title></circle>
+<text x="1124.0" y="374.8" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R5</text>
+<line x1="1135.0" y1="400.8" x2="1124.0" y2="370.8" stroke="#0969da" stroke-width="1"/>
+<circle cx="1124.0" cy="370.8" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R5: Start MCP Gateway, inference, 23.0s</title></circle>
+<text x="1124.0" y="374.8" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R5</text>
+<line x1="65" y1="697" x2="100" y2="697" stroke="#0969da" stroke-width="3"/>
+<text x="110" y="701">Start MCP Gateway</text>
+<text x="65.0" y="490" text-anchor="start">2026-06-22</text>
+<text x="198.8" y="490" text-anchor="middle">2026-07-01</text>
+<text x="332.5" y="490" text-anchor="middle">2026-07-09</text>
+<text x="466.2" y="490" text-anchor="middle">2026-07-18</text>
+<text x="600.0" y="490" text-anchor="middle">2026-07-27</text>
+<text x="733.8" y="490" text-anchor="middle">2026-08-04</text>
+<text x="867.5" y="490" text-anchor="middle">2026-08-13</text>
+<text x="1001.2" y="490" text-anchor="middle">2026-08-22</text>
+<text x="1135.0" y="490" text-anchor="end">2026-08-31</text>
 <line class="axis" x1="65" y1="465" x2="1135" y2="465"/>
-<text x="65" y="719" font-size="16" font-weight="bold">Regression episodes</text>
-<text x="65" y="747" fill="#0969da" font-weight="bold">R1</text>
-<text x="99" y="747">2026-08-31  Copilot phase — AWF startup / inference  +142%</text>
-<text x="65" y="769" fill="#1a7f37" font-weight="bold">R2</text>
-<text x="99" y="769">2026-08-31  Copilot phase — harness startup / inference  +495%</text>
-<text x="65" y="791" fill="#8250df" font-weight="bold">R3</text>
-<text x="99" y="791">2026-08-31  Download container images / inference  +384%</text>
-<text x="65" y="813" fill="#bf8700" font-weight="bold">R4</text>
-<text x="99" y="813">2026-08-31  Execute GitHub Copilot CLI / inference  +148%</text>
-<text x="65" y="835" fill="#9a6700" font-weight="bold">R5</text>
+<text x="65" y="741" font-size="16" font-weight="bold">Regression episodes</text>
+<text x="65" y="769" fill="#0969da" font-weight="bold">R1</text>
+<text x="99" y="769">2026-08-31  Copilot phase — AWF startup / inference  +122%</text>
+<text x="65" y="791" fill="#8250df" font-weight="bold">R2</text>
+<text x="99" y="791">2026-08-31  Download container images / inference  +475%</text>
+<text x="65" y="813" fill="#bf8700" font-weight="bold">R3</text>
+<text x="99" y="813">2026-08-31  Execute GitHub Copilot CLI / inference  +121%</text>
+<text x="65" y="835" fill="#116329" font-weight="bold">R4</text>
 <text x="99" y="835">2026-08-31  Set up job / inference  +867%</text>
-<text x="65" y="857" fill="#116329" font-weight="bold">R6</text>
-<text x="99" y="857">2026-08-31  Start MCP Gateway / inference  +254%</text>
-<text x="65" y="879" fill="#9a6700" font-weight="bold">R7</text>
-<text x="99" y="879">2026-09-22  Set up job / inference  +500%</text>
+<text x="65" y="857" fill="#0969da" font-weight="bold">R5</text>
+<text x="99" y="857">2026-08-31  Start MCP Gateway / inference  +229%</text>
 </svg>
