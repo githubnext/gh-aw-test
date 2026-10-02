@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="575" viewBox="0 0 1200 575">
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="729" viewBox="0 0 1200 729">
 <rect width="100%" height="100%" fill="white"/>
 <style>text{font-family:ui-monospace,monospace;font-size:13px}.axis{stroke:#57606a;stroke-width:1}.grid{stroke:#d8dee4;stroke-width:1}</style>
 <text x="65" y="30" font-size="20">Major step timing: detection job (released, using inference)</text>
@@ -6,14 +6,64 @@
 <line class="grid" x1="65" y1="465.0" x2="1135" y2="465.0"/>
 <text x="8" y="470.0">0s</text>
 <line class="grid" x1="65" y1="387.0" x2="1135" y2="387.0"/>
-<text x="8" y="392.0">0s</text>
+<text x="8" y="392.0">25s</text>
 <line class="grid" x1="65" y1="309.0" x2="1135" y2="309.0"/>
-<text x="8" y="314.0">0s</text>
+<text x="8" y="314.0">50s</text>
 <line class="grid" x1="65" y1="231.0" x2="1135" y2="231.0"/>
-<text x="8" y="236.0">1s</text>
+<text x="8" y="236.0">75s</text>
 <line class="grid" x1="65" y1="153.0" x2="1135" y2="153.0"/>
-<text x="8" y="158.0">1s</text>
+<text x="8" y="158.0">100s</text>
 <line class="grid" x1="65" y1="75.0" x2="1135" y2="75.0"/>
-<text x="8" y="80.0">1s</text>
+<text x="8" y="80.0">125s</text>
+<line class="grid" x1="65.0" y1="75" x2="65.0" y2="465"/>
+<line class="grid" x1="198.8" y1="75" x2="198.8" y2="465"/>
+<line class="grid" x1="332.5" y1="75" x2="332.5" y2="465"/>
+<line class="grid" x1="466.2" y1="75" x2="466.2" y2="465"/>
+<line class="grid" x1="600.0" y1="75" x2="600.0" y2="465"/>
+<line class="grid" x1="733.8" y1="75" x2="733.8" y2="465"/>
+<line class="grid" x1="867.5" y1="75" x2="867.5" y2="465"/>
+<line class="grid" x1="1001.2" y1="75" x2="1001.2" y2="465"/>
+<line class="grid" x1="1135.0" y1="75" x2="1135.0" y2="465"/>
+<polyline points="65.0,440.1 556.7,427.7 556.7,427.7 572.2,437.0 572.2,437.0 588.9,421.5 588.9,421.5 596.0,427.7 596.0,427.7 597.7,437.0 597.7,437.0 618.0,427.7 618.0,427.7 628.3,433.9 628.3,433.9 643.0,409.0 643.0,409.0 681.9,405.9 681.9,405.9 688.7,427.7 688.7,427.7 691.4,430.8 691.4,430.8 696.4,433.9 696.4,433.9 714.7,427.7 714.7,427.7 734.0,433.9 734.0,433.9 755.3,427.7 755.3,427.7 759.8,424.6 759.8,424.6 763.8,430.8 763.8,430.8 792.3,433.9 792.3,433.9 797.2,430.8 797.2,430.8 808.2,437.0 808.2,437.0 815.2,437.0 815.2,437.0 821.5,440.1 821.5,440.1 831.7,433.9 831.7,433.9 847.3,440.1 847.3,440.1 864.3,437.0 864.3,437.0 867.7,433.9 867.7,433.9 942.8,440.1 942.8,440.1 974.0,440.1 974.0,440.1 1007.4,461.9 1007.4,461.9 1010.1,465.0 1010.1,465.0 1033.4,465.0 1033.4,465.0 1050.5,437.0 1050.5,437.0 1061.1,430.8 1061.1,430.8 1135.0,437.0 1135.0,437.0" fill="none" stroke="#0969da" stroke-width="2"><title>Download container images</title></polyline>
+<line x1="1061.1" y1="430.8" x2="1043.1" y2="408.8" stroke="#0969da" stroke-width="1"/>
+<circle cx="1043.1" cy="408.8" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R1: Download container images, inference, 11.0s</title></circle>
+<text x="1043.1" y="412.8" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R1</text>
+<line x1="1061.1" y1="430.8" x2="1043.1" y2="408.8" stroke="#0969da" stroke-width="1"/>
+<circle cx="1043.1" cy="408.8" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R1: Download container images, inference, 11.0s</title></circle>
+<text x="1043.1" y="412.8" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R1</text>
+<line x1="65" y1="521" x2="100" y2="521" stroke="#0969da" stroke-width="3"/>
+<text x="110" y="525">Download container images</text>
+<polyline points="65.0,396.6 556.7,368.6 556.7,368.6 572.2,384.1 572.2,384.1 588.9,365.5 588.9,365.5 596.0,390.4 596.0,390.4 597.7,377.9 597.7,377.9 618.0,390.4 618.0,390.4 628.3,371.7 628.3,371.7 643.0,393.5 643.0,393.5 681.9,368.6 681.9,368.6 688.7,387.2 688.7,387.2 691.4,381.0 691.4,381.0 696.4,390.4 696.4,390.4 714.7,384.1 714.7,384.1 734.0,374.8 734.0,374.8 755.3,122.9 755.3,122.9 759.8,110.5 759.8,110.5 763.8,116.7 763.8,116.7 792.3,390.4 792.3,390.4 797.2,387.2 797.2,387.2 808.2,409.0 808.2,409.0 815.2,399.7 815.2,399.7 821.5,387.2 821.5,387.2 831.7,405.9 831.7,405.9 847.3,384.1 847.3,384.1 864.3,396.6 864.3,396.6 867.7,409.0 867.7,409.0 942.8,368.6 942.8,368.6 974.0,374.8 974.0,374.8 1007.4,353.0 1007.4,353.0 1010.1,359.3 1010.1,359.3 1033.4,368.6 1033.4,368.6" fill="none" stroke="#cf222e" stroke-width="2"><title>Execute GitHub Copilot CLI</title></polyline>
+<line x1="65" y1="543" x2="100" y2="543" stroke="#cf222e" stroke-width="3"/>
+<text x="110" y="547">Execute GitHub Copilot CLI</text>
+<polyline points="1050.5,374.8 1050.5,374.8 1061.1,362.4 1061.1,362.4 1135.0,374.8 1135.0,374.8" fill="none" stroke="#1a7f37" stroke-width="2"><title>Execute threat detection with AWF</title></polyline>
+<line x1="65" y1="565" x2="100" y2="565" stroke="#1a7f37" stroke-width="3"/>
+<text x="110" y="569">Execute threat detection with AWF</text>
+<polyline points="65.0,455.7 556.7,455.7 556.7,455.7 572.2,452.6 572.2,452.6 588.9,455.7 588.9,455.7 596.0,452.6 596.0,452.6 597.7,455.7 597.7,455.7 618.0,455.7 618.0,455.7 628.3,452.6 628.3,452.6 643.0,458.8 643.0,458.8 681.9,452.6 681.9,452.6 688.7,452.6 688.7,452.6 691.4,452.6 691.4,452.6 696.4,449.4 696.4,449.4 714.7,455.7 714.7,455.7 734.0,452.6 734.0,452.6 755.3,452.6 755.3,452.6 759.8,452.6 759.8,452.6 763.8,452.6 763.8,452.6 792.3,455.7 792.3,455.7 797.2,452.6 797.2,452.6 808.2,452.6 808.2,452.6 815.2,452.6 815.2,452.6 821.5,452.6 821.5,452.6 831.7,452.6 831.7,452.6 847.3,452.6 847.3,452.6 864.3,452.6 864.3,452.6 867.7,449.4 867.7,449.4 942.8,418.3 942.8,418.3 974.0,443.2 974.0,443.2 1007.4,437.0 1007.4,437.0 1010.1,430.8 1010.1,430.8 1033.4,427.7 1033.4,427.7 1050.5,437.0 1050.5,437.0 1061.1,427.7 1061.1,427.7 1135.0,415.2 1135.0,415.2" fill="none" stroke="#8250df" stroke-width="2"><title>Install GitHub Copilot CLI</title></polyline>
+<line x1="65" y1="587" x2="100" y2="587" stroke="#8250df" stroke-width="3"/>
+<text x="110" y="591">Install GitHub Copilot CLI</text>
+<polyline points="65.0,449.4 556.7,458.8 556.7,458.8 572.2,461.9 572.2,461.9 588.9,455.7 588.9,455.7 596.0,458.8 596.0,458.8 597.7,461.9 597.7,461.9 618.0,458.8 618.0,458.8 628.3,458.8 628.3,458.8 643.0,461.9 643.0,461.9 681.9,458.8 681.9,458.8 688.7,458.8 688.7,458.8 691.4,458.8 691.4,458.8 696.4,455.7 696.4,455.7 714.7,461.9 714.7,461.9 734.0,458.8 734.0,458.8 755.3,458.8 755.3,458.8 759.8,458.8 759.8,458.8 763.8,458.8 763.8,458.8 792.3,458.8 792.3,458.8 797.2,455.7 797.2,455.7 808.2,458.8 808.2,458.8 815.2,461.9 815.2,461.9 821.5,455.7 821.5,455.7 831.7,458.8 831.7,458.8 847.3,458.8 847.3,458.8 864.3,458.8 864.3,458.8 867.7,458.8 867.7,458.8 942.8,458.8 942.8,458.8 974.0,455.7 974.0,455.7 1007.4,458.8 1007.4,458.8 1010.1,455.7 1010.1,455.7 1033.4,458.8 1033.4,458.8 1050.5,455.7 1050.5,455.7 1061.1,458.8 1061.1,458.8 1135.0,409.0 1135.0,409.0" fill="none" stroke="#bf8700" stroke-width="2"><title>Set up job</title></polyline>
+<line x1="1135.0" y1="409.0" x2="1124.0" y2="387.0" stroke="#bf8700" stroke-width="1"/>
+<circle cx="1124.0" cy="387.0" r="11" fill="white" stroke="#bf8700" stroke-width="2"><title>R2: Set up job, inference, 18.0s</title></circle>
+<text x="1124.0" y="391.0" fill="#bf8700" font-size="10" font-weight="bold" text-anchor="middle">R2</text>
+<line x1="1135.0" y1="409.0" x2="1124.0" y2="387.0" stroke="#bf8700" stroke-width="1"/>
+<circle cx="1124.0" cy="387.0" r="11" fill="white" stroke="#bf8700" stroke-width="2"><title>R2: Set up job, inference, 18.0s</title></circle>
+<text x="1124.0" y="391.0" fill="#bf8700" font-size="10" font-weight="bold" text-anchor="middle">R2</text>
+<line x1="65" y1="609" x2="100" y2="609" stroke="#bf8700" stroke-width="3"/>
+<text x="110" y="613">Set up job</text>
+<text x="65.0" y="490" text-anchor="start">2026-04-23</text>
+<text x="198.8" y="490" text-anchor="middle">2026-05-10</text>
+<text x="332.5" y="490" text-anchor="middle">2026-05-26</text>
+<text x="466.2" y="490" text-anchor="middle">2026-06-11</text>
+<text x="600.0" y="490" text-anchor="middle">2026-06-27</text>
+<text x="733.8" y="490" text-anchor="middle">2026-07-13</text>
+<text x="867.5" y="490" text-anchor="middle">2026-07-29</text>
+<text x="1001.2" y="490" text-anchor="middle">2026-08-14</text>
+<text x="1135.0" y="490" text-anchor="end">2026-08-31</text>
 <line class="axis" x1="65" y1="465" x2="1135" y2="465"/>
+<text x="65" y="653" font-size="16" font-weight="bold">Regression episodes</text>
+<text x="65" y="681" fill="#0969da" font-weight="bold">R1</text>
+<text x="99" y="681">2026-08-22  Download container images / inference  +1000%</text>
+<text x="65" y="703" fill="#bf8700" font-weight="bold">R2</text>
+<text x="99" y="703">2026-08-31  Set up job / inference  +800%</text>
 </svg>
