@@ -533,6 +533,12 @@ should_run_test() {
     return 1
 }
 
+is_sample_incompatible_test() {
+    local test_name="$1"
+
+    [[ "$test_name" == *"custom-safe-outputs" || "$test_name" == "test-copilot-steer" ]]
+}
+
 get_all_tests() {
     # Workflow dispatch tests
     echo "test-claude-create-issue"
@@ -689,6 +695,9 @@ filter_tests() {
     
     local filtered_tests=()
     for test in "${all_tests[@]}"; do
+        if [[ "$USE_SAMPLES" == true ]] && is_sample_incompatible_test "$test"; then
+            continue
+        fi
         if should_run_test "$test" "${patterns[@]}"; then
             filtered_tests+=("$test")
         fi
@@ -2090,6 +2099,23 @@ validate_mcp_workflow() {
     local repo_flag=""
     if [[ -n "$repo" ]]; then
         repo_flag="--repo $repo"
+    fi
+
+    if [[ "$workflow_name" == *"mcp-github-remote" ]]; then
+        local remote_mcp_issues=$(gh issue list $repo_flag --limit 10 --json title,body \
+            --jq '.[] | select(
+                ((.title == "GitHub remote MCP passed") and
+                 (.body | contains("hosted GitHub MCP server returned repository information"))) or
+                ((.body | contains("githubnext/gh-aw-test")) and
+                 (.body | test("#[0-9]+.*#[0-9]+.*#[0-9]+"; "s")))) | .title' | head -1)
+
+        if [[ -n "$remote_mcp_issues" ]]; then
+            success "MCP workflow '$workflow_name' produced the expected hosted GitHub MCP result: $remote_mcp_issues"
+            return 0
+        else
+            error "MCP workflow '$workflow_name' completed but no hosted GitHub MCP result was found"
+            return 1
+        fi
     fi
     
     if [[ "$workflow_name" == *"code-quality"* ]]; then
