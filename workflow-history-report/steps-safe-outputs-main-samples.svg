@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="685" viewBox="0 0 1200 685">
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="663" viewBox="0 0 1200 663">
 <rect width="100%" height="100%" fill="white"/>
 <style>text{font-family:ui-monospace,monospace;font-size:13px}.axis{stroke:#57606a;stroke-width:1}.grid{stroke:#d8dee4;stroke-width:1}</style>
 <text x="65" y="30" font-size="20">Major step timing: safe_outputs job (main, using samples)</text>
@@ -24,38 +24,33 @@
 <line class="grid" x1="867.5" y1="75" x2="867.5" y2="465"/>
 <line class="grid" x1="1001.2" y1="75" x2="1001.2" y2="465"/>
 <line class="grid" x1="1135.0" y1="75" x2="1135.0" y2="465"/>
-<polyline points="65.0,389.8 66.0,386.2 68.1,346.8 68.7,368.3 68.7,389.8 71.8,386.2 77.9,393.4 82.0,404.1 106.3,389.8 106.8,397.0 111.7,393.4 121.4,332.5 131.5,404.1 141.1,397.0 150.6,393.4 160.1,361.1 170.2,364.7 180.5,375.5 190.8,382.6 199.3,418.4 210.6,389.8 220.5,343.2 230.4,414.9 239.8,393.4 259.8,414.9 263.0,411.3 270.2,411.3 280.1,400.5 287.0,393.4 299.6,411.3 308.9,375.5 319.4,414.9 329.8,418.4 337.3,404.1 349.2,397.0 354.2,418.4 369.4,418.4 379.6,411.3 389.3,404.1 393.6,404.1 407.4,418.4 419.3,386.2 429.1,393.4 438.9,418.4 446.1,407.7 452.6,393.4 452.9,389.8 458.8,393.4 466.5,386.2 476.6,336.1 485.5,371.9 498.7,332.5 507.6,343.2 518.7,375.5 528.6,354.0 536.8,361.1 538.5,371.9 717.0,375.5 727.1,271.6 737.1,371.9 745.1,397.0 757.4,375.5 767.5,404.1 776.3,386.2 786.9,379.0 806.7,407.7 836.1,293.1 846.4,325.3 866.1,311.0 875.7,114.0 885.8,350.4 895.0,153.4 906.1,303.8 916.0,371.9 926.0,361.1 935.9,350.4 935.9,346.8 945.1,307.4 954.1,153.4 958.0,321.7 965.4,350.4 974.7,300.3 974.7,350.4 985.6,336.1 990.0,368.3 990.0,350.4 1015.1,321.7 1034.5,389.8 1045.0,386.2 1053.0,375.5 1064.5,389.8 1066.2,110.5 1083.9,332.5 1095.0,368.3 1104.9,364.7 1114.3,393.4 1125.0,379.0 1135.0,361.1" fill="none" stroke="#0969da" stroke-width="2"><title>Set up job</title></polyline>
-<line x1="727.1" y1="271.6" x2="709.1" y2="249.6" stroke="#0969da" stroke-width="1"/>
-<circle cx="709.1" cy="249.6" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R1: Set up job, samples, 54.0s</title></circle>
-<text x="709.1" y="253.6" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R1</text>
-<line x1="875.7" y1="114.0" x2="893.7" y2="92.0" stroke="#0969da" stroke-width="1"/>
-<circle cx="893.7" cy="92.0" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R2: Set up job, samples, 98.0s</title></circle>
-<text x="893.7" y="96.0" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R2</text>
-<line x1="954.1" y1="153.4" x2="936.1" y2="175.4" stroke="#0969da" stroke-width="1"/>
-<circle cx="936.1" cy="175.4" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R3: Set up job, samples, 87.0s</title></circle>
-<text x="936.1" y="179.4" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R3</text>
-<line x1="1066.2" y1="110.5" x2="1084.2" y2="132.5" stroke="#0969da" stroke-width="1"/>
-<circle cx="1084.2" cy="132.5" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R4: Set up job, samples, 99.0s</title></circle>
-<text x="1084.2" y="136.5" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R4</text>
+<polyline points="65.0,389.8 66.0,386.2 68.1,346.8 68.7,368.3 68.7,389.8 71.7,386.2 77.8,393.4 81.9,404.1 106.0,389.8 106.5,397.0 111.3,393.4 121.0,332.5 131.0,404.1 140.5,397.0 150.0,393.4 159.5,361.1 169.5,364.7 179.7,375.5 189.9,382.6 198.4,418.4 209.6,389.8 219.4,343.2 229.3,414.9 238.6,393.4 258.4,414.9 261.6,411.3 268.8,411.3 278.6,400.5 285.5,393.4 298.0,411.3 307.2,375.5 317.7,414.9 327.9,418.4 335.4,404.1 347.2,397.0 352.2,418.4 367.3,418.4 377.4,411.3 387.1,404.1 391.4,404.1 405.0,418.4 416.8,386.2 426.6,393.4 436.4,418.4 443.5,407.7 449.9,393.4 450.2,389.8 456.1,393.4 463.7,386.2 473.7,336.1 482.6,371.9 495.7,332.5 504.5,343.2 515.6,375.5 525.4,354.0 533.5,361.1 535.2,371.9 712.5,375.5 722.5,271.6 732.4,371.9 740.4,397.0 752.6,375.5 762.6,404.1 771.4,386.2 781.9,379.0 801.6,407.7 830.8,293.1 841.0,325.3 860.5,311.0 870.0,114.0 880.1,350.4 889.2,153.4 900.3,303.8 910.1,371.9 920.0,361.1 929.8,350.4 929.8,346.8 939.0,307.4 948.0,153.4 951.8,321.7 959.2,350.4 968.4,300.3 968.4,350.4 979.3,336.1 983.6,368.3 983.6,350.4 1008.5,321.7 1027.8,389.8 1038.2,386.2 1046.1,375.5 1057.6,389.8 1059.2,110.5 1076.8,332.5 1087.8,368.3 1097.7,364.7 1107.0,393.4 1117.6,379.0 1127.6,361.1 1135.0,397.0" fill="none" stroke="#0969da" stroke-width="2"><title>Set up job</title></polyline>
+<line x1="870.0" y1="114.0" x2="852.0" y2="92.0" stroke="#0969da" stroke-width="1"/>
+<circle cx="852.0" cy="92.0" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R1: Set up job, samples, 98.0s</title></circle>
+<text x="852.0" y="96.0" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R1</text>
+<line x1="948.0" y1="153.4" x2="966.0" y2="131.4" stroke="#0969da" stroke-width="1"/>
+<circle cx="966.0" cy="131.4" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R2: Set up job, samples, 87.0s</title></circle>
+<text x="966.0" y="135.4" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R2</text>
+<line x1="1059.2" y1="110.5" x2="1041.2" y2="132.5" stroke="#0969da" stroke-width="1"/>
+<circle cx="1041.2" cy="132.5" r="11" fill="white" stroke="#0969da" stroke-width="2"><title>R3: Set up job, samples, 99.0s</title></circle>
+<text x="1041.2" y="136.5" fill="#0969da" font-size="10" font-weight="bold" text-anchor="middle">R3</text>
 <line x1="65" y1="521" x2="100" y2="521" stroke="#0969da" stroke-width="3"/>
 <text x="110" y="525">Set up job</text>
 <text x="65.0" y="490" text-anchor="start">2026-06-18</text>
-<text x="198.8" y="490" text-anchor="middle">2026-07-01</text>
+<text x="198.8" y="490" text-anchor="middle">2026-07-02</text>
 <text x="332.5" y="490" text-anchor="middle">2026-07-15</text>
-<text x="466.2" y="490" text-anchor="middle">2026-07-28</text>
+<text x="466.2" y="490" text-anchor="middle">2026-07-29</text>
 <text x="600.0" y="490" text-anchor="middle">2026-08-11</text>
-<text x="733.8" y="490" text-anchor="middle">2026-08-24</text>
+<text x="733.8" y="490" text-anchor="middle">2026-08-25</text>
 <text x="867.5" y="490" text-anchor="middle">2026-09-07</text>
-<text x="1001.2" y="490" text-anchor="middle">2026-09-20</text>
+<text x="1001.2" y="490" text-anchor="middle">2026-09-21</text>
 <text x="1135.0" y="490" text-anchor="end">2026-10-04</text>
 <line class="axis" x1="65" y1="465" x2="1135" y2="465"/>
 <text x="65" y="565" font-size="16" font-weight="bold">Regression episodes</text>
 <text x="65" y="593" fill="#0969da" font-weight="bold">R1</text>
-<text x="99" y="593">2026-08-24  Set up job / samples  +96%</text>
+<text x="99" y="593">2026-09-04 to 2026-09-10  Set up job / samples  +300%</text>
 <text x="65" y="615" fill="#0969da" font-weight="bold">R2</text>
-<text x="99" y="615">2026-09-04 to 2026-09-10  Set up job / samples  +300%</text>
+<text x="99" y="615">2026-09-15  Set up job / samples  +129%</text>
 <text x="65" y="637" fill="#0969da" font-weight="bold">R3</text>
-<text x="99" y="637">2026-09-15  Set up job / samples  +129%</text>
-<text x="65" y="659" fill="#0969da" font-weight="bold">R4</text>
-<text x="99" y="659">2026-09-27  Set up job / samples  +236%</text>
+<text x="99" y="637">2026-09-27  Set up job / samples  +236%</text>
 </svg>
