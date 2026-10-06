@@ -1077,6 +1077,7 @@ disable_all_workflows_before_testing() {
 wait_for_workflow() {
     local workflow_name="$1"
     local run_id="$2"
+    local expected_conclusion="${3:-success}"
     local timeout_seconds=$((TIMEOUT_MINUTES * 60))
     local start_time=$(date +%s)
     local max_consecutive_failures=10
@@ -1102,13 +1103,17 @@ wait_for_workflow() {
             
             case "$run_status" in
                 "completed")
+                    if [[ "$run_conclusion" == "$expected_conclusion" ]]; then
+                        success "Workflow '$workflow_name' completed with expected conclusion: $run_conclusion"
+                        return 0
+                    fi
                     case "$run_conclusion" in
                         "success")
-                            success "Workflow '$workflow_name' completed successfully"
-                            return 0
+                            error "Workflow '$workflow_name' completed successfully; expected conclusion: $expected_conclusion"
+                            return 1
                             ;;
                         "failure"|"cancelled"|"timed_out")
-                            error "Workflow '$workflow_name' failed with conclusion: $run_conclusion"
+                            error "Workflow '$workflow_name' completed with conclusion '$run_conclusion'; expected: $expected_conclusion"
                             error "View run details: https://github.com/$REPO_OWNER/$REPO_NAME/actions/runs/$run_id"
                             return 1
                             ;;
@@ -1311,6 +1316,7 @@ disable_workflow() {
 
 trigger_workflow_dispatch_and_await_completion() {
     local workflow_name="$1"
+    local expected_conclusion="${2:-success}"
     local workflow_file="${workflow_name}.lock.yml"
     
     info "Triggering workflow_dispatch for '$workflow_name'..."
@@ -1353,7 +1359,7 @@ trigger_workflow_dispatch_and_await_completion() {
         if [[ "$after_run_id" != "$before_run_id" && -n "$after_run_id" ]]; then
             local result=0
             TEST_RUN_URLS["$workflow_name"]="https://github.com/$REPO_OWNER/$REPO_NAME/actions/runs/$after_run_id"
-            wait_for_workflow "$workflow_name" "$after_run_id" || result=1
+            wait_for_workflow "$workflow_name" "$after_run_id" "$expected_conclusion" || result=1
             
             # Disable the workflow after running
             disable_workflow "$workflow_name"
@@ -3938,13 +3944,23 @@ run_single_test() {
         # Workflow dispatch tests - triggered with gh aw run
         *"create-issue"|*"create-discussion"|*"create-pull-request"|*"create-two-pull-requests"|*"code-scanning-alert"|*"create-check-run"|*"mcp"*|*"safe-jobs"|*"gh-steps"|*"restore-memory-custom-job"|*"custom-safe-outputs"|*"noop"|*"report-incomplete"|*"missing-data"|*"missing-tool"|*"assign-to-agent"*|*"set-issue-field"|*"set-issue-field-builtin-rejection"|*"issue-intents"|*"skills-frontmatter"|*"inline-sub-agents"|*"network-isolation"|*"upload-code-coverage"|*"sandbox-runtime-profile"|*"playwright-cli"|*"network-engine-domain-opt-in"|*"sandbox-exclude-env"|*"repo-memory"|*"linear-create-issue"|*"jira-create-issue"|*"steer"|*"body-footer")
             local workflow_success=false
-            if trigger_workflow_dispatch_and_await_completion "$workflow"; then
+            local expected_conclusion="success"
+            case "$workflow" in
+                *"report-incomplete"|*"set-issue-field-builtin-rejection")
+                    expected_conclusion="failure"
+                    ;;
+            esac
+            if trigger_workflow_dispatch_and_await_completion "$workflow" "$expected_conclusion"; then
                 workflow_success=true
             fi
             
             if [[ "$workflow_success" == true ]]; then
                 local validation_success=false
                 case "$workflow" in
+                    *"report-incomplete"|*"set-issue-field-builtin-rejection")
+                        success "Workflow '$workflow' produced the expected incomplete outcome"
+                        validation_success=true
+                        ;;
                     *"linear-create-issue"|*"jira-create-issue"|*"steer")
                         success "Workflow '$workflow' completed successfully"
                         validation_success=true
