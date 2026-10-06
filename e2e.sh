@@ -1077,6 +1077,7 @@ disable_all_workflows_before_testing() {
 wait_for_workflow() {
     local workflow_name="$1"
     local run_id="$2"
+    local expected_conclusion="${3:-success}"
     local timeout_seconds=$((TIMEOUT_MINUTES * 60))
     local start_time=$(date +%s)
     local max_consecutive_failures=10
@@ -1102,22 +1103,13 @@ wait_for_workflow() {
             
             case "$run_status" in
                 "completed")
-                    case "$run_conclusion" in
-                        "success")
-                            success "Workflow '$workflow_name' completed successfully"
-                            return 0
-                            ;;
-                        "failure"|"cancelled"|"timed_out")
-                            error "Workflow '$workflow_name' failed with conclusion: $run_conclusion"
-                            error "View run details: https://github.com/$REPO_OWNER/$REPO_NAME/actions/runs/$run_id"
-                            return 1
-                            ;;
-                        *)
-                            error "Workflow '$workflow_name' completed with unexpected conclusion: $run_conclusion"
-                            error "View run details: https://github.com/$REPO_OWNER/$REPO_NAME/actions/runs/$run_id"
-                            return 1
-                            ;;
-                    esac
+                    if [[ "$run_conclusion" == "$expected_conclusion" ]]; then
+                        success "Workflow '$workflow_name' completed with expected conclusion: $run_conclusion"
+                        return 0
+                    fi
+                    error "Workflow '$workflow_name' completed with conclusion '$run_conclusion' (expected '$expected_conclusion')"
+                    error "View run details: https://github.com/$REPO_OWNER/$REPO_NAME/actions/runs/$run_id"
+                    return 1
                     ;;
                 "in_progress"|"queued"|"requested"|"waiting"|"pending")
                     echo -n "."
@@ -1311,6 +1303,7 @@ disable_workflow() {
 
 trigger_workflow_dispatch_and_await_completion() {
     local workflow_name="$1"
+    local expected_conclusion="${2:-success}"
     local workflow_file="${workflow_name}.lock.yml"
     
     info "Triggering workflow_dispatch for '$workflow_name'..."
@@ -1353,7 +1346,7 @@ trigger_workflow_dispatch_and_await_completion() {
         if [[ "$after_run_id" != "$before_run_id" && -n "$after_run_id" ]]; then
             local result=0
             TEST_RUN_URLS["$workflow_name"]="https://github.com/$REPO_OWNER/$REPO_NAME/actions/runs/$after_run_id"
-            wait_for_workflow "$workflow_name" "$after_run_id" || result=1
+            wait_for_workflow "$workflow_name" "$after_run_id" "$expected_conclusion" || result=1
             
             # Disable the workflow after running
             disable_workflow "$workflow_name"
@@ -1369,6 +1362,31 @@ trigger_workflow_dispatch_and_await_completion() {
         disable_workflow "$workflow_name"
         return 1
     fi
+}
+
+validate_workflow_log_contains() {
+    local workflow_name="$1"
+    local expected_text="$2"
+    local run_url="${TEST_RUN_URLS[$workflow_name]:-}"
+    local run_id="${run_url##*/}"
+
+    if [[ -z "$run_url" || -z "$run_id" ]]; then
+        error "No workflow run ID available to validate '$workflow_name'"
+        return 1
+    fi
+
+    local run_log
+    if ! run_log=$(gh run view "$run_id" --log 2>> "$LOG_FILE"); then
+        error "Could not read logs for '$workflow_name' run #$run_id"
+        return 1
+    fi
+    if grep -Fq "$expected_text" <<< "$run_log"; then
+        success "Workflow '$workflow_name' emitted the expected diagnostic: $expected_text"
+        return 0
+    fi
+
+    error "Workflow '$workflow_name' did not emit the expected diagnostic: $expected_text"
+    return 1
 }
 
 trigger_workflow_with_inputs() {
@@ -1793,6 +1811,7 @@ validate_issue_created() {
     local title_prefix="$1"
     local expected_labels="$2"
     local repo="${3:-}"
+    local exact_title="${4:-}"
     VALIDATED_ISSUE_NUMBER=""
     
     local repo_flag=""
@@ -1802,8 +1821,11 @@ validate_issue_created() {
         repo_url="$repo"
     fi
     
-    # Look for recently created issues with the title prefix
-    local issue_number=$(gh issue list $repo_flag --limit 10 --json number,title,labels --jq ".[] | select(.title | startswith(\"$title_prefix\")) | .number" | head -1)
+    local title_filter=".title | startswith(\"$title_prefix\")"
+    if [[ -n "$exact_title" ]]; then
+        title_filter=".title == \"$exact_title\""
+    fi
+    local issue_number=$(gh issue list $repo_flag --limit 100 --json number,title,labels --jq ".[] | select($title_filter) | .number" | head -1)
     
     if [[ -n "$issue_number" ]]; then
         VALIDATED_ISSUE_NUMBER="$issue_number"
@@ -2102,7 +2124,7 @@ validate_mcp_workflow() {
     fi
 
     if [[ "$workflow_name" == *"mcp-github-remote" ]]; then
-        local remote_mcp_issues=$(gh issue list $repo_flag --limit 10 --json title,body \
+        local remote_mcp_issues=$(gh issue list $repo_flag --limit 100 --json title,body \
             --jq '.[] | select(
                 ((.title == "GitHub remote MCP passed") and
                  (.body | contains("hosted GitHub MCP server returned repository information"))) or
@@ -3938,13 +3960,38 @@ run_single_test() {
         # Workflow dispatch tests - triggered with gh aw run
         *"create-issue"|*"create-discussion"|*"create-pull-request"|*"create-two-pull-requests"|*"code-scanning-alert"|*"create-check-run"|*"mcp"*|*"safe-jobs"|*"gh-steps"|*"restore-memory-custom-job"|*"custom-safe-outputs"|*"noop"|*"report-incomplete"|*"missing-data"|*"missing-tool"|*"assign-to-agent"*|*"set-issue-field"|*"set-issue-field-builtin-rejection"|*"issue-intents"|*"skills-frontmatter"|*"inline-sub-agents"|*"network-isolation"|*"upload-code-coverage"|*"sandbox-runtime-profile"|*"playwright-cli"|*"network-engine-domain-opt-in"|*"sandbox-exclude-env"|*"repo-memory"|*"linear-create-issue"|*"jira-create-issue"|*"steer"|*"body-footer")
             local workflow_success=false
-            if trigger_workflow_dispatch_and_await_completion "$workflow"; then
+            local expected_conclusion="success"
+            if [[ "$workflow" == *"report-incomplete" || "$workflow" == *"set-issue-field-builtin-rejection" \
+                || "$workflow" == *"missing-tool" || "$workflow" == *"missing-data" ]]; then
+                expected_conclusion="failure"
+            fi
+            if trigger_workflow_dispatch_and_await_completion "$workflow" "$expected_conclusion"; then
                 workflow_success=true
             fi
             
             if [[ "$workflow_success" == true ]]; then
                 local validation_success=false
                 case "$workflow" in
+                    *"set-issue-field-builtin-rejection")
+                        if validate_workflow_log_contains "$workflow" "report_incomplete reason: set_issue_field rejected builtin field 'title'"; then
+                            validation_success=true
+                        fi
+                        ;;
+                    *"report-incomplete")
+                        if validate_workflow_log_contains "$workflow" "report_incomplete reason: Demonstrating the report-incomplete safe output from Copilot"; then
+                            validation_success=true
+                        fi
+                        ;;
+                    *"missing-tool")
+                        if validate_workflow_log_contains "$workflow" "Agent emitted 1 missing_tool message(s) - activating failure handling"; then
+                            validation_success=true
+                        fi
+                        ;;
+                    *"missing-data")
+                        if validate_workflow_log_contains "$workflow" "Agent emitted 1 missing_data message(s) - activating failure handling"; then
+                            validation_success=true
+                        fi
+                        ;;
                     *"linear-create-issue"|*"jira-create-issue"|*"steer")
                         success "Workflow '$workflow' completed successfully"
                         validation_success=true
@@ -3962,7 +4009,11 @@ run_single_test() {
                     *"create-issue"|*"skills-frontmatter"|*"restore-memory-custom-job"|*"inline-sub-agents"|*"network-isolation"|*"sandbox-runtime-profile"|*"playwright-cli"|*"network-engine-domain-opt-in"|*"sandbox-exclude-env"|*"repo-memory"|*"body-footer")
                         local title_prefix=$(get_title_prefix "$workflow" "$ai_type")
                         local expected_labels=$(get_expected_labels "$ai_type")
-                        if validate_issue_created "$title_prefix" "$expected_labels" "$target_repo"; then
+                        local exact_title=""
+                        if [[ "$workflow" == *"body-footer" ]]; then
+                            exact_title="${title_prefix}body-footer composition smoke test"
+                        fi
+                        if validate_issue_created "$title_prefix" "$expected_labels" "$target_repo" "$exact_title"; then
                             validation_success=true
                             if [[ "$workflow" == *"body-footer"* ]] \
                                 && ! wait_for_issue_body_contains "$VALIDATED_ISSUE_NUMBER" "Global footer from" "$target_repo"; then
