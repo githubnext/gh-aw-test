@@ -103,7 +103,7 @@ jobs:
       discussions: write
     steps:
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@b15560d3bf0957183a3a6904c8993bdb53a22f1f # b15560d3bf0957183a3a6904c8993bdb53a22f1f
+        uses: github/gh-aw/actions/setup@23403d903f5cf27e2d01474daa76b7841e4bae76 # 23403d903f5cf27e2d01474daa76b7841e4bae76
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
 
@@ -126,7 +126,7 @@ jobs:
       issues: write
     steps:
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@b15560d3bf0957183a3a6904c8993bdb53a22f1f # b15560d3bf0957183a3a6904c8993bdb53a22f1f
+        uses: github/gh-aw/actions/setup@23403d903f5cf27e2d01474daa76b7841e4bae76 # 23403d903f5cf27e2d01474daa76b7841e4bae76
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
 
@@ -149,7 +149,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@b15560d3bf0957183a3a6904c8993bdb53a22f1f # b15560d3bf0957183a3a6904c8993bdb53a22f1f
+        uses: github/gh-aw/actions/setup@23403d903f5cf27e2d01474daa76b7841e4bae76 # 23403d903f5cf27e2d01474daa76b7841e4bae76
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
 
@@ -173,7 +173,7 @@ jobs:
       actions: write
     steps:
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@b15560d3bf0957183a3a6904c8993bdb53a22f1f # b15560d3bf0957183a3a6904c8993bdb53a22f1f
+        uses: github/gh-aw/actions/setup@23403d903f5cf27e2d01474daa76b7841e4bae76 # 23403d903f5cf27e2d01474daa76b7841e4bae76
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
 
@@ -206,7 +206,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@b15560d3bf0957183a3a6904c8993bdb53a22f1f # b15560d3bf0957183a3a6904c8993bdb53a22f1f
+        uses: github/gh-aw/actions/setup@23403d903f5cf27e2d01474daa76b7841e4bae76 # 23403d903f5cf27e2d01474daa76b7841e4bae76
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
 
@@ -223,9 +223,9 @@ jobs:
             await main();
 
       - name: Install gh-aw
-        uses: github/gh-aw-actions/setup-cli@b15560d3bf0957183a3a6904c8993bdb53a22f1f
+        uses: github/gh-aw-actions/setup-cli@23403d903f5cf27e2d01474daa76b7841e4bae76
         with:
-          version: b15560d3bf0957183a3a6904c8993bdb53a22f1f
+          version: 23403d903f5cf27e2d01474daa76b7841e4bae76
 
       - name: Run operation
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
@@ -259,7 +259,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@b15560d3bf0957183a3a6904c8993bdb53a22f1f # b15560d3bf0957183a3a6904c8993bdb53a22f1f
+        uses: github/gh-aw/actions/setup@23403d903f5cf27e2d01474daa76b7841e4bae76 # 23403d903f5cf27e2d01474daa76b7841e4bae76
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
 
@@ -312,7 +312,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@b15560d3bf0957183a3a6904c8993bdb53a22f1f # b15560d3bf0957183a3a6904c8993bdb53a22f1f
+        uses: github/gh-aw/actions/setup@23403d903f5cf27e2d01474daa76b7841e4bae76 # 23403d903f5cf27e2d01474daa76b7841e4bae76
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
 
@@ -364,7 +364,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@b15560d3bf0957183a3a6904c8993bdb53a22f1f # b15560d3bf0957183a3a6904c8993bdb53a22f1f
+        uses: github/gh-aw/actions/setup@23403d903f5cf27e2d01474daa76b7841e4bae76 # 23403d903f5cf27e2d01474daa76b7841e4bae76
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
 
@@ -381,9 +381,9 @@ jobs:
             await main();
 
       - name: Install gh-aw
-        uses: github/gh-aw-actions/setup-cli@b15560d3bf0957183a3a6904c8993bdb53a22f1f
+        uses: github/gh-aw-actions/setup-cli@23403d903f5cf27e2d01474daa76b7841e4bae76
         with:
-          version: b15560d3bf0957183a3a6904c8993bdb53a22f1f
+          version: 23403d903f5cf27e2d01474daa76b7841e4bae76
 
       - name: Create missing labels
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
@@ -416,7 +416,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@b15560d3bf0957183a3a6904c8993bdb53a22f1f # b15560d3bf0957183a3a6904c8993bdb53a22f1f
+        uses: github/gh-aw/actions/setup@23403d903f5cf27e2d01474daa76b7841e4bae76 # 23403d903f5cf27e2d01474daa76b7841e4bae76
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
 
@@ -433,9 +433,9 @@ jobs:
             await main();
 
       - name: Install gh-aw
-        uses: github/gh-aw-actions/setup-cli@b15560d3bf0957183a3a6904c8993bdb53a22f1f
+        uses: github/gh-aw-actions/setup-cli@23403d903f5cf27e2d01474daa76b7841e4bae76
         with:
-          version: b15560d3bf0957183a3a6904c8993bdb53a22f1f
+          version: 23403d903f5cf27e2d01474daa76b7841e4bae76
 
       - name: Restore activity report logs cache
         id: activity_report_logs_cache
@@ -525,7 +525,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@b15560d3bf0957183a3a6904c8993bdb53a22f1f # b15560d3bf0957183a3a6904c8993bdb53a22f1f
+        uses: github/gh-aw/actions/setup@23403d903f5cf27e2d01474daa76b7841e4bae76 # 23403d903f5cf27e2d01474daa76b7841e4bae76
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
 
@@ -542,9 +542,9 @@ jobs:
             await main();
 
       - name: Install gh-aw
-        uses: github/gh-aw-actions/setup-cli@b15560d3bf0957183a3a6904c8993bdb53a22f1f
+        uses: github/gh-aw-actions/setup-cli@23403d903f5cf27e2d01474daa76b7841e4bae76
         with:
-          version: b15560d3bf0957183a3a6904c8993bdb53a22f1f
+          version: 23403d903f5cf27e2d01474daa76b7841e4bae76
 
       - name: Restore forecast report logs cache
         id: forecast_report_logs_cache
@@ -623,7 +623,7 @@ jobs:
       issues: write
     steps:
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@b15560d3bf0957183a3a6904c8993bdb53a22f1f # b15560d3bf0957183a3a6904c8993bdb53a22f1f
+        uses: github/gh-aw/actions/setup@23403d903f5cf27e2d01474daa76b7841e4bae76 # 23403d903f5cf27e2d01474daa76b7841e4bae76
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
 
@@ -666,7 +666,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@b15560d3bf0957183a3a6904c8993bdb53a22f1f # b15560d3bf0957183a3a6904c8993bdb53a22f1f
+        uses: github/gh-aw/actions/setup@23403d903f5cf27e2d01474daa76b7841e4bae76 # 23403d903f5cf27e2d01474daa76b7841e4bae76
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
 
@@ -683,9 +683,9 @@ jobs:
             await main();
 
       - name: Install gh-aw
-        uses: github/gh-aw-actions/setup-cli@b15560d3bf0957183a3a6904c8993bdb53a22f1f
+        uses: github/gh-aw-actions/setup-cli@23403d903f5cf27e2d01474daa76b7841e4bae76
         with:
-          version: b15560d3bf0957183a3a6904c8993bdb53a22f1f
+          version: 23403d903f5cf27e2d01474daa76b7841e4bae76
 
       - name: Validate workflows and file issue on findings
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
