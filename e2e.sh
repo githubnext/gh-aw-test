@@ -2114,6 +2114,44 @@ validate_code_scanning_alert() {
     fi
 }
 
+MCP_WORKFLOW_ISSUE=""
+
+wait_for_mcp_workflow_issue() {
+    local workflow_name="$1"
+    local repo="${2:-}"
+    local run_url="${TEST_RUN_URLS[$workflow_name]:-}"
+    local run_id="${run_url##*/}"
+    local api_repo="${repo:-$REPO_OWNER/$REPO_NAME}"
+    local max_wait=120
+    local waited=0
+
+    if [[ -z "$run_url" || -z "$run_id" ]]; then
+        error "No workflow run ID available to validate '$workflow_name'"
+        return 1
+    fi
+
+    local marker="id: ${run_id}, workflow_id: ${workflow_name},"
+    while [[ $waited -lt $max_wait ]]; do
+        local issues issue
+        if issues=$(gh api "repos/$api_repo/issues?state=all&sort=created&direction=desc&per_page=100" 2>> "$LOG_FILE"); then
+            issue=$(jq -c --arg marker "$marker" \
+                '[.[] | select((has("pull_request") | not) and ((.body // "") | contains($marker)))][0] // empty' \
+                <<< "$issues")
+            if [[ -n "$issue" ]]; then
+                MCP_WORKFLOW_ISSUE="$issue"
+                return 0
+            fi
+        fi
+
+        info "Waiting for the issue created by '$workflow_name' run #$run_id..."
+        sleep "$OUTCOME_POLL_INTERVAL"
+        waited=$((waited + OUTCOME_POLL_INTERVAL))
+    done
+
+    error "Workflow '$workflow_name' completed but no issue from run #$run_id was found"
+    return 1
+}
+
 validate_mcp_workflow() {
     local workflow_name="$1"
     local repo="${2:-}"
@@ -2123,21 +2161,37 @@ validate_mcp_workflow() {
         repo_flag="--repo $repo"
     fi
 
-    if [[ "$workflow_name" == *"mcp-github-remote" ]]; then
-        local remote_mcp_issues=$(gh issue list $repo_flag --limit 100 --json title,body \
-            --jq '.[] | select(
-                ((.title == "GitHub remote MCP passed") and
-                 (.body | contains("hosted GitHub MCP server returned repository information"))) or
-                ((.body | contains("githubnext/gh-aw-test")) and
-                 (.body | test("#[0-9]+.*#[0-9]+.*#[0-9]+"; "s")))) | .title' | head -1)
-
-        if [[ -n "$remote_mcp_issues" ]]; then
-            success "MCP workflow '$workflow_name' produced the expected hosted GitHub MCP result: $remote_mcp_issues"
-            return 0
-        else
-            error "MCP workflow '$workflow_name' completed but no hosted GitHub MCP result was found"
+    if [[ "$workflow_name" == *"mcp-github-remote" || "$workflow_name" == *"mcp-large-json-payload" ]]; then
+        MCP_WORKFLOW_ISSUE=""
+        if ! wait_for_mcp_workflow_issue "$workflow_name" "$repo"; then
             return 1
         fi
+
+        local issue_title issue_body
+        issue_title=$(jq -r '.title' <<< "$MCP_WORKFLOW_ISSUE")
+        issue_body=$(jq -r '.body // ""' <<< "$MCP_WORKFLOW_ISSUE")
+
+        if [[ "$workflow_name" == *"mcp-github-remote" ]] \
+            && { [[ "$issue_title" == "GitHub remote MCP passed" \
+                    && "$issue_body" == *"hosted GitHub MCP server returned repository information"* ]] \
+                || [[ "$issue_body" == *"githubnext/gh-aw-test"* \
+                    && "$issue_body" =~ \#[0-9]+.*\#[0-9]+.*\#[0-9]+ ]]; }; then
+            success "MCP workflow '$workflow_name' produced the expected hosted GitHub MCP result: $issue_title"
+            return 0
+        fi
+
+        if [[ "$workflow_name" == *"mcp-large-json-payload" ]] \
+            && { [[ "$issue_title" == "Large MCP JSON payload passed" \
+                    && "$issue_body" == *"large paginated payload"* ]] \
+                || [[ "$issue_body" =~ ([Rr]esults?|[Ii]ssues?) \
+                    && "$issue_body" =~ [Cc]haracters \
+                    && "$issue_body" =~ [0-9]+ ]]; }; then
+            success "MCP workflow '$workflow_name' produced the expected large-payload result: $issue_title"
+            return 0
+        fi
+
+        error "MCP workflow '$workflow_name' produced an issue for its run, but the content was unexpected: $issue_title"
+        return 1
     fi
     
     if [[ "$workflow_name" == *"code-quality"* ]]; then
