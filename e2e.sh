@@ -1389,6 +1389,44 @@ validate_workflow_log_contains() {
     return 1
 }
 
+validate_report_incomplete_output() {
+    local workflow_name="$1"
+    local expected_reason="$2"
+    local run_url="${TEST_RUN_URLS[$workflow_name]:-}"
+    local run_id="${run_url##*/}"
+
+    if [[ -z "$run_url" || -z "$run_id" ]]; then
+        error "No workflow run ID available to validate '$workflow_name'"
+        return 1
+    fi
+
+    local artifact_dir
+    artifact_dir=$(mktemp -d)
+    if ! gh run download "$run_id" --name agent --dir "$artifact_dir" &>> "$LOG_FILE"; then
+        error "Could not download the agent artifact for '$workflow_name' run #$run_id"
+        rm -rf "$artifact_dir"
+        return 1
+    fi
+
+    local output_file="$artifact_dir/agent_output.json"
+    if [[ -f "$output_file" ]] \
+        && jq -e --arg reason "$expected_reason" \
+            '.items[]? | select(.type == "report_incomplete" and .reason == $reason)' \
+            "$output_file" &>/dev/null; then
+        success "Workflow '$workflow_name' emitted report_incomplete with the expected reason: $expected_reason"
+        rm -rf "$artifact_dir"
+        return 0
+    fi
+
+    local actual_reasons=""
+    if [[ -f "$output_file" ]]; then
+        actual_reasons=$(jq -r '[.items[]? | select(.type == "report_incomplete") | .reason] | join(", ")' "$output_file" 2>/dev/null)
+    fi
+    error "Workflow '$workflow_name' did not emit report_incomplete with reason '$expected_reason'. Actual reasons: ${actual_reasons:-none}"
+    rm -rf "$artifact_dir"
+    return 1
+}
+
 trigger_workflow_with_inputs() {
     local workflow_name="$1"
     shift
@@ -1812,6 +1850,7 @@ validate_issue_created() {
     local expected_labels="$2"
     local repo="${3:-}"
     local exact_title="${4:-}"
+    local workflow_name="${5:-}"
     VALIDATED_ISSUE_NUMBER=""
     
     local repo_flag=""
@@ -1821,11 +1860,29 @@ validate_issue_created() {
         repo_url="$repo"
     fi
     
-    local title_filter=".title | startswith(\"$title_prefix\")"
-    if [[ -n "$exact_title" ]]; then
-        title_filter=".title == \"$exact_title\""
+    local run_url=""
+    if [[ -n "$workflow_name" ]]; then
+        run_url="${TEST_RUN_URLS[$workflow_name]:-}"
+        if [[ -z "$run_url" ]]; then
+            error "No workflow run URL available to validate the issue created by '$workflow_name'"
+            return 1
+        fi
     fi
-    local issue_number=$(gh issue list $repo_flag --limit 100 --json number,title,labels --jq ".[] | select($title_filter) | .number" | head -1)
+
+    local issues_json
+    if ! issues_json=$(gh issue list $repo_flag --limit 100 --json number,title,labels,body 2>> "$LOG_FILE"); then
+        error "Could not list issues while validating '$workflow_name'"
+        return 1
+    fi
+    local issue_number
+    issue_number=$(jq -r \
+        --arg title_prefix "$title_prefix" \
+        --arg exact_title "$exact_title" \
+        --arg run_url "$run_url" \
+        '.[]
+            | select(if $exact_title == "" then (.title | startswith($title_prefix)) else .title == $exact_title end)
+            | select($run_url == "" or (.body | contains($run_url)))
+            | .number' <<< "$issues_json" | head -1)
     
     if [[ -n "$issue_number" ]]; then
         VALIDATED_ISSUE_NUMBER="$issue_number"
@@ -1845,7 +1902,7 @@ validate_issue_created() {
         fi
         return 0
     else
-        error "No issue found with title prefix: $title_prefix"
+        error "No issue found with title prefix '$title_prefix' owned by workflow run: ${run_url:-unspecified}"
         return 1
     fi
 }
@@ -4027,12 +4084,12 @@ run_single_test() {
                 local validation_success=false
                 case "$workflow" in
                     *"set-issue-field-builtin-rejection")
-                        if validate_workflow_log_contains "$workflow" "report_incomplete reason: set_issue_field rejected builtin field 'title'"; then
+                        if validate_report_incomplete_output "$workflow" "set_issue_field rejected builtin field 'title'"; then
                             validation_success=true
                         fi
                         ;;
                     *"report-incomplete")
-                        if validate_workflow_log_contains "$workflow" "report_incomplete reason: Demonstrating the report-incomplete safe output from Copilot"; then
+                        if validate_report_incomplete_output "$workflow" "Demonstrating the report-incomplete safe output from Copilot"; then
                             validation_success=true
                         fi
                         ;;
@@ -4053,7 +4110,7 @@ run_single_test() {
                     *"multi")
                         local title_prefix=$(get_title_prefix "$workflow" "$ai_type")
                         local expected_labels=$(get_expected_labels "$ai_type")
-                        if validate_issue_created "$title_prefix" "$expected_labels" "$target_repo"; then
+                        if validate_issue_created "$title_prefix" "$expected_labels" "$target_repo" "" "$workflow"; then
                             validation_success=true
                         fi
                         if validate_pr_created "$title_prefix" "$target_repo"; then
@@ -4067,7 +4124,7 @@ run_single_test() {
                         if [[ "$workflow" == *"body-footer" ]]; then
                             exact_title="${title_prefix}body-footer composition smoke test"
                         fi
-                        if validate_issue_created "$title_prefix" "$expected_labels" "$target_repo" "$exact_title"; then
+                        if validate_issue_created "$title_prefix" "$expected_labels" "$target_repo" "$exact_title" "$workflow"; then
                             validation_success=true
                             if [[ "$workflow" == *"body-footer"* ]] \
                                 && ! wait_for_issue_body_contains "$VALIDATED_ISSUE_NUMBER" "Global footer from" "$target_repo"; then
@@ -4107,12 +4164,12 @@ run_single_test() {
                     *"gh-steps")
                         local title_prefix=$(get_title_prefix "$workflow" "$ai_type")
                         local expected_labels=$(get_expected_labels "$ai_type")
-                        if validate_issue_created "$title_prefix" "$expected_labels" "$target_repo"; then
+                        if validate_issue_created "$title_prefix" "$expected_labels" "$target_repo" "" "$workflow"; then
                             local run_url="${TEST_RUN_URLS[$workflow]:-}"
                             local expected_run_id="${run_url##*/}"
                             local repo_flag=""
                             [[ -n "$target_repo" ]] && repo_flag="--repo $target_repo"
-                            local issue_title=$(gh issue list $repo_flag --limit 10 --json title --jq ".[] | select(.title | startswith(\"$title_prefix\")) | .title" | head -1)
+                            local issue_title=$(gh issue view $repo_flag "$VALIDATED_ISSUE_NUMBER" --json title --jq '.title')
                             if [[ -n "$expected_run_id" ]] && echo "$issue_title" | grep -q "Test ${expected_run_id}:.*The number of issues is"; then
                                 success "Issue title contains run ID $expected_run_id and expected gh-steps output: $issue_title"
                                 validation_success=true
@@ -4127,7 +4184,7 @@ run_single_test() {
                     *"assign-to-agent"|*"set-issue-field")
                         local title_prefix=$(get_title_prefix "$workflow" "$ai_type")
                         local expected_labels=$(get_expected_labels "$ai_type")
-                        if validate_issue_created "$title_prefix" "$expected_labels" "$target_repo"; then
+                        if validate_issue_created "$title_prefix" "$expected_labels" "$target_repo" "" "$workflow"; then
                             validation_success=true
                         fi
                         ;;
