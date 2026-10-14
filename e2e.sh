@@ -1222,7 +1222,14 @@ throttle_if_rate_limited() {
         now=$(date +%s)
         sleep_sec=$(( reset_ts - now + 15 ))
         warning "GitHub API rate limit low: ${remaining}/${limit} remaining (threshold=${RATE_LIMIT_THRESHOLD}). Sleeping ${sleep_sec}s until reset at ${reset_time} UTC..."
-        (( sleep_sec > 0 )) && sleep "$sleep_sec"
+        if (( sleep_sec > 0 )); then
+            if [[ -n "${E2E_TEST_THROTTLE_FILE:-}" ]]; then
+                local prior_throttle_seconds=0
+                read -r prior_throttle_seconds < "$E2E_TEST_THROTTLE_FILE" || prior_throttle_seconds=0
+                printf '%s\n' "$((prior_throttle_seconds + sleep_sec))" > "$E2E_TEST_THROTTLE_FILE"
+            fi
+            sleep "$sleep_sec"
+        fi
         info "Rate limit window reset. Resuming."
     else
         info "GitHub API rate limit: ${remaining}/${limit} remaining (resets ${reset_time} UTC)"
@@ -4121,9 +4128,31 @@ run_single_test() {
                         local title_prefix=$(get_title_prefix "$workflow" "$ai_type")
                         local expected_labels=$(get_expected_labels "$ai_type")
                         local exact_title=""
-                        if [[ "$workflow" == *"body-footer" ]]; then
-                            exact_title="${title_prefix}body-footer composition smoke test"
-                        fi
+                        case "$workflow" in
+                            *"network-isolation")
+                                exact_title="[copilot-network-isolation-test] Hello from Copilot (Network Isolation)"
+                                expected_labels="copilot,automation,haiku"
+                                ;;
+                            *"sandbox-runtime-profile")
+                                exact_title="Explicit sandbox runtime profile passed"
+                                expected_labels=""
+                                ;;
+                            *"playwright-cli")
+                                exact_title="Playwright CLI mode passed"
+                                expected_labels=""
+                                ;;
+                            *"network-engine-domain-opt-in")
+                                exact_title="Explicit Copilot network domain passed"
+                                expected_labels=""
+                                ;;
+                            *"sandbox-exclude-env")
+                                exact_title="Sandbox excluded environment passed"
+                                expected_labels=""
+                                ;;
+                            *"body-footer")
+                                exact_title="${title_prefix}body-footer composition smoke test"
+                                ;;
+                        esac
                         if validate_issue_created "$title_prefix" "$expected_labels" "$target_repo" "$exact_title" "$workflow"; then
                             validation_success=true
                             if [[ "$workflow" == *"body-footer"* ]] \
@@ -4755,14 +4784,18 @@ run_tests_parallel() {
         local pids=()
         local -A pid_to_test=()
         local -A pid_to_start=()
+        local -A pid_to_throttle_file=()
         local batch_launch_time=$(date +%s)
         for test in "${batch_tests[@]}"; do
             progress "  🚀 Starting: $test"
-            run_single_test "$test" &
+            local throttle_file="/tmp/e2e-throttle-${test}-$$.seconds"
+            printf '0\n' > "$throttle_file"
+            E2E_TEST_THROTTLE_FILE="$throttle_file" run_single_test "$test" &
             local _pid=$!
             pids+=("$_pid")
             pid_to_test[$_pid]="$test"
             pid_to_start[$_pid]=$batch_launch_time
+            pid_to_throttle_file[$_pid]="$throttle_file"
         done
 
         # Wait for batch to complete with live status
@@ -4791,7 +4824,9 @@ run_tests_parallel() {
                     completed=$((completed + 1))
                     continue
                 fi
-                local elapsed=$(( now - ${pid_to_start[$pid]} ))
+                local throttle_seconds=0
+                read -r throttle_seconds < "${pid_to_throttle_file[$pid]}" || throttle_seconds=0
+                local elapsed=$(( now - ${pid_to_start[$pid]} - throttle_seconds ))
                 # Kill tests that exceed the hard ceiling
                 if [[ $elapsed -gt $per_test_kill_seconds ]]; then
                     local stuck_test="${pid_to_test[$pid]}"
@@ -4852,6 +4887,10 @@ run_tests_parallel() {
             fi
         done
         echo
+
+        for pid in "${pids[@]}"; do
+            rm -f "${pid_to_throttle_file[$pid]}"
+        done
         
         # Read batch results
         local batch_passed=0
