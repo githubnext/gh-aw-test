@@ -287,26 +287,26 @@ No candidate regressions in the last six weeks.
 
 ## Run, job & step times (`released`, using samples)
 
-**188 successful runs.** Regressions shown below are limited to the last six weeks.
+**189 successful runs.** Regressions shown below are limited to the last six weeks.
 
 ![Run and job times for released, using samples](timing-released-samples.svg)
 
 | Run or job | Samples | Median | P90 |
 |---|---:|---:|---:|
-| Workflow complete | 188 | 125.0s | 175.9s |
-| Workflow start to proxy step | 188 | 67.5s | 97.0s |
-| Proxy step to first reasoning/sample | 188 | 0.0s | 1.0s |
-| Job `activation` | 188 | 18.0s | 39.0s |
-| Job `agent` | 188 | 42.0s | 58.3s |
+| Workflow complete | 189 | 125.0s | 175.6s |
+| Workflow start to proxy step | 189 | 67.0s | 97.0s |
+| Proxy step to first reasoning/sample | 189 | 0.0s | 1.0s |
+| Job `activation` | 189 | 18.0s | 39.0s |
+| Job `agent` | 189 | 42.0s | 58.2s |
 | Job `detection` | 0 | n/a | n/a |
-| Job `safe_outputs` | 188 | 13.0s | 23.0s |
-| Job `conclusion` | 188 | 16.0s | 27.0s |
-| Major step `Download container images` | 188 | 9.0s | 18.0s |
+| Job `safe_outputs` | 189 | 13.0s | 23.0s |
+| Job `conclusion` | 189 | 16.0s | 27.0s |
+| Major step `Download container images` | 189 | 9.0s | 18.0s |
 | Major step `Install ripgrep` | 8 | 9.0s | 18.0s |
-| Major step `Start MCP Gateway` | 188 | 7.0s | 12.0s |
-| Major step `Install GitHub Copilot CLI` | 187 | 4.0s | 12.0s |
-| Major step `Set up job` | 157 | 3.0s | 4.0s |
-| Major step `Setup Scripts` | 174 | 2.0s | 4.0s |
+| Major step `Start MCP Gateway` | 189 | 7.0s | 12.0s |
+| Major step `Install GitHub Copilot CLI` | 188 | 4.0s | 12.0s |
+| Major step `Set up job` | 158 | 3.0s | 4.0s |
+| Major step `Setup Scripts` | 175 | 2.0s | 4.0s |
 | Major step `Install AWF binary` | 14 | 2.0s | 2.0s |
 | Major step `Download activation artifact` | 62 | 2.0s | 2.0s |
 | Major step `Upload agent artifacts` | 35 | 2.0s | 2.0s |
