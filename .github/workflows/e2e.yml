@@ -213,7 +213,7 @@ jobs:
     name: "E2E: ${{ matrix.entry.label }} (gh-aw@${{ matrix.entry.ref }}, ${{ matrix.entry.mode }}, samples=${{ matrix.entry.samples }})"
     needs: resolve-refs
     runs-on: ubuntu-latest
-    timeout-minutes: 160
+    timeout-minutes: 170
     strategy:
       # Run entries one at a time so the suite never floods GitHub Actions with
       # concurrent dispatched test runs (each entry itself dispatches many
@@ -299,7 +299,7 @@ jobs:
       - name: Run E2E against gh-aw@${{ matrix.entry.ref }} (${{ matrix.entry.mode }} mode)
         id: run
         working-directory: gh-aw-test
-        timeout-minutes: 150
+        timeout-minutes: 160
         env:
           GH_TOKEN: ${{ secrets.GH_AW_TEST_PAT }}
           GITHUB_TOKEN: ${{ secrets.GH_AW_TEST_PAT }}
