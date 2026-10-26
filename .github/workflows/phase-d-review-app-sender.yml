@@ -1,0 +1,36 @@
+name: Phase D App review sender
+
+on:
+  workflow_dispatch:
+    inputs:
+      pull_request_number:
+        description: Pull request to review
+        required: true
+        type: number
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3.3.0
+        with:
+          app-id: ${{ vars.GH_AW_TEST_APP_ID }}
+          private-key: ${{ secrets.GH_AW_TEST_APP_PRIVATE_KEY }}
+          owner: githubnext
+          repositories: gh-aw-test
+          permission-pull-requests: write
+      - name: Submit App-authored review
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ inputs.pull_request_number }}
+        run: |
+          gh api --method POST "repos/$GH_REPO/pulls/$PR_NUMBER/reviews" \
+            -f event=COMMENT \
+            -f body='Phase D App-authored review fixture.'

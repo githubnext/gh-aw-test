@@ -5,6 +5,11 @@
       "version": "v5.0.5",
       "sha": "27d5ce7f107fe9357f9df03efb73ab90386fccae"
     },
+    "actions/create-github-app-token@v2": {
+      "repo": "actions/create-github-app-token",
+      "version": "v2",
+      "sha": "fee1f7d63c2ff003460e3d139729b119787bc349"
+    },
     "actions/github-script@v7": {
       "repo": "actions/github-script",
       "version": "v7",
@@ -35,10 +40,20 @@
       "version": "v0.93.3",
       "sha": "e89a5670dc4c790b37ade361215b8d72d8ce8942"
     },
+    "github/gh-aw/actions/setup@8bb3a0c40b7e56f1434fb5658d689304d26c77a1": {
+      "repo": "github/gh-aw/actions/setup",
+      "version": "8bb3a0c40b7e56f1434fb5658d689304d26c77a1",
+      "sha": "8bb3a0c40b7e56f1434fb5658d689304d26c77a1"
+    },
     "github/gh-aw/actions/setup@ca470ff0726a579fd2663f09c72700727f80124d": {
       "repo": "github/gh-aw/actions/setup",
       "version": "ca470ff0726a579fd2663f09c72700727f80124d",
       "sha": "ca470ff0726a579fd2663f09c72700727f80124d"
+    },
+    "github/gh-aw/actions/setup@d7b1baa820fb93dba13df4fc30a9aca8fe83a1f3": {
+      "repo": "github/gh-aw/actions/setup",
+      "version": "d7b1baa820fb93dba13df4fc30a9aca8fe83a1f3",
+      "sha": "d7b1baa820fb93dba13df4fc30a9aca8fe83a1f3"
     }
   }
 }
