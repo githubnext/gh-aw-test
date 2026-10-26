@@ -536,7 +536,18 @@ should_run_test() {
 is_sample_incompatible_test() {
     local test_name="$1"
 
-    [[ "$test_name" == *"custom-safe-outputs" || "$test_name" == "test-copilot-steer" ]]
+    [[ "$test_name" == *"custom-safe-outputs" \
+        || "$test_name" == "test-copilot-steer" \
+        || "$test_name" == "test-copilot-upload-artifact" \
+        || "$test_name" == "test-copilot-custom-job-artifacts" \
+        || "$test_name" == "test-copilot-dispatch-work-queue" \
+        || "$test_name" == "test-copilot-dynamic-workflow" \
+        || "$test_name" == "test-copilot-multi-checkout" \
+        || "$test_name" == "test-copilot-repository-dispatch-bot" \
+        || "$test_name" == "test-copilot-web-fetch" \
+        || "$test_name" == "test-claude-web-search" \
+        || "$test_name" == "test-copilot-mcp-custom-ca" \
+        || "$test_name" == "test-copilot-mcp-startup-timeout" ]]
 }
 
 get_all_tests() {
@@ -630,6 +641,17 @@ get_all_tests() {
     echo "test-copilot-update-release"
     echo "test-copilot-upload-asset"
     echo "test-copilot-upload-code-coverage"
+    # Phase A: high-value capability coverage
+    echo "test-copilot-upload-artifact"
+    echo "test-copilot-custom-job-artifacts"
+    echo "test-copilot-dispatch-work-queue"
+    echo "test-copilot-dynamic-workflow"
+    echo "test-copilot-multi-checkout"
+    echo "test-copilot-repository-dispatch-bot"
+    echo "test-copilot-web-fetch"
+    echo "test-claude-web-search"
+    echo "test-copilot-mcp-custom-ca"
+    echo "test-copilot-mcp-startup-timeout"
     # Phase 2: runtime, sandbox, network, memory, and MCP
     echo "test-copilot-cache-memory-concurrent-merge"
     echo "test-copilot-sandbox-runtime-profile"
@@ -3771,6 +3793,18 @@ run_single_test() {
                 return 0
             fi
             ;;
+        *"multi-checkout")
+            local checkout_variables=(GH_AW_TEST_CHECKOUT_REPOS GH_AW_TEST_ALLOWED_CHECKOUT_REPOS)
+            local checkout_variable
+            for checkout_variable in "${checkout_variables[@]}"; do
+                if ! gh variable list --repo "$REPO_OWNER/$REPO_NAME" --json name --jq '.[].name' 2>/dev/null | grep -qx "$checkout_variable"; then
+                    record_test_skip "$workflow" "requires GH_AW_TEST_CHECKOUT_REPOS and GH_AW_TEST_ALLOWED_CHECKOUT_REPOS repository variables"
+                    cat "$test_log" >&3
+                    rm -f "$test_log"
+                    return 0
+                fi
+            done
+            ;;
     esac
     
     case "$workflow" in
@@ -3968,6 +4002,47 @@ run_single_test() {
                 fi
             fi
             ;;
+        *"dispatch-work-queue")
+            local worker_workflow="phase-a-work-queue-worker"
+            local worker_file="${worker_workflow}.lock.yml"
+            local before_worker_run_id
+            before_worker_run_id=$(get_latest_run_id "$worker_file")
+            if enable_workflow "$worker_workflow" \
+                && trigger_workflow_dispatch_and_await_completion "$workflow"; then
+                sleep 5
+                local after_worker_run_id
+                after_worker_run_id=$(get_latest_run_id "$worker_file")
+                if [[ -n "$after_worker_run_id" && "$after_worker_run_id" != "$before_worker_run_id" ]] \
+                    && wait_for_workflow "$worker_workflow" "$after_worker_run_id"; then
+                    test_result="PASS"
+                else
+                    error "Work-queue worker did not produce a successful new run"
+                fi
+            fi
+            disable_workflow "$worker_workflow"
+            ;;
+        *"repository-dispatch-bot")
+            local sender_file="phase-a-repository-dispatch-sender.yml"
+            local workflow_file="${workflow}.lock.yml"
+            local before_run_id
+            if enable_workflow "$workflow"; then
+                before_run_id=$(get_latest_run_id "$workflow_file")
+                gh workflow enable "$sender_file" --repo "$REPO_OWNER/$REPO_NAME" &>> "$LOG_FILE" || true
+                local -a sender_args=(workflow run "$sender_file" --repo "$REPO_OWNER/$REPO_NAME")
+                [[ -n "$DISPATCH_REF" ]] && sender_args+=(--ref "$DISPATCH_REF")
+                if gh "${sender_args[@]}" &>> "$LOG_FILE"; then
+                    sleep 5
+                    local after_run_id
+                    after_run_id=$(get_latest_run_id "$workflow_file")
+                    if [[ -n "$after_run_id" && "$after_run_id" != "$before_run_id" ]] \
+                        && wait_for_workflow "$workflow" "$after_run_id"; then
+                        TEST_RUN_URLS["$workflow"]="https://github.com/$REPO_OWNER/$REPO_NAME/actions/runs/$after_run_id"
+                        test_result="PASS"
+                    fi
+                fi
+                disable_workflow "$workflow"
+            fi
+            ;;
         # Call-workflow test: dispatch the gateway with a sentinel; the gateway
         # activates the reusable worker (test-copilot-call-worker) via workflow_call,
         # which creates an issue carrying the sentinel. The worker runs as part of the
@@ -4076,7 +4151,7 @@ run_single_test() {
             fi
             ;;
         # Workflow dispatch tests - triggered with gh aw run
-        *"create-issue"|*"create-discussion"|*"create-pull-request"|*"create-two-pull-requests"|*"code-scanning-alert"|*"create-check-run"|*"mcp"*|*"safe-jobs"|*"gh-steps"|*"restore-memory-custom-job"|*"custom-safe-outputs"|*"noop"|*"report-incomplete"|*"missing-data"|*"missing-tool"|*"assign-to-agent"*|*"set-issue-field"|*"set-issue-field-builtin-rejection"|*"issue-intents"|*"skills-frontmatter"|*"inline-sub-agents"|*"network-isolation"|*"upload-code-coverage"|*"sandbox-runtime-profile"|*"playwright-cli"|*"network-engine-domain-opt-in"|*"sandbox-exclude-env"|*"repo-memory"|*"linear-create-issue"|*"jira-create-issue"|*"steer"|*"body-footer")
+        *"create-issue"|*"create-discussion"|*"create-pull-request"|*"create-two-pull-requests"|*"code-scanning-alert"|*"create-check-run"|*"mcp"*|*"safe-jobs"|*"gh-steps"|*"restore-memory-custom-job"|*"custom-safe-outputs"|*"custom-job-artifacts"|*"noop"|*"report-incomplete"|*"missing-data"|*"missing-tool"|*"assign-to-agent"*|*"set-issue-field"|*"set-issue-field-builtin-rejection"|*"issue-intents"|*"skills-frontmatter"|*"inline-sub-agents"|*"network-isolation"|*"upload-code-coverage"|*"upload-artifact"|*"sandbox-runtime-profile"|*"playwright-cli"|*"network-engine-domain-opt-in"|*"sandbox-exclude-env"|*"repo-memory"|*"linear-create-issue"|*"jira-create-issue"|*"steer"|*"body-footer"|*"dynamic-workflow"|*"multi-checkout"|*"web-fetch"|*"web-search")
             local workflow_success=false
             local expected_conclusion="success"
             if [[ "$workflow" == *"report-incomplete" || "$workflow" == *"set-issue-field-builtin-rejection" \
@@ -4112,6 +4187,22 @@ run_single_test() {
                         ;;
                     *"linear-create-issue"|*"jira-create-issue"|*"steer")
                         success "Workflow '$workflow' completed successfully"
+                        validation_success=true
+                        ;;
+                    *"upload-artifact")
+                        local run_id="${TEST_RUN_URLS[$workflow]##*/}"
+                        local artifact_count
+                        artifact_count=$(gh api "repos/$REPO_OWNER/$REPO_NAME/actions/runs/$run_id/artifacts" \
+                            --jq '.total_count' 2>> "$LOG_FILE" || echo 0)
+                        if [[ "$artifact_count" -gt 0 ]]; then
+                            success "Workflow '$workflow' uploaded $artifact_count artifact(s)"
+                            validation_success=true
+                        else
+                            error "Workflow '$workflow' completed without uploading an artifact"
+                        fi
+                        ;;
+                    *"mcp-custom-ca"|*"mcp-startup-timeout")
+                        success "MCP transport workflow '$workflow' completed successfully"
                         validation_success=true
                         ;;
                     *"multi")
