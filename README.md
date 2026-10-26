@@ -113,7 +113,9 @@ Tracking the full matrix of [safe outputs](https://github.com/github/gh-aw/blob/
 - [x] `inline sub-agents` — test-copilot-inline-sub-agents
 - [x] `upload-asset` — test-copilot-upload-asset (auto-creates orphaned `assets/` branch)
 - [x] `upload-code-coverage` — test-copilot-upload-code-coverage
-- [ ] `upload-artifact` — test-copilot-upload-artifact
+- [x] `upload-artifact` — test-copilot-upload-artifact
+- [x] custom safe-output job artifacts — test-copilot-custom-job-artifacts
+- [x] `dispatch-workflow` work queue — test-copilot-dispatch-work-queue
 - [x] `noop` — test-copilot-noop
 - [x] `report-incomplete` — test-copilot-report-incomplete
 - [x] `missing-data` — test-copilot-missing-data
@@ -133,6 +135,8 @@ Tracking the full matrix of [safe outputs](https://github.com/github/gh-aw/blob/
 - [x] HTTP MCP GitHub OIDC permission path (skips without an OIDC MCP fixture) — test-copilot-mcp-http-oidc-permission
 - [x] sandbox `excluded-env` filtering — test-copilot-sandbox-exclude-env
 - [x] hosted GitHub remote MCP transport — test-copilot-mcp-github-remote
+- [x] HTTP MCP custom CA trust — test-copilot-mcp-custom-ca
+- [x] MCP startup timeout — test-copilot-mcp-startup-timeout
 
 The runtime-profile test intentionally uses `docker-sudo-iptables`. Removed
 `legacy-security` and `sudo` fields are not tested, and deprecated `gvisor` and
@@ -150,6 +154,11 @@ The runtime-profile test intentionally uses `docker-sudo-iptables`. Removed
 - [x] `assign-to-agent` model, base branch, and custom instructions — test-copilot-assign-to-agent-with-config
 - [x] `update-pull-request` replace-island operation — test-copilot-update-pull-request-replace-island
 - [x] global and per-handler `body-footer` — test-copilot-body-footer
+- [x] Copilot dynamic workflows — test-copilot-dynamic-workflow
+- [x] multi-repository checkout (skips without repository variables) — test-copilot-multi-checkout
+- [x] `repository_dispatch` bot allowlist — test-copilot-repository-dispatch-bot
+- [x] Copilot SDK built-in web fetch — test-copilot-web-fetch
+- [x] Claude built-in web search — test-claude-web-search
 
 Provisioning for external fixtures is documented in
 [External integration E2E fixtures](docs/e2e-external-integrations.md).
@@ -158,7 +167,6 @@ Provisioning for external fixtures is documented in
 
 - [ ] `create-agent-session` — requires Copilot coding agent access
 - [ ] `create-project` / `create-project-status-update` — requires PAT with Projects permissions (`update-project` is covered above)
-- [ ] `upload-artifact` — needs a staged fixture file plus artifact-specific assertions in the harness
 - [ ] `autofix-code-scanning-alert` — requires existing code scanning alerts
 - [ ] `dispatch_repository` — experimental, requires cross-repo setup
 - [ ] `merge-pull-request` — verified against `github/gh-aw@origin/main`: the workflow JSON schema still rejects `samples:` on `merge-pull-request` (the Go struct accepts it, but schema validation fails compile), so it cannot be sample-tested yet

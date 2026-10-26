@@ -1,0 +1,16 @@
+name: Phase A repository dispatch sender
+
+on: workflow_dispatch
+
+permissions:
+  contents: write
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send repository dispatch as GitHub Actions
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh api --method POST "repos/$GH_REPO/dispatches" -f event_type=gh-aw-bot-allowlist-e2e
