@@ -10,6 +10,9 @@ safe-outputs:
   dispatch-workflow:
     workflows:
       - phase-a-work-queue-worker
+    allowed-refs:
+      - refs/heads/main
+      - refs/heads/e2e-phase-a-*
     max: 1
 timeout-minutes: 5
 ---

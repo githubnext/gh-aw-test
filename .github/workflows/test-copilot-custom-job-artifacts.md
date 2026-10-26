@@ -14,11 +14,13 @@ safe-outputs:
         marker:
           description: Marker expected in the restored artifact
           required: true
+          type: string
       steps:
         - name: Verify restored artifact
-          env:
-            EXPECTED_MARKER: ${{ inputs.marker }}
-          run: grep -Fx "$EXPECTED_MARKER" /tmp/gh-aw/output/phase-a-job-artifact.txt
+          run: |
+            expected_marker=$(jq -er '.items[] | select(.type == "verify_artifact") | .marker' "$GH_AW_AGENT_OUTPUT")
+            artifact_path="$(dirname "$GH_AW_AGENT_OUTPUT")/output/phase-a-job-artifact.txt"
+            grep -Fx "$expected_marker" "$artifact_path"
 timeout-minutes: 5
 ---
 

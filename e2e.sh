@@ -4239,7 +4239,12 @@ run_single_test() {
                         fi
                         ;;
                     *"dynamic-workflow")
-                        if validate_workflow_log_contains "$workflow" "GH_AW_DYNAMIC_WORKFLOW_E2E"; then
+                        local title_prefix=$(get_title_prefix "$workflow" "$ai_type")
+                        local expected_labels=$(get_expected_labels "$ai_type")
+                        if validate_issue_created "$title_prefix" "$expected_labels" "$target_repo" \
+                            "[copilot-test] Dynamic workflow passed" "$workflow" \
+                            && wait_for_issue_body_contains "$VALIDATED_ISSUE_NUMBER" \
+                                "GH_AW_DYNAMIC_WORKFLOW_E2E" "$target_repo"; then
                             validation_success=true
                         fi
                         ;;

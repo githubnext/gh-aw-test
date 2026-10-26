@@ -13,12 +13,17 @@ export const phaseAWorkflow = {
   },
   run: async context => {
     context.phase("Validate");
-    const fixture = JSON.parse(
+    const fixture = await context.step("load-fixture", async () => JSON.parse(
       await readFile(new URL("./support/.fixture.json", import.meta.url), "utf8"),
-    );
+    ));
     if (context.args?.marker !== fixture.marker) {
       throw new Error("Dynamic workflow marker does not match the packaged fixture");
     }
-    return { status: "PASS", marker: fixture.marker };
+    const result = await context.step("result", () => ({
+      status: "PASS",
+      marker: fixture.marker,
+    }));
+    context.log(`PASS: ${result.marker}`);
+    return result;
   },
 };
