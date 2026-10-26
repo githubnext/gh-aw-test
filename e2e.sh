@@ -551,7 +551,8 @@ is_sample_incompatible_test() {
         || "$test_name" == "test-copilot-web-fetch" \
         || "$test_name" == "test-claude-web-search" \
         || "$test_name" == "test-copilot-mcp-custom-ca" \
-        || "$test_name" == "test-copilot-mcp-startup-timeout" ]]
+        || "$test_name" == "test-copilot-mcp-startup-timeout" \
+        || "$test_name" == "test-copilot-max-tool-calls-budget" ]]
 }
 
 get_all_tests() {
@@ -667,6 +668,17 @@ get_all_tests() {
     echo "test-copilot-siderepo-create-pull-request-issues-disabled"
     echo "test-copilot-create-pull-request-labels"
     echo "test-copilot-add-discussion-comment-dispatch"
+    # Phase C: activation provenance, persistent state, and budgets
+    echo "test-copilot-push-to-pull-request-branch-allowed-files"
+    echo "test-copilot-pull-request-activation-base-sha"
+    echo "test-copilot-repo-memory-concurrent-retry"
+    echo "test-copilot-repo-memory-shared-branch"
+    echo "test-copilot-siderepo-target-repo-only-add-comment"
+    echo "test-copilot-siderepo-add-comment-mention"
+    echo "test-copilot-pull-request-target-allowed-checkout"
+    echo "test-copilot-ledger-counter"
+    echo "test-copilot-max-tool-calls-budget"
+    echo "test-copilot-max-daily-ai-credits-warning-mode"
     # Phase 2: runtime, sandbox, network, memory, and MCP
     echo "test-copilot-cache-memory-concurrent-merge"
     echo "test-copilot-sandbox-runtime-profile"
@@ -3855,6 +3867,15 @@ run_single_test() {
                 return 0
             fi
             ;;
+        *"siderepo-add-comment-mention")
+            if ! gh variable list --repo "$REPO_OWNER/$REPO_NAME" --json name --jq '.[].name' 2>/dev/null \
+                | grep -qx GH_AW_TEST_SIDE_REPO_COLLABORATOR; then
+                record_test_skip "$workflow" "requires GH_AW_TEST_SIDE_REPO_COLLABORATOR"
+                cat "$test_log" >&3
+                rm -f "$test_log"
+                return 0
+            fi
+            ;;
     esac
     
     case "$workflow" in
@@ -4176,6 +4197,127 @@ run_single_test() {
                 test_result="PASS"
             fi
             ;;
+        *"push-to-pull-request-branch-allowed-files")
+            local pr_info
+            pr_info=$(create_test_pr_with_branch "Phase C allowed-files fixture" "Pre-existing out-of-policy commit for $workflow" "$target_repo")
+            if [[ -n "$pr_info" ]]; then
+                local pr_num branch_name after_commit_sha repo_from_info
+                IFS=',' read -r pr_num branch_name after_commit_sha repo_from_info <<< "$pr_info"
+                if trigger_workflow_with_inputs "$workflow" "pull_request_number=$pr_num" "branch_name=$branch_name" \
+                    && wait_for_branch_update "$branch_name" "$after_commit_sha" "$workflow" "$target_repo"; then
+                    test_result="PASS"
+                fi
+            fi
+            ;;
+        *"pull-request-activation-base-sha")
+            if enable_workflow "$workflow"; then
+                local pr_info
+                pr_info=$(create_test_pr_with_branch "Phase C activation base fixture" "Fixture for $workflow" "$target_repo")
+                if [[ -n "$pr_info" ]]; then
+                    local pr_num branch_name after_commit_sha repo_from_info
+                    IFS=',' read -r pr_num branch_name after_commit_sha repo_from_info <<< "$pr_info"
+                    local fixture_path=".github/shared/phase-c-activation-sentinel.md"
+                    local fixture_sha
+                    fixture_sha=$(gh api "repos/$REPO_OWNER/$REPO_NAME/contents/$fixture_path?ref=$branch_name" --jq '.sha' 2>/dev/null)
+                    if [[ -n "$fixture_sha" ]] \
+                        && gh api "repos/$REPO_OWNER/$REPO_NAME/contents/$fixture_path" --method PUT \
+                            --field message="Poison activation sentinel on PR head" \
+                            --field content="$(printf '%s\n' 'The untrusted sentinel is `GH_AW_ACTIVATION_HEAD_POISONED`.' | base64 -w 0)" \
+                            --field branch="$branch_name" --field sha="$fixture_sha" &>> "$LOG_FILE" \
+                        && wait_for_comment "$pr_num" "GH_AW_ACTIVATION_BASE_SENTINEL" "$workflow" "$target_repo"; then
+                        local poisoned_comment
+                        poisoned_comment=$(gh api "repos/$REPO_OWNER/$REPO_NAME/issues/$pr_num/comments" \
+                            --jq '[.[] | select((.body // "") | contains("GH_AW_ACTIVATION_HEAD_POISONED"))] | length' 2>/dev/null)
+                        if [[ "$poisoned_comment" == "0" ]]; then
+                            test_result="PASS"
+                        else
+                            error "Activation imported the poisoned PR-head sentinel"
+                        fi
+                    fi
+                fi
+                disable_workflow "$workflow"
+            fi
+            ;;
+        *"repo-memory-concurrent-retry")
+            local marker_one="first-${E2E_RUN_START_EPOCH}-$RANDOM"
+            local marker_two="second-${E2E_RUN_START_EPOCH}-$RANDOM"
+            local workflow_file="${workflow}.lock.yml"
+            if enable_workflow "$workflow"; then
+                local before_run_id
+                before_run_id=$(get_latest_run_id "$workflow_file")
+                local ref_args=()
+                [[ -n "$DISPATCH_REF" ]] && ref_args=(--ref "$DISPATCH_REF")
+                if gh workflow run "$workflow_file" "${ref_args[@]}" -f "marker=$marker_one" &>> "$LOG_FILE"; then
+                    sleep 5
+                    local first_run_id
+                    first_run_id=$(get_latest_run_id "$workflow_file")
+                    if [[ -n "$first_run_id" && "$first_run_id" != "$before_run_id" ]] \
+                        && gh workflow run "$workflow_file" "${ref_args[@]}" -f "marker=$marker_two" &>> "$LOG_FILE"; then
+                        sleep 5
+                        local second_run_id
+                        second_run_id=$(get_latest_run_id "$workflow_file")
+                        if [[ -n "$second_run_id" && "$second_run_id" != "$first_run_id" ]] \
+                            && wait_for_workflow "$workflow" "$first_run_id" \
+                            && wait_for_workflow "$workflow" "$second_run_id" \
+                            && gh api "repos/$REPO_OWNER/$REPO_NAME/contents/$marker_one.txt?ref=memory/e2e-repo-memory-concurrent" &>> "$LOG_FILE" \
+                            && gh api "repos/$REPO_OWNER/$REPO_NAME/contents/$marker_two.txt?ref=memory/e2e-repo-memory-concurrent" &>> "$LOG_FILE"; then
+                            test_result="PASS"
+                        fi
+                    fi
+                fi
+                disable_workflow "$workflow"
+            fi
+            ;;
+        *"repo-memory-shared-branch")
+            local alpha_workflow="phase-c-repo-memory-sibling-alpha"
+            local alpha_marker="alpha-${E2E_RUN_START_EPOCH}-$RANDOM"
+            local beta_marker="beta-${E2E_RUN_START_EPOCH}-$RANDOM"
+            if trigger_workflow_with_inputs "$alpha_workflow" "marker=$alpha_marker" \
+                && trigger_workflow_with_inputs "$workflow" "marker=$beta_marker" \
+                && gh api "repos/$REPO_OWNER/$REPO_NAME/contents/alpha/$alpha_marker.txt?ref=memory/e2e-repo-memory-shared" &>> "$LOG_FILE" \
+                && gh api "repos/$REPO_OWNER/$REPO_NAME/contents/beta/$beta_marker.txt?ref=memory/e2e-repo-memory-shared" &>> "$LOG_FILE"; then
+                test_result="PASS"
+            fi
+            ;;
+        *"siderepo-target-repo-only-add-comment")
+            local issue_num
+            issue_num=$(create_test_issue "Phase C target-repo-only fixture" "Fixture for $workflow" "" "$target_repo")
+            if [[ -n "$issue_num" ]] \
+                && trigger_workflow_with_inputs "$workflow" "issue_number=$issue_num" \
+                && wait_for_comment "$issue_num" "Target-repo-only activation comment passed." "$workflow" "$target_repo"; then
+                test_result="PASS"
+            fi
+            ;;
+        *"siderepo-add-comment-mention")
+            local collaborator issue_num
+            collaborator=$(gh variable get GH_AW_TEST_SIDE_REPO_COLLABORATOR --repo "$REPO_OWNER/$REPO_NAME")
+            issue_num=$(create_test_issue "Phase C mention-scoping fixture" "Fixture for $workflow" "" "$target_repo")
+            if [[ -n "$collaborator" && -n "$issue_num" ]] \
+                && trigger_workflow_with_inputs "$workflow" "issue_number=$issue_num" "collaborator=$collaborator" \
+                && wait_for_comment "$issue_num" "@$collaborator mention-scoping passed." "$workflow" "$target_repo"; then
+                test_result="PASS"
+            fi
+            ;;
+        *"pull-request-target-allowed-checkout")
+            local workflow_file="${workflow}.lock.yml"
+            if enable_workflow "$workflow"; then
+                local before_run_id
+                before_run_id=$(get_latest_run_id "$workflow_file")
+                local pr_num
+                pr_num=$(create_test_pr "Phase C pull-request-target checkout fixture" "Fixture for $workflow" "$target_repo")
+                if [[ -n "$pr_num" ]]; then
+                    sleep 10
+                    local after_run_id
+                    after_run_id=$(get_latest_run_id "$workflow_file")
+                    if [[ -n "$after_run_id" && "$after_run_id" != "$before_run_id" ]] \
+                        && wait_for_workflow "$workflow" "$after_run_id" \
+                        && validate_issue_created "[pull-request-target-checkout] " "" "$target_repo" "" "$workflow"; then
+                        test_result="PASS"
+                    fi
+                fi
+                disable_workflow "$workflow"
+            fi
+            ;;
         *"repository-dispatch-bot")
             local sender_file="phase-a-repository-dispatch-sender.yml"
             local workflow_file="${workflow}.lock.yml"
@@ -4306,7 +4448,7 @@ run_single_test() {
             fi
             ;;
         # Workflow dispatch tests - triggered with gh aw run
-        *"create-issue"|*"create-discussion"|*"create-pull-request"|*"create-two-pull-requests"|*"code-scanning-alert"|*"create-check-run"|*"mcp"*|*"safe-jobs"|*"gh-steps"|*"restore-memory-custom-job"|*"custom-safe-outputs"|*"custom-job-artifacts"|*"noop"|*"report-incomplete"|*"missing-data"|*"missing-tool"|*"assign-to-agent"*|*"set-issue-field"|*"set-issue-field-builtin-rejection"|*"issue-intents"|*"skills-frontmatter"|*"inline-sub-agents"|*"network-isolation"|*"upload-code-coverage"|*"upload-artifact"|*"sandbox-runtime-profile"|*"playwright-cli"|*"network-engine-domain-opt-in"|*"sandbox-exclude-env"|*"repo-memory"|*"linear-create-issue"|*"jira-create-issue"|*"steer"|*"body-footer"|*"dynamic-workflow"|*"multi-checkout"|*"web-fetch"|*"web-search")
+        *"create-issue"|*"create-discussion"|*"create-pull-request"|*"create-two-pull-requests"|*"code-scanning-alert"|*"create-check-run"|*"mcp"*|*"safe-jobs"|*"gh-steps"|*"restore-memory-custom-job"|*"custom-safe-outputs"|*"custom-job-artifacts"|*"noop"|*"report-incomplete"|*"missing-data"|*"missing-tool"|*"assign-to-agent"*|*"set-issue-field"|*"set-issue-field-builtin-rejection"|*"issue-intents"|*"skills-frontmatter"|*"inline-sub-agents"|*"network-isolation"|*"upload-code-coverage"|*"upload-artifact"|*"sandbox-runtime-profile"|*"playwright-cli"|*"network-engine-domain-opt-in"|*"sandbox-exclude-env"|*"repo-memory"|*"linear-create-issue"|*"jira-create-issue"|*"steer"|*"body-footer"|*"dynamic-workflow"|*"multi-checkout"|*"web-fetch"|*"web-search"|*"ledger-counter"|*"max-tool-calls-budget"|*"max-daily-ai-credits-warning-mode")
             local workflow_success=false
             local expected_conclusion="success"
             if [[ "$workflow" == *"report-incomplete" || "$workflow" == *"set-issue-field-builtin-rejection" \
@@ -4392,6 +4534,21 @@ run_single_test() {
                     *"siderepo-create-pull-request-issues-disabled")
                         success "Issues-disabled fallback workflow completed successfully"
                         validation_success=true
+                        ;;
+                    *"ledger-counter")
+                        if validate_issue_created "[ledger-counter] " "" "$target_repo" "" "$workflow"; then
+                            validation_success=true
+                        fi
+                        ;;
+                    *"max-tool-calls-budget")
+                        if validate_workflow_log_contains "$workflow" "guard.tool_call_budget_exceeded"; then
+                            validation_success=true
+                        fi
+                        ;;
+                    *"max-daily-ai-credits-warning-mode")
+                        if validate_issue_created "[daily-credits-warning] " "" "$target_repo" "" "$workflow"; then
+                            validation_success=true
+                        fi
                         ;;
                     *"multi")
                         local title_prefix=$(get_title_prefix "$workflow" "$ai_type")

@@ -1,0 +1,1 @@
+The trusted sentinel is `GH_AW_ACTIVATION_BASE_SENTINEL`.
