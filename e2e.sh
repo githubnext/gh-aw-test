@@ -552,7 +552,10 @@ is_sample_incompatible_test() {
         || "$test_name" == "test-claude-web-search" \
         || "$test_name" == "test-copilot-mcp-custom-ca" \
         || "$test_name" == "test-copilot-mcp-startup-timeout" \
-        || "$test_name" == "test-copilot-max-tool-calls-budget" ]]
+        || "$test_name" == "test-copilot-max-tool-calls-budget" \
+        || "$test_name" == "test-copilot-inline-engine-driver" \
+        || "$test_name" == "test-copilot-enclave-github-tools-disabled" \
+        || "$test_name" == "test-copilot-pull-request-review-checkout" ]]
 }
 
 get_all_tests() {
@@ -679,6 +682,17 @@ get_all_tests() {
     echo "test-copilot-ledger-counter"
     echo "test-copilot-max-tool-calls-budget"
     echo "test-copilot-max-daily-ai-credits-warning-mode"
+    # Phase D: engine extensibility and scoped authentication
+    echo "test-copilot-sdk-mode"
+    echo "test-copilot-custom-engine-behaviors"
+    echo "test-copilot-inline-engine-driver"
+    echo "test-copilot-safe-output-github-app"
+    echo "test-copilot-siderepo-checkout-safe-output-github-app"
+    echo "test-copilot-skill-per-auth"
+    echo "test-copilot-custom-engine-threat-detection"
+    echo "test-copilot-enclave-github-tools-disabled"
+    echo "test-copilot-pull-request-review-checkout"
+    echo "test-copilot-github-app-token-missing-scope"
     # Phase 2: runtime, sandbox, network, memory, and MCP
     echo "test-copilot-cache-memory-concurrent-merge"
     echo "test-copilot-sandbox-runtime-profile"
@@ -3876,6 +3890,27 @@ run_single_test() {
                 return 0
             fi
             ;;
+        *"safe-output-github-app"|*"checkout-safe-output-github-app"|*"pull-request-review-checkout")
+            if ! gh variable list --repo "$REPO_OWNER/$REPO_NAME" --json name --jq '.[].name' 2>/dev/null \
+                | grep -qx GH_AW_TEST_APP_CLIENT_ID \
+                || ! gh variable list --repo "$REPO_OWNER/$REPO_NAME" --json name --jq '.[].name' 2>/dev/null \
+                | grep -qx GH_AW_TEST_APP_ID \
+                || ! gh secret list --repo "$REPO_OWNER/$REPO_NAME" --json name --jq '.[].name' 2>/dev/null \
+                | grep -qx GH_AW_TEST_APP_PRIVATE_KEY; then
+                record_test_skip "$workflow" "requires GH_AW_TEST_APP_CLIENT_ID, GH_AW_TEST_APP_ID, and GH_AW_TEST_APP_PRIVATE_KEY"
+                cat "$test_log" >&3
+                rm -f "$test_log"
+                return 0
+            fi
+            ;;
+        *"skill-per-auth")
+            if ! gh secret list --repo "$REPO_OWNER/$REPO_NAME" --json name --jq '.[].name' 2>/dev/null | grep -qx GH_AW_TEST_PAT; then
+                record_test_skip "$workflow" "requires GH_AW_TEST_PAT for per-skill authentication"
+                cat "$test_log" >&3
+                rm -f "$test_log"
+                return 0
+            fi
+            ;;
     esac
     
     case "$workflow" in
@@ -4318,6 +4353,50 @@ run_single_test() {
                 disable_workflow "$workflow"
             fi
             ;;
+        *"safe-output-github-app")
+            local issue_num
+            issue_num=$(create_test_issue "Phase D per-handler App fixture" "Fixture for $workflow" "" "$target_repo")
+            if [[ -n "$issue_num" ]] \
+                && trigger_workflow_with_inputs "$workflow" "issue_number=$issue_num" \
+                && wait_for_comment "$issue_num" "Per-handler GitHub App override passed." "$workflow" "$target_repo"; then
+                test_result="PASS"
+            fi
+            ;;
+        *"siderepo-checkout-safe-output-github-app")
+            local pr_info
+            pr_info=$(create_test_pr_with_branch "Phase D checkout App fixture" "Fixture for $workflow" "$target_repo")
+            if [[ -n "$pr_info" ]]; then
+                local pr_num branch_name after_commit_sha repo_from_info
+                IFS=',' read -r pr_num branch_name after_commit_sha repo_from_info <<< "$pr_info"
+                if trigger_workflow_with_inputs "$workflow" "pull_request_number=$pr_num" "branch_name=$branch_name" \
+                    && wait_for_branch_update "$branch_name" "$after_commit_sha" "$workflow" "$target_repo"; then
+                    test_result="PASS"
+                fi
+            fi
+            ;;
+        *"pull-request-review-checkout")
+            local workflow_file="${workflow}.lock.yml"
+            if enable_workflow "$workflow"; then
+                local before_run_id
+                before_run_id=$(get_latest_run_id "$workflow_file")
+                local pr_num
+                pr_num=$(create_test_pr "Phase D App review checkout fixture" "Fixture for $workflow" "$target_repo")
+                gh workflow enable phase-d-review-app-sender.yml --repo "$REPO_OWNER/$REPO_NAME" &>> "$LOG_FILE" || true
+                local -a sender_args=(workflow run phase-d-review-app-sender.yml --repo "$REPO_OWNER/$REPO_NAME" -f "pull_request_number=$pr_num")
+                [[ -n "$DISPATCH_REF" ]] && sender_args+=(--ref "$DISPATCH_REF")
+                if [[ -n "$pr_num" ]] && gh "${sender_args[@]}" &>> "$LOG_FILE"; then
+                    sleep 10
+                    local after_run_id
+                    after_run_id=$(get_latest_run_id "$workflow_file")
+                    if [[ -n "$after_run_id" && "$after_run_id" != "$before_run_id" ]] \
+                        && wait_for_workflow "$workflow" "$after_run_id" \
+                        && wait_for_comment "$pr_num" "App-authored review checkout passed." "$workflow" "$target_repo"; then
+                        test_result="PASS"
+                    fi
+                fi
+                disable_workflow "$workflow"
+            fi
+            ;;
         *"repository-dispatch-bot")
             local sender_file="phase-a-repository-dispatch-sender.yml"
             local workflow_file="${workflow}.lock.yml"
@@ -4448,7 +4527,7 @@ run_single_test() {
             fi
             ;;
         # Workflow dispatch tests - triggered with gh aw run
-        *"create-issue"|*"create-discussion"|*"create-pull-request"|*"create-two-pull-requests"|*"code-scanning-alert"|*"create-check-run"|*"mcp"*|*"safe-jobs"|*"gh-steps"|*"restore-memory-custom-job"|*"custom-safe-outputs"|*"custom-job-artifacts"|*"noop"|*"report-incomplete"|*"missing-data"|*"missing-tool"|*"assign-to-agent"*|*"set-issue-field"|*"set-issue-field-builtin-rejection"|*"issue-intents"|*"skills-frontmatter"|*"inline-sub-agents"|*"network-isolation"|*"upload-code-coverage"|*"upload-artifact"|*"sandbox-runtime-profile"|*"playwright-cli"|*"network-engine-domain-opt-in"|*"sandbox-exclude-env"|*"repo-memory"|*"linear-create-issue"|*"jira-create-issue"|*"steer"|*"body-footer"|*"dynamic-workflow"|*"multi-checkout"|*"web-fetch"|*"web-search"|*"ledger-counter"|*"max-tool-calls-budget"|*"max-daily-ai-credits-warning-mode")
+        *"create-issue"|*"create-discussion"|*"create-pull-request"|*"create-two-pull-requests"|*"code-scanning-alert"|*"create-check-run"|*"mcp"*|*"safe-jobs"|*"gh-steps"|*"restore-memory-custom-job"|*"custom-safe-outputs"|*"custom-job-artifacts"|*"noop"|*"report-incomplete"|*"missing-data"|*"missing-tool"|*"assign-to-agent"*|*"set-issue-field"|*"set-issue-field-builtin-rejection"|*"issue-intents"|*"skills-frontmatter"|*"inline-sub-agents"|*"network-isolation"|*"upload-code-coverage"|*"upload-artifact"|*"sandbox-runtime-profile"|*"playwright-cli"|*"network-engine-domain-opt-in"|*"sandbox-exclude-env"|*"repo-memory"|*"linear-create-issue"|*"jira-create-issue"|*"steer"|*"body-footer"|*"dynamic-workflow"|*"multi-checkout"|*"web-fetch"|*"web-search"|*"ledger-counter"|*"max-tool-calls-budget"|*"max-daily-ai-credits-warning-mode"|*"sdk-mode"|*"custom-engine"*|*"inline-engine-driver"|*"skill-per-auth"|*"enclave-github-tools-disabled"|*"github-app-token-missing-scope")
             local workflow_success=false
             local expected_conclusion="success"
             if [[ "$workflow" == *"report-incomplete" || "$workflow" == *"set-issue-field-builtin-rejection" \
@@ -4547,6 +4626,42 @@ run_single_test() {
                         ;;
                     *"max-daily-ai-credits-warning-mode")
                         if validate_issue_created "[daily-credits-warning] " "" "$target_repo" "" "$workflow"; then
+                            validation_success=true
+                        fi
+                        ;;
+                    *"sdk-mode")
+                        if validate_issue_created "[copilot-sdk-mode] " "" "$target_repo" "" "$workflow"; then
+                            validation_success=true
+                        fi
+                        ;;
+                    *"custom-engine-behaviors")
+                        if validate_issue_created "[custom-engine] " "" "$target_repo" "" "$workflow"; then
+                            validation_success=true
+                        fi
+                        ;;
+                    *"custom-engine-threat-detection")
+                        if validate_issue_created "[custom-engine-detection] " "" "$target_repo" "" "$workflow" \
+                            && grep -Fq 'threat-detect --engine copilot' ".github/workflows/${workflow}.lock.yml"; then
+                            validation_success=true
+                        fi
+                        ;;
+                    *"inline-engine-driver")
+                        if grep -Fq 'GH_AW_INLINE_ENGINE_DRIVER_E2E' ".github/workflows/${workflow}.lock.yml"; then
+                            success "Inline driver source was materialized into the generated workflow"
+                            validation_success=true
+                        fi
+                        ;;
+                    *"skill-per-auth")
+                        if validate_issue_created "[skill-per-auth] " "" "$target_repo" "" "$workflow"; then
+                            validation_success=true
+                        fi
+                        ;;
+                    *"enclave-github-tools-disabled")
+                        success "Enclave-only GitHub tools workflow completed without gateway policy failure"
+                        validation_success=true
+                        ;;
+                    *"github-app-token-missing-scope")
+                        if validate_issue_created "[app-token-scope-policy] " "" "$target_repo" "" "$workflow"; then
                             validation_success=true
                         fi
                         ;;

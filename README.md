@@ -90,6 +90,7 @@ Tracking the full matrix of [safe outputs](https://github.com/github/gh-aw/blob/
 - [x] `submit-pull-request-review` — test-copilot-submit-pull-request-review
 - [x] `submit-pull-request-review` (locked PR soft-skip) — test-copilot-submit-pull-request-review-locked
 - [x] `submit-pull-request-review` commit attribution — test-copilot-submit-pull-request-review-commit-id
+- [x] App-authored `pull_request_review` checkout (skips without App fixture) — test-copilot-pull-request-review-checkout
 - [x] `dismiss-pull-request-review` — test-copilot-dismiss-pull-request-review
 - [x] `add-reviewer` — test-copilot-add-reviewer
 - [x] `mark-pull-request-as-ready-for-review` — test-copilot-mark-pull-request-as-ready-for-review
@@ -127,6 +128,8 @@ Tracking the full matrix of [safe outputs](https://github.com/github/gh-aw/blob/
 - [x] `upload-artifact` — test-copilot-upload-artifact
 - [x] custom safe-output job artifacts — test-copilot-custom-job-artifacts
 - [x] `dispatch-workflow` work queue — test-copilot-dispatch-work-queue
+- [x] per-handler GitHub App override (skips without App fixture) — test-copilot-safe-output-github-app
+- [x] checkout safe-output GitHub App auth (skips without App fixture) — test-copilot-siderepo-checkout-safe-output-github-app
 - [x] `noop` — test-copilot-noop
 - [x] `report-incomplete` — test-copilot-report-incomplete
 - [x] `missing-data` — test-copilot-missing-data
@@ -154,6 +157,9 @@ Tracking the full matrix of [safe outputs](https://github.com/github/gh-aw/blob/
 - [x] shared repo-memory branch sibling preservation — test-copilot-repo-memory-shared-branch
 - [x] Copilot SDK run-wide tool-call budget — test-copilot-max-tool-calls-budget
 - [x] daily AI credits warning mode — test-copilot-max-daily-ai-credits-warning-mode
+- [x] stable Copilot SDK engine mode — test-copilot-sdk-mode
+- [x] inline Copilot SDK engine driver — test-copilot-inline-engine-driver
+- [x] enclave-only GitHub tool guard policy — test-copilot-enclave-github-tools-disabled
 
 The runtime-profile test intentionally uses `docker-sudo-iptables`. Removed
 `legacy-security` and `sudo` fields are not tested, and deprecated `gvisor` and
@@ -179,6 +185,10 @@ The runtime-profile test intentionally uses `docker-sudo-iptables`. Removed
 - [x] side-repository target-repo-only activation context — test-copilot-siderepo-target-repo-only-add-comment
 - [x] side-repository mention scoping (skips without collaborator variable) — test-copilot-siderepo-add-comment-mention
 - [x] typed ledger counter operations — test-copilot-ledger-counter
+- [x] declarative third-party engine behaviors — test-copilot-custom-engine-behaviors
+- [x] custom-engine Copilot threat detection — test-copilot-custom-engine-threat-detection
+- [x] per-skill authentication (skips without PAT) — test-copilot-skill-per-auth
+- [x] GitHub App token permission-scope rejection — test-copilot-github-app-token-missing-scope
 
 Provisioning for external fixtures is documented in
 [External integration E2E fixtures](docs/e2e-external-integrations.md).
