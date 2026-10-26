@@ -1184,6 +1184,27 @@ get_latest_run_id() {
     done
 }
 
+wait_for_new_workflow_run_id() {
+    local workflow_file="$1"
+    local previous_run_id="$2"
+    local timeout_seconds="${3:-120}"
+    local start_time
+    start_time=$(date +%s)
+
+    while (( $(date +%s) - start_time < timeout_seconds )); do
+        local run_id
+        if run_id=$(get_latest_run_id "$workflow_file") \
+            && [[ -n "$run_id" && "$run_id" != "$previous_run_id" ]]; then
+            echo "$run_id"
+            return 0
+        fi
+        sleep "$POLL_INTERVAL"
+    done
+
+    error "Timed out waiting for a new run of '$workflow_file'" >&2
+    return 1
+}
+
 is_rate_limit_error() {
     local output="$1"
     [[ "$output" == *"API rate limit exceeded"* || "$output" == *"rate limit exceeded"* ]]
@@ -1266,7 +1287,11 @@ enable_workflow() {
     # Redirect gh aw enable output to log file to prevent terminal control codes from clearing previous output
     local rc command_output
     while true; do
-        command_output=$(timeout 120s $GH_AW_BIN enable "$workflow_name" 2>&1)
+        if [[ "$workflow_name" == *.yml || "$workflow_name" == *.yaml ]]; then
+            command_output=$(timeout 120s gh workflow enable "$workflow_name" --repo "$REPO_OWNER/$REPO_NAME" 2>&1)
+        else
+            command_output=$(timeout 120s $GH_AW_BIN enable "$workflow_name" 2>&1)
+        fi
         rc=$?
         printf '%s\n' "$command_output" >> "$LOG_FILE"
         if [[ $rc -eq 0 ]] || ! is_rate_limit_error "$command_output"; then
@@ -1300,7 +1325,11 @@ disable_workflow() {
     info "Disabling workflow '$workflow_name'..."
     local rc command_output
     while true; do
-        command_output=$(timeout 120s $GH_AW_BIN disable "$workflow_name" 2>&1)
+        if [[ "$workflow_name" == *.yml || "$workflow_name" == *.yaml ]]; then
+            command_output=$(timeout 120s gh workflow disable "$workflow_name" --repo "$REPO_OWNER/$REPO_NAME" 2>&1)
+        else
+            command_output=$(timeout 120s $GH_AW_BIN disable "$workflow_name" 2>&1)
+        fi
         rc=$?
         printf '%s\n' "$command_output" >> "$LOG_FILE"
         if [[ $rc -eq 0 ]] || ! is_rate_limit_error "$command_output"; then
@@ -4009,12 +4038,13 @@ run_single_test() {
             before_worker_run_id=$(get_latest_run_id "$worker_file")
             if enable_workflow "$worker_workflow" \
                 && trigger_workflow_dispatch_and_await_completion "$workflow"; then
-                sleep 5
                 local after_worker_run_id
-                after_worker_run_id=$(get_latest_run_id "$worker_file")
-                if [[ -n "$after_worker_run_id" && "$after_worker_run_id" != "$before_worker_run_id" ]] \
+                if after_worker_run_id=$(wait_for_new_workflow_run_id "$worker_file" "$before_worker_run_id") \
                     && wait_for_workflow "$worker_workflow" "$after_worker_run_id"; then
-                    test_result="PASS"
+                    TEST_RUN_URLS["$worker_workflow"]="https://github.com/$REPO_OWNER/$REPO_NAME/actions/runs/$after_worker_run_id"
+                    if validate_workflow_log_contains "$worker_workflow" "GH_AW_WORK_QUEUE_E2E"; then
+                        test_result="PASS"
+                    fi
                 else
                     error "Work-queue worker did not produce a successful new run"
                 fi
@@ -4027,19 +4057,21 @@ run_single_test() {
             local before_run_id
             if enable_workflow "$workflow"; then
                 before_run_id=$(get_latest_run_id "$workflow_file")
-                gh workflow enable "$sender_file" --repo "$REPO_OWNER/$REPO_NAME" &>> "$LOG_FILE" || true
-                local -a sender_args=(workflow run "$sender_file" --repo "$REPO_OWNER/$REPO_NAME")
-                [[ -n "$DISPATCH_REF" ]] && sender_args+=(--ref "$DISPATCH_REF")
-                if gh "${sender_args[@]}" &>> "$LOG_FILE"; then
-                    sleep 5
-                    local after_run_id
-                    after_run_id=$(get_latest_run_id "$workflow_file")
-                    if [[ -n "$after_run_id" && "$after_run_id" != "$before_run_id" ]] \
-                        && wait_for_workflow "$workflow" "$after_run_id"; then
-                        TEST_RUN_URLS["$workflow"]="https://github.com/$REPO_OWNER/$REPO_NAME/actions/runs/$after_run_id"
-                        test_result="PASS"
+                if enable_workflow "$sender_file"; then
+                    local -a sender_args=(workflow run "$sender_file" --repo "$REPO_OWNER/$REPO_NAME")
+                    [[ -n "$DISPATCH_REF" ]] && sender_args+=(--ref "$DISPATCH_REF")
+                    if gh "${sender_args[@]}" &>> "$LOG_FILE"; then
+                        local after_run_id
+                        if after_run_id=$(wait_for_new_workflow_run_id "$workflow_file" "$before_run_id") \
+                            && wait_for_workflow "$workflow" "$after_run_id"; then
+                            TEST_RUN_URLS["$workflow"]="https://github.com/$REPO_OWNER/$REPO_NAME/actions/runs/$after_run_id"
+                            if validate_workflow_log_contains "$workflow" "GH_AW_REPOSITORY_DISPATCH_BOT_E2E"; then
+                                test_result="PASS"
+                            fi
+                        fi
                     fi
                 fi
+                disable_workflow "$sender_file"
                 disable_workflow "$workflow"
             fi
             ;;
@@ -4201,9 +4233,35 @@ run_single_test() {
                             error "Workflow '$workflow' completed without uploading an artifact"
                         fi
                         ;;
-                    *"mcp-custom-ca"|*"mcp-startup-timeout")
-                        success "MCP transport workflow '$workflow' completed successfully"
-                        validation_success=true
+                    *"custom-job-artifacts")
+                        if validate_workflow_log_contains "$workflow" "GH_AW_CUSTOM_JOB_ARTIFACT_E2E"; then
+                            validation_success=true
+                        fi
+                        ;;
+                    *"dynamic-workflow")
+                        if validate_workflow_log_contains "$workflow" "GH_AW_DYNAMIC_WORKFLOW_E2E"; then
+                            validation_success=true
+                        fi
+                        ;;
+                    *"mcp-custom-ca")
+                        if validate_workflow_log_contains "$workflow" "GH_AW_MCP_CUSTOM_CA_E2E"; then
+                            validation_success=true
+                        fi
+                        ;;
+                    *"mcp-startup-timeout")
+                        if validate_workflow_log_contains "$workflow" "GH_AW_MCP_STARTUP_TIMEOUT_E2E"; then
+                            validation_success=true
+                        fi
+                        ;;
+                    *"web-fetch")
+                        if validate_workflow_log_contains "$workflow" "Example Domain"; then
+                            validation_success=true
+                        fi
+                        ;;
+                    *"web-search")
+                        if validate_workflow_log_contains "$workflow" "github/gh-aw"; then
+                            validation_success=true
+                        fi
                         ;;
                     *"multi")
                         local title_prefix=$(get_title_prefix "$workflow" "$ai_type")
