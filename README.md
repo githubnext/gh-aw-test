@@ -62,7 +62,9 @@ Tracking the full matrix of [safe outputs](https://github.com/github/gh-aw/blob/
 - [ ] `restore-memory` in custom job (`jobs.<id>.restore-memory`) — test-copilot-restore-memory-custom-job
 - [x] `add-comment` — test-copilot-add-comment
 - [x] `add-comment` (discussions) — test-copilot-add-discussion-comment
+- [x] `add-comment` (discussion target via workflow dispatch) — test-copilot-add-discussion-comment-dispatch
 - [x] `add-labels` — test-copilot-add-labels
+- [x] `add-labels` configured target restriction — test-copilot-add-labels-target-restriction
 - [x] `update-issue` — test-copilot-update-issue
 - [x] `update-pull-request` — test-copilot-update-pull-request
 - [x] `push-to-pull-request-branch` (slash-command) — test-copilot-push-to-pull-request-branch-using-slash-command
@@ -87,9 +89,15 @@ Tracking the full matrix of [safe outputs](https://github.com/github/gh-aw/blob/
 - [x] `resolve-pull-request-review-thread` — test-copilot-resolve-pull-request-review-thread
 - [x] `submit-pull-request-review` — test-copilot-submit-pull-request-review
 - [x] `submit-pull-request-review` (locked PR soft-skip) — test-copilot-submit-pull-request-review-locked
+- [x] `submit-pull-request-review` commit attribution — test-copilot-submit-pull-request-review-commit-id
 - [x] `dismiss-pull-request-review` — test-copilot-dismiss-pull-request-review
 - [x] `add-reviewer` — test-copilot-add-reviewer
 - [x] `mark-pull-request-as-ready-for-review` — test-copilot-mark-pull-request-as-ready-for-review
+- [x] `create-pull-request` squash auto-merge strategy — test-copilot-create-pull-request-auto-merge
+- [x] `create-pull-request` array-valued labels — test-copilot-create-pull-request-labels
+- [x] `create-pull-request` same-organization fork (skips without fixture) — test-copilot-siderepo-create-pull-request-same-org
+- [x] `create-pull-request` issues-disabled fallback (skips without fixture) — test-copilot-siderepo-create-pull-request-issues-disabled
+- [x] `push-to-pull-request-branch` without fallback — test-copilot-push-to-pull-request-branch-no-fallback
 - [ ] `merge-pull-request` — cannot yet be sample-tested because the current workflow schema rejects `samples:` for `merge-pull-request`
 
 ### Labels, Assignments & Reviews — Remaining
@@ -109,6 +117,8 @@ Tracking the full matrix of [safe outputs](https://github.com/github/gh-aw/blob/
 ### Security & Agent Tasks — Remaining
 
 - [x] `dispatch-workflow` — test-copilot-dispatch-workflow
+- [x] `dispatch-workflow` explicit ref override — test-copilot-dispatch-workflow-ref-override
+- [x] `dispatch-workflow` PR issue-comment ref resolution — test-copilot-dispatch-workflow-issue-comment-ref
 - [x] `call-workflow` — test-copilot-call-workflow (worker: test-copilot-call-worker)
 - [x] `inline sub-agents` — test-copilot-inline-sub-agents
 - [x] `upload-asset` — test-copilot-upload-asset (auto-creates orphaned `assets/` branch)
