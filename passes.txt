@@ -2,3 +2,9 @@ test-copilot-add-labels-target-restriction 40980858421
 test-copilot-add-discussion-comment-dispatch 40980857519
 test-copilot-add-labels-target-restriction 40980858421
 test-copilot-add-discussion-comment-dispatch 40980857519
+test-copilot-add-labels-target-restriction 40982722689
+test-copilot-add-discussion-comment-dispatch 40982720479
+test-copilot-create-pull-request-labels 40982716378
+test-copilot-add-labels-target-restriction 40982722689
+test-copilot-add-discussion-comment-dispatch 40982720479
+test-copilot-dispatch-workflow-ref-override 40982721939
