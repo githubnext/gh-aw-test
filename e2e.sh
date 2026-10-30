@@ -1226,13 +1226,17 @@ acquire_dispatch_worker_lock() {
     local wait_started
     wait_started=$(date +%s)
     exec {DISPATCH_WORKER_LOCK_FD}>"${GLOBAL_WORKFLOWS_LOCK}.dispatch-worker"
-    flock -x "$DISPATCH_WORKER_LOCK_FD"
+    local prior_throttle_seconds=0
     if [[ -n "${E2E_TEST_THROTTLE_FILE:-}" ]]; then
-        local prior_throttle_seconds=0
-        local wait_seconds=$(( $(date +%s) - wait_started ))
         read -r prior_throttle_seconds < "$E2E_TEST_THROTTLE_FILE" || prior_throttle_seconds=0
-        printf '%s\n' "$((prior_throttle_seconds + wait_seconds))" > "$E2E_TEST_THROTTLE_FILE"
     fi
+    until flock -n "$DISPATCH_WORKER_LOCK_FD"; do
+        sleep 1
+        if [[ -n "${E2E_TEST_THROTTLE_FILE:-}" ]]; then
+            printf '%s\n' "$((prior_throttle_seconds + $(date +%s) - wait_started))" \
+                > "$E2E_TEST_THROTTLE_FILE"
+        fi
+    done
 }
 
 release_dispatch_worker_lock() {
@@ -1839,6 +1843,7 @@ create_test_pr_with_branch() {
     local title="$1"
     local body="$2"
     local repo="${3:-}"
+    local base_branch="${4:-main}"
     local branch="test-pr-$(date +%s)-${BASHPID:-$$}-$RANDOM"
 
     # Parallel-safety marker (see create_test_issue)
@@ -1856,15 +1861,15 @@ create_test_pr_with_branch() {
     # Create the remote branch via gh api. `git push` against a cross-repo
     # HTTPS URL has no credentials on the runner and was silently failing,
     # leaving siderepo PR tests without a PR to trigger from.
-    local main_sha=$(gh api repos/"$api_repo"/git/refs/heads/main --jq '.object.sha' 2>/dev/null)
-    if [[ -z "$main_sha" ]]; then
+    local base_sha=$(gh api repos/"$api_repo"/git/refs/heads/"$base_branch" --jq '.object.sha' 2>/dev/null)
+    if [[ -z "$base_sha" ]]; then
         echo ""
         return
     fi
     gh api repos/"$api_repo"/git/refs \
         --method POST \
         --field ref="refs/heads/$branch" \
-        --field sha="$main_sha" &>/dev/null
+        --field sha="$base_sha" &>/dev/null
 
     # Create a commit on the remote branch using GitHub API to make it different from main
     local commit_message="Test commit for PR"
@@ -1886,7 +1891,7 @@ create_test_pr_with_branch() {
         local after_commit_sha=$(gh api repos/"$api_repo"/git/refs/heads/"$branch" --jq '.object.sha' 2>/dev/null)
 
         # Create a PR using the GitHub CLI
-        local pr_url=$(gh pr create $repo_flag --title "$title" --body "$body" --head "$branch" --base main 2>/dev/null)
+        local pr_url=$(gh pr create $repo_flag --title "$title" --body "$body" --head "$branch" --base "$base_branch" 2>/dev/null)
 
         if [[ -n "$pr_url" ]]; then
             local pr_number=$(echo "$pr_url" | grep -o '[0-9]\+$')
@@ -2857,7 +2862,7 @@ wait_for_pr_review_commit_id() {
     while [[ $waited -lt $max_wait ]]; do
         local actual_commit_id
         actual_commit_id=$(gh api "repos/$REPO_OWNER/$REPO_NAME/pulls/$pr_number/reviews" \
-            --jq '[.[] | select(.body == "Review pinned to the requested commit.")][-1].commit_id // empty' 2>/dev/null)
+            --jq '[.[] | select(.body != null) | select(.body | contains("Review pinned to the requested commit."))][-1].commit_id // empty' 2>/dev/null)
         if [[ "$actual_commit_id" == "$expected_commit_id" ]]; then
             return 0
         fi
@@ -4201,7 +4206,7 @@ run_single_test() {
             ;;
         *"push-to-pull-request-branch-no-fallback")
             local pr_info
-            pr_info=$(create_test_pr_with_branch "Phase B no-fallback push fixture" "Fixture for $workflow" "$target_repo")
+            pr_info=$(create_test_pr_with_branch "Phase B no-fallback push fixture" "Fixture for $workflow" "$target_repo" "${DISPATCH_REF:-main}")
             if [[ -n "$pr_info" ]]; then
                 local pr_num branch_name after_commit_sha repo_from_info
                 IFS=',' read -r pr_num branch_name after_commit_sha repo_from_info <<< "$pr_info"
