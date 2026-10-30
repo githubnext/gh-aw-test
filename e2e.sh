@@ -1199,6 +1199,39 @@ get_latest_run_id() {
     done
 }
 
+wait_for_new_run_id() {
+    local workflow_file="$1"
+    local previous_run_id="$2"
+    local start_time
+    start_time=$(date +%s)
+
+    while true; do
+        local run_id
+        if ! run_id=$(get_latest_run_id "$workflow_file"); then
+            return 1
+        fi
+        if [[ -n "$run_id" && "$run_id" != "$previous_run_id" ]]; then
+            echo "$run_id"
+            return 0
+        fi
+        if (( $(date +%s) - start_time >= TIMEOUT_MINUTES * 60 )); then
+            error "Timeout waiting for a new '$workflow_file' run" >&2
+            return 1
+        fi
+        sleep "$POLL_INTERVAL"
+    done
+}
+
+acquire_dispatch_worker_lock() {
+    exec {DISPATCH_WORKER_LOCK_FD}>"${GLOBAL_WORKFLOWS_LOCK}.dispatch-worker"
+    flock -x "$DISPATCH_WORKER_LOCK_FD"
+}
+
+release_dispatch_worker_lock() {
+    flock -u "$DISPATCH_WORKER_LOCK_FD"
+    exec {DISPATCH_WORKER_LOCK_FD}>&-
+}
+
 is_rate_limit_error() {
     local output="$1"
     [[ "$output" == *"API rate limit exceeded"* || "$output" == *"rate limit exceeded"* ]]
@@ -4025,6 +4058,7 @@ run_single_test() {
             ;;
         # Dispatch-workflow test: enable worker, trigger dispatcher with sentinel, wait for worker issue
         *"dispatch-workflow")
+            acquire_dispatch_worker_lock
             echo ""
             echo -e "${CYAN}━━━ Preparing test prerequisites ━━━${NC}"
             local worker_workflow="test-copilot-dispatch-worker"
@@ -4051,6 +4085,7 @@ run_single_test() {
                     test_result="PASS"
                 fi
             fi
+            release_dispatch_worker_lock
             ;;
         *"dispatch-work-queue")
             local worker_workflow="phase-a-work-queue-worker"
@@ -4072,6 +4107,7 @@ run_single_test() {
             disable_workflow "$worker_workflow"
             ;;
         *"dispatch-workflow-ref-override")
+            acquire_dispatch_worker_lock
             local worker_workflow="test-copilot-dispatch-worker"
             local worker_file="${worker_workflow}.lock.yml"
             local before_worker_run_id
@@ -4090,6 +4126,7 @@ run_single_test() {
                 fi
             fi
             disable_workflow "$worker_workflow"
+            release_dispatch_worker_lock
             ;;
         *"dispatch-workflow-issue-comment-ref")
             local worker_workflow="test-copilot-dispatch-worker"
@@ -4100,13 +4137,12 @@ run_single_test() {
                 local pr_num branch_name after_commit_sha repo_from_info
                 IFS=',' read -r pr_num branch_name after_commit_sha repo_from_info <<< "$pr_info"
                 local before_worker_run_id
+                acquire_dispatch_worker_lock
                 before_worker_run_id=$(get_latest_run_id "$worker_file")
                 if enable_workflow "$worker_workflow" && enable_workflow "$workflow" \
                     && post_pr_command "$pr_num" "/test-copilot-dispatch-workflow-issue-comment-ref" "$target_repo"; then
-                    sleep 10
                     local after_worker_run_id
-                    after_worker_run_id=$(get_latest_run_id "$worker_file")
-                    if [[ -n "$after_worker_run_id" && "$after_worker_run_id" != "$before_worker_run_id" ]] \
+                    if after_worker_run_id=$(wait_for_new_run_id "$worker_file" "$before_worker_run_id") \
                         && wait_for_workflow "$worker_workflow" "$after_worker_run_id" \
                         && [[ "$(gh run view "$after_worker_run_id" --repo "$REPO_OWNER/$REPO_NAME" --json headBranch --jq '.headBranch')" == "$branch_name" ]]; then
                         test_result="PASS"
@@ -4114,6 +4150,7 @@ run_single_test() {
                         error "Issue-comment dispatch did not run the worker from PR branch '$branch_name'"
                     fi
                 fi
+                release_dispatch_worker_lock
             fi
             disable_workflow "$workflow"
             disable_workflow "$worker_workflow"
@@ -4306,7 +4343,7 @@ run_single_test() {
             fi
             ;;
         # Workflow dispatch tests - triggered with gh aw run
-        *"create-issue"|*"create-discussion"|*"create-pull-request"|*"create-two-pull-requests"|*"code-scanning-alert"|*"create-check-run"|*"mcp"*|*"safe-jobs"|*"gh-steps"|*"restore-memory-custom-job"|*"custom-safe-outputs"|*"custom-job-artifacts"|*"noop"|*"report-incomplete"|*"missing-data"|*"missing-tool"|*"assign-to-agent"*|*"set-issue-field"|*"set-issue-field-builtin-rejection"|*"issue-intents"|*"skills-frontmatter"|*"inline-sub-agents"|*"network-isolation"|*"upload-code-coverage"|*"upload-artifact"|*"sandbox-runtime-profile"|*"playwright-cli"|*"network-engine-domain-opt-in"|*"sandbox-exclude-env"|*"repo-memory"|*"linear-create-issue"|*"jira-create-issue"|*"steer"|*"body-footer"|*"dynamic-workflow"|*"multi-checkout"|*"web-fetch"|*"web-search")
+        *"create-issue"|*"create-discussion"|*"create-pull-request"|*"create-pull-request-auto-merge"|*"create-pull-request-labels"|*"siderepo-create-pull-request-same-org"|*"siderepo-create-pull-request-issues-disabled"|*"create-two-pull-requests"|*"code-scanning-alert"|*"create-check-run"|*"mcp"*|*"safe-jobs"|*"gh-steps"|*"restore-memory-custom-job"|*"custom-safe-outputs"|*"custom-job-artifacts"|*"noop"|*"report-incomplete"|*"missing-data"|*"missing-tool"|*"assign-to-agent"*|*"set-issue-field"|*"set-issue-field-builtin-rejection"|*"issue-intents"|*"skills-frontmatter"|*"inline-sub-agents"|*"network-isolation"|*"upload-code-coverage"|*"upload-artifact"|*"sandbox-runtime-profile"|*"playwright-cli"|*"network-engine-domain-opt-in"|*"sandbox-exclude-env"|*"repo-memory"|*"linear-create-issue"|*"jira-create-issue"|*"steer"|*"body-footer"|*"dynamic-workflow"|*"multi-checkout"|*"web-fetch"|*"web-search")
             local workflow_success=false
             local expected_conclusion="success"
             if [[ "$workflow" == *"report-incomplete" || "$workflow" == *"set-issue-field-builtin-rejection" \
