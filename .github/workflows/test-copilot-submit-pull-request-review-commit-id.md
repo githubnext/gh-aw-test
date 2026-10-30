@@ -18,6 +18,7 @@ engine:
   id: copilot
 safe-outputs:
   submit-pull-request-review:
+    target: ${{ inputs.pull_request_number }}
     commit-id: ${{ inputs.commit_id }}
     allowed-events: [COMMENT]
     max: 1
