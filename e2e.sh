@@ -410,7 +410,11 @@ matches_pattern() {
 get_target_repo() {
     local workflow_name="$1"
     
-    if [[ "$workflow_name" == *"siderepo"* ]]; then
+    if [[ "$workflow_name" == *"siderepo-create-pull-request-same-org"* ]]; then
+        gh variable get GH_AW_TEST_SAME_ORG_BASE_REPO --repo "$REPO_OWNER/$REPO_NAME" 2>/dev/null || true
+    elif [[ "$workflow_name" == *"siderepo-create-pull-request-issues-disabled"* ]]; then
+        gh variable get GH_AW_TEST_NO_ISSUES_REPO --repo "$REPO_OWNER/$REPO_NAME" 2>/dev/null || true
+    elif [[ "$workflow_name" == *"siderepo"* ]]; then
         echo "githubnext/gh-aw-side-repo"
     else
         echo ""
@@ -652,6 +656,17 @@ get_all_tests() {
     echo "test-claude-web-search"
     echo "test-copilot-mcp-custom-ca"
     echo "test-copilot-mcp-startup-timeout"
+    # Phase B: safe-output policy and pull request regressions
+    echo "test-copilot-dispatch-workflow-ref-override"
+    echo "test-copilot-dispatch-workflow-issue-comment-ref"
+    echo "test-copilot-create-pull-request-auto-merge"
+    echo "test-copilot-submit-pull-request-review-commit-id"
+    echo "test-copilot-siderepo-create-pull-request-same-org"
+    echo "test-copilot-push-to-pull-request-branch-no-fallback"
+    echo "test-copilot-add-labels-target-restriction"
+    echo "test-copilot-siderepo-create-pull-request-issues-disabled"
+    echo "test-copilot-create-pull-request-labels"
+    echo "test-copilot-add-discussion-comment-dispatch"
     # Phase 2: runtime, sandbox, network, memory, and MCP
     echo "test-copilot-cache-memory-concurrent-merge"
     echo "test-copilot-sandbox-runtime-profile"
@@ -3805,6 +3820,41 @@ run_single_test() {
                 fi
             done
             ;;
+        *"create-pull-request-auto-merge")
+            if [[ "$(gh api "repos/$REPO_OWNER/$REPO_NAME" --jq '.allow_auto_merge' 2>/dev/null)" != "true" ]]; then
+                record_test_skip "$workflow" "requires auto-merge to be enabled on $REPO_OWNER/$REPO_NAME"
+                cat "$test_log" >&3
+                rm -f "$test_log"
+                return 0
+            fi
+            ;;
+        *"siderepo-create-pull-request-same-org")
+            local same_org_variables=(GH_AW_TEST_SAME_ORG_BASE_REPO GH_AW_TEST_SAME_ORG_HEAD_REPO GH_AW_TEST_SAME_ORG_ALLOWED_REPOS)
+            local same_org_variable
+            for same_org_variable in "${same_org_variables[@]}"; do
+                if ! gh variable list --repo "$REPO_OWNER/$REPO_NAME" --json name --jq '.[].name' 2>/dev/null | grep -qx "$same_org_variable"; then
+                    record_test_skip "$workflow" "requires same-organization base/head repository fixture variables and GH_AW_TEST_PAT"
+                    cat "$test_log" >&3
+                    rm -f "$test_log"
+                    return 0
+                fi
+            done
+            if ! gh secret list --repo "$REPO_OWNER/$REPO_NAME" --json name --jq '.[].name' 2>/dev/null | grep -qx GH_AW_TEST_PAT; then
+                record_test_skip "$workflow" "requires GH_AW_TEST_PAT for the same-organization fork fixture"
+                cat "$test_log" >&3
+                rm -f "$test_log"
+                return 0
+            fi
+            ;;
+        *"siderepo-create-pull-request-issues-disabled")
+            if ! gh variable list --repo "$REPO_OWNER/$REPO_NAME" --json name --jq '.[].name' 2>/dev/null | grep -qx GH_AW_TEST_NO_ISSUES_REPO \
+                || ! gh secret list --repo "$REPO_OWNER/$REPO_NAME" --json name --jq '.[].name' 2>/dev/null | grep -qx GH_AW_TEST_PAT; then
+                record_test_skip "$workflow" "requires GH_AW_TEST_NO_ISSUES_REPO and GH_AW_TEST_PAT"
+                cat "$test_log" >&3
+                rm -f "$test_log"
+                return 0
+            fi
+            ;;
     esac
     
     case "$workflow" in
@@ -4021,6 +4071,111 @@ run_single_test() {
             fi
             disable_workflow "$worker_workflow"
             ;;
+        *"dispatch-workflow-ref-override")
+            local worker_workflow="test-copilot-dispatch-worker"
+            local worker_file="${worker_workflow}.lock.yml"
+            local before_worker_run_id
+            before_worker_run_id=$(get_latest_run_id "$worker_file")
+            if enable_workflow "$worker_workflow" \
+                && trigger_workflow_with_inputs "$workflow" "sentinel=ref-override-$RANDOM"; then
+                sleep 5
+                local after_worker_run_id
+                after_worker_run_id=$(get_latest_run_id "$worker_file")
+                if [[ -n "$after_worker_run_id" && "$after_worker_run_id" != "$before_worker_run_id" ]] \
+                    && wait_for_workflow "$worker_workflow" "$after_worker_run_id" \
+                    && [[ "$(gh run view "$after_worker_run_id" --repo "$REPO_OWNER/$REPO_NAME" --json headBranch --jq '.headBranch')" == "main" ]]; then
+                    test_result="PASS"
+                else
+                    error "Explicit dispatch ref did not run the worker from main"
+                fi
+            fi
+            disable_workflow "$worker_workflow"
+            ;;
+        *"dispatch-workflow-issue-comment-ref")
+            local worker_workflow="test-copilot-dispatch-worker"
+            local worker_file="${worker_workflow}.lock.yml"
+            local pr_info
+            pr_info=$(create_test_pr_with_branch "Phase B issue-comment ref fixture" "Fixture for $workflow" "$target_repo")
+            if [[ -n "$pr_info" ]]; then
+                local pr_num branch_name after_commit_sha repo_from_info
+                IFS=',' read -r pr_num branch_name after_commit_sha repo_from_info <<< "$pr_info"
+                local before_worker_run_id
+                before_worker_run_id=$(get_latest_run_id "$worker_file")
+                if enable_workflow "$worker_workflow" && enable_workflow "$workflow" \
+                    && post_pr_command "$pr_num" "/test-copilot-dispatch-workflow-issue-comment-ref" "$target_repo"; then
+                    sleep 10
+                    local after_worker_run_id
+                    after_worker_run_id=$(get_latest_run_id "$worker_file")
+                    if [[ -n "$after_worker_run_id" && "$after_worker_run_id" != "$before_worker_run_id" ]] \
+                        && wait_for_workflow "$worker_workflow" "$after_worker_run_id" \
+                        && [[ "$(gh run view "$after_worker_run_id" --repo "$REPO_OWNER/$REPO_NAME" --json headBranch --jq '.headBranch')" == "$branch_name" ]]; then
+                        test_result="PASS"
+                    else
+                        error "Issue-comment dispatch did not run the worker from PR branch '$branch_name'"
+                    fi
+                fi
+            fi
+            disable_workflow "$workflow"
+            disable_workflow "$worker_workflow"
+            ;;
+        *"submit-pull-request-review-commit-id")
+            local pr_info
+            pr_info=$(create_test_pr_with_branch "Phase B pinned review fixture" "Fixture for $workflow" "$target_repo")
+            if [[ -n "$pr_info" ]]; then
+                local pr_num branch_name expected_commit_id repo_from_info
+                IFS=',' read -r pr_num branch_name expected_commit_id repo_from_info <<< "$pr_info"
+                if trigger_workflow_with_inputs "$workflow" "pull_request_number=$pr_num" "commit_id=$expected_commit_id"; then
+                    local actual_commit_id
+                    actual_commit_id=$(gh api "repos/$REPO_OWNER/$REPO_NAME/pulls/$pr_num/reviews" \
+                        --jq '[.[] | select(.body == "Review pinned to the requested commit.")][-1].commit_id // empty' 2>/dev/null)
+                    if [[ "$actual_commit_id" == "$expected_commit_id" ]]; then
+                        test_result="PASS"
+                    else
+                        error "Review commit ID '$actual_commit_id' did not match '$expected_commit_id'"
+                    fi
+                fi
+            fi
+            ;;
+        *"push-to-pull-request-branch-no-fallback")
+            local pr_info
+            pr_info=$(create_test_pr_with_branch "Phase B no-fallback push fixture" "Fixture for $workflow" "$target_repo")
+            if [[ -n "$pr_info" ]]; then
+                local pr_num branch_name after_commit_sha repo_from_info
+                IFS=',' read -r pr_num branch_name after_commit_sha repo_from_info <<< "$pr_info"
+                if trigger_workflow_with_inputs "$workflow" "pull_request_number=$pr_num" "branch_name=$branch_name" \
+                    && wait_for_branch_update "$branch_name" "$after_commit_sha" "$workflow" "$target_repo"; then
+                    test_result="PASS"
+                fi
+            fi
+            ;;
+        *"add-labels-target-restriction")
+            local target_issue decoy_issue
+            gh label create phase-b-target-restriction --repo "$REPO_OWNER/$REPO_NAME" \
+                --color 5319e7 --description "Phase B target restriction fixture" --force &>> "$LOG_FILE"
+            target_issue=$(create_test_issue "Phase B configured label target" "Fixture for $workflow" "" "$target_repo")
+            decoy_issue=$(create_test_issue "Phase B model-selected label decoy" "Fixture for $workflow" "" "$target_repo")
+            if [[ -n "$target_issue" && -n "$decoy_issue" ]] \
+                && trigger_workflow_with_inputs "$workflow" "target_issue_number=$target_issue" "decoy_issue_number=$decoy_issue" \
+                && wait_for_labels "$target_issue" "phase-b-target-restriction" "$workflow" "$target_repo"; then
+                local decoy_has_label
+                decoy_has_label=$(gh issue view "$decoy_issue" --repo "$REPO_OWNER/$REPO_NAME" --json labels \
+                    --jq '[.labels[].name] | contains(["phase-b-target-restriction"])' 2>/dev/null)
+                if [[ "$decoy_has_label" == "false" ]]; then
+                    test_result="PASS"
+                else
+                    error "Restricted label was incorrectly applied to decoy issue #$decoy_issue"
+                fi
+            fi
+            ;;
+        *"add-discussion-comment-dispatch")
+            local discussion_num
+            discussion_num=$(create_test_discussion "Phase B discussion dispatch fixture" "Fixture for $workflow" "General" "$target_repo")
+            if [[ -n "$discussion_num" ]] \
+                && trigger_workflow_with_inputs "$workflow" "discussion_number=$discussion_num" \
+                && wait_for_discussion_comment "$discussion_num" "Reply from Copilot Discussion Dispatch" "$workflow" "$target_repo"; then
+                test_result="PASS"
+            fi
+            ;;
         *"repository-dispatch-bot")
             local sender_file="phase-a-repository-dispatch-sender.yml"
             local workflow_file="${workflow}.lock.yml"
@@ -4203,6 +4358,39 @@ run_single_test() {
                         ;;
                     *"mcp-custom-ca"|*"mcp-startup-timeout")
                         success "MCP transport workflow '$workflow' completed successfully"
+                        validation_success=true
+                        ;;
+                    *"create-pull-request-auto-merge")
+                        local pr_number
+                        pr_number=$(gh pr list --repo "$REPO_OWNER/$REPO_NAME" --state all --limit 20 --json number,title \
+                            --jq '[.[] | select(.title | startswith("[auto-merge-squash] "))][0].number // empty')
+                        local merge_method
+                        merge_method=$(gh api "repos/$REPO_OWNER/$REPO_NAME/pulls/$pr_number" --jq '.auto_merge.merge_method // empty' 2>/dev/null)
+                        if [[ "$merge_method" == "squash" ]]; then
+                            success "PR #$pr_number has squash auto-merge enabled"
+                            validation_success=true
+                        else
+                            error "Expected squash auto-merge on PR #$pr_number, got '$merge_method'"
+                        fi
+                        ;;
+                    *"create-pull-request-labels")
+                        local labels_match
+                        labels_match=$(gh pr list --repo "$REPO_OWNER/$REPO_NAME" --state all --limit 20 --json title,labels \
+                            --jq '[.[] | select(.title | startswith("[pr-labels] "))][0].labels | map(.name) | contains(["copilot", "automation", "bot"])' 2>/dev/null)
+                        if [[ "$labels_match" == "true" ]]; then
+                            success "Created pull request has all configured labels"
+                            validation_success=true
+                        else
+                            error "Created pull request is missing configured labels"
+                        fi
+                        ;;
+                    *"siderepo-create-pull-request-same-org")
+                        if validate_pr_created "[same-org-fork] " "$target_repo"; then
+                            validation_success=true
+                        fi
+                        ;;
+                    *"siderepo-create-pull-request-issues-disabled")
+                        success "Issues-disabled fallback workflow completed successfully"
                         validation_success=true
                         ;;
                     *"multi")
