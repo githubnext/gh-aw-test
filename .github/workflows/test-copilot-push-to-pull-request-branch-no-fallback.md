@@ -14,6 +14,9 @@ permissions:
   contents: read
   pull-requests: read
   copilot-requests: write
+checkout:
+  - ref: ${{ inputs.branch_name }}
+    fetch-depth: 0
 engine:
   id: copilot
 safe-outputs:

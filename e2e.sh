@@ -1223,8 +1223,16 @@ wait_for_new_run_id() {
 }
 
 acquire_dispatch_worker_lock() {
+    local wait_started
+    wait_started=$(date +%s)
     exec {DISPATCH_WORKER_LOCK_FD}>"${GLOBAL_WORKFLOWS_LOCK}.dispatch-worker"
     flock -x "$DISPATCH_WORKER_LOCK_FD"
+    if [[ -n "${E2E_TEST_THROTTLE_FILE:-}" ]]; then
+        local prior_throttle_seconds=0
+        local wait_seconds=$(( $(date +%s) - wait_started ))
+        read -r prior_throttle_seconds < "$E2E_TEST_THROTTLE_FILE" || prior_throttle_seconds=0
+        printf '%s\n' "$((prior_throttle_seconds + wait_seconds))" > "$E2E_TEST_THROTTLE_FILE"
+    fi
 }
 
 release_dispatch_worker_lock() {
@@ -2840,6 +2848,27 @@ wait_for_pr_reviews() {
     return 1
 }
 
+wait_for_pr_review_commit_id() {
+    local pr_number="$1"
+    local expected_commit_id="$2"
+    local max_wait=480
+    local waited=0
+
+    while [[ $waited -lt $max_wait ]]; do
+        local actual_commit_id
+        actual_commit_id=$(gh api "repos/$REPO_OWNER/$REPO_NAME/pulls/$pr_number/reviews" \
+            --jq '[.[] | select(.body == "Review pinned to the requested commit.")][-1].commit_id // empty' 2>/dev/null)
+        if [[ "$actual_commit_id" == "$expected_commit_id" ]]; then
+            return 0
+        fi
+        info "..."
+        sleep "$OUTCOME_POLL_INTERVAL"
+        waited=$((waited + OUTCOME_POLL_INTERVAL))
+    done
+
+    return 1
+}
+
 wait_for_pr_update() {
     local pr_number="$1"
     local ai_type="$2"
@@ -4162,13 +4191,10 @@ run_single_test() {
                 local pr_num branch_name expected_commit_id repo_from_info
                 IFS=',' read -r pr_num branch_name expected_commit_id repo_from_info <<< "$pr_info"
                 if trigger_workflow_with_inputs "$workflow" "pull_request_number=$pr_num" "commit_id=$expected_commit_id"; then
-                    local actual_commit_id
-                    actual_commit_id=$(gh api "repos/$REPO_OWNER/$REPO_NAME/pulls/$pr_num/reviews" \
-                        --jq '[.[] | select(.body == "Review pinned to the requested commit.")][-1].commit_id // empty' 2>/dev/null)
-                    if [[ "$actual_commit_id" == "$expected_commit_id" ]]; then
+                    if wait_for_pr_review_commit_id "$pr_num" "$expected_commit_id"; then
                         test_result="PASS"
                     else
-                        error "Review commit ID '$actual_commit_id' did not match '$expected_commit_id'"
+                        error "No review was attributed to commit '$expected_commit_id'"
                     fi
                 fi
             fi
