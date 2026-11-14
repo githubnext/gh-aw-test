@@ -98,6 +98,7 @@ Tracking the full matrix of [safe outputs](https://github.com/github/gh-aw/blob/
 - [x] `create-pull-request` same-organization fork (skips without fixture) — test-copilot-siderepo-create-pull-request-same-org
 - [x] `create-pull-request` issues-disabled fallback (skips without fixture) — test-copilot-siderepo-create-pull-request-issues-disabled
 - [x] `push-to-pull-request-branch` without fallback — test-copilot-push-to-pull-request-branch-no-fallback
+- [x] `push-to-pull-request-branch` allowed-files scoped to agent commits — test-copilot-push-to-pull-request-branch-allowed-files
 - [ ] `merge-pull-request` — cannot yet be sample-tested because the current workflow schema rejects `samples:` for `merge-pull-request`
 
 ### Labels, Assignments & Reviews — Remaining
@@ -147,6 +148,12 @@ Tracking the full matrix of [safe outputs](https://github.com/github/gh-aw/blob/
 - [x] hosted GitHub remote MCP transport — test-copilot-mcp-github-remote
 - [x] HTTP MCP custom CA trust — test-copilot-mcp-custom-ca
 - [x] MCP startup timeout — test-copilot-mcp-startup-timeout
+- [x] pull-request activation pinned to the base SHA — test-copilot-pull-request-activation-base-sha
+- [x] trusted `pull_request_target` external checkout — test-copilot-pull-request-target-allowed-checkout
+- [x] concurrent repo-memory retry reconciliation — test-copilot-repo-memory-concurrent-retry
+- [x] shared repo-memory branch sibling preservation — test-copilot-repo-memory-shared-branch
+- [x] Copilot SDK run-wide tool-call budget — test-copilot-max-tool-calls-budget
+- [x] daily AI credits warning mode — test-copilot-max-daily-ai-credits-warning-mode
 
 The runtime-profile test intentionally uses `docker-sudo-iptables`. Removed
 `legacy-security` and `sudo` fields are not tested, and deprecated `gvisor` and
@@ -169,6 +176,9 @@ The runtime-profile test intentionally uses `docker-sudo-iptables`. Removed
 - [x] `repository_dispatch` bot allowlist — test-copilot-repository-dispatch-bot
 - [x] Copilot SDK built-in web fetch — test-copilot-web-fetch
 - [x] Claude built-in web search — test-claude-web-search
+- [x] side-repository target-repo-only activation context — test-copilot-siderepo-target-repo-only-add-comment
+- [x] side-repository mention scoping (skips without collaborator variable) — test-copilot-siderepo-add-comment-mention
+- [x] typed ledger counter operations — test-copilot-ledger-counter
 
 Provisioning for external fixtures is documented in
 [External integration E2E fixtures](docs/e2e-external-integrations.md).
