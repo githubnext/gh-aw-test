@@ -2,31 +2,31 @@
 
 ## Run, job & step times (`main`, using inference)
 
-**152 successful runs.** Regressions shown below are limited to the last six weeks.
+**153 successful runs.** Regressions shown below are limited to the last six weeks.
 
 ![Run and job times for main, using inference](timing-main-inference.svg)
 
 | Run or job | Samples | Median | P90 |
 |---|---:|---:|---:|
-| Workflow complete | 152 | 362.5s | 442.8s |
-| Workflow start to proxy step | 152 | 118.0s | 155.0s |
-| Proxy step to first reasoning/sample | 144 | 22.9s | 35.5s |
-| Copilot phase — AWF startup | 144 | 15.2s | 21.2s |
-| Copilot phase — harness startup | 144 | 2.6s | 8.8s |
-| Copilot phase — Copilot process | 144 | 6.4s | 10.5s |
-| Job `activation` | 152 | 50.0s | 73.8s |
-| Job `agent` | 152 | 92.0s | 166.8s |
-| Job `detection` | 152 | 77.5s | 103.9s |
-| Job `safe_outputs` | 152 | 44.0s | 73.8s |
-| Job `conclusion` | 152 | 48.0s | 67.9s |
-| Major step `Execute GitHub Copilot CLI` | 152 | 29.5s | 111.0s |
-| Major step `Set up job` | 152 | 19.0s | 23.0s |
+| Workflow complete | 153 | 363.0s | 448.6s |
+| Workflow start to proxy step | 153 | 118.0s | 155.0s |
+| Proxy step to first reasoning/sample | 145 | 23.0s | 35.6s |
+| Copilot phase — AWF startup | 145 | 15.2s | 21.2s |
+| Copilot phase — harness startup | 145 | 2.6s | 8.9s |
+| Copilot phase — Copilot process | 145 | 6.4s | 10.8s |
+| Job `activation` | 153 | 50.0s | 73.6s |
+| Job `agent` | 153 | 92.0s | 166.6s |
+| Job `detection` | 153 | 78.0s | 104.8s |
+| Job `safe_outputs` | 153 | 44.0s | 73.6s |
+| Job `conclusion` | 153 | 48.0s | 67.8s |
+| Major step `Execute GitHub Copilot CLI` | 153 | 30.0s | 111.0s |
+| Major step `Set up job` | 153 | 19.0s | 23.0s |
 | Major step `Install ripgrep` | 6 | 14.0s | 19.0s |
-| Major step `Download container images` | 152 | 11.0s | 18.0s |
+| Major step `Download container images` | 153 | 11.0s | 18.0s |
 | Major step `Install AWF binary` | 27 | 11.0s | 13.4s |
-| Major step `Start MCP Gateway` | 152 | 7.0s | 13.0s |
-| Major step `Install GitHub Copilot CLI` | 152 | 5.0s | 12.9s |
-| Major step `Setup Scripts` | 151 | 3.0s | 7.0s |
+| Major step `Start MCP Gateway` | 153 | 7.0s | 13.0s |
+| Major step `Install GitHub Copilot CLI` | 153 | 5.0s | 12.8s |
+| Major step `Setup Scripts` | 152 | 3.0s | 7.0s |
 | Major step `Download activation artifact` | 58 | 2.0s | 2.0s |
 | Major step `Upload agent artifacts` | 43 | 2.0s | 2.0s |
 | Major step `Checkout repository` | 27 | 2.0s | 3.0s |
@@ -292,32 +292,32 @@ No candidate regressions in the last six weeks.
 
 ## Run, job & step times (`released`, using samples)
 
-**267 successful runs.** Regressions shown below are limited to the last six weeks.
+**269 successful runs.** Regressions shown below are limited to the last six weeks.
 
 ![Run and job times for released, using samples](timing-released-samples.svg)
 
 | Run or job | Samples | Median | P90 |
 |---|---:|---:|---:|
-| Workflow complete | 267 | 126.0s | 169.8s |
-| Workflow start to proxy step | 267 | 70.0s | 97.0s |
-| Proxy step to first reasoning/sample | 267 | 0.0s | 1.0s |
-| Job `activation` | 267 | 18.0s | 35.4s |
-| Job `agent` | 267 | 45.0s | 64.4s |
+| Workflow complete | 269 | 126.0s | 169.4s |
+| Workflow start to proxy step | 269 | 70.0s | 97.0s |
+| Proxy step to first reasoning/sample | 269 | 0.0s | 1.0s |
+| Job `activation` | 269 | 18.0s | 35.2s |
+| Job `agent` | 269 | 45.0s | 65.0s |
 | Job `detection` | 0 | n/a | n/a |
-| Job `safe_outputs` | 267 | 13.0s | 22.4s |
-| Job `conclusion` | 267 | 16.0s | 26.4s |
-| Major step `Install AWF binary` | 43 | 10.0s | 13.8s |
-| Major step `Download container images` | 267 | 10.0s | 18.0s |
+| Job `safe_outputs` | 269 | 13.0s | 22.2s |
+| Job `conclusion` | 269 | 16.0s | 26.2s |
+| Major step `Install AWF binary` | 44 | 10.5s | 13.7s |
+| Major step `Download container images` | 269 | 10.0s | 18.0s |
 | Major step `Install ripgrep` | 8 | 9.0s | 18.0s |
-| Major step `Start MCP Gateway` | 267 | 7.0s | 12.4s |
-| Major step `Install GitHub Copilot CLI` | 265 | 4.0s | 13.6s |
-| Major step `Set up job` | 226 | 3.0s | 4.0s |
-| Major step `Setup Scripts` | 253 | 2.0s | 5.0s |
-| Major step `Download activation artifact` | 90 | 2.0s | 2.0s |
+| Major step `Start MCP Gateway` | 269 | 7.0s | 12.2s |
+| Major step `Install GitHub Copilot CLI` | 267 | 4.0s | 13.4s |
+| Major step `Set up job` | 228 | 3.0s | 4.0s |
+| Major step `Setup Scripts` | 255 | 2.0s | 5.0s |
+| Major step `Download activation artifact` | 92 | 2.0s | 2.0s |
 | Major step `Upload agent artifacts` | 54 | 2.0s | 2.0s |
 | Major step `Stop MCP Gateway` | 31 | 2.0s | 2.0s |
 | Major step `Checkout repository` | 33 | 2.0s | 3.0s |
-| Major step `Upload agent output fallback artifact` | 19 | 2.0s | 2.0s |
+| Major step `Upload agent output fallback artifact` | 21 | 2.0s | 2.0s |
 | Major step `Checkout repository (gh-aw default)` | 5 | 2.0s | 2.0s |
 | Major step `Redact secrets in logs` | 2 | 2.0s | 2.0s |
 
@@ -342,17 +342,16 @@ No candidate regressions in the last six weeks.
 | Label | Episode | Step | Peak | Prior median | Increase | Run | gh-aw version / commit |
 |---|---|---|---:|---:|---:|---|---|
 | R1 | 2026-10-14 | Install GitHub Copilot CLI | 21.0s | 7.0s | 200% | [#648](https://github.com/githubnext/gh-aw-test/actions/runs/38683926531) | `v0.91.14` / `667d4531279b` |
-| R2 | 2026-10-14 | Start MCP Gateway | 20.0s | 6.0s | 233% | [#651](https://github.com/githubnext/gh-aw-test/actions/runs/38692101200) | `v0.91.12` / `5708fc68e91f` |
-| R3 | 2026-10-17 | Download container images | 27.0s | 10.5s | 157% | [#669](https://github.com/githubnext/gh-aw-test/actions/runs/39203708774) | `v0.92.5` / `cbc32699c3d6` |
-| R4 | 2026-10-17 | Start MCP Gateway | 32.0s | 6.0s | 433% | [#673](https://github.com/githubnext/gh-aw-test/actions/runs/39375395453) | `v0.92.5` / `cbc32699c3d6` |
-| R5 | 2026-10-22 | Download container images | 26.0s | 16.0s | 62% | [#701](https://github.com/githubnext/gh-aw-test/actions/runs/40269048729) | `v0.93.1` / `310317364125` |
-| R6 | 2026-10-23 | Set up job | 13.0s | 2.0s | 550% | [#692](https://github.com/githubnext/gh-aw-test/actions/runs/40058412852) | `v0.93.3` / `317d9005a6bc` |
-| R7 | 2026-10-25 to 2026-10-27 | Install GitHub Copilot CLI | 19.0s | 3.0s | 533% | [#709](https://github.com/githubnext/gh-aw-test/actions/runs/40631906382) | `v0.93.5` / `32ecafbc061c` |
-| R8 | 2026-10-25 | Start MCP Gateway | 15.0s | 5.0s | 200% | [#709](https://github.com/githubnext/gh-aw-test/actions/runs/40631906382) | `v0.93.5` / `32ecafbc061c` |
-| R9 | 2026-11-04 to 2026-11-06 | Install AWF binary | 14.0s | 1.0s | 1300% | [#737](https://github.com/githubnext/gh-aw-test/actions/runs/41973253286) | `v1.2.0` / `18928ba35b7e` |
-| R10 | 2026-11-06 | Install GitHub Copilot CLI | 21.0s | 9.5s | 121% | [#768](https://github.com/githubnext/gh-aw-test/actions/runs/43365622315) | `v1.2.1` / `8f3224323bdf` |
-| R11 | 2026-11-10 | Download container images | 14.0s | 4.0s | 250% | [#802](https://github.com/githubnext/gh-aw-test/actions/runs/44985678172) | `v1.2.2` / `399a445fe2d8` |
-| R12 | 2026-11-10 to 2026-11-13 | Install GitHub Copilot CLI | 29.0s | 7.0s | 314% | [#771](https://github.com/githubnext/gh-aw-test/actions/runs/43553611003) | `v1.2.3` / `5b6d021250c8` |
+| R2 | 2026-10-17 | Download container images | 27.0s | 10.5s | 157% | [#669](https://github.com/githubnext/gh-aw-test/actions/runs/39203708774) | `v0.92.5` / `cbc32699c3d6` |
+| R3 | 2026-10-17 | Start MCP Gateway | 32.0s | 6.0s | 433% | [#673](https://github.com/githubnext/gh-aw-test/actions/runs/39375395453) | `v0.92.5` / `cbc32699c3d6` |
+| R4 | 2026-10-22 | Download container images | 26.0s | 16.0s | 62% | [#701](https://github.com/githubnext/gh-aw-test/actions/runs/40269048729) | `v0.93.1` / `310317364125` |
+| R5 | 2026-10-23 | Set up job | 13.0s | 2.0s | 550% | [#692](https://github.com/githubnext/gh-aw-test/actions/runs/40058412852) | `v0.93.3` / `317d9005a6bc` |
+| R6 | 2026-10-25 to 2026-10-27 | Install GitHub Copilot CLI | 19.0s | 3.0s | 533% | [#709](https://github.com/githubnext/gh-aw-test/actions/runs/40631906382) | `v0.93.5` / `32ecafbc061c` |
+| R7 | 2026-10-25 | Start MCP Gateway | 15.0s | 5.0s | 200% | [#709](https://github.com/githubnext/gh-aw-test/actions/runs/40631906382) | `v0.93.5` / `32ecafbc061c` |
+| R8 | 2026-11-04 to 2026-11-06 | Install AWF binary | 14.0s | 1.0s | 1300% | [#737](https://github.com/githubnext/gh-aw-test/actions/runs/41973253286) | `v1.2.0` / `18928ba35b7e` |
+| R9 | 2026-11-06 | Install GitHub Copilot CLI | 21.0s | 9.5s | 121% | [#768](https://github.com/githubnext/gh-aw-test/actions/runs/43365622315) | `v1.2.1` / `8f3224323bdf` |
+| R10 | 2026-11-10 | Download container images | 14.0s | 4.0s | 250% | [#802](https://github.com/githubnext/gh-aw-test/actions/runs/44985678172) | `v1.2.2` / `399a445fe2d8` |
+| R11 | 2026-11-10 to 2026-11-13 | Install GitHub Copilot CLI | 29.0s | 7.5s | 287% | [#771](https://github.com/githubnext/gh-aw-test/actions/runs/43553611003) | `v1.2.3` / `5b6d021250c8` |
 
 ### Major step times for job `detection` (`released`, using samples)
 
