@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="795" viewBox="0 0 1200 795">
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="773" viewBox="0 0 1200 773">
 <rect width="100%" height="100%" fill="white"/>
 <style>text{font-family:ui-monospace,monospace;font-size:13px}.axis{stroke:#57606a;stroke-width:1}.grid{stroke:#d8dee4;stroke-width:1}</style>
 <text x="65" y="30" font-size="20">Major step timing: agent job (released, using inference)</text>
@@ -43,12 +43,9 @@
 <line x1="65" y1="631" x2="100" y2="631" stroke="#0550ae" stroke-width="3"/>
 <text x="110" y="635">Install ripgrep</text>
 <polyline points="65.0,459.4 81.2,456.6 98.6,456.6 106.1,459.4 107.8,456.6 129.1,459.4 139.8,456.6 155.2,451.0 195.8,453.8 202.9,462.2 205.7,456.6 210.9,456.6 230.1,456.6 250.2,456.6 272.5,459.4 277.2,456.6 281.4,459.4 311.1,453.8 316.3,459.4 327.7,453.8 335.0,459.4 341.6,453.8 352.2,462.2 368.6,456.6 386.3,456.6 389.9,456.6 468.3,459.4 500.9,459.4 535.8,453.8 538.6,456.6 563.0,459.4 580.8,459.4 591.9,453.8 669.1,384.0 867.2,414.7 1135.0,409.2" fill="none" stroke="#9a6700" stroke-width="2"><title>Set up job</title></polyline>
-<line x1="867.2" y1="414.7" x2="849.2" y2="392.7" stroke="#9a6700" stroke-width="1"/>
-<circle cx="849.2" cy="392.7" r="11" fill="white" stroke="#9a6700" stroke-width="2"><title>R1: Set up job, inference, 18.0s</title></circle>
-<text x="849.2" y="396.7" fill="#9a6700" font-size="10" font-weight="bold" text-anchor="middle">R1</text>
-<line x1="1135.0" y1="409.2" x2="1124.0" y2="387.2" stroke="#9a6700" stroke-width="1"/>
-<circle cx="1124.0" cy="387.2" r="11" fill="white" stroke="#9a6700" stroke-width="2"><title>R2: Set up job, inference, 20.0s</title></circle>
-<text x="1124.0" y="391.2" fill="#9a6700" font-size="10" font-weight="bold" text-anchor="middle">R2</text>
+<line x1="1135.0" y1="409.2" x2="1117.0" y2="387.2" stroke="#9a6700" stroke-width="1"/>
+<circle cx="1117.0" cy="387.2" r="11" fill="white" stroke="#9a6700" stroke-width="2"><title>R1: Set up job, inference, 20.0s</title></circle>
+<text x="1117.0" y="391.2" fill="#9a6700" font-size="10" font-weight="bold" text-anchor="middle">R1</text>
 <line x1="65" y1="653" x2="100" y2="653" stroke="#9a6700" stroke-width="3"/>
 <text x="110" y="657">Set up job</text>
 <polyline points="65.0,451.0 81.2,442.7 98.6,448.2 106.1,451.0 107.8,451.0 129.1,448.2 139.8,451.0 155.2,425.9 195.8,439.9 202.9,448.2 205.7,445.5 210.9,448.2 230.1,451.0 250.2,448.2 272.5,451.0 277.2,448.2 281.4,445.5 311.1,445.5 316.3,451.0 327.7,445.5 335.0,451.0 341.6,445.5 352.2,448.2 368.6,448.2 386.3,445.5 389.9,448.2 468.3,448.2 500.9,437.1 535.8,437.1 538.6,445.5 563.0,442.7 580.8,451.0 591.9,448.2 669.1,400.8 867.2,442.7 1135.0,451.0" fill="none" stroke="#116329" stroke-width="2"><title>Start MCP Gateway</title></polyline>
@@ -66,7 +63,5 @@
 <line class="axis" x1="65" y1="465" x2="1135" y2="465"/>
 <text x="65" y="719" font-size="16" font-weight="bold">Regression episodes</text>
 <text x="65" y="747" fill="#9a6700" font-weight="bold">R1</text>
-<text x="99" y="747">2026-09-22  Set up job / inference  +500%</text>
-<text x="65" y="769" fill="#9a6700" font-weight="bold">R2</text>
-<text x="99" y="769">2026-10-23  Set up job / inference  +567%</text>
+<text x="99" y="747">2026-10-23  Set up job / inference  +567%</text>
 </svg>
