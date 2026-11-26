@@ -104,7 +104,7 @@ jobs:
       discussions: write # Create or update discussions and comments.
     steps:
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@96f72ee56fc5c23aceaad99ca4329d0be2d7f8b3 # 96f72ee56fc5c23aceaad99ca4329d0be2d7f8b3
+        uses: github/gh-aw/actions/setup@a1afaae8b8394360de5d4efa39e72e3c2fa59fcd # a1afaae8b8394360de5d4efa39e72e3c2fa59fcd
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
 
@@ -127,7 +127,7 @@ jobs:
       issues: write # Create or update issues and comments.
     steps:
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@96f72ee56fc5c23aceaad99ca4329d0be2d7f8b3 # 96f72ee56fc5c23aceaad99ca4329d0be2d7f8b3
+        uses: github/gh-aw/actions/setup@a1afaae8b8394360de5d4efa39e72e3c2fa59fcd # a1afaae8b8394360de5d4efa39e72e3c2fa59fcd
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
 
@@ -150,7 +150,7 @@ jobs:
       pull-requests: write # Create or update pull requests and review comments.
     steps:
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@96f72ee56fc5c23aceaad99ca4329d0be2d7f8b3 # 96f72ee56fc5c23aceaad99ca4329d0be2d7f8b3
+        uses: github/gh-aw/actions/setup@a1afaae8b8394360de5d4efa39e72e3c2fa59fcd # a1afaae8b8394360de5d4efa39e72e3c2fa59fcd
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
 
@@ -175,7 +175,7 @@ jobs:
       issues: write # Create or update issues and comments.
     steps:
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@96f72ee56fc5c23aceaad99ca4329d0be2d7f8b3 # 96f72ee56fc5c23aceaad99ca4329d0be2d7f8b3
+        uses: github/gh-aw/actions/setup@a1afaae8b8394360de5d4efa39e72e3c2fa59fcd # a1afaae8b8394360de5d4efa39e72e3c2fa59fcd
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
 
@@ -199,7 +199,7 @@ jobs:
       actions: write # Create or update workflow runs and artifacts.
     steps:
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@96f72ee56fc5c23aceaad99ca4329d0be2d7f8b3 # 96f72ee56fc5c23aceaad99ca4329d0be2d7f8b3
+        uses: github/gh-aw/actions/setup@a1afaae8b8394360de5d4efa39e72e3c2fa59fcd # a1afaae8b8394360de5d4efa39e72e3c2fa59fcd
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
 
@@ -232,7 +232,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@96f72ee56fc5c23aceaad99ca4329d0be2d7f8b3 # 96f72ee56fc5c23aceaad99ca4329d0be2d7f8b3
+        uses: github/gh-aw/actions/setup@a1afaae8b8394360de5d4efa39e72e3c2fa59fcd # a1afaae8b8394360de5d4efa39e72e3c2fa59fcd
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
 
@@ -249,9 +249,9 @@ jobs:
             await main();
 
       - name: Install gh-aw
-        uses: github/gh-aw-actions/setup-cli@96f72ee56fc5c23aceaad99ca4329d0be2d7f8b3
+        uses: github/gh-aw-actions/setup-cli@a1afaae8b8394360de5d4efa39e72e3c2fa59fcd
         with:
-          version: 96f72ee56fc5c23aceaad99ca4329d0be2d7f8b3
+          version: a1afaae8b8394360de5d4efa39e72e3c2fa59fcd
 
       - name: Run operation
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
@@ -285,7 +285,7 @@ jobs:
       pull-requests: write # Create or update pull requests and review comments.
     steps:
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@96f72ee56fc5c23aceaad99ca4329d0be2d7f8b3 # 96f72ee56fc5c23aceaad99ca4329d0be2d7f8b3
+        uses: github/gh-aw/actions/setup@a1afaae8b8394360de5d4efa39e72e3c2fa59fcd # a1afaae8b8394360de5d4efa39e72e3c2fa59fcd
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
 
@@ -338,7 +338,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@96f72ee56fc5c23aceaad99ca4329d0be2d7f8b3 # 96f72ee56fc5c23aceaad99ca4329d0be2d7f8b3
+        uses: github/gh-aw/actions/setup@a1afaae8b8394360de5d4efa39e72e3c2fa59fcd # a1afaae8b8394360de5d4efa39e72e3c2fa59fcd
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
 
@@ -392,7 +392,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@96f72ee56fc5c23aceaad99ca4329d0be2d7f8b3 # 96f72ee56fc5c23aceaad99ca4329d0be2d7f8b3
+        uses: github/gh-aw/actions/setup@a1afaae8b8394360de5d4efa39e72e3c2fa59fcd # a1afaae8b8394360de5d4efa39e72e3c2fa59fcd
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
 
@@ -409,9 +409,9 @@ jobs:
             await main();
 
       - name: Install gh-aw
-        uses: github/gh-aw-actions/setup-cli@96f72ee56fc5c23aceaad99ca4329d0be2d7f8b3
+        uses: github/gh-aw-actions/setup-cli@a1afaae8b8394360de5d4efa39e72e3c2fa59fcd
         with:
-          version: 96f72ee56fc5c23aceaad99ca4329d0be2d7f8b3
+          version: a1afaae8b8394360de5d4efa39e72e3c2fa59fcd
 
       - name: Create missing labels
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
@@ -444,7 +444,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@96f72ee56fc5c23aceaad99ca4329d0be2d7f8b3 # 96f72ee56fc5c23aceaad99ca4329d0be2d7f8b3
+        uses: github/gh-aw/actions/setup@a1afaae8b8394360de5d4efa39e72e3c2fa59fcd # a1afaae8b8394360de5d4efa39e72e3c2fa59fcd
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
 
@@ -461,9 +461,9 @@ jobs:
             await main();
 
       - name: Install gh-aw
-        uses: github/gh-aw-actions/setup-cli@96f72ee56fc5c23aceaad99ca4329d0be2d7f8b3
+        uses: github/gh-aw-actions/setup-cli@a1afaae8b8394360de5d4efa39e72e3c2fa59fcd
         with:
-          version: 96f72ee56fc5c23aceaad99ca4329d0be2d7f8b3
+          version: a1afaae8b8394360de5d4efa39e72e3c2fa59fcd
 
       - name: Restore activity report logs cache
         id: activity_report_logs_cache
@@ -553,7 +553,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@96f72ee56fc5c23aceaad99ca4329d0be2d7f8b3 # 96f72ee56fc5c23aceaad99ca4329d0be2d7f8b3
+        uses: github/gh-aw/actions/setup@a1afaae8b8394360de5d4efa39e72e3c2fa59fcd # a1afaae8b8394360de5d4efa39e72e3c2fa59fcd
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
 
@@ -570,9 +570,9 @@ jobs:
             await main();
 
       - name: Install gh-aw
-        uses: github/gh-aw-actions/setup-cli@96f72ee56fc5c23aceaad99ca4329d0be2d7f8b3
+        uses: github/gh-aw-actions/setup-cli@a1afaae8b8394360de5d4efa39e72e3c2fa59fcd
         with:
-          version: 96f72ee56fc5c23aceaad99ca4329d0be2d7f8b3
+          version: a1afaae8b8394360de5d4efa39e72e3c2fa59fcd
 
       - name: Restore forecast report logs cache
         id: forecast_report_logs_cache
@@ -650,7 +650,7 @@ jobs:
       issues: write # Create or update issues and comments.
     steps:
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@96f72ee56fc5c23aceaad99ca4329d0be2d7f8b3 # 96f72ee56fc5c23aceaad99ca4329d0be2d7f8b3
+        uses: github/gh-aw/actions/setup@a1afaae8b8394360de5d4efa39e72e3c2fa59fcd # a1afaae8b8394360de5d4efa39e72e3c2fa59fcd
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
 
@@ -693,7 +693,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@96f72ee56fc5c23aceaad99ca4329d0be2d7f8b3 # 96f72ee56fc5c23aceaad99ca4329d0be2d7f8b3
+        uses: github/gh-aw/actions/setup@a1afaae8b8394360de5d4efa39e72e3c2fa59fcd # a1afaae8b8394360de5d4efa39e72e3c2fa59fcd
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
 
@@ -710,9 +710,9 @@ jobs:
             await main();
 
       - name: Install gh-aw
-        uses: github/gh-aw-actions/setup-cli@96f72ee56fc5c23aceaad99ca4329d0be2d7f8b3
+        uses: github/gh-aw-actions/setup-cli@a1afaae8b8394360de5d4efa39e72e3c2fa59fcd
         with:
-          version: 96f72ee56fc5c23aceaad99ca4329d0be2d7f8b3
+          version: a1afaae8b8394360de5d4efa39e72e3c2fa59fcd
 
       - name: Validate workflows and file issue on findings
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
@@ -738,7 +738,7 @@ jobs:
       issues: write # Create or update issues and comments.
     steps:
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@96f72ee56fc5c23aceaad99ca4329d0be2d7f8b3 # 96f72ee56fc5c23aceaad99ca4329d0be2d7f8b3
+        uses: github/gh-aw/actions/setup@a1afaae8b8394360de5d4efa39e72e3c2fa59fcd # a1afaae8b8394360de5d4efa39e72e3c2fa59fcd
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
 
