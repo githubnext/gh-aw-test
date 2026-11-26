@@ -2,33 +2,33 @@
 
 ## Run, job & step times (`main`, using inference)
 
-**153 successful runs.** Regressions shown below are limited to the last six weeks.
+**154 successful runs.** Regressions shown below are limited to the last six weeks.
 
 ![Run and job times for main, using inference](timing-main-inference.svg)
 
 | Run or job | Samples | Median | P90 |
 |---|---:|---:|---:|
-| Workflow complete | 153 | 363.0s | 448.6s |
-| Workflow start to proxy step | 153 | 118.0s | 155.0s |
-| Proxy step to first reasoning/sample | 145 | 23.0s | 35.6s |
-| Copilot phase — AWF startup | 145 | 15.2s | 21.2s |
-| Copilot phase — harness startup | 145 | 2.6s | 8.9s |
-| Copilot phase — Copilot process | 145 | 6.4s | 10.8s |
-| Job `activation` | 153 | 50.0s | 73.6s |
-| Job `agent` | 153 | 92.0s | 166.6s |
-| Job `detection` | 153 | 78.0s | 104.8s |
-| Job `safe_outputs` | 153 | 44.0s | 73.6s |
-| Job `conclusion` | 153 | 48.0s | 67.8s |
-| Major step `Execute GitHub Copilot CLI` | 153 | 30.0s | 111.0s |
-| Major step `Set up job` | 153 | 19.0s | 23.0s |
+| Workflow complete | 154 | 363.5s | 447.9s |
+| Workflow start to proxy step | 154 | 118.0s | 155.0s |
+| Proxy step to first reasoning/sample | 146 | 23.0s | 35.7s |
+| Copilot phase — AWF startup | 146 | 15.2s | 21.4s |
+| Copilot phase — harness startup | 146 | 2.7s | 8.9s |
+| Copilot phase — Copilot process | 146 | 6.4s | 11.1s |
+| Job `activation` | 154 | 50.0s | 73.7s |
+| Job `agent` | 154 | 92.0s | 166.4s |
+| Job `detection` | 154 | 78.0s | 104.7s |
+| Job `safe_outputs` | 154 | 44.0s | 73.4s |
+| Job `conclusion` | 154 | 48.0s | 68.0s |
+| Major step `Execute GitHub Copilot CLI` | 154 | 30.0s | 111.0s |
+| Major step `Set up job` | 154 | 19.0s | 23.0s |
 | Major step `Install ripgrep` | 6 | 14.0s | 19.0s |
-| Major step `Download container images` | 153 | 11.0s | 18.0s |
-| Major step `Install AWF binary` | 27 | 11.0s | 13.4s |
-| Major step `Start MCP Gateway` | 153 | 7.0s | 13.0s |
-| Major step `Install GitHub Copilot CLI` | 153 | 5.0s | 12.8s |
-| Major step `Setup Scripts` | 152 | 3.0s | 7.0s |
-| Major step `Download activation artifact` | 58 | 2.0s | 2.0s |
-| Major step `Upload agent artifacts` | 43 | 2.0s | 2.0s |
+| Major step `Download container images` | 154 | 11.0s | 18.0s |
+| Major step `Start MCP Gateway` | 154 | 7.0s | 13.0s |
+| Major step `Install AWF binary` | 28 | 6.5s | 13.3s |
+| Major step `Install GitHub Copilot CLI` | 154 | 5.0s | 12.7s |
+| Major step `Setup Scripts` | 153 | 3.0s | 7.0s |
+| Major step `Download activation artifact` | 59 | 2.0s | 2.0s |
+| Major step `Upload agent artifacts` | 44 | 2.0s | 2.0s |
 | Major step `Checkout repository` | 27 | 2.0s | 3.0s |
 | Major step `Stop MCP Gateway` | 19 | 2.0s | 2.0s |
 | Major step `Print firewall logs` | 2 | 2.0s | 2.0s |
@@ -88,11 +88,10 @@
 
 | Label | Episode | Step | Peak | Prior median | Increase | Run | gh-aw version / commit |
 |---|---|---|---:|---:|---:|---|---|
-| R1 | 2026-10-15 | Set up job | 59.0s | 34.5s | 71% | [#649](https://github.com/githubnext/gh-aw-test/actions/runs/38685973796) | `5eb4c298ec` / `5eb4c298ecba` |
-| R2 | 2026-10-28 | Set up job | 57.0s | 33.5s | 70% | [#711](https://github.com/githubnext/gh-aw-test/actions/runs/40810886681) | `0bb0365790` / `0bb036579091` |
-| R3 | 2026-11-02 | Set up job | 72.0s | 36.0s | 100% | [#727](https://github.com/githubnext/gh-aw-test/actions/runs/41381991056) | `110ad53df6` / `110ad53df63c` |
-| R4 | 2026-11-05 | Set up job | 62.0s | 35.0s | 77% | [#738](https://github.com/githubnext/gh-aw-test/actions/runs/42155182196) | `f7b1cc2c3a` / `f7b1cc2c3a7a` |
-| R5 | 2026-11-10 to 2026-11-12 | Set up job | 58.0s | 37.5s | 55% | [#762](https://github.com/githubnext/gh-aw-test/actions/runs/43146776510) | `1da86bb379` / `1da86bb37966` |
+| R1 | 2026-10-28 | Set up job | 57.0s | 33.5s | 70% | [#711](https://github.com/githubnext/gh-aw-test/actions/runs/40810886681) | `0bb0365790` / `0bb036579091` |
+| R2 | 2026-11-02 | Set up job | 72.0s | 36.0s | 100% | [#727](https://github.com/githubnext/gh-aw-test/actions/runs/41381991056) | `110ad53df6` / `110ad53df63c` |
+| R3 | 2026-11-05 | Set up job | 62.0s | 35.0s | 77% | [#738](https://github.com/githubnext/gh-aw-test/actions/runs/42155182196) | `f7b1cc2c3a` / `f7b1cc2c3a7a` |
+| R4 | 2026-11-10 to 2026-11-12 | Set up job | 58.0s | 37.5s | 55% | [#762](https://github.com/githubnext/gh-aw-test/actions/runs/43146776510) | `1da86bb379` / `1da86bb37966` |
 
 ### Major step times for job `conclusion` (`main`, using inference)
 
@@ -102,12 +101,11 @@
 
 | Label | Episode | Step | Peak | Prior median | Increase | Run | gh-aw version / commit |
 |---|---|---|---:|---:|---:|---|---|
-| R1 | 2026-10-15 | Set up job | 78.0s | 32.5s | 140% | [#645](https://github.com/githubnext/gh-aw-test/actions/runs/38675409397) | `e7bc6056a7` / `e7bc6056a784` |
-| R2 | 2026-10-22 | Set up job | 54.0s | 32.5s | 66% | [#679](https://github.com/githubnext/gh-aw-test/actions/runs/39715911390) | `2b01e8ed2a` / `2b01e8ed2a27` |
-| R3 | 2026-11-13 | Set up job | 70.0s | 37.5s | 87% | [#766](https://github.com/githubnext/gh-aw-test/actions/runs/43357457586) | `5b6d021250` / `5b6d021250c8` |
-| R4 | 2026-11-17 | Generate usage activity summary and unified session | 16.0s | 1.0s | 1500% | [#780](https://github.com/githubnext/gh-aw-test/actions/runs/44008657661) | `6a47c8553d` / `6a47c8553d4e` |
-| R5 | 2026-11-17 | Set up job | 113.0s | 38.0s | 197% | [#780](https://github.com/githubnext/gh-aw-test/actions/runs/44008657661) | `6a47c8553d` / `6a47c8553d4e` |
-| R6 | 2026-11-17 | Setup Scripts | 46.0s | 5.5s | 736% | [#780](https://github.com/githubnext/gh-aw-test/actions/runs/44008657661) | `6a47c8553d` / `6a47c8553d4e` |
+| R1 | 2026-10-22 | Set up job | 54.0s | 32.5s | 66% | [#679](https://github.com/githubnext/gh-aw-test/actions/runs/39715911390) | `2b01e8ed2a` / `2b01e8ed2a27` |
+| R2 | 2026-11-13 | Set up job | 70.0s | 37.5s | 87% | [#766](https://github.com/githubnext/gh-aw-test/actions/runs/43357457586) | `5b6d021250` / `5b6d021250c8` |
+| R3 | 2026-11-17 | Generate usage activity summary and unified session | 16.0s | 1.0s | 1500% | [#780](https://github.com/githubnext/gh-aw-test/actions/runs/44008657661) | `6a47c8553d` / `6a47c8553d4e` |
+| R4 | 2026-11-17 | Set up job | 113.0s | 38.0s | 197% | [#780](https://github.com/githubnext/gh-aw-test/actions/runs/44008657661) | `6a47c8553d` / `6a47c8553d4e` |
+| R5 | 2026-11-17 | Setup Scripts | 46.0s | 5.5s | 736% | [#780](https://github.com/githubnext/gh-aw-test/actions/runs/44008657661) | `6a47c8553d` / `6a47c8553d4e` |
 
 ## Run, job & step times (`released`, using inference)
 
@@ -194,32 +192,32 @@
 
 ## Run, job & step times (`main`, using samples)
 
-**145 successful runs.** Regressions shown below are limited to the last six weeks.
+**146 successful runs.** Regressions shown below are limited to the last six weeks.
 
 ![Run and job times for main, using samples](timing-main-samples.svg)
 
 | Run or job | Samples | Median | P90 |
 |---|---:|---:|---:|
-| Workflow complete | 145 | 216.0s | 273.4s |
-| Workflow start to proxy step | 145 | 106.0s | 139.0s |
-| Proxy step to first reasoning/sample | 145 | 0.0s | 1.0s |
-| Job `activation` | 145 | 48.0s | 73.0s |
-| Job `agent` | 145 | 53.0s | 73.0s |
+| Workflow complete | 146 | 216.5s | 273.0s |
+| Workflow start to proxy step | 146 | 106.0s | 141.5s |
+| Proxy step to first reasoning/sample | 146 | 0.0s | 1.0s |
+| Job `activation` | 146 | 48.0s | 73.0s |
+| Job `agent` | 146 | 53.0s | 74.0s |
 | Job `detection` | 0 | n/a | n/a |
-| Job `safe_outputs` | 145 | 37.0s | 58.0s |
-| Job `conclusion` | 145 | 40.0s | 65.6s |
+| Job `safe_outputs` | 146 | 37.0s | 58.0s |
+| Job `conclusion` | 146 | 40.0s | 65.5s |
 | Major step `Install AWF binary` | 20 | 12.0s | 14.1s |
-| Major step `Download container images` | 145 | 10.0s | 15.0s |
-| Major step `Set up job` | 145 | 9.0s | 15.0s |
-| Major step `Start MCP Gateway` | 145 | 7.0s | 12.0s |
+| Major step `Download container images` | 146 | 10.0s | 15.0s |
+| Major step `Set up job` | 146 | 9.0s | 15.5s |
+| Major step `Start MCP Gateway` | 146 | 7.0s | 12.0s |
 | Major step `Print firewall logs` | 1 | 5.0s | 5.0s |
-| Major step `Install GitHub Copilot CLI` | 145 | 4.0s | 12.0s |
-| Major step `Setup Scripts` | 144 | 3.0s | 7.0s |
+| Major step `Install GitHub Copilot CLI` | 146 | 4.0s | 12.0s |
+| Major step `Setup Scripts` | 145 | 3.0s | 7.0s |
 | Major step `Checkout repository` | 26 | 2.0s | 3.0s |
-| Major step `Download activation artifact` | 50 | 2.0s | 2.0s |
+| Major step `Download activation artifact` | 51 | 2.0s | 2.0s |
 | Major step `Upload agent artifacts` | 30 | 2.0s | 2.0s |
 | Major step `Stop MCP Gateway` | 22 | 2.0s | 2.0s |
-| Major step `Upload agent output fallback artifact` | 12 | 2.0s | 2.0s |
+| Major step `Upload agent output fallback artifact` | 13 | 2.0s | 2.0s |
 | Major step `Checkout repository (gh-aw default)` | 11 | 2.0s | 2.0s |
 
 ### Major step times for job `activation` (`main`, using samples)
@@ -251,6 +249,8 @@
 | R7 | 2026-11-15 to 2026-11-17 | Set up job | 26.0s | 10.5s | 148% | [#781](https://github.com/githubnext/gh-aw-test/actions/runs/44010553291) | `gh-aw/work-queue/6a47c8553d4e12ffb27e84b191fc2e3143ecf674` / `6a47c8553d4e` |
 | R8 | 2026-11-19 | Install GitHub Copilot CLI | 22.0s | 11.0s | 100% | [#793](https://github.com/githubnext/gh-aw-test/actions/runs/44667594587) | `32398b3f20` / `32398b3f20e9` |
 | R9 | 2026-11-21 to 2026-11-22 | Set up job | 22.0s | 11.0s | 100% | [#797](https://github.com/githubnext/gh-aw-test/actions/runs/44861094599) | `ea7f2616b4` / `ea7f2616b491` |
+| R10 | 2026-11-26 | Install GitHub Copilot CLI | 23.0s | 11.0s | 109% | [#809](https://github.com/githubnext/gh-aw-test/actions/runs/45749106561) | `a1afaae8b8` / `a1afaae8b839` |
+| R11 | 2026-11-26 | Set up job | 24.0s | 12.5s | 92% | [#809](https://github.com/githubnext/gh-aw-test/actions/runs/45749106561) | `a1afaae8b8` / `a1afaae8b839` |
 
 ### Major step times for job `detection` (`main`, using samples)
 
@@ -268,13 +268,11 @@ No candidate regressions in the last six weeks.
 
 | Label | Episode | Step | Peak | Prior median | Increase | Run | gh-aw version / commit |
 |---|---|---|---:|---:|---:|---|---|
-| R1 | 2026-10-15 | Set up job | 128.0s | 25.0s | 412% | [#650](https://github.com/githubnext/gh-aw-test/actions/runs/38687065162) | `5eb4c298ec` / `5eb4c298ecba` |
-| R2 | 2026-10-15 | Setup Scripts | 33.0s | 5.0s | 560% | [#650](https://github.com/githubnext/gh-aw-test/actions/runs/38687065162) | `5eb4c298ec` / `5eb4c298ecba` |
-| R3 | 2026-10-27 to 2026-10-28 | Set up job | 78.0s | 26.5s | 194% | [#704](https://github.com/githubnext/gh-aw-test/actions/runs/40444485731) | `6c387d00c7` / `6c387d00c750` |
-| R4 | 2026-11-05 | Set up job | 59.0s | 31.5s | 87% | [#735](https://github.com/githubnext/gh-aw-test/actions/runs/41961481939) | `0aa2738ed8` / `0aa2738ed88d` |
-| R5 | 2026-11-13 | Set up job | 109.0s | 31.0s | 252% | [#767](https://github.com/githubnext/gh-aw-test/actions/runs/43359061542) | `gh-aw/work-queue/849297657187eba1d1bd7a1c9441ae74050c475a` / `849297657187` |
-| R6 | 2026-11-16 | Set up job | 49.0s | 31.0s | 58% | [#777](https://github.com/githubnext/gh-aw-test/actions/runs/43798388335) | `dca7c332c6` / `dca7c332c63e` |
-| R7 | 2026-11-19 | Set up job | 52.0s | 31.0s | 68% | [#793](https://github.com/githubnext/gh-aw-test/actions/runs/44667594587) | `32398b3f20` / `32398b3f20e9` |
+| R1 | 2026-10-27 to 2026-10-28 | Set up job | 78.0s | 26.5s | 194% | [#704](https://github.com/githubnext/gh-aw-test/actions/runs/40444485731) | `6c387d00c7` / `6c387d00c750` |
+| R2 | 2026-11-05 | Set up job | 59.0s | 31.5s | 87% | [#735](https://github.com/githubnext/gh-aw-test/actions/runs/41961481939) | `0aa2738ed8` / `0aa2738ed88d` |
+| R3 | 2026-11-13 | Set up job | 109.0s | 31.0s | 252% | [#767](https://github.com/githubnext/gh-aw-test/actions/runs/43359061542) | `gh-aw/work-queue/849297657187eba1d1bd7a1c9441ae74050c475a` / `849297657187` |
+| R4 | 2026-11-16 | Set up job | 49.0s | 31.0s | 58% | [#777](https://github.com/githubnext/gh-aw-test/actions/runs/43798388335) | `dca7c332c6` / `dca7c332c63e` |
+| R5 | 2026-11-19 | Set up job | 52.0s | 31.0s | 68% | [#793](https://github.com/githubnext/gh-aw-test/actions/runs/44667594587) | `32398b3f20` / `32398b3f20e9` |
 
 ### Major step times for job `conclusion` (`main`, using samples)
 
@@ -284,41 +282,40 @@ No candidate regressions in the last six weeks.
 
 | Label | Episode | Step | Peak | Prior median | Increase | Run | gh-aw version / commit |
 |---|---|---|---:|---:|---:|---|---|
-| R1 | 2026-10-14 to 2026-10-15 | Set up job | 44.0s | 26.0s | 69% | [#640](https://github.com/githubnext/gh-aw-test/actions/runs/38506297635) | `d06e0878f2` / `d06e0878f2b7` |
-| R2 | 2026-10-27 to 2026-10-30 | Set up job | 88.0s | 24.5s | 259% | [#716](https://github.com/githubnext/gh-aw-test/actions/runs/40997496546) | `0c48a3354d` / `0c48a3354d11` |
-| R3 | 2026-11-02 to 2026-11-03 | Set up job | 54.0s | 25.5s | 112% | [#728](https://github.com/githubnext/gh-aw-test/actions/runs/41383278858) | `110ad53df6` / `110ad53df63c` |
-| R4 | 2026-11-03 | Setup Scripts | 21.0s | 5.0s | 320% | [#731](https://github.com/githubnext/gh-aw-test/actions/runs/41571985205) | `b5b1bf7df7` / `b5b1bf7df754` |
-| R5 | 2026-11-18 | Set up job | 43.0s | 23.0s | 87% | [#785](https://github.com/githubnext/gh-aw-test/actions/runs/44230541962) | `gh-aw/work-queue/74f66c64fff49802e66fbf25583d09e2d6b5f69b` / `74f66c64fff4` |
+| R1 | 2026-10-27 to 2026-10-30 | Set up job | 88.0s | 24.5s | 259% | [#716](https://github.com/githubnext/gh-aw-test/actions/runs/40997496546) | `0c48a3354d` / `0c48a3354d11` |
+| R2 | 2026-11-02 to 2026-11-03 | Set up job | 54.0s | 25.5s | 112% | [#728](https://github.com/githubnext/gh-aw-test/actions/runs/41383278858) | `110ad53df6` / `110ad53df63c` |
+| R3 | 2026-11-03 | Setup Scripts | 21.0s | 5.0s | 320% | [#731](https://github.com/githubnext/gh-aw-test/actions/runs/41571985205) | `b5b1bf7df7` / `b5b1bf7df754` |
+| R4 | 2026-11-18 | Set up job | 43.0s | 23.0s | 87% | [#785](https://github.com/githubnext/gh-aw-test/actions/runs/44230541962) | `gh-aw/work-queue/74f66c64fff49802e66fbf25583d09e2d6b5f69b` / `74f66c64fff4` |
 
 ## Run, job & step times (`released`, using samples)
 
-**269 successful runs.** Regressions shown below are limited to the last six weeks.
+**271 successful runs.** Regressions shown below are limited to the last six weeks.
 
 ![Run and job times for released, using samples](timing-released-samples.svg)
 
 | Run or job | Samples | Median | P90 |
 |---|---:|---:|---:|
-| Workflow complete | 269 | 126.0s | 169.4s |
-| Workflow start to proxy step | 269 | 70.0s | 97.0s |
-| Proxy step to first reasoning/sample | 269 | 0.0s | 1.0s |
-| Job `activation` | 269 | 18.0s | 35.2s |
-| Job `agent` | 269 | 45.0s | 65.0s |
+| Workflow complete | 271 | 127.0s | 169.0s |
+| Workflow start to proxy step | 271 | 70.0s | 97.0s |
+| Proxy step to first reasoning/sample | 271 | 0.0s | 1.0s |
+| Job `activation` | 271 | 18.0s | 35.0s |
+| Job `agent` | 271 | 45.0s | 65.0s |
 | Job `detection` | 0 | n/a | n/a |
-| Job `safe_outputs` | 269 | 13.0s | 22.2s |
-| Job `conclusion` | 269 | 16.0s | 26.2s |
-| Major step `Install AWF binary` | 44 | 10.5s | 13.7s |
-| Major step `Download container images` | 269 | 10.0s | 18.0s |
+| Job `safe_outputs` | 271 | 13.0s | 22.0s |
+| Job `conclusion` | 271 | 17.0s | 26.0s |
+| Major step `Install AWF binary` | 45 | 11.0s | 13.6s |
+| Major step `Download container images` | 271 | 10.0s | 18.0s |
 | Major step `Install ripgrep` | 8 | 9.0s | 18.0s |
-| Major step `Start MCP Gateway` | 269 | 7.0s | 12.2s |
-| Major step `Install GitHub Copilot CLI` | 267 | 4.0s | 13.4s |
-| Major step `Set up job` | 228 | 3.0s | 4.0s |
-| Major step `Setup Scripts` | 255 | 2.0s | 5.0s |
-| Major step `Download activation artifact` | 92 | 2.0s | 2.0s |
+| Major step `Start MCP Gateway` | 271 | 7.0s | 13.0s |
+| Major step `Install GitHub Copilot CLI` | 269 | 5.0s | 13.2s |
+| Major step `Set up job` | 230 | 3.0s | 4.0s |
+| Major step `Setup Scripts` | 257 | 2.0s | 5.0s |
+| Major step `Download activation artifact` | 93 | 2.0s | 2.0s |
 | Major step `Upload agent artifacts` | 54 | 2.0s | 2.0s |
 | Major step `Stop MCP Gateway` | 31 | 2.0s | 2.0s |
 | Major step `Checkout repository` | 33 | 2.0s | 3.0s |
-| Major step `Upload agent output fallback artifact` | 21 | 2.0s | 2.0s |
-| Major step `Checkout repository (gh-aw default)` | 5 | 2.0s | 2.0s |
+| Major step `Upload agent output fallback artifact` | 22 | 2.0s | 2.0s |
+| Major step `Checkout repository (gh-aw default)` | 6 | 2.0s | 2.0s |
 | Major step `Redact secrets in logs` | 2 | 2.0s | 2.0s |
 
 ### Major step times for job `activation` (`released`, using samples)
@@ -341,17 +338,16 @@ No candidate regressions in the last six weeks.
 
 | Label | Episode | Step | Peak | Prior median | Increase | Run | gh-aw version / commit |
 |---|---|---|---:|---:|---:|---|---|
-| R1 | 2026-10-14 | Install GitHub Copilot CLI | 21.0s | 7.0s | 200% | [#648](https://github.com/githubnext/gh-aw-test/actions/runs/38683926531) | `v0.91.14` / `667d4531279b` |
-| R2 | 2026-10-17 | Download container images | 27.0s | 10.5s | 157% | [#669](https://github.com/githubnext/gh-aw-test/actions/runs/39203708774) | `v0.92.5` / `cbc32699c3d6` |
-| R3 | 2026-10-17 | Start MCP Gateway | 32.0s | 6.0s | 433% | [#673](https://github.com/githubnext/gh-aw-test/actions/runs/39375395453) | `v0.92.5` / `cbc32699c3d6` |
-| R4 | 2026-10-22 | Download container images | 26.0s | 16.0s | 62% | [#701](https://github.com/githubnext/gh-aw-test/actions/runs/40269048729) | `v0.93.1` / `310317364125` |
-| R5 | 2026-10-23 | Set up job | 13.0s | 2.0s | 550% | [#692](https://github.com/githubnext/gh-aw-test/actions/runs/40058412852) | `v0.93.3` / `317d9005a6bc` |
-| R6 | 2026-10-25 to 2026-10-27 | Install GitHub Copilot CLI | 19.0s | 3.0s | 533% | [#709](https://github.com/githubnext/gh-aw-test/actions/runs/40631906382) | `v0.93.5` / `32ecafbc061c` |
-| R7 | 2026-10-25 | Start MCP Gateway | 15.0s | 5.0s | 200% | [#709](https://github.com/githubnext/gh-aw-test/actions/runs/40631906382) | `v0.93.5` / `32ecafbc061c` |
-| R8 | 2026-11-04 to 2026-11-06 | Install AWF binary | 14.0s | 1.0s | 1300% | [#737](https://github.com/githubnext/gh-aw-test/actions/runs/41973253286) | `v1.2.0` / `18928ba35b7e` |
-| R9 | 2026-11-06 | Install GitHub Copilot CLI | 21.0s | 9.5s | 121% | [#768](https://github.com/githubnext/gh-aw-test/actions/runs/43365622315) | `v1.2.1` / `8f3224323bdf` |
-| R10 | 2026-11-10 | Download container images | 14.0s | 4.0s | 250% | [#802](https://github.com/githubnext/gh-aw-test/actions/runs/44985678172) | `v1.2.2` / `399a445fe2d8` |
-| R11 | 2026-11-10 to 2026-11-13 | Install GitHub Copilot CLI | 29.0s | 7.5s | 287% | [#771](https://github.com/githubnext/gh-aw-test/actions/runs/43553611003) | `v1.2.3` / `5b6d021250c8` |
+| R1 | 2026-10-17 | Download container images | 27.0s | 10.5s | 157% | [#669](https://github.com/githubnext/gh-aw-test/actions/runs/39203708774) | `v0.92.5` / `cbc32699c3d6` |
+| R2 | 2026-10-17 | Start MCP Gateway | 32.0s | 6.0s | 433% | [#673](https://github.com/githubnext/gh-aw-test/actions/runs/39375395453) | `v0.92.5` / `cbc32699c3d6` |
+| R3 | 2026-10-22 | Download container images | 26.0s | 16.0s | 62% | [#701](https://github.com/githubnext/gh-aw-test/actions/runs/40269048729) | `v0.93.1` / `310317364125` |
+| R4 | 2026-10-23 | Set up job | 13.0s | 2.0s | 550% | [#692](https://github.com/githubnext/gh-aw-test/actions/runs/40058412852) | `v0.93.3` / `317d9005a6bc` |
+| R5 | 2026-10-25 to 2026-10-27 | Install GitHub Copilot CLI | 19.0s | 3.0s | 533% | [#709](https://github.com/githubnext/gh-aw-test/actions/runs/40631906382) | `v0.93.5` / `32ecafbc061c` |
+| R6 | 2026-10-25 | Start MCP Gateway | 15.0s | 5.0s | 200% | [#709](https://github.com/githubnext/gh-aw-test/actions/runs/40631906382) | `v0.93.5` / `32ecafbc061c` |
+| R7 | 2026-11-04 to 2026-11-06 | Install AWF binary | 14.0s | 1.0s | 1300% | [#737](https://github.com/githubnext/gh-aw-test/actions/runs/41973253286) | `v1.2.0` / `18928ba35b7e` |
+| R8 | 2026-11-06 | Install GitHub Copilot CLI | 21.0s | 9.5s | 121% | [#768](https://github.com/githubnext/gh-aw-test/actions/runs/43365622315) | `v1.2.1` / `8f3224323bdf` |
+| R9 | 2026-11-10 | Download container images | 14.0s | 4.0s | 250% | [#802](https://github.com/githubnext/gh-aw-test/actions/runs/44985678172) | `v1.2.2` / `399a445fe2d8` |
+| R10 | 2026-11-10 to 2026-11-13 | Install GitHub Copilot CLI | 29.0s | 7.0s | 314% | [#771](https://github.com/githubnext/gh-aw-test/actions/runs/43553611003) | `v1.2.3` / `5b6d021250c8` |
 
 ### Major step times for job `detection` (`released`, using samples)
 
@@ -369,9 +365,8 @@ No candidate regressions in the last six weeks.
 
 | Label | Episode | Step | Peak | Prior median | Increase | Run | gh-aw version / commit |
 |---|---|---|---:|---:|---:|---|---|
-| R1 | 2026-10-15 | Setup Scripts | 18.0s | 4.0s | 350% | [#672](https://github.com/githubnext/gh-aw-test/actions/runs/39369618109) | `v0.92.0` / `a68f5a9436d2` |
-| R2 | 2026-10-23 | Set up job | 26.0s | 3.0s | 767% | [#692](https://github.com/githubnext/gh-aw-test/actions/runs/40058412852) | `v0.93.3` / `317d9005a6bc` |
-| R3 | 2026-10-23 | Setup Scripts | 13.0s | 3.0s | 333% | [#692](https://github.com/githubnext/gh-aw-test/actions/runs/40058412852) | `v0.93.3` / `317d9005a6bc` |
+| R1 | 2026-10-23 | Set up job | 26.0s | 3.0s | 767% | [#692](https://github.com/githubnext/gh-aw-test/actions/runs/40058412852) | `v0.93.3` / `317d9005a6bc` |
+| R2 | 2026-10-23 | Setup Scripts | 13.0s | 3.0s | 333% | [#692](https://github.com/githubnext/gh-aw-test/actions/runs/40058412852) | `v0.93.3` / `317d9005a6bc` |
 
 ### Major step times for job `conclusion` (`released`, using samples)
 
